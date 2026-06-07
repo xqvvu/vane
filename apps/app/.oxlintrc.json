@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+
+  "extends": ["../../.oxlintrc.json"],
+
+  "settings": {
+    "react": {
+      "version": "19.2.7"
+    },
+    "vitest": {
+      "typecheck": false
+    }
+  },
+
+  "plugins": ["typescript", "unicorn", "oxc", "react", "react-perf", "vitest", "node"],
+  "jsPlugins": [
+    {
+      "name": "tanstack-router",
+      "specifier": "@tanstack/eslint-plugin-router"
+    }
+  ],
+  "rules": {
+    "tanstack-router/create-route-property-order": "error",
+    "typescript/only-throw-error": [
+      "error",
+      {
+        "allow": [
+          {
+            "from": "package",
+            "package": "@tanstack/router-core",
+            "name": "Redirect"
+          },
+          {
+            "from": "package",
+            "package": "@tanstack/router-core",
+            "name": "NotFoundError"
+          }
+        ]
+      }
+    ]
+  }
+}

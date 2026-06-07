@@ -1,0 +1,26 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit",
+    "source.format.oxc": "explicit",
+    "source.fixAllDangerous.oxc": "explicit"
+  },
+
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "files.watcherExclude": {
+    "**/route-tree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/route-tree.gen.ts": true
+  },
+  "files.readonlyInclude": {
+    "**/route-tree.gen.ts": true
+  },
+
+  "[javascript][typescript][typescriptreact][json][jsonc][css][markdown]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  }
+}
