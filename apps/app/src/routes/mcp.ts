@@ -2,8 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { handleMcpRequest } from "#/lib/mcp/handler.server";
-import { addTodo } from "#/lib/mcp/todos.server";
+import { handleMcpRequest } from "#/lib/mcp/handler.server.ts";
+import { addTodo } from "#/lib/mcp/todos.server.ts";
 
 const server = new McpServer({
   name: "start-server",

@@ -2,8 +2,8 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
-import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
-import TanStackRouterDevtools from "#/integrations/tanstack-router/devtools";
+import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools.tsx";
+import TanStackRouterDevtools from "#/integrations/tanstack-router/devtools.tsx";
 
 import appCss from "#/styles.css?url";
 

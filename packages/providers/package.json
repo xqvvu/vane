@@ -1,0 +1,26 @@
+{
+  "name": "@vane/providers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "oxlint",
+    "fmt": "oxfmt --write",
+    "fmt:check": "oxfmt --check"
+  },
+  "dependencies": {
+    "@vane/core": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:toolchain",
+    "vitest": "catalog:toolchain"
+  }
+}

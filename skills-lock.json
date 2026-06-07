@@ -37,6 +37,12 @@
       "skillPath": "skills/tanstack-start/SKILL.md",
       "computedHash": "8b073187405a10f9997158f9139a9664cc801595d2fe63d542a0bac9bf2152f5"
     },
+    "to-issues": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/to-issues/SKILL.md",
+      "computedHash": "47f648f3414848ccfc62cb41d2828b7e575fb5e7cbd6c4bdf630c063b5dc5e82"
+    },
     "to-prd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
