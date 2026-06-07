@@ -14,9 +14,17 @@ Before product or architecture work, read:
 Do not duplicate PRD content here. If a product decision changes, update the
 relevant doc instead of expanding `AGENTS.md`.
 
+## Docs Workflow
+
+- Write project docs in Chinese by default.
+- After creating or updating docs, use the `obsidian-vault` skill to sync them
+  into Obsidian.
+- Before syncing docs to Obsidian, inspect the previously synced Vane notes and
+  confirm which vault directory they live in; sync into that same directory.
+
 ## Project Shape
 
-- `apps/app` is the TanStack Start app. It owns UI, API routes, auth, SQLite
+- `apps/console` is the TanStack Start console. It owns UI, API routes, auth, SQLite
   persistence, migrations, repositories/services, orchestration, and the
   in-process worker.
 - `packages/core` owns shared schemas, domain types, route rules, delivery
@@ -25,8 +33,8 @@ relevant doc instead of expanding `AGENTS.md`.
 - `packages/destinations` owns outbound destination senders and the sender
   registry.
 
-Keep reusable integration code in packages. Keep app runtime concerns in
-`apps/app`. Do not introduce new deployable services or default middleware
+Keep reusable integration code in packages. Keep console runtime concerns in
+`apps/console`. Do not introduce new deployable services or default middleware
 without an explicit architecture decision.
 
 ## Engineering Workflow
@@ -44,7 +52,7 @@ without an explicit architecture decision.
 
 ## Imports
 
-- In `apps/app`, import app source through the configured alias: `#/*`.
+- In `apps/console`, import console source through the configured alias: `#/*`.
   Example: `import { cn } from "#/lib/utils.ts";`
 - Use relative imports only for same-directory package internals, generated
   route-tree files, or colocated tests where an alias would make ownership less
@@ -64,7 +72,7 @@ Use pnpm and the existing workspace scripts.
 - Formatting: `pnpm --filter <package> fmt` or `fmt:check`.
 - Linting: `pnpm --filter <package> lint`.
 - Tests: `pnpm --filter <package> test`.
-- Dev server: `pnpm --filter @vane/app dev`.
+- Dev server: `pnpm --filter @vane/console dev`.
 
 Prefer package-scoped commands while working on a focused area. Run broader
 checks when touching shared packages or cross-package contracts.
@@ -76,13 +84,13 @@ checks when touching shared packages or cross-package contracts.
 - Keep SQLite, filesystem, secrets, and server runtime modules server-only.
 - Do not expose source tokens, destination secrets, signing secrets, or raw
   secret config through loaders, client components, or serialized data.
-- Use the existing UI stack in `apps/app` before adding another component
+- Use the existing UI stack in `apps/console` before adding another component
   system.
 
 ## SQLite And Migrations
 
-- Put explicit migrations in `apps/app/src/infra/sqlite/migrations/`.
-- Apply migrations through `apps/app/src/infra/sqlite/migrate.server.ts`.
+- Put explicit migrations in `apps/console/src/infra/sqlite/migrations/`.
+- Apply migrations through `apps/console/src/infra/sqlite/migrate.server.ts`.
 - Record applied migrations in `schema_migrations`.
 - Migrations move forward only. Do not edit old committed migrations.
 - Use one consistent timestamp representation across tables.
@@ -96,8 +104,8 @@ oversized hero sections, and decorative dashboards.
 
 Use shadcn for shared UI primitives:
 
-- Run `npx shadcn@latest add <component>` from `apps/app` when adding common
-  UI components, so the CLI reads `apps/app/components.json`.
+- Run `npx shadcn@latest add <component>` from `apps/console` when adding common
+  UI components, so the CLI reads `apps/console/components.json`.
 - Follow the current shadcn config: `style` is `base-lyra`, `baseColor` is
   `neutral`, `iconLibrary` is `remixicon`, menu color is `default`, and menu
   accent is `subtle`.

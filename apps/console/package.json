@@ -1,5 +1,5 @@
 {
-  "name": "@vane/app",
+  "name": "@vane/console",
   "private": true,
   "type": "module",
   "imports": {

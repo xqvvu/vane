@@ -177,7 +177,7 @@ importers:
         specifier: catalog:toolchain
         version: 0.23.0
 
-  apps/app:
+  apps/console:
     dependencies:
       '@base-ui/react':
         specifier: catalog:ui

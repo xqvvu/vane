@@ -1,9 +1,9 @@
-# SQLite 存储层（`apps/app/src/infra/sqlite`）
+# SQLite 存储层（`apps/console/src/infra/sqlite`）
 
 本文档详细说明 Vane 的 SQLite 持久化层：它的分层方式、目录结构，以及每个
 interface、type、class、函数的职责与签名。
 
-> 适用范围：`apps/app/src/infra/sqlite/`。跨包共享的领域 schema（如
+> 适用范围：`apps/console/src/infra/sqlite/`。跨包共享的领域 schema（如
 > `SourceSummary`、`DeliveryJob`、`NormalizedEvent`）定义在 `@vane/core`，本层只负责
 > 把它们持久化到 SQLite 并读回。
 
@@ -425,7 +425,7 @@ export interface HistoryRepository {
 
 **新增一个聚合：**
 
-1. 新建 `apps/app/src/infra/sqlite/<aggregate>.ts`，放入 Row 类型、Repository 接口、
+1. 新建 `apps/console/src/infra/sqlite/<aggregate>.ts`，放入 Row 类型、Repository 接口、
    输入/输出 DTO、映射函数、require 守卫、仓储类。
 2. 在 `store.ts` 的 `SqliteStoreUnitOfWork` 加上该仓储，并在
    `createSqliteRepositories` 里实例化、按依赖顺序注入。
