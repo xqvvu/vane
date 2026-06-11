@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createApplicationContainer,
+  disposeApplicationContainer,
+  getApplicationContainer,
   type ApplicationContainerOptions,
 } from "#/application/runtime/container.server.ts";
 import { WebhookIntakeService } from "#/application/services/intake.ts";
@@ -13,9 +15,23 @@ describe("application container", () => {
   let store: SqliteStore | undefined;
 
   afterEach(() => {
+    disposeApplicationContainer();
     store?.close();
     store = undefined;
     vi.restoreAllMocks();
+  });
+
+  it("caches the default container in the ESM module until disposed", () => {
+    const first = getApplicationContainer();
+    const second = getApplicationContainer();
+
+    expect(first).toBe(second);
+
+    disposeApplicationContainer();
+
+    const third = getApplicationContainer();
+
+    expect(third).not.toBe(first);
   });
 
   it("caches long-lived dependencies and creates services through explicit factories", () => {
@@ -69,5 +85,85 @@ describe("application container", () => {
         worker: expect.any(Object),
       }),
     );
+  });
+
+  it("disposes opened long-lived dependencies", () => {
+    let openedStoreClose: ReturnType<typeof vi.fn<() => void>> | undefined;
+    const openStore = vi.fn<() => SqliteStore>(() => {
+      const nextStore = openSqliteStore({
+        databasePath: ":memory:",
+      });
+      openedStoreClose = vi.spyOn(nextStore, "close");
+
+      return nextStore;
+    });
+    const authDatabaseClose = vi.fn<() => void>();
+    const authDatabase = { close: authDatabaseClose };
+    const runner = {
+      runNow: async () => null,
+      stop: vi.fn<() => void>(),
+    };
+    const container = createApplicationContainer({
+      openStore,
+      createAuthDatabase: () => authDatabase as never,
+      createAuth: () =>
+        ({
+          handler: async () => new Response(null),
+          api: {
+            getSession: async () => null,
+          },
+        }) as never,
+      createWorkerRunner: () => runner,
+    });
+
+    container.getSqliteStore();
+    container.getAuth();
+
+    container.dispose();
+    container.dispose();
+
+    expect(runner.stop).toHaveBeenCalledTimes(1);
+    expect(openedStoreClose).toHaveBeenCalledTimes(1);
+    expect(authDatabaseClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears resource references before reporting dispose errors", () => {
+    const sqliteCloseError = new Error("sqlite close failed");
+    const authCloseError = new Error("auth close failed");
+    const sqliteStoreClose = vi.fn<() => void>(() => {
+      throw sqliteCloseError;
+    });
+    const sqliteStore = {
+      close: sqliteStoreClose,
+    } as unknown as SqliteStore;
+    const authDatabaseClose = vi.fn<() => void>(() => {
+      throw authCloseError;
+    });
+    const authDatabase = { close: authDatabaseClose };
+    const runner = {
+      runNow: async () => null,
+      stop: vi.fn<() => void>(),
+    };
+    const container = createApplicationContainer({
+      openStore: () => sqliteStore,
+      createAuthDatabase: () => authDatabase as never,
+      createAuth: () =>
+        ({
+          handler: async () => new Response(null),
+          api: {
+            getSession: async () => null,
+          },
+        }) as never,
+      createWorkerRunner: () => runner,
+    });
+
+    container.getSqliteStore();
+    container.getAuth();
+
+    expect(() => container.dispose()).toThrow(AggregateError);
+    expect(() => container.dispose()).not.toThrow();
+    expect(runner.stop).toHaveBeenCalledTimes(1);
+    expect(sqliteStoreClose).toHaveBeenCalledTimes(1);
+    expect(authDatabaseClose).toHaveBeenCalledTimes(1);
   });
 });

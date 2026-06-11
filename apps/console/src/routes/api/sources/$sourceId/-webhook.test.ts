@@ -558,5 +558,6 @@ function createTestContainer(): ApplicationContainer {
     getAuth: () => {
       throw new Error("Dashboard auth is not used by webhook tests");
     },
+    dispose: () => {},
   } satisfies ApplicationContainer;
 }

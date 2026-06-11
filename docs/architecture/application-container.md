@@ -34,13 +34,18 @@ Vane 的 MVP 约束不变：单进程、SQLite-first、server-only 后端运行�
 `apps/console/src/application/runtime/container.server.ts` 是默认运行时的 composition root。它只
 在服务端导入，负责组装这些长期依赖：
 
+默认 container 使用 ESM module cache 做懒加载：第一次调用 `getApplicationContainer()`
+时创建，后续在同一个 server module 实例内复用。不要把 container 挂到 `globalThis`；如果
+开发模式 HMR 或测试需要释放默认实例，调用 `disposeApplicationContainer()`，它会停止
+delivery worker runner，并关闭已打开的 SQLite store / Better Auth database。
+
 | 依赖 | 生命周期 | 说明 |
 | --- | --- | --- |
-| `SqliteStore` | 进程级懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、settings 等仓储。 |
-| `ProviderRegistry` | 进程级懒加载 | 默认来自 `createDefaultProviderRegistry()`，用于把 Source payload 解析为 normalized Event。 |
-| `DestinationRegistry` | 进程级懒加载 | 默认来自 `createDefaultDestinationRegistry()`，用于校验 Destination config、preview 和 send。 |
-| Better Auth database | 进程级懒加载 | 使用与 SQLite store 同一套连接工厂和 migrations。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务仓储。 |
-| `DeliveryWorkerRunner` | 进程级单例 | 由 `DeliveryWorker` + store + destination registry + env worker 配置组装，维持 MVP 的 in-process SQLite-backed delivery worker。 |
+| `SqliteStore` | 默认 container 内懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、settings 等仓储。 |
+| `ProviderRegistry` | 默认 container 内懒加载 | 默认来自 `createDefaultProviderRegistry()`，用于把 Source payload 解析为 normalized Event。 |
+| `DestinationRegistry` | 默认 container 内懒加载 | 默认来自 `createDefaultDestinationRegistry()`，用于校验 Destination config、preview 和 send。 |
+| Better Auth database | 默认 container 内懒加载 | 使用与 SQLite store 同一套连接工厂和 migrations。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务仓储。 |
+| `DeliveryWorkerRunner` | 默认 container 内单例 | 由 `DeliveryWorker` + store + destination registry + env worker 配置组装，维持 MVP 的 in-process SQLite-backed delivery worker。 |
 | service factory | 每次调用新建 | `createConfigurationService()`、`createWebhookIntakeService()`、`createDeliveryWorker()` 返回显式注入依赖的服务实例。 |
 
 推荐目录结构：
@@ -162,6 +167,10 @@ Delivery worker 是进程级后台循环，默认通过 container 组装：
 const runner = getApplicationContainer().ensureDeliveryWorkerRunner();
 ```
 
+默认 container dispose 时必须停止该 runner。`container.server.ts` 在支持 HMR 的运行时中会注册
+`import.meta.hot.dispose(disposeApplicationContainer)`，避免开发模式热替换后遗留旧 interval
+和旧 SQLite 连接。
+
 手动触发 worker（例如 dashboard 的 run-once server function）不直接 `new
 DeliveryWorker`，而是：
 
@@ -206,6 +215,10 @@ Vane 的后端是 TanStack Start 单体应用，MVP 需要的是清晰的 server
 负责请求级依赖，业务服务保持显式构造函数。这足够支持测试替身、未来扩展 provider /
 destination，也不会牺牲 TanStack Start 的 client/server 分离。
 
+默认 container 的缓存位置应是 server-only ESM module scope，而不是 `globalThis`。这让默认
+运行时仍然是懒加载 singleton，同时把生命周期留在 `disposeApplicationContainer()` 和 HMR
+dispose 钩子里，避免不可见的全局挂载状态。
+
 ---
 
 ## 7. 测试守护
@@ -214,6 +227,8 @@ destination，也不会牺牲 TanStack Start 的 client/server 分离。
 
 - container factory 可以用 fake store / fake registry 构造服务，证明业务服务没有写死全局
   singleton。
+- 默认 container 通过 ESM module cache 复用；调用 `disposeApplicationContainer()` 后必须停
+  worker、关闭已打开的数据库连接，并允许后续请求重建新 container。
 - dashboard server functions 必须通过 dashboard request context 认证。
 - webhook route 不导入也不调用 dashboard request context，Source token / provider secret
   认证路径保持独立。

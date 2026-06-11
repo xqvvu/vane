@@ -52,6 +52,7 @@ export interface ApplicationContainer {
   ensureDeliveryWorkerRunner(): DeliveryWorkerRunner;
   getBetterAuthDatabase(): SqliteDatabase;
   getAuth(): VaneAuth;
+  dispose(): void;
 }
 
 export interface ApplicationContainerOptions {
@@ -66,14 +67,19 @@ export interface ApplicationContainerOptions {
   onWorkerError?: (error: unknown) => void;
 }
 
-const globalContainer = globalThis as typeof globalThis & {
-  __vaneApplicationContainer?: ApplicationContainer;
-};
+let applicationContainer: ApplicationContainer | undefined;
 
 export function getApplicationContainer(): ApplicationContainer {
-  globalContainer.__vaneApplicationContainer ??= createApplicationContainer();
+  applicationContainer ??= createApplicationContainer();
 
-  return globalContainer.__vaneApplicationContainer;
+  return applicationContainer;
+}
+
+export function disposeApplicationContainer(): void {
+  const container = applicationContainer;
+
+  applicationContainer = undefined;
+  container?.dispose();
 }
 
 export function createApplicationContainer(
@@ -174,6 +180,32 @@ export function createApplicationContainer(
 
       return auth;
     },
+
+    dispose() {
+      const currentRunner = runner;
+      const currentSqliteStore = sqliteStore;
+      const currentAuthDatabase = authDatabase;
+      const errors: unknown[] = [];
+
+      runner = undefined;
+      sqliteStore = undefined;
+      authDatabase = undefined;
+      providers = undefined;
+      destinations = undefined;
+      auth = undefined;
+
+      tryDispose(() => currentRunner?.stop(), errors);
+      tryDispose(() => currentSqliteStore?.close(), errors);
+      tryDispose(() => currentAuthDatabase?.close(), errors);
+
+      if (errors.length === 1) {
+        throw errors[0];
+      }
+
+      if (errors.length > 1) {
+        throw new AggregateError(errors, "Failed to dispose application container");
+      }
+    },
   };
 
   function getOrOpenSqliteStore(): SqliteStore {
@@ -184,6 +216,24 @@ export function createApplicationContainer(
 
   return container;
 }
+
+function tryDispose(dispose: () => void, errors: unknown[]): void {
+  try {
+    dispose();
+  } catch (error) {
+    errors.push(error);
+  }
+}
+
+const hot = (
+  import.meta as ImportMeta & {
+    hot?: {
+      dispose(callback: () => void): void;
+    };
+  }
+).hot;
+
+hot?.dispose(disposeApplicationContainer);
 
 function createDefaultBetterAuthDatabase(): SqliteDatabase {
   const database = createSqliteDatabase({
