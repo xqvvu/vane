@@ -1,0 +1,21 @@
+services:
+  vane:
+    build:
+      context: .
+    image: vane:local
+    ports:
+      - "3000:3000"
+    environment:
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET to a 32+ character random value}
+      SERVER_URL: http://localhost:3000
+      VANE_DATABASE_PATH: /data/vane.sqlite
+      VANE_MAX_WEBHOOK_BYTES: "1048576"
+      VANE_WORKER_BATCH_SIZE: "10"
+      VANE_WORKER_INTERVAL_MS: "5000"
+    volumes:
+      - vane-data:/data
+
+volumes:
+  vane-data:
+    name: "vane-data"

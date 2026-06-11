@@ -1,23 +1,27 @@
 import "@tanstack/react-start/server-only";
 import type { PathLike } from "node:fs";
 import path from "node:path";
-import sqlite from "node:sqlite";
+import process from "node:process";
+
+import Database from "better-sqlite3";
+
+export type SqliteDatabase = Database.Database;
 
 export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;
 }
 
-export function createSqliteDatabase(
-  options: CreateSqliteDatabaseOptions = {},
-): sqlite.DatabaseSync {
-  const databasePath = options.databasePath ?? path.join(import.meta.dirname, "data.sqlite");
-  const db = new sqlite.DatabaseSync(databasePath, {});
+export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): SqliteDatabase {
+  const databasePath = String(options.databasePath ?? path.join(process.cwd(), "data.sqlite"));
+  const db = new Database(databasePath, {
+    timeout: 5000,
+  });
 
-  db.exec("PRAGMA foreign_keys = ON");
+  db.pragma("foreign_keys = ON");
 
   if (databasePath !== ":memory:") {
-    db.exec("PRAGMA journal_mode = WAL");
-    db.exec("PRAGMA busy_timeout = 5000");
+    db.pragma("journal_mode = WAL");
+    db.pragma("busy_timeout = 5000");
   }
 
   return db;

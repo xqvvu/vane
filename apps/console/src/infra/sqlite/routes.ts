@@ -1,6 +1,4 @@
 import "@tanstack/react-start/server-only";
-import { randomUUID } from "node:crypto";
-
 import {
   decodeSchemaJson,
   encodeSchemaJson,
@@ -110,7 +108,7 @@ export class SqliteRouteRepository implements RouteRepository {
     const now = this.context.now();
     const createdAt = input.createdAt ?? now;
     const route = RouteDefinitionSchema.parse({
-      id: input.id ?? randomUUID(),
+      id: input.id ?? this.context.ids.route(),
       name: input.name,
       enabled: input.enabled ?? true,
       rule: input.rule,

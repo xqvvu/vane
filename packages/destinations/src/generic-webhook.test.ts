@@ -84,4 +84,33 @@ describe("generic webhook sender", () => {
     expect(result.error).toBe("Generic webhook returned HTTP 500");
     expect(result.responseBody).toBe("down");
   });
+
+  it("renders sent payloads with the same parsed template config as previews", async () => {
+    const calls: Array<{ url: string; init: RequestInit }> = [];
+    const fetcher: FetchLike = async (url, init) => {
+      calls.push({ url, init });
+      return {
+        ok: true,
+        status: 202,
+        text: async () => "accepted",
+      };
+    };
+
+    const result = await genericWebhookSender.send(
+      {
+        ...input,
+        config: {
+          ...input.config,
+          messageTemplate: "  {{event.title}} -> {{destination.name}}  ",
+        },
+      },
+      { fetch: fetcher },
+    );
+    const body = JSON.parse(calls[0]?.init.body as string) as { message: string };
+
+    expect(body.message).toBe("Checkout API latency high -> Internal relay");
+    expect(result.renderedPayload).toMatchObject({
+      message: "Checkout API latency high -> Internal relay",
+    });
+  });
 });

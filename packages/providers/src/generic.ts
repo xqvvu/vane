@@ -18,16 +18,35 @@ export const genericProviderParser: ProviderParser = {
     const labels = extractLabels(payload);
 
     const title =
-      firstString(payload, ["title", "alert", "alertname", "name", "summary"]) ?? "Generic webhook event";
-    const message = firstString(payload, ["message", "description", "text", "body"]) ?? stableStringify(input.payload);
-    const severity = normalizeSeverity(firstString(payload, ["severity", "level", "priority"]) ?? labels.severity);
+      firstString(payload, ["title", "alert", "alertname", "name", "summary"]) ??
+      "Generic webhook event";
+    const message =
+      firstString(payload, ["message", "description", "text", "body"]) ??
+      stableStringify(input.payload);
+    const severity = normalizeSeverity(
+      firstString(payload, ["severity", "level", "priority"]) ?? labels.severity,
+    );
     const status = normalizeStatus(firstString(payload, ["status", "state"]) ?? labels.status);
-    const fingerprint = firstString(payload, ["fingerprint", "alertId", "alert_id"]) ?? `generic:${payloadHash}`;
+    const fingerprint =
+      firstString(payload, ["fingerprint", "alertId", "alert_id"]) ?? `generic:${payloadHash}`;
     const idempotencyKey =
-      firstString(payload, ["idempotencyKey", "idempotency_key", "requestId", "request_id", "eventId", "id"]) ??
-      `generic:${payloadHash}`;
+      firstString(payload, [
+        "idempotencyKey",
+        "idempotency_key",
+        "requestId",
+        "request_id",
+        "eventId",
+        "id",
+      ]) ?? `generic:${payloadHash}`;
     const occurredAt = normalizeDate(
-      firstValue(payload, ["occurredAt", "occurred_at", "startsAt", "starts_at", "time", "timestamp"]),
+      firstValue(payload, [
+        "occurredAt",
+        "occurred_at",
+        "startsAt",
+        "starts_at",
+        "time",
+        "timestamp",
+      ]),
       input.receivedAt,
     );
 

@@ -4,8 +4,10 @@ import type {
   DeliveryState,
   EventRecord,
   NormalizedEvent,
+  RouteMatchResult,
   SourceSummary,
 } from "@vane/core";
+import { evaluateRouteMatch } from "@vane/core";
 
 import { rowAs } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
@@ -15,6 +17,7 @@ import {
   type SqliteDeliveryRepository,
 } from "#/infra/sqlite/deliveries.ts";
 import { type SqliteIntakeRepository } from "#/infra/sqlite/intake.ts";
+import type { RouteRepository } from "#/infra/sqlite/routes.ts";
 import {
   requireSource,
   sourceSummaryFromRuntime,
@@ -39,8 +42,11 @@ export interface EventListQuery {
 
 export interface DeliveryListQuery {
   sourceId?: string;
+  severity?: NormalizedEvent["severity"];
+  status?: NormalizedEvent["status"];
   destinationId?: string;
   state?: DeliveryState;
+  q?: string;
   cursor?: string;
   limit?: number;
 }
@@ -60,7 +66,13 @@ export interface EventListItem {
 export interface EventDetail {
   event: EventRecord;
   source: SourceSummary;
-  deliveries: DeliveryJob[];
+  routeMatches: RouteMatchResult[];
+  deliveries: EventDetailDelivery[];
+}
+
+export interface EventDetailDelivery extends DeliveryJob {
+  destinationName: string;
+  routeName: string | null;
 }
 
 export interface DeliveryListItem {
@@ -81,6 +93,7 @@ export class SqliteHistoryRepository implements HistoryRepository {
     private readonly context: SqliteRepositoryContext,
     private readonly sources: SourceRepository,
     private readonly intake: SqliteIntakeRepository,
+    private readonly routes: RouteRepository,
     _deliveries: SqliteDeliveryRepository,
   ) {}
 
@@ -110,8 +123,15 @@ export class SqliteHistoryRepository implements HistoryRepository {
     }
 
     if (query.cursor) {
-      filters.push("events.received_at < ?");
-      params.push(query.cursor);
+      const cursor = decodeHistoryCursor(query.cursor);
+
+      if (cursor.id) {
+        filters.push("(events.received_at < ? OR (events.received_at = ? AND events.id < ?))");
+        params.push(cursor.time, cursor.time, cursor.id);
+      } else {
+        filters.push("events.received_at < ?");
+        params.push(cursor.time);
+      }
     }
 
     const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -136,7 +156,7 @@ export class SqliteHistoryRepository implements HistoryRepository {
           LEFT JOIN deliveries ON deliveries.event_id = events.id
           ${where}
           GROUP BY events.id
-          ORDER BY events.received_at DESC
+          ORDER BY events.received_at DESC, events.id DESC
           LIMIT ?
         `,
       )
@@ -173,7 +193,10 @@ export class SqliteHistoryRepository implements HistoryRepository {
           failed: row.failed_count ?? 0,
         },
       })),
-      nextCursor: rows.length > limit ? (pageRows.at(-1)?.received_at ?? null) : null,
+      nextCursor:
+        rows.length > limit && pageRows.at(-1)
+          ? encodeHistoryCursor(pageRows.at(-1)!.received_at, pageRows.at(-1)!.id)
+          : null,
     };
   }
 
@@ -185,12 +208,32 @@ export class SqliteHistoryRepository implements HistoryRepository {
     }
 
     const source = sourceSummaryFromRuntime(requireSource(this.sources.get(event.sourceId)));
+    const routeMatches =
+      event.routeMatches ??
+      this.routes.list().map((route) =>
+        evaluateRouteMatch(route, {
+          sourceId: event.sourceId,
+          event: event.normalized,
+        }),
+      );
     const deliveries = this.context.db
-      .prepare("SELECT * FROM deliveries WHERE event_id = ? ORDER BY created_at")
+      .prepare(
+        `
+          SELECT
+            deliveries.*,
+            destinations.name AS destination_name,
+            routes.name AS route_name
+          FROM deliveries
+          JOIN destinations ON destinations.id = deliveries.destination_id
+          LEFT JOIN routes ON routes.id = deliveries.route_id
+          WHERE deliveries.event_id = ?
+          ORDER BY deliveries.created_at
+        `,
+      )
       .all(eventId)
-      .map((row) => deliveryFromRow(rowAs<DeliveryRow>(row)));
+      .map((row) => eventDetailDeliveryFromRow(rowAs<EventDetailDeliveryRow>(row)));
 
-    return { event, source, deliveries };
+    return { event, source, routeMatches, deliveries };
   }
 
   listDeliveries(query: DeliveryListQuery = {}): Page<DeliveryListItem> {
@@ -203,6 +246,16 @@ export class SqliteHistoryRepository implements HistoryRepository {
       params.push(query.sourceId);
     }
 
+    if (query.severity) {
+      filters.push("events.severity = ?");
+      params.push(query.severity);
+    }
+
+    if (query.status) {
+      filters.push("events.status = ?");
+      params.push(query.status);
+    }
+
     if (query.destinationId) {
       filters.push("deliveries.destination_id = ?");
       params.push(query.destinationId);
@@ -213,9 +266,23 @@ export class SqliteHistoryRepository implements HistoryRepository {
       params.push(query.state);
     }
 
+    if (query.q) {
+      filters.push("(events.title LIKE ? OR events.message LIKE ?)");
+      params.push(`%${query.q}%`, `%${query.q}%`);
+    }
+
     if (query.cursor) {
-      filters.push("deliveries.updated_at < ?");
-      params.push(query.cursor);
+      const cursor = decodeHistoryCursor(query.cursor);
+
+      if (cursor.id) {
+        filters.push(
+          "(deliveries.updated_at < ? OR (deliveries.updated_at = ? AND deliveries.id < ?))",
+        );
+        params.push(cursor.time, cursor.time, cursor.id);
+      } else {
+        filters.push("deliveries.updated_at < ?");
+        params.push(cursor.time);
+      }
     }
 
     const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -239,7 +306,7 @@ export class SqliteHistoryRepository implements HistoryRepository {
           JOIN destinations ON destinations.id = deliveries.destination_id
           LEFT JOIN routes ON routes.id = deliveries.route_id
           ${where}
-          ORDER BY deliveries.updated_at DESC
+          ORDER BY deliveries.updated_at DESC, deliveries.id DESC
           LIMIT ?
         `,
       )
@@ -270,7 +337,40 @@ export class SqliteHistoryRepository implements HistoryRepository {
         lastError: row.last_error,
         updatedAt: row.updated_at,
       })),
-      nextCursor: rows.length > limit ? (pageRows.at(-1)?.updated_at ?? null) : null,
+      nextCursor:
+        rows.length > limit && pageRows.at(-1)
+          ? encodeHistoryCursor(pageRows.at(-1)!.updated_at, pageRows.at(-1)!.id)
+          : null,
     };
   }
+}
+
+interface EventDetailDeliveryRow extends DeliveryRow {
+  destination_name: string;
+  route_name: string | null;
+}
+
+function eventDetailDeliveryFromRow(row: EventDetailDeliveryRow): EventDetailDelivery {
+  return {
+    ...deliveryFromRow(row),
+    destinationName: row.destination_name,
+    routeName: row.route_name,
+  };
+}
+
+function encodeHistoryCursor(time: string, id: string): string {
+  return `${encodeURIComponent(time)}|${encodeURIComponent(id)}`;
+}
+
+function decodeHistoryCursor(cursor: string): { time: string; id: string | null } {
+  const [time, id] = cursor.split("|", 2);
+
+  if (!time) {
+    return { time: cursor, id: null };
+  }
+
+  return {
+    time: decodeURIComponent(time),
+    id: id ? decodeURIComponent(id) : null,
+  };
 }

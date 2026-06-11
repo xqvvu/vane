@@ -1,7 +1,10 @@
 import "@tanstack/react-start/server-only";
 import fs from "node:fs";
 import path from "node:path";
-import type sqlite from "node:sqlite";
+import process from "node:process";
+
+import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { transaction } from "#/infra/sqlite/transaction.ts";
 
 export interface Migration {
   version: string;
@@ -18,8 +21,8 @@ export interface MigrationResult {
 const MIGRATION_FILE_PATTERN = /^(\d{4})_(.+)\.sql$/;
 
 export function migrateSqliteDatabase(
-  db: sqlite.DatabaseSync,
-  migrationsDir = path.join(import.meta.dirname, "migrations"),
+  db: SqliteDatabase,
+  migrationsDir = resolveDefaultMigrationsDir(),
 ): MigrationResult {
   ensureMigrationLedger(db);
 
@@ -36,22 +39,16 @@ export function migrateSqliteDatabase(
       continue;
     }
 
-    db.exec("BEGIN");
-
-    try {
+    transaction(db, () => {
       db.exec(migration.sql);
       db.prepare("INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)").run(
         migration.version,
         migration.name,
         new Date().toISOString(),
       );
-      db.exec("COMMIT");
-      appliedVersions.add(migration.version);
-      result.applied.push(migration);
-    } catch (error) {
-      db.exec("ROLLBACK");
-      throw error;
-    }
+    });
+    appliedVersions.add(migration.version);
+    result.applied.push(migration);
   }
 
   return result;
@@ -80,14 +77,14 @@ export function readMigrations(migrationsDir: string): Migration[] {
     .sort((left, right) => left.version.localeCompare(right.version));
 }
 
-export function getAppliedMigrationVersions(db: sqlite.DatabaseSync): Set<string> {
+export function getAppliedMigrationVersions(db: SqliteDatabase): Set<string> {
   const rows = db.prepare("SELECT version FROM schema_migrations ORDER BY version").all() as Array<{
     version: string;
   }>;
   return new Set(rows.map((row) => row.version));
 }
 
-function ensureMigrationLedger(db: sqlite.DatabaseSync): void {
+function ensureMigrationLedger(db: SqliteDatabase): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version TEXT PRIMARY KEY,
@@ -95,4 +92,22 @@ function ensureMigrationLedger(db: sqlite.DatabaseSync): void {
       applied_at TEXT NOT NULL
     )
   `);
+}
+
+function resolveDefaultMigrationsDir(): string {
+  const candidates = [
+    path.join(import.meta.dirname, "migrations"),
+    path.join(process.cwd(), "src/infra/sqlite/migrations"),
+    path.join(process.cwd(), "apps/console/src/infra/sqlite/migrations"),
+  ];
+
+  const migrationsDir = candidates.find((candidate) => fs.existsSync(candidate));
+
+  if (!migrationsDir) {
+    throw new Error(
+      `Unable to locate SQLite migrations directory. Checked: ${candidates.join(", ")}`,
+    );
+  }
+
+  return migrationsDir;
 }

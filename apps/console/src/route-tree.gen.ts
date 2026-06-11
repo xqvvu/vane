@@ -9,13 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root";
-import { Route as McpRouteImport } from "./routes/mcp";
+import { Route as LoginRouteImport } from "./routes/login";
+import { Route as DashboardRouteImport } from "./routes/_dashboard";
 import { Route as IndexRouteImport } from "./routes/index";
+import { Route as DashboardSourcesRouteImport } from "./routes/_dashboard.sources";
+import { Route as DashboardSettingsRouteImport } from "./routes/_dashboard.settings";
+import { Route as DashboardRoutesRouteImport } from "./routes/_dashboard.routes";
+import { Route as DashboardEventsRouteImport } from "./routes/_dashboard.events";
+import { Route as DashboardDestinationsRouteImport } from "./routes/_dashboard.destinations";
+import { Route as DashboardDeliveriesRouteImport } from "./routes/_dashboard.deliveries";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
+import { Route as ApiSourcesSourceIdWebhookRouteImport } from "./routes/api/sources/$sourceId/webhook";
 
-const McpRoute = McpRouteImport.update({
-  id: "/mcp",
-  path: "/mcp",
+const LoginRoute = LoginRouteImport.update({
+  id: "/login",
+  path: "/login",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const DashboardRoute = DashboardRouteImport.update({
+  id: "/_dashboard",
   getParentRoute: () => rootRouteImport,
 } as any);
 const IndexRoute = IndexRouteImport.update({
@@ -23,49 +35,148 @@ const IndexRoute = IndexRouteImport.update({
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any);
+const DashboardSourcesRoute = DashboardSourcesRouteImport.update({
+  id: "/sources",
+  path: "/sources",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: "/settings",
+  path: "/settings",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardRoutesRoute = DashboardRoutesRouteImport.update({
+  id: "/routes",
+  path: "/routes",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardEventsRoute = DashboardEventsRouteImport.update({
+  id: "/events",
+  path: "/events",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardDestinationsRoute = DashboardDestinationsRouteImport.update({
+  id: "/destinations",
+  path: "/destinations",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardDeliveriesRoute = DashboardDeliveriesRouteImport.update({
+  id: "/deliveries",
+  path: "/deliveries",
+  getParentRoute: () => DashboardRoute,
+} as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: "/api/auth/$",
   path: "/api/auth/$",
   getParentRoute: () => rootRouteImport,
 } as any);
+const ApiSourcesSourceIdWebhookRoute =
+  ApiSourcesSourceIdWebhookRouteImport.update({
+    id: "/api/sources/$sourceId/webhook",
+    path: "/api/sources/$sourceId/webhook",
+    getParentRoute: () => rootRouteImport,
+  } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
-  "/mcp": typeof McpRoute;
+  "/login": typeof LoginRoute;
+  "/deliveries": typeof DashboardDeliveriesRoute;
+  "/destinations": typeof DashboardDestinationsRoute;
+  "/events": typeof DashboardEventsRoute;
+  "/routes": typeof DashboardRoutesRoute;
+  "/settings": typeof DashboardSettingsRoute;
+  "/sources": typeof DashboardSourcesRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/api/sources/$sourceId/webhook": typeof ApiSourcesSourceIdWebhookRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
-  "/mcp": typeof McpRoute;
+  "/login": typeof LoginRoute;
+  "/deliveries": typeof DashboardDeliveriesRoute;
+  "/destinations": typeof DashboardDestinationsRoute;
+  "/events": typeof DashboardEventsRoute;
+  "/routes": typeof DashboardRoutesRoute;
+  "/settings": typeof DashboardSettingsRoute;
+  "/sources": typeof DashboardSourcesRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/api/sources/$sourceId/webhook": typeof ApiSourcesSourceIdWebhookRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
-  "/mcp": typeof McpRoute;
+  "/_dashboard": typeof DashboardRouteWithChildren;
+  "/login": typeof LoginRoute;
+  "/_dashboard/deliveries": typeof DashboardDeliveriesRoute;
+  "/_dashboard/destinations": typeof DashboardDestinationsRoute;
+  "/_dashboard/events": typeof DashboardEventsRoute;
+  "/_dashboard/routes": typeof DashboardRoutesRoute;
+  "/_dashboard/settings": typeof DashboardSettingsRoute;
+  "/_dashboard/sources": typeof DashboardSourcesRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/api/sources/$sourceId/webhook": typeof ApiSourcesSourceIdWebhookRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/mcp" | "/api/auth/$";
+  fullPaths:
+    | "/"
+    | "/login"
+    | "/deliveries"
+    | "/destinations"
+    | "/events"
+    | "/routes"
+    | "/settings"
+    | "/sources"
+    | "/api/auth/$"
+    | "/api/sources/$sourceId/webhook";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/mcp" | "/api/auth/$";
-  id: "__root__" | "/" | "/mcp" | "/api/auth/$";
+  to:
+    | "/"
+    | "/login"
+    | "/deliveries"
+    | "/destinations"
+    | "/events"
+    | "/routes"
+    | "/settings"
+    | "/sources"
+    | "/api/auth/$"
+    | "/api/sources/$sourceId/webhook";
+  id:
+    | "__root__"
+    | "/"
+    | "/_dashboard"
+    | "/login"
+    | "/_dashboard/deliveries"
+    | "/_dashboard/destinations"
+    | "/_dashboard/events"
+    | "/_dashboard/routes"
+    | "/_dashboard/settings"
+    | "/_dashboard/sources"
+    | "/api/auth/$"
+    | "/api/sources/$sourceId/webhook";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
-  McpRoute: typeof McpRoute;
+  DashboardRoute: typeof DashboardRouteWithChildren;
+  LoginRoute: typeof LoginRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  ApiSourcesSourceIdWebhookRoute: typeof ApiSourcesSourceIdWebhookRoute;
 }
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    "/mcp": {
-      id: "/mcp";
-      path: "/mcp";
-      fullPath: "/mcp";
-      preLoaderRoute: typeof McpRouteImport;
+    "/login": {
+      id: "/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof LoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_dashboard": {
+      id: "/_dashboard";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof DashboardRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/": {
@@ -75,6 +186,48 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/_dashboard/sources": {
+      id: "/_dashboard/sources";
+      path: "/sources";
+      fullPath: "/sources";
+      preLoaderRoute: typeof DashboardSourcesRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/settings": {
+      id: "/_dashboard/settings";
+      path: "/settings";
+      fullPath: "/settings";
+      preLoaderRoute: typeof DashboardSettingsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/routes": {
+      id: "/_dashboard/routes";
+      path: "/routes";
+      fullPath: "/routes";
+      preLoaderRoute: typeof DashboardRoutesRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/events": {
+      id: "/_dashboard/events";
+      path: "/events";
+      fullPath: "/events";
+      preLoaderRoute: typeof DashboardEventsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/destinations": {
+      id: "/_dashboard/destinations";
+      path: "/destinations";
+      fullPath: "/destinations";
+      preLoaderRoute: typeof DashboardDestinationsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/deliveries": {
+      id: "/_dashboard/deliveries";
+      path: "/deliveries";
+      fullPath: "/deliveries";
+      preLoaderRoute: typeof DashboardDeliveriesRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
     "/api/auth/$": {
       id: "/api/auth/$";
       path: "/api/auth/$";
@@ -82,13 +235,44 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/api/sources/$sourceId/webhook": {
+      id: "/api/sources/$sourceId/webhook";
+      path: "/api/sources/$sourceId/webhook";
+      fullPath: "/api/sources/$sourceId/webhook";
+      preLoaderRoute: typeof ApiSourcesSourceIdWebhookRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
+interface DashboardRouteChildren {
+  DashboardDeliveriesRoute: typeof DashboardDeliveriesRoute;
+  DashboardDestinationsRoute: typeof DashboardDestinationsRoute;
+  DashboardEventsRoute: typeof DashboardEventsRoute;
+  DashboardRoutesRoute: typeof DashboardRoutesRoute;
+  DashboardSettingsRoute: typeof DashboardSettingsRoute;
+  DashboardSourcesRoute: typeof DashboardSourcesRoute;
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardDeliveriesRoute: DashboardDeliveriesRoute,
+  DashboardDestinationsRoute: DashboardDestinationsRoute,
+  DashboardEventsRoute: DashboardEventsRoute,
+  DashboardRoutesRoute: DashboardRoutesRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardSourcesRoute: DashboardSourcesRoute,
+};
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  McpRoute: McpRoute,
+  DashboardRoute: DashboardRouteWithChildren,
+  LoginRoute: LoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiSourcesSourceIdWebhookRoute: ApiSourcesSourceIdWebhookRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

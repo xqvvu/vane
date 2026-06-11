@@ -1,0 +1,338 @@
+import "@tanstack/react-start/server-only";
+import {
+  isSensitiveKey,
+  isSafeVaneSecretPath,
+  VANE_CONFIG_SCHEMA_VERSION,
+  VaneConfigurationSchema,
+  vaneConfigurationToTomlDocument,
+  vaneTomlDocumentToConfiguration,
+  type JsonObject,
+  type JsonValue,
+  type VaneConfigDestination,
+  type VaneConfigSource,
+  type VaneConfiguration,
+  type VaneSecretReferences,
+} from "@vane/core";
+import type { RouteDefinition } from "@vane/core";
+import { parse, stringify } from "smol-toml";
+
+import type { DestinationRuntimeConfig } from "#/infra/sqlite/destinations.ts";
+import type { SourceRuntimeConfig } from "#/infra/sqlite/sources.ts";
+
+export type PortableConfiguration = VaneConfiguration;
+export type PortableDestination = VaneConfigDestination;
+export type PortableSource = VaneConfigSource;
+
+export interface ExportConfigurationOptions {
+  includeSecrets?: boolean;
+  now?: () => string;
+}
+
+export interface ImportConfigurationOptions {
+  env?: Record<string, string | undefined>;
+}
+
+export interface ImportedConfigurationResult {
+  generatedSourceTokens: Array<{
+    sourceId: string;
+    sourceName: string;
+    token: string;
+  }>;
+}
+
+export const PortableConfigurationSchema = VaneConfigurationSchema;
+
+export function createPortableConfiguration(
+  input: {
+    sources: SourceRuntimeConfig[];
+    destinations: DestinationRuntimeConfig[];
+    routes: RouteDefinition[];
+    settings: {
+      rawPayloadRetentionDays: number;
+    };
+  },
+  options: ExportConfigurationOptions = {},
+): PortableConfiguration {
+  if (options.includeSecrets) {
+    throw new Error("Plaintext secret export is not supported");
+  }
+
+  return VaneConfigurationSchema.parse({
+    settings: {
+      schemaVersion: VANE_CONFIG_SCHEMA_VERSION,
+      exportedAt: options.now?.() ?? new Date().toISOString(),
+      includeSecrets: false,
+      rawPayloadRetentionDays: input.settings.rawPayloadRetentionDays,
+    },
+    sources: input.sources.map((source) => sanitizeSourceConfig(source)),
+    destinations: input.destinations.map((destination) => {
+      const sanitized = sanitizeDestinationConfig(destination);
+
+      return {
+        id: destination.id,
+        name: destination.name,
+        kind: destination.kind,
+        enabled: destination.enabled,
+        config: sanitized.config,
+        secretRefs: sanitized.secretRefs,
+      };
+    }),
+    routes: input.routes.map((route) => ({
+      id: route.id,
+      name: route.name,
+      enabled: route.enabled,
+      rule: route.rule,
+      destinationIds: route.destinationIds,
+    })),
+  });
+}
+
+export function serializePortableConfigurationToml(config: PortableConfiguration): string {
+  return [
+    "# Vane portable configuration",
+    "# Secrets are omitted by default; secret_refs entries point to environment variables.",
+    stringify(vaneConfigurationToTomlDocument(config)).trimEnd(),
+    "",
+  ].join("\n");
+}
+
+export function parsePortableConfigurationToml(toml: string): PortableConfiguration {
+  return vaneTomlDocumentToConfiguration(parse(toml));
+}
+
+export function resolveDestinationSecretRefs(
+  destination: PortableDestination,
+  options: ImportConfigurationOptions = {},
+): PortableDestination {
+  return resolvePortableSecretRefs(destination, options, "destination");
+}
+
+export function resolveSourceSecretRefs(
+  source: PortableSource,
+  options: ImportConfigurationOptions = {},
+): PortableSource {
+  return resolvePortableSecretRefs(source, options, "source");
+}
+
+function resolvePortableSecretRefs<
+  T extends { config: JsonObject; secretRefs: VaneSecretReferences },
+>(entry: T, options: ImportConfigurationOptions, resource: "source" | "destination"): T {
+  const config = structuredClone(entry.config);
+  const env = options.env ?? {};
+
+  for (const [path, ref] of Object.entries(entry.secretRefs)) {
+    const envName = secretRefEnvName(ref);
+
+    if (!envName) {
+      continue;
+    }
+
+    const value = env[envName];
+
+    if (value === undefined) {
+      throw new Error(`Missing environment variable for ${resource} secret: ${envName}`);
+    }
+
+    setJsonPath(config, path, value);
+  }
+
+  return {
+    ...entry,
+    config,
+  };
+}
+
+function sanitizeSourceConfig(source: SourceRuntimeConfig): PortableSource {
+  const secretPaths = sourceSecretPaths(source);
+  const config = omitJsonPaths(omitSensitiveJson(source.config), secretPaths);
+  const secretRefs = normalizeSecretRefs({});
+
+  for (const path of secretPaths) {
+    if (getJsonPath(source.config, path) !== undefined && secretRefs[path] === undefined) {
+      secretRefs[path] = { env: envNameForSourceSecret(source, path) };
+    }
+  }
+
+  return {
+    id: source.id,
+    name: source.name,
+    provider: source.provider,
+    enabled: source.enabled,
+    config,
+    secretRefs,
+  };
+}
+
+function sanitizeDestinationConfig(destination: DestinationRuntimeConfig): {
+  config: JsonObject;
+  secretRefs: VaneSecretReferences;
+} {
+  const secretPaths = destinationSecretPaths(destination);
+  const config = omitJsonPaths(omitSensitiveJson(destination.config), secretPaths);
+  const secretRefs = normalizeSecretRefs(destination.secretRefs);
+
+  for (const path of secretPaths) {
+    if (getJsonPath(destination.config, path) !== undefined && secretRefs[path] === undefined) {
+      secretRefs[path] = { env: envNameForSecret(destination, path) };
+    }
+  }
+
+  return { config, secretRefs };
+}
+
+function destinationSecretPaths(destination: DestinationRuntimeConfig): string[] {
+  const paths: string[] =
+    destination.kind === "generic_webhook"
+      ? ["url"]
+      : destination.kind === "feishu"
+        ? ["webhookUrl", "signSecret"]
+        : destination.kind === "slack"
+          ? ["webhookUrl"]
+          : destination.kind === "email"
+            ? ["endpointUrl"]
+            : [];
+  const headers = destination.config.headers;
+
+  if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+    for (const key of Object.keys(headers)) {
+      if (isSensitiveKey(key)) {
+        paths.push(`headers.${key}`);
+      }
+    }
+  }
+
+  return paths;
+}
+
+function sourceSecretPaths(source: SourceRuntimeConfig): string[] {
+  const paths: string[] = [];
+
+  for (const key of Object.keys(source.config)) {
+    if (isSensitiveKey(key)) {
+      paths.push(key);
+    }
+  }
+
+  return paths;
+}
+
+function omitSensitiveJson(value: JsonObject): JsonObject {
+  return omitSensitiveEntries(value) as JsonObject;
+}
+
+function omitSensitiveEntries(value: JsonValue): JsonValue {
+  if (Array.isArray(value)) {
+    return value.map(omitSensitiveEntries);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => !isSensitiveKey(key))
+        .map(([key, entry]) => [key, omitSensitiveEntries(entry)]),
+    );
+  }
+
+  return value;
+}
+
+function omitJsonPaths(input: JsonObject, paths: string[]): JsonObject {
+  const output = structuredClone(input);
+
+  for (const path of paths) {
+    deleteJsonPath(output, path);
+  }
+
+  return output;
+}
+
+function getJsonPath(input: JsonObject, path: string): JsonValue | undefined {
+  let current: JsonValue | undefined = input;
+
+  for (const segment of path.split(".")) {
+    if (!current || typeof current !== "object" || Array.isArray(current)) {
+      return undefined;
+    }
+
+    current = current[segment];
+  }
+
+  return current;
+}
+
+function setJsonPath(input: JsonObject, path: string, value: JsonValue): void {
+  if (!isSafeVaneSecretPath(path)) {
+    throw new Error(`Unsafe destination secret reference path: ${path}`);
+  }
+
+  const segments = path.split(".");
+  let current: JsonObject = input;
+
+  for (const segment of segments.slice(0, -1)) {
+    const next = current[segment];
+
+    if (!next || typeof next !== "object" || Array.isArray(next)) {
+      current[segment] = {};
+    }
+
+    current = current[segment] as JsonObject;
+  }
+
+  current[segments.at(-1)!] = value;
+}
+
+function deleteJsonPath(input: JsonObject, path: string): void {
+  const segments = path.split(".");
+  let current: JsonObject = input;
+
+  for (const segment of segments.slice(0, -1)) {
+    const next = current[segment];
+
+    if (!next || typeof next !== "object" || Array.isArray(next)) {
+      return;
+    }
+
+    current = next as JsonObject;
+  }
+
+  delete current[segments.at(-1)!];
+}
+
+function envNameForSecret(destination: DestinationRuntimeConfig, path: string): string {
+  return `VANE_DEST_${slugEnvPart(destination.id)}_${slugEnvPart(path)}`;
+}
+
+function envNameForSourceSecret(source: SourceRuntimeConfig, path: string): string {
+  return `VANE_SOURCE_${slugEnvPart(source.id)}_${slugEnvPart(path)}`;
+}
+
+function slugEnvPart(value: string): string {
+  return value
+    .replaceAll(/[^a-zA-Z0-9]+/g, "_")
+    .replaceAll(/^_+|_+$/g, "")
+    .toUpperCase();
+}
+
+function secretRefEnvName(ref: JsonValue): string | null {
+  if (ref && typeof ref === "object" && !Array.isArray(ref)) {
+    const env = ref.env;
+    return typeof env === "string" && env.trim() ? env.trim() : null;
+  }
+
+  return null;
+}
+
+function normalizeSecretRefs(secretRefs: JsonObject): VaneSecretReferences {
+  const normalized: VaneSecretReferences = {};
+
+  for (const [path, ref] of Object.entries(secretRefs)) {
+    const env =
+      secretRefEnvName(ref) ?? (typeof ref === "string" && ref.trim() ? ref.trim() : null);
+
+    if (env) {
+      normalized[path] = { env };
+    }
+  }
+
+  return normalized;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { REDACTED_VALUE, redactHeaders, redactJsonValue } from "#/redaction.ts";
+import { REDACTED_VALUE, redactHeaders, redactJsonValue, redactText } from "#/redaction.ts";
 
 describe("redaction", () => {
   it("redacts common sensitive headers", () => {
@@ -8,11 +8,13 @@ describe("redaction", () => {
       redactHeaders({
         Authorization: "Bearer secret",
         "X-Request-Id": "req-1",
+        "X-Vane-Source-Token": "source-token",
         Cookie: "session=secret",
       }),
     ).toEqual({
       Authorization: REDACTED_VALUE,
       "X-Request-Id": "req-1",
+      "X-Vane-Source-Token": REDACTED_VALUE,
       Cookie: REDACTED_VALUE,
     });
   });
@@ -23,6 +25,9 @@ describe("redaction", () => {
         title: "alert",
         destination: {
           webhook_url: "https://example.test/secret",
+          webhookUrl: "https://example.test/camel-secret",
+          signSecret: "signing-secret",
+          accessToken: "access-token",
           token: "secret",
         },
       }),
@@ -30,8 +35,21 @@ describe("redaction", () => {
       title: "alert",
       destination: {
         webhook_url: REDACTED_VALUE,
+        webhookUrl: REDACTED_VALUE,
+        signSecret: REDACTED_VALUE,
+        accessToken: REDACTED_VALUE,
         token: REDACTED_VALUE,
       },
     });
+  });
+
+  it("redacts common sensitive text assignments", () => {
+    expect(
+      redactText(
+        "parser failed: Authorization: Bearer parser-secret; token=abc123, password: hunter2 accessToken=oauth signSecret=robot",
+      ),
+    ).toBe(
+      `parser failed: Authorization: ${REDACTED_VALUE}; token=${REDACTED_VALUE}, password: ${REDACTED_VALUE} accessToken=${REDACTED_VALUE} signSecret=${REDACTED_VALUE}`,
+    );
   });
 });

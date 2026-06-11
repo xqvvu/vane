@@ -2,11 +2,13 @@ import type { JsonValue } from "@vane/core";
 import { z } from "zod";
 
 import type { DestinationSendInput, DestinationSender, FetchLike } from "#/types.ts";
+import { MessageTemplateSchema, renderMessageTemplate } from "#/template.ts";
 
 export const GenericWebhookConfigSchema = z.object({
   url: z.url(),
   method: z.enum(["POST", "PUT", "PATCH"]).default("POST"),
   headers: z.record(z.string(), z.string()).default({}),
+  messageTemplate: MessageTemplateSchema,
 });
 
 export type GenericWebhookConfig = z.infer<typeof GenericWebhookConfigSchema>;
@@ -14,10 +16,15 @@ export type GenericWebhookConfig = z.infer<typeof GenericWebhookConfigSchema>;
 export const genericWebhookSender: DestinationSender<GenericWebhookConfig> = {
   kind: "generic_webhook",
   configSchema: GenericWebhookConfigSchema,
+  preview(input) {
+    const config = GenericWebhookConfigSchema.parse(input.config);
+
+    return renderGenericWebhookPayload({ ...input, config });
+  },
   async send(input, context) {
     const config = GenericWebhookConfigSchema.parse(input.config);
     const fetcher = context?.fetch ?? getGlobalFetch();
-    const renderedPayload = renderGenericWebhookPayload(input);
+    const renderedPayload = renderGenericWebhookPayload({ ...input, config });
     const response = await fetcher(config.url, {
       method: config.method,
       headers: {
@@ -38,7 +45,9 @@ export const genericWebhookSender: DestinationSender<GenericWebhookConfig> = {
   },
 };
 
-export function renderGenericWebhookPayload(input: DestinationSendInput<GenericWebhookConfig>): JsonValue {
+export function renderGenericWebhookPayload(
+  input: DestinationSendInput<GenericWebhookConfig>,
+): JsonValue {
   return {
     eventId: input.eventId,
     source: {
@@ -52,6 +61,8 @@ export function renderGenericWebhookPayload(input: DestinationSendInput<GenericW
       kind: input.destination.kind,
     },
     alert: input.normalizedEvent,
+    message:
+      renderMessageTemplate(input, input.config.messageTemplate) ?? input.normalizedEvent.message,
   };
 }
 

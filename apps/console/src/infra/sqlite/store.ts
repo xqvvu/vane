@@ -1,7 +1,5 @@
 import "@tanstack/react-start/server-only";
-import type sqlite from "node:sqlite";
-
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { createSqliteDatabase, type SqliteDatabase } from "#/infra/sqlite/connection.ts";
 import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import { SqliteDeliveryRepository, type DeliveryRepository } from "#/infra/sqlite/deliveries.ts";
 import {
@@ -12,7 +10,9 @@ import { SqliteHistoryRepository, type HistoryRepository } from "#/infra/sqlite/
 import { SqliteIntakeRepository, type IntakeRepository } from "#/infra/sqlite/intake.ts";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
 import { SqliteRouteRepository, type RouteRepository } from "#/infra/sqlite/routes.ts";
+import { SqliteSettingsRepository, type SettingsRepository } from "#/infra/sqlite/settings.ts";
 import { SqliteSourceRepository, type SourceRepository } from "#/infra/sqlite/sources.ts";
+import type { SyncTransactionGuard } from "#/infra/sqlite/transaction.ts";
 import type { IsoDateTimeString } from "#/infra/sqlite/types.ts";
 
 export interface OpenSqliteStoreOptions {
@@ -21,6 +21,9 @@ export interface OpenSqliteStoreOptions {
   migrationsDir?: string;
   now?: () => IsoDateTimeString;
   ids?: Partial<{
+    source: () => string;
+    destination: () => string;
+    route: () => string;
     event: () => string;
     delivery: () => string;
     attempt: () => string;
@@ -34,13 +37,14 @@ export interface SqliteStoreUnitOfWork {
   readonly intake: IntakeRepository;
   readonly deliveries: DeliveryRepository;
   readonly history: HistoryRepository;
+  readonly settings: SettingsRepository;
 }
 
 export interface SqliteStore extends SqliteStoreUnitOfWork {
   readonly schemaVersion: string | null;
 
   close(): void;
-  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T): T;
+  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T, ...guard: SyncTransactionGuard<T>): T;
 }
 
 export interface SqliteRepositorySet extends SqliteStoreUnitOfWork {}
@@ -51,7 +55,8 @@ export function createSqliteRepositories(context: SqliteRepositoryContext): Sqli
   const routes = new SqliteRouteRepository(context);
   const intake = new SqliteIntakeRepository(context);
   const deliveries = new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
-  const history = new SqliteHistoryRepository(context, sources, intake, deliveries);
+  const history = new SqliteHistoryRepository(context, sources, intake, routes, deliveries);
+  const settings = new SqliteSettingsRepository(context);
 
   return {
     sources,
@@ -60,6 +65,7 @@ export function createSqliteRepositories(context: SqliteRepositoryContext): Sqli
     intake,
     deliveries,
     history,
+    settings,
   };
 }
 
@@ -67,18 +73,18 @@ export class OpenedSqliteStore implements SqliteStore {
   private readonly repositories: SqliteRepositorySet;
 
   constructor(
-    private readonly db: sqlite.DatabaseSync,
+    private readonly db: SqliteDatabase,
     private readonly context: SqliteRepositoryContext,
   ) {
     this.repositories = createSqliteRepositories(context);
   }
 
   get schemaVersion(): string | null {
-    const row = this.db.prepare("SELECT value FROM settings WHERE key = 'schema_version'").get() as
-      | { value: string }
-      | undefined;
+    const row = this.db
+      .prepare("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1")
+      .get() as { version: string } | undefined;
 
-    return row?.value ?? null;
+    return row?.version ?? null;
   }
 
   get sources() {
@@ -105,12 +111,16 @@ export class OpenedSqliteStore implements SqliteStore {
     return this.repositories.history;
   }
 
+  get settings() {
+    return this.repositories.settings;
+  }
+
   close(): void {
     this.db.close();
   }
 
-  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T): T {
-    return this.context.runInTransaction(() => fn(this.repositories));
+  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T, ...guard: SyncTransactionGuard<T>): T {
+    return this.context.runInTransaction(() => fn(this.repositories), ...guard);
   }
 }
 

@@ -1,15 +1,16 @@
 import "@tanstack/react-start/server-only";
-import type sqlite from "node:sqlite";
+import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
 
-export function transaction<T>(db: sqlite.DatabaseSync, fn: () => T): T {
-  db.exec("BEGIN IMMEDIATE");
+type PromiseLikeReturn<T> = Extract<T, PromiseLike<unknown>>;
 
-  try {
-    const result = fn();
-    db.exec("COMMIT");
-    return result;
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+export type SyncTransactionGuard<T> = [PromiseLikeReturn<T>] extends [never]
+  ? []
+  : ["SQLite transaction callbacks must be synchronous"];
+
+export function transaction<T>(
+  db: SqliteDatabase,
+  fn: () => T,
+  ..._guard: SyncTransactionGuard<T>
+): T {
+  return db.transaction(fn).immediate();
 }

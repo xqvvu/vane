@@ -5,11 +5,19 @@ import {
   decodeSchemaJson,
   encodeJson,
   encodeJsonObject,
+  encodeSchemaJson,
   EventRecordSchema,
   JsonObjectSchema,
   NormalizedEventSchema,
+  RouteMatchResultsSchema,
 } from "@vane/core";
-import type { EventRecord, JsonObject, JsonValue, NormalizedEvent } from "@vane/core";
+import type {
+  EventRecord,
+  JsonObject,
+  JsonValue,
+  NormalizedEvent,
+  RouteMatchResult,
+} from "@vane/core";
 
 import { rowOrUndefined, type SqliteJsonText } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
@@ -30,6 +38,7 @@ export interface EventRow {
   provider_metadata_json: SqliteJsonText;
   raw_payload_json: SqliteJsonText;
   raw_headers_json: SqliteJsonText;
+  route_matches_json: SqliteJsonText | null;
   received_at: IsoDateTimeString;
   occurred_at: IsoDateTimeString;
   created_at: IsoDateTimeString;
@@ -37,6 +46,7 @@ export interface EventRow {
 
 export interface IntakeRepository {
   recordEvent(input: RecordEventInput): EventRecord;
+  pruneRawPayloads(input: PruneRawPayloadsInput): number;
 }
 
 export interface RecordEventInput {
@@ -47,9 +57,18 @@ export interface RecordEventInput {
   providerMetadata?: JsonObject;
   rawPayload: JsonValue;
   rawHeaders?: Record<string, string>;
+  routeMatches?: RouteMatchResult[];
   receivedAt?: IsoDateTimeString;
   createdAt?: IsoDateTimeString;
 }
+
+export interface PruneRawPayloadsInput {
+  before: IsoDateTimeString;
+}
+
+const PRUNED_RAW_PAYLOAD = {
+  retentionPruned: true,
+};
 
 export function eventFromRow(row: EventRow): EventRecord {
   return EventRecordSchema.parse({
@@ -60,6 +79,10 @@ export function eventFromRow(row: EventRow): EventRecord {
     providerMetadata: decodeJsonObject(row.provider_metadata_json),
     rawPayload: decodeJson(row.raw_payload_json),
     rawHeaders: decodeRawHeaders(row.raw_headers_json),
+    routeMatches:
+      row.route_matches_json === null
+        ? null
+        : decodeSchemaJson(RouteMatchResultsSchema, row.route_matches_json),
     receivedAt: row.received_at,
   });
 }
@@ -92,6 +115,9 @@ export class SqliteIntakeRepository implements IntakeRepository {
     const normalized = input.normalized;
     const providerMetadata = JsonObjectSchema.parse(input.providerMetadata ?? {});
     const rawHeaders = JsonObjectSchema.parse(input.rawHeaders ?? {});
+    const routeMatches = input.routeMatches
+      ? RouteMatchResultsSchema.parse(input.routeMatches)
+      : null;
 
     this.context.db
       .prepare(
@@ -110,11 +136,12 @@ export class SqliteIntakeRepository implements IntakeRepository {
             provider_metadata_json,
             raw_payload_json,
             raw_headers_json,
+            route_matches_json,
             received_at,
             occurred_at,
             created_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
       )
       .run(
@@ -131,6 +158,7 @@ export class SqliteIntakeRepository implements IntakeRepository {
         encodeJsonObject(providerMetadata),
         encodeJson(input.rawPayload),
         encodeJsonObject(rawHeaders),
+        routeMatches === null ? null : encodeSchemaJson(RouteMatchResultsSchema, routeMatches),
         receivedAt,
         normalized.occurredAt,
         createdAt,
@@ -144,5 +172,20 @@ export class SqliteIntakeRepository implements IntakeRepository {
       this.context.db.prepare("SELECT * FROM events WHERE id = ?").get(id),
     );
     return row ? eventFromRow(row) : null;
+  }
+
+  pruneRawPayloads(input: PruneRawPayloadsInput): number {
+    const prunedPayload = encodeJson(PRUNED_RAW_PAYLOAD);
+    const result = this.context.db
+      .prepare(
+        `
+          UPDATE events
+          SET raw_payload_json = ?, raw_headers_json = ?
+          WHERE received_at < ? AND raw_payload_json != ?
+        `,
+      )
+      .run(prunedPayload, encodeJsonObject({}), input.before, prunedPayload);
+
+    return result.changes;
   }
 }

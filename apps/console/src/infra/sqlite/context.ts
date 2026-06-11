@@ -1,14 +1,17 @@
 import "@tanstack/react-start/server-only";
 import { randomUUID } from "node:crypto";
-import type sqlite from "node:sqlite";
 
-import { transaction } from "#/infra/sqlite/transaction.ts";
+import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { transaction, type SyncTransactionGuard } from "#/infra/sqlite/transaction.ts";
 import type { IsoDateTimeString } from "#/infra/sqlite/types.ts";
 
 export interface SqliteRepositoryContextOptions {
-  db: sqlite.DatabaseSync;
+  db: SqliteDatabase;
   now?: () => IsoDateTimeString;
   ids?: Partial<{
+    source: () => string;
+    destination: () => string;
+    route: () => string;
     event: () => string;
     delivery: () => string;
     attempt: () => string;
@@ -16,39 +19,31 @@ export interface SqliteRepositoryContextOptions {
 }
 
 export class SqliteRepositoryContext {
-  readonly db: sqlite.DatabaseSync;
+  readonly db: SqliteDatabase;
   readonly now: () => IsoDateTimeString;
   readonly ids: {
+    source: () => string;
+    destination: () => string;
+    route: () => string;
     event: () => string;
     delivery: () => string;
     attempt: () => string;
   };
 
-  private transactionDepth = 0;
-
   constructor(options: SqliteRepositoryContextOptions) {
     this.db = options.db;
     this.now = options.now ?? (() => new Date().toISOString());
     this.ids = {
+      source: options.ids?.source ?? randomUUID,
+      destination: options.ids?.destination ?? randomUUID,
+      route: options.ids?.route ?? randomUUID,
       event: options.ids?.event ?? randomUUID,
       delivery: options.ids?.delivery ?? randomUUID,
       attempt: options.ids?.attempt ?? randomUUID,
     };
   }
 
-  runInTransaction<T>(fn: () => T): T {
-    if (this.transactionDepth > 0) {
-      return fn();
-    }
-
-    return transaction(this.db, () => {
-      this.transactionDepth += 1;
-
-      try {
-        return fn();
-      } finally {
-        this.transactionDepth -= 1;
-      }
-    });
+  runInTransaction<T>(fn: () => T, ...guard: SyncTransactionGuard<T>): T {
+    return transaction(this.db, fn, ...guard);
   }
 }

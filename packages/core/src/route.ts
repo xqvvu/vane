@@ -1,23 +1,28 @@
 import { z } from "zod";
 
-import { AlertSeveritySchema, AlertStatusSchema, NormalizedEventSchema } from "#/normalized-event.ts";
+import {
+  AlertSeveritySchema,
+  AlertStatusSchema,
+  NormalizedEventSchema,
+} from "#/normalized-event.ts";
 import type { NormalizedEvent } from "#/normalized-event.ts";
 
 export const LabelMatchOperatorSchema = z.enum(["equals", "contains"]);
+const NonEmptyRouteStringSchema = z.string().trim().min(1);
 
-export const LabelMatcherSchema = z.object({
-  key: z.string().min(1),
+export const LabelMatcherSchema = z.strictObject({
+  key: NonEmptyRouteStringSchema,
   operator: LabelMatchOperatorSchema.default("equals"),
-  value: z.string(),
+  value: NonEmptyRouteStringSchema,
 });
 
-export const RouteRuleSchema = z.object({
-  sourceIds: z.array(z.string().min(1)).default([]),
+export const RouteRuleSchema = z.strictObject({
+  sourceIds: z.array(NonEmptyRouteStringSchema).default([]),
   severities: z.array(AlertSeveritySchema).default([]),
   statuses: z.array(AlertStatusSchema).default([]),
   labels: z.array(LabelMatcherSchema).default([]),
-  titleContains: z.array(z.string().min(1)).default([]),
-  messageContains: z.array(z.string().min(1)).default([]),
+  titleContains: z.array(NonEmptyRouteStringSchema).default([]),
+  messageContains: z.array(NonEmptyRouteStringSchema).default([]),
 });
 
 const EmptyRouteRule = {
@@ -30,17 +35,38 @@ const EmptyRouteRule = {
 } satisfies z.output<typeof RouteRuleSchema>;
 
 export const RouteDefinitionSchema = z.object({
-  id: z.string().min(1),
+  id: NonEmptyRouteStringSchema,
   name: z.string().trim().min(1),
   enabled: z.boolean().default(true),
   rule: RouteRuleSchema.default(EmptyRouteRule),
-  destinationIds: z.array(z.string().min(1)).min(1),
+  destinationIds: z
+    .array(NonEmptyRouteStringSchema)
+    .min(1)
+    .refine((destinationIds) => new Set(destinationIds).size === destinationIds.length, {
+      message: "Route destination IDs must be unique",
+    }),
 });
 
 export const RouteMatchInputSchema = z.object({
-  sourceId: z.string().min(1),
+  sourceId: NonEmptyRouteStringSchema,
   event: NormalizedEventSchema,
 });
+
+export const RouteMatchCheckSchema = z.object({
+  field: z.enum(["enabled", "source", "severity", "status", "label", "title", "message"]),
+  matched: z.boolean(),
+  detail: z.string(),
+});
+
+export const RouteMatchResultSchema = z.object({
+  routeId: NonEmptyRouteStringSchema,
+  routeName: z.string().trim().min(1),
+  matched: z.boolean(),
+  destinationIds: z.array(NonEmptyRouteStringSchema),
+  checks: z.array(RouteMatchCheckSchema),
+});
+
+export const RouteMatchResultsSchema = z.array(RouteMatchResultSchema);
 
 export type LabelMatcher = z.infer<typeof LabelMatcherSchema>;
 export type RouteRule = z.output<typeof RouteRuleSchema>;
@@ -48,22 +74,13 @@ export type RouteRuleInput = z.input<typeof RouteRuleSchema>;
 export type RouteDefinition = z.output<typeof RouteDefinitionSchema>;
 export type RouteDefinitionInput = z.input<typeof RouteDefinitionSchema>;
 export type RouteMatchInput = z.infer<typeof RouteMatchInputSchema>;
+export type RouteMatchCheck = z.infer<typeof RouteMatchCheckSchema>;
+export type RouteMatchResult = z.infer<typeof RouteMatchResultSchema>;
 
-export interface RouteMatchCheck {
-  field: "enabled" | "source" | "severity" | "status" | "label" | "title" | "message";
-  matched: boolean;
-  detail: string;
-}
-
-export interface RouteMatchResult {
-  routeId: string;
-  routeName: string;
-  matched: boolean;
-  destinationIds: string[];
-  checks: RouteMatchCheck[];
-}
-
-export function evaluateRouteMatch(routeInput: RouteDefinitionInput, input: RouteMatchInput): RouteMatchResult {
+export function evaluateRouteMatch(
+  routeInput: RouteDefinitionInput,
+  input: RouteMatchInput,
+): RouteMatchResult {
   const route = RouteDefinitionSchema.parse(routeInput);
   const checks: RouteMatchCheck[] = [];
 
@@ -87,7 +104,10 @@ export function routeMatchesEvent(route: RouteDefinitionInput, input: RouteMatch
   return evaluateRouteMatch(route, input).matched;
 }
 
-export function findMatchingRoutes(routes: RouteDefinitionInput[], input: RouteMatchInput): RouteMatchResult[] {
+export function findMatchingRoutes(
+  routes: RouteDefinitionInput[],
+  input: RouteMatchInput,
+): RouteMatchResult[] {
   return routes.map((route) => evaluateRouteMatch(route, input)).filter((result) => result.matched);
 }
 
@@ -101,7 +121,11 @@ function resultFor(route: RouteDefinition, checks: RouteMatchCheck[]): RouteMatc
   };
 }
 
-function evaluateSource(expectedSourceIds: string[], actualSourceId: string, checks: RouteMatchCheck[]): void {
+function evaluateSource(
+  expectedSourceIds: string[],
+  actualSourceId: string,
+  checks: RouteMatchCheck[],
+): void {
   if (expectedSourceIds.length === 0) {
     checks.push({ field: "source", matched: true, detail: "No source condition" });
     return;
@@ -132,7 +156,11 @@ function evaluateOneOf(
   });
 }
 
-function evaluateLabels(matchers: LabelMatcher[], event: NormalizedEvent, checks: RouteMatchCheck[]): void {
+function evaluateLabels(
+  matchers: LabelMatcher[],
+  event: NormalizedEvent,
+  checks: RouteMatchCheck[],
+): void {
   if (matchers.length === 0) {
     checks.push({ field: "label", matched: true, detail: "No label condition" });
     return;

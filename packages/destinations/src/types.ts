@@ -1,4 +1,10 @@
-import type { DestinationKind, DestinationSummary, JsonValue, NormalizedEvent, SourceSummary } from "@vane/core";
+import type {
+  DestinationKind,
+  DestinationSummary,
+  JsonValue,
+  NormalizedEvent,
+  SourceSummary,
+} from "@vane/core";
 import type { z } from "zod";
 
 export interface FetchLikeResponse {
@@ -32,5 +38,9 @@ export interface DestinationSendResult {
 export interface DestinationSender<Config = unknown> {
   kind: DestinationKind;
   configSchema: z.ZodType<Config>;
-  send(input: DestinationSendInput<Config>, context?: DestinationSendContext): Promise<DestinationSendResult>;
+  preview(input: DestinationSendInput<Config>): Promise<JsonValue> | JsonValue;
+  send(
+    input: DestinationSendInput<Config>,
+    context?: DestinationSendContext,
+  ): Promise<DestinationSendResult>;
 }

@@ -6,7 +6,11 @@ export type AlertSeverity = z.infer<typeof AlertSeveritySchema>;
 export const AlertStatusSchema = z.enum(["firing", "resolved", "unknown"]);
 export type AlertStatus = z.infer<typeof AlertStatusSchema>;
 
-export const LabelsSchema = z.record(z.string().min(1), z.string());
+export const LabelsSchema = z
+  .record(z.string().trim().min(1), z.string().trim())
+  .transform((labels) =>
+    Object.fromEntries(Object.entries(labels).filter(([, value]) => value.length > 0)),
+  );
 export type Labels = z.infer<typeof LabelsSchema>;
 
 export const IsoDateTimeSchema = z.string().refine((value) => !Number.isNaN(Date.parse(value)), {

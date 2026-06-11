@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { JsonObjectSchema, JsonValueSchema } from "#/json.ts";
 import { IsoDateTimeSchema, NormalizedEventSchema } from "#/normalized-event.ts";
+import { RouteMatchResultsSchema } from "#/route.ts";
 
 export const EventRecordSchema = z.object({
   id: z.string().min(1),
@@ -11,6 +12,7 @@ export const EventRecordSchema = z.object({
   providerMetadata: JsonObjectSchema.default({}),
   rawPayload: JsonValueSchema,
   rawHeaders: z.record(z.string(), z.string()).default({}),
+  routeMatches: RouteMatchResultsSchema.nullable().default(null),
   receivedAt: IsoDateTimeSchema,
 });
 

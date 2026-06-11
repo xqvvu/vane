@@ -1,10 +1,79 @@
 import { describe, expect, it } from "vitest";
 
-import { openSqliteStore } from "#/infra/sqlite/store";
+import { InvalidDeliveryStateError } from "#/infra/sqlite/deliveries.ts";
+import { openSqliteStore } from "#/infra/sqlite/store.ts";
 
 const now = "2026-06-07T00:00:00.000Z";
 
 describe("sqlite store", () => {
+  it("uses injected id factories for every repository-owned record", () => {
+    let nextId = 0;
+    const store = openSqliteStore({
+      databasePath: ":memory:",
+      now: () => now,
+      ids: {
+        source: () => `source-${++nextId}`,
+        destination: () => `destination-${++nextId}`,
+        route: () => `route-${++nextId}`,
+        event: () => `event-${++nextId}`,
+        delivery: () => `delivery-${++nextId}`,
+        attempt: () => `attempt-${++nextId}`,
+      },
+    });
+
+    const source = store.sources.create({
+      name: "Grafana",
+      provider: "grafana",
+      tokenHash: "token-hash",
+    });
+    const destination = store.destinations.create({
+      name: "Ops webhook",
+      kind: "generic_webhook",
+    });
+    const route = store.routes.create({
+      name: "All alerts",
+      destinationIds: [destination.id],
+    });
+    const event = store.intake.recordEvent({
+      sourceId: source.id,
+      idempotencyKey: null,
+      normalized: {
+        title: "CPU high",
+        message: "CPU is above threshold",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "cpu:api",
+        labels: {},
+        occurredAt: now,
+      },
+      rawPayload: {},
+    });
+    const delivery = store.deliveries.enqueueForEvent({
+      event,
+      matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+    }).created[0]!;
+    const claim = store.deliveries.claimNext({ limit: 1 })[0]!;
+
+    expect({
+      sourceId: source.id,
+      destinationId: destination.id,
+      routeId: route.id,
+      eventId: event.id,
+      deliveryId: delivery.id,
+      attemptId: claim.attempt.id,
+    }).toEqual({
+      sourceId: "source-1",
+      destinationId: "destination-2",
+      routeId: "route-3",
+      eventId: "event-4",
+      deliveryId: "delivery-5",
+      attemptId: "attempt-6",
+    });
+
+    store.close();
+  });
+
   it("records duplicate events while deduping deliveries for the same idempotency key", () => {
     let nextId = 0;
     const store = openSqliteStore({
@@ -126,7 +195,9 @@ describe("sqlite store", () => {
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
-      config: { url: "https://example.test/webhook" },
+      config: {
+        url: "https://example.test/webhook",
+      },
     });
     const route = store.routes.create({
       id: "route-1",
@@ -168,7 +239,7 @@ describe("sqlite store", () => {
       deliveryId: claimed[0]!.job.id,
       attemptId: claimed[0]!.attempt.id,
       responseStatus: 202,
-      responseBody: "accepted",
+      responseBody: "accepted token=delivery-secret password: hidden",
       renderedPayload: { ok: true },
     });
     const detail = store.deliveries.get(updated.id);
@@ -180,7 +251,394 @@ describe("sqlite store", () => {
         attemptNumber: 1,
         state: "succeeded",
         responseStatus: 202,
-        responseBody: "accepted",
+        responseBody: "accepted token=[REDACTED] password: [REDACTED]",
+      },
+    ]);
+
+    store.close();
+  });
+
+  it("pauses pending delivery claims while the destination or route is disabled", () => {
+    let nextId = 0;
+    const store = openSqliteStore({
+      databasePath: ":memory:",
+      now: () => now,
+      ids: {
+        event: () => `event-${++nextId}`,
+        delivery: () => `delivery-${++nextId}`,
+        attempt: () => `attempt-${++nextId}`,
+      },
+    });
+
+    store.sources.create({
+      id: "source-1",
+      name: "Grafana",
+      provider: "grafana",
+      tokenHash: "token-hash",
+    });
+    store.destinations.create({
+      id: "destination-1",
+      name: "Ops webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/webhook",
+      },
+    });
+    const route = store.routes.create({
+      id: "route-1",
+      name: "All alerts",
+      destinationIds: ["destination-1"],
+    });
+    const event = store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: null,
+      normalized: {
+        title: "CPU high",
+        message: "CPU is above threshold",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "cpu:api",
+        labels: {},
+        occurredAt: now,
+      },
+      rawPayload: {},
+    });
+
+    store.deliveries.enqueueForEvent({
+      event,
+      matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+    });
+
+    store.destinations.setEnabled("destination-1", false);
+    expect(store.deliveries.claimNext({ limit: 1 })).toHaveLength(0);
+
+    store.destinations.setEnabled("destination-1", true);
+    store.routes.setEnabled("route-1", false);
+    expect(store.deliveries.claimNext({ limit: 1 })).toHaveLength(0);
+
+    store.routes.setEnabled("route-1", true);
+    expect(store.deliveries.claimNext({ limit: 1 })).toHaveLength(1);
+
+    store.close();
+  });
+
+  it("manual retry only accepts failed deliveries and schedules an exhausted job for one more attempt", () => {
+    let nextId = 0;
+    const store = openSqliteStore({
+      databasePath: ":memory:",
+      now: () => now,
+      ids: {
+        event: () => `event-${++nextId}`,
+        delivery: () => `delivery-${++nextId}`,
+        attempt: () => `attempt-${++nextId}`,
+      },
+    });
+
+    store.sources.create({
+      id: "source-1",
+      name: "Grafana",
+      provider: "grafana",
+      tokenHash: "token-hash",
+    });
+    store.destinations.create({
+      id: "destination-1",
+      name: "Ops webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/webhook",
+      },
+    });
+    const route = store.routes.create({
+      id: "route-1",
+      name: "All alerts",
+      destinationIds: ["destination-1"],
+    });
+    const event = store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: null,
+      normalized: {
+        title: "CPU high",
+        message: "CPU is above threshold",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "cpu:api",
+        labels: {},
+        occurredAt: now,
+      },
+      rawPayload: {},
+    });
+    const delivery = store.deliveries.enqueueForEvent({
+      event,
+      matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      maxAttempts: 1,
+    }).created[0]!;
+
+    expect(() => store.deliveries.retryNow({ deliveryId: delivery.id })).toThrow(
+      InvalidDeliveryStateError,
+    );
+
+    const claimed = store.deliveries.claimNext({ limit: 1 });
+    store.deliveries.markFailed({
+      deliveryId: claimed[0]!.job.id,
+      attemptId: claimed[0]!.attempt.id,
+      error: "destination unavailable",
+      retryAt: null,
+      responseStatus: 503,
+      responseBody: "unavailable",
+      finishedAt: "2026-06-07T00:01:00.000Z",
+    });
+
+    const retried = store.deliveries.retryNow({
+      deliveryId: delivery.id,
+      requestedAt: "2026-06-07T00:02:00.000Z",
+    });
+
+    expect(retried).toMatchObject({
+      state: "pending",
+      attemptCount: 1,
+      maxAttempts: 2,
+      nextAttemptAt: "2026-06-07T00:02:00.000Z",
+      lastError: null,
+      finishedAt: null,
+    });
+
+    store.destinations.setEnabled("destination-1", false);
+    expect(
+      store.deliveries.claimNext({
+        now: "2026-06-07T00:02:00.000Z",
+        limit: 1,
+      }),
+    ).toHaveLength(0);
+
+    store.destinations.setEnabled("destination-1", true);
+
+    const retryClaim = store.deliveries.claimNext({
+      now: "2026-06-07T00:02:00.000Z",
+      limit: 1,
+    });
+
+    expect(retryClaim).toHaveLength(1);
+    expect(retryClaim[0]?.attempt.attemptNumber).toBe(2);
+
+    store.close();
+  });
+
+  it("filters operational history and exposes event and delivery details", () => {
+    let nextId = 0;
+    const store = openSqliteStore({
+      databasePath: ":memory:",
+      now: () => now,
+      ids: {
+        event: () => `event-${++nextId}`,
+        delivery: () => `delivery-${++nextId}`,
+        attempt: () => `attempt-${++nextId}`,
+      },
+    });
+
+    store.sources.create({
+      id: "source-1",
+      name: "Grafana",
+      provider: "grafana",
+      tokenHash: "token-hash",
+    });
+    store.sources.create({
+      id: "source-2",
+      name: "Uptime Kuma",
+      provider: "uptime_kuma",
+      tokenHash: "token-hash-2",
+    });
+    store.destinations.create({
+      id: "destination-1",
+      name: "Ops webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/webhook",
+        headers: {
+          Authorization: "Bearer destination-secret",
+          "X-Team": "sre",
+        },
+      },
+    });
+    store.destinations.create({
+      id: "destination-2",
+      name: "Audit email",
+      kind: "email",
+      config: {
+        endpointUrl: "https://mail.example.test/send",
+        to: ["audit@example.test"],
+        from: "vane@example.test",
+      },
+    });
+    const criticalRoute = store.routes.create({
+      id: "route-1",
+      name: "Critical route",
+      rule: {
+        severities: ["critical"],
+      },
+      destinationIds: ["destination-1"],
+    });
+    const uptimeRoute = store.routes.create({
+      id: "route-2",
+      name: "Uptime audit",
+      rule: {
+        sourceIds: ["source-2"],
+      },
+      destinationIds: ["destination-2"],
+    });
+
+    const criticalEvent = store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: "request-1",
+      normalized: {
+        title: "CPU high",
+        message: "CPU is above threshold",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "cpu:api",
+        labels: { service: "api" },
+        occurredAt: now,
+      },
+      rawPayload: {
+        title: "CPU high",
+      },
+      rawHeaders: {
+        "x-provider": "grafana",
+      },
+    });
+    const uptimeEvent = store.intake.recordEvent({
+      sourceId: "source-2",
+      idempotencyKey: "request-2",
+      normalized: {
+        title: "API recovered",
+        message: "Health check resolved",
+        severity: "info",
+        status: "resolved",
+        fingerprint: "uptime:api",
+        labels: { service: "api" },
+        occurredAt: now,
+      },
+      rawPayload: {
+        msg: "up",
+      },
+    });
+
+    const criticalDelivery = store.deliveries.enqueueForEvent({
+      event: criticalEvent,
+      matches: [{ routeId: criticalRoute.id, destinationIds: criticalRoute.destinationIds }],
+      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+    }).created[0]!;
+    store.deliveries.enqueueForEvent({
+      event: uptimeEvent,
+      matches: [{ routeId: uptimeRoute.id, destinationIds: uptimeRoute.destinationIds }],
+      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+    });
+
+    const claimed = store.deliveries.claimNext({ limit: 1 });
+    store.deliveries.markFailed({
+      deliveryId: claimed[0]!.job.id,
+      attemptId: claimed[0]!.attempt.id,
+      error: "destination unavailable token=delivery-secret",
+      retryAt: null,
+      responseStatus: 503,
+      responseBody: "unavailable password: hidden",
+    });
+
+    expect(store.history.listEvents({ severity: "critical" }).items).toHaveLength(1);
+    expect(store.history.listEvents({ status: "resolved" }).items[0]?.id).toBe(uptimeEvent.id);
+    expect(store.history.listEvents({ q: "CPU" }).items[0]?.id).toBe(criticalEvent.id);
+    expect(store.history.listDeliveries({ severity: "critical" }).items[0]?.id).toBe(
+      criticalDelivery.id,
+    );
+    expect(store.history.listDeliveries({ status: "resolved" }).items).toHaveLength(1);
+    expect(store.history.listDeliveries({ q: "CPU" }).items[0]?.id).toBe(criticalDelivery.id);
+    expect(store.history.listDeliveries({ destinationId: "destination-1" }).items[0]?.id).toBe(
+      criticalDelivery.id,
+    );
+    expect(store.history.listDeliveries({ state: "failed" }).items[0]?.lastError).toBe(
+      "destination unavailable token=[REDACTED]",
+    );
+    const eventFirstPage = store.history.listEvents({ limit: 1 });
+    const eventSecondPage = store.history.listEvents({
+      limit: 1,
+      cursor: eventFirstPage.nextCursor ?? undefined,
+    });
+    const deliveryFirstPage = store.history.listDeliveries({ limit: 1 });
+    const deliverySecondPage = store.history.listDeliveries({
+      limit: 1,
+      cursor: deliveryFirstPage.nextCursor ?? undefined,
+    });
+
+    expect(eventFirstPage.nextCursor).toBeTruthy();
+    expect(eventSecondPage.items.map((event) => event.id)).toEqual([criticalEvent.id]);
+    expect(eventSecondPage.nextCursor).toBeNull();
+    expect(deliveryFirstPage.nextCursor).toBeTruthy();
+    expect(deliverySecondPage.items).toHaveLength(1);
+    expect(deliverySecondPage.items[0]?.id).not.toBe(deliveryFirstPage.items[0]?.id);
+    expect(deliverySecondPage.nextCursor).toBeNull();
+
+    const eventDetail = store.history.getEventDetail(criticalEvent.id);
+    const deliveryDetail = store.deliveries.get(criticalDelivery.id);
+
+    expect(eventDetail?.event.rawPayload).toEqual({ title: "CPU high" });
+    expect(eventDetail?.event.rawHeaders).toEqual({ "x-provider": "grafana" });
+    expect(eventDetail?.deliveries).toMatchObject([
+      {
+        id: criticalDelivery.id,
+        destinationId: "destination-1",
+        destinationName: "Ops webhook",
+        routeId: "route-1",
+        routeName: "Critical route",
+        state: "failed",
+        attemptCount: 1,
+        maxAttempts: 3,
+        nextAttemptAt: null,
+        lastError: "destination unavailable token=[REDACTED]",
+      },
+    ]);
+    expect(JSON.stringify(eventDetail?.deliveries)).not.toContain("https://example.test/webhook");
+    expect(JSON.stringify(eventDetail?.deliveries)).not.toContain("Bearer destination-secret");
+    expect(eventDetail?.routeMatches).toMatchObject([
+      {
+        routeId: "route-1",
+        routeName: "Critical route",
+        matched: true,
+        destinationIds: ["destination-1"],
+      },
+      {
+        routeId: "route-2",
+        routeName: "Uptime audit",
+        matched: false,
+        destinationIds: ["destination-2"],
+      },
+    ]);
+    expect(
+      eventDetail?.routeMatches
+        .find((match) => match.routeId === "route-2")
+        ?.checks.some((check) => check.field === "source" && !check.matched),
+    ).toBe(true);
+    expect(deliveryDetail?.destination).toMatchObject({
+      id: "destination-1",
+      name: "Ops webhook",
+      kind: "generic_webhook",
+    });
+    expect(deliveryDetail?.destination).not.toHaveProperty("config");
+    expect(deliveryDetail?.destinationMetadata).toEqual({
+      method: "POST",
+      messageTemplateConfigured: false,
+      headerNames: ["Authorization", "X-Team"],
+    });
+    expect(JSON.stringify(deliveryDetail)).not.toContain("https://example.test/webhook");
+    expect(JSON.stringify(deliveryDetail)).not.toContain("Bearer destination-secret");
+    expect(deliveryDetail?.renderedPayload).toBeNull();
+    expect(deliveryDetail?.attempts).toMatchObject([
+      {
+        attemptNumber: 1,
+        state: "failed",
+        responseStatus: 503,
+        responseBody: "unavailable password: [REDACTED]",
+        error: "destination unavailable token=[REDACTED]",
       },
     ]);
 

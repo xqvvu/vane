@@ -68,4 +68,24 @@ describe("generic provider parser", () => {
     expect(first.idempotencyKey).toBe(second.idempotencyKey);
     expect(first.normalized.fingerprint).toBe(second.normalized.fingerprint);
   });
+
+  it("normalizes payload label keys and values", () => {
+    const result = parseGenericProvider({
+      sourceId: "source-generic",
+      sourceName: "custom-emitter",
+      receivedAt: "2026-06-07T08:00:00.000Z",
+      headers: {},
+      payload: {
+        title: "CPU high",
+        labels: {
+          " service ": " checkout ",
+          empty: "   ",
+        },
+      },
+    });
+
+    expect(result.normalized.labels).toEqual({
+      service: "checkout",
+    });
+  });
 });

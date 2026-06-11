@@ -1,9 +1,4 @@
-import { betterAuth } from "better-auth";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
+import "@tanstack/react-start/server-only";
+import { getApplicationContainer } from "#/application/runtime/container.server.ts";
 
-export const auth = betterAuth({
-  emailAndPassword: {
-    enabled: true,
-  },
-  plugins: [tanstackStartCookies()],
-});
+export const auth = getApplicationContainer().getAuth();

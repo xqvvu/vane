@@ -1,21 +1,10 @@
 import { z } from "zod";
 
-export type JsonPrimitive = string | number | boolean | null;
-export type JsonObject = { [key: string]: JsonValue };
-export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+export const JsonValueSchema = z.json();
+export type JsonValue = z.infer<typeof JsonValueSchema>;
 
-export const JsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
-  z.union([
-    z.string(),
-    z.number().finite(),
-    z.boolean(),
-    z.null(),
-    z.array(JsonValueSchema),
-    JsonObjectSchema,
-  ]),
-);
-
-export const JsonObjectSchema: z.ZodType<JsonObject> = z.record(z.string(), JsonValueSchema);
+export const JsonObjectSchema = z.record(z.string(), JsonValueSchema);
+export type JsonObject = z.infer<typeof JsonObjectSchema>;
 
 export function encodeJson(value: JsonValue): string {
   return JSON.stringify(JsonValueSchema.parse(value));

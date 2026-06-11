@@ -1,7 +1,11 @@
 import type { SourceProvider } from "@vane/core";
 
+import { alertmanagerProviderParser } from "#/alertmanager.ts";
+import { grafanaProviderParser } from "#/grafana.ts";
 import { genericProviderParser } from "#/generic.ts";
+import { signozProviderParser } from "#/signoz.ts";
 import type { ProviderParseInput, ProviderParseResult, ProviderParser } from "#/types.ts";
+import { uptimeKumaProviderParser } from "#/uptime-kuma.ts";
 
 export class ProviderRegistry {
   private readonly parsers = new Map<SourceProvider, ProviderParser>();
@@ -36,5 +40,9 @@ export class ProviderRegistry {
 export function createDefaultProviderRegistry(): ProviderRegistry {
   const registry = new ProviderRegistry();
   registry.register(genericProviderParser);
+  registry.register(signozProviderParser);
+  registry.register(grafanaProviderParser);
+  registry.register(uptimeKumaProviderParser);
+  registry.register(alertmanagerProviderParser);
   return registry;
 }

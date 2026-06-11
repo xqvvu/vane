@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const SourceProviderSchema = z.enum(["generic", "signoz", "grafana", "uptime_kuma", "alertmanager"]);
+export const SourceProviderSchema = z.enum([
+  "generic",
+  "signoz",
+  "grafana",
+  "uptime_kuma",
+  "alertmanager",
+]);
 export type SourceProvider = z.infer<typeof SourceProviderSchema>;
 
 export const SourceSummarySchema = z.object({

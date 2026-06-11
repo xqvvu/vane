@@ -1,25 +1,26 @@
 import "@tanstack/react-start/server-only";
-import type sqlite from "node:sqlite";
-
-import { decodeJson, DeliveryJobSchema, encodeJson } from "@vane/core";
+import { decodeJson, DeliveryJobSchema, encodeJson, redactText } from "@vane/core";
 import type {
   DeliveryJob,
   DestinationSummary,
   EventRecord,
+  JsonObject,
   JsonValue,
   RouteDefinition,
   SourceSummary,
 } from "@vane/core";
 
 import { rowAs, rowOrUndefined, rowsAs, type SqliteJsonText } from "#/infra/sqlite/codecs.ts";
+import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import {
+  destinationMetadataFromRuntime,
   destinationSummaryFromRuntime,
   requireDestination,
   type DestinationRepository,
   type DestinationRuntimeConfig,
 } from "#/infra/sqlite/destinations.ts";
-import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
+import { RecordNotFoundError, SqliteError } from "#/infra/sqlite/errors.ts";
 import { requireEvent, type SqliteIntakeRepository } from "#/infra/sqlite/intake.ts";
 import type { RouteRepository } from "#/infra/sqlite/routes.ts";
 import {
@@ -155,6 +156,7 @@ export interface DeliveryDetail {
   event: EventRecord;
   source: SourceSummary;
   destination: DestinationSummary;
+  destinationMetadata: JsonObject;
   route: RouteDefinition | null;
   renderedPayload: JsonValue | null;
   attempts: DeliveryAttempt[];
@@ -209,6 +211,12 @@ export function requireAttempt(attempt: DeliveryAttempt | null): DeliveryAttempt
   }
 
   return attempt;
+}
+
+export class InvalidDeliveryStateError extends SqliteError {
+  constructor(deliveryId: string, state: DeliveryJob["state"], operation: string) {
+    super(`Cannot ${operation} delivery ${deliveryId} while it is ${state}`);
+  }
 }
 
 export class SqliteDeliveryRepository implements DeliveryRepository {
@@ -292,12 +300,16 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
         this.context.db
           .prepare(
             `
-              SELECT *
+              SELECT deliveries.*
               FROM deliveries
-              WHERE state = 'pending'
-                AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
-                AND attempt_count < max_attempts
-              ORDER BY COALESCE(next_attempt_at, created_at), created_at
+              JOIN destinations ON destinations.id = deliveries.destination_id
+              LEFT JOIN routes ON routes.id = deliveries.route_id
+              WHERE deliveries.state = 'pending'
+                AND destinations.enabled = 1
+                AND (deliveries.route_id IS NULL OR routes.enabled = 1)
+                AND (deliveries.next_attempt_at IS NULL OR deliveries.next_attempt_at <= ?)
+                AND deliveries.attempt_count < deliveries.max_attempts
+              ORDER BY COALESCE(deliveries.next_attempt_at, deliveries.created_at), deliveries.created_at
               LIMIT ?
             `,
           )
@@ -372,7 +384,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
         )
         .run(
           input.responseStatus ?? null,
-          input.responseBody ?? null,
+          redactNullableText(input.responseBody),
           finishedAt,
           input.attemptId,
           input.deliveryId,
@@ -421,8 +433,8 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
         )
         .run(
           input.responseStatus ?? null,
-          input.responseBody ?? null,
-          input.error,
+          redactNullableText(input.responseBody),
+          redactText(input.error),
           finishedAt,
           input.attemptId,
           input.deliveryId,
@@ -439,7 +451,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
         .run(
           nextState,
           nextAttemptAt,
-          input.error,
+          redactText(input.error),
           finishedAt,
           finishedDeliveryAt,
           input.deliveryId,
@@ -450,19 +462,34 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
   }
 
   retryNow(input: RetryDeliveryInput): DeliveryJob {
-    const requestedAt = input.requestedAt ?? this.context.now();
+    return this.context.runInTransaction(() => {
+      const requestedAt = input.requestedAt ?? this.context.now();
+      const current = requireDelivery(this.getJob(input.deliveryId));
 
-    this.context.db
-      .prepare(
-        `
-          UPDATE deliveries
-          SET state = 'pending', next_attempt_at = ?, last_error = NULL, updated_at = ?, finished_at = NULL
-          WHERE id = ?
-        `,
-      )
-      .run(requestedAt, requestedAt, input.deliveryId);
+      if (current.state !== "failed") {
+        throw new InvalidDeliveryStateError(input.deliveryId, current.state, "retry");
+      }
 
-    return requireDelivery(this.getJob(input.deliveryId));
+      this.context.db
+        .prepare(
+          `
+            UPDATE deliveries
+            SET state = 'pending',
+                max_attempts = CASE
+                  WHEN max_attempts <= attempt_count THEN attempt_count + 1
+                  ELSE max_attempts
+                END,
+                next_attempt_at = ?,
+                last_error = NULL,
+                updated_at = ?,
+                finished_at = NULL
+            WHERE id = ?
+          `,
+        )
+        .run(requestedAt, requestedAt, input.deliveryId);
+
+      return requireDelivery(this.getJob(input.deliveryId));
+    });
   }
 
   get(id: string): DeliveryDetail | null {
@@ -474,9 +501,9 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
 
     const event = requireEvent(this.intake.get(job.eventId));
     const source = sourceSummaryFromRuntime(requireSource(this.sources.get(event.sourceId)));
-    const destination = destinationSummaryFromRuntime(
-      requireDestination(this.destinations.get(job.destinationId)),
-    );
+    const destinationRuntime = requireDestination(this.destinations.get(job.destinationId));
+    const destination = destinationSummaryFromRuntime(destinationRuntime);
+    const destinationMetadata = destinationMetadataFromRuntime(destinationRuntime);
     const route = job.routeId ? this.routes.get(job.routeId) : null;
     const attempts = this.context.db
       .prepare("SELECT * FROM delivery_attempts WHERE delivery_id = ? ORDER BY attempt_number")
@@ -491,6 +518,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
       event,
       source,
       destination,
+      destinationMetadata,
       route,
       renderedPayload: row ? decodeRenderedPayload(row.rendered_payload_json) : null,
       attempts,
@@ -513,7 +541,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
 }
 
 function reserveDedupeKey(
-  db: sqlite.DatabaseSync,
+  db: SqliteDatabase,
   row: DeliveryDedupeKeyRow,
 ): DeliveryDedupeKeyRow | null {
   const existing = db
@@ -559,6 +587,10 @@ function reserveDedupeKey(
   return null;
 }
 
-function pruneDedupeKeys(db: sqlite.DatabaseSync, startsAt: string): void {
+function pruneDedupeKeys(db: SqliteDatabase, startsAt: string): void {
   db.prepare("DELETE FROM delivery_dedupe_keys WHERE created_at < ?").run(startsAt);
+}
+
+function redactNullableText(value: string | null | undefined): string | null {
+  return value === null || value === undefined ? null : redactText(value);
 }

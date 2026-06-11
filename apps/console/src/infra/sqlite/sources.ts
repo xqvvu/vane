@@ -1,6 +1,4 @@
 import "@tanstack/react-start/server-only";
-import { randomUUID } from "node:crypto";
-
 import { decodeJsonObject, encodeJsonObject, SourceProviderSchema } from "@vane/core";
 import type { JsonObject, SourceProvider, SourceSummary } from "@vane/core";
 
@@ -127,7 +125,7 @@ export class SqliteSourceRepository implements SourceRepository {
 
   create(input: CreateSourceInput): SourceSummary {
     const now = this.context.now();
-    const id = input.id ?? randomUUID();
+    const id = input.id ?? this.context.ids.source();
     const createdAt = input.createdAt ?? now;
     const updatedAt = input.updatedAt ?? createdAt;
 
