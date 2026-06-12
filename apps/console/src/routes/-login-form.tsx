@@ -1,6 +1,7 @@
 import "@tanstack/react-start/client-only";
 import { RiErrorWarningLine, RiLoginCircleLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
@@ -15,6 +16,7 @@ import {
 } from "#/components/ui/card.tsx";
 import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
+import { authQueryKeys } from "#/features/auth/api/auth.queries.ts";
 import { authClient } from "#/lib/auth.client.ts";
 
 type LoginFormValues = {
@@ -29,6 +31,7 @@ const defaultValues: LoginFormValues = {
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [error, setError] = React.useState<string | null>(null);
   const form = useForm({
     defaultValues,
@@ -46,8 +49,15 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           return;
         }
 
+        queryClient.removeQueries({
+          queryKey: authQueryKeys.dashboardSession(),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: authQueryKeys.all,
+        });
         await navigate({
           to: redirectTo as never,
+          replace: true,
         });
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : String(caught));
