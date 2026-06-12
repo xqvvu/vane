@@ -139,6 +139,7 @@ function createFakeContainer(): ApplicationContainer {
     getBetterAuthDatabase: () => {
       throw new Error("Auth database is not used by request context tests");
     },
+    hasRegisteredUsers: () => false,
     getAuth: () => fakeAuth,
     dispose: () => {},
   } satisfies ApplicationContainer;

@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
@@ -44,6 +45,7 @@ export function RoutesPage() {
 
   return (
     <DashboardContentLayout
+      variant="split"
       main={
         <>
           <RoutesPageToolbar
@@ -52,7 +54,7 @@ export function RoutesPage() {
             onRefresh={() => void refreshConfiguration()}
           />
           {formError ? (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
               <AlertTitle>Route operation failed</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
@@ -87,7 +89,7 @@ export function RoutesPage() {
         </>
       }
       sidebar={
-        <DashboardSidebar>
+        <DashboardSidebar variant="split">
           <CreateRouteForm
             sources={configuration.sources}
             destinations={configuration.destinations}
@@ -112,13 +114,15 @@ function RoutesPageToolbar({
   onRefresh: () => void;
 }) {
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold">Routes</h2>
-          <span className="text-muted-foreground text-xs">{routeCount} configured</span>
+          <h1 className="font-heading text-2xl leading-none font-semibold">Routes</h1>
+          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
+            {routeCount} configured
+          </Badge>
         </div>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="text-muted-foreground mt-2 text-sm">
           Match normalized event fields and fan out matching events to destinations.
         </p>
       </div>

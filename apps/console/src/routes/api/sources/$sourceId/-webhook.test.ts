@@ -555,6 +555,7 @@ function createTestContainer(): ApplicationContainer {
     getBetterAuthDatabase: () => {
       throw new Error("Auth database is not used by webhook tests");
     },
+    hasRegisteredUsers: () => false,
     getAuth: () => {
       throw new Error("Dashboard auth is not used by webhook tests");
     },

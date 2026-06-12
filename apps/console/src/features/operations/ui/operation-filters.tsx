@@ -1,6 +1,13 @@
 import { Field as UiField, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { NativeSelect, NativeSelectOption } from "#/components/ui/native-select.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
 import { cn } from "#/lib/utils.ts";
@@ -18,6 +25,18 @@ export function OperationFilters({
   onChange: (next: Partial<DashboardOperationSearch>) => void;
   layout?: "grid" | "rail";
 }) {
+  const sourceItems = [
+    { value: null, label: "Any source" },
+    ...configuration.sources.map((source) => ({ value: source.id, label: source.name })),
+  ];
+  const destinationItems = [
+    { value: null, label: "Any destination" },
+    ...configuration.destinations.map((destination) => ({
+      value: destination.id,
+      label: destination.name,
+    })),
+  ];
+
   return (
     <FieldGroup
       className={cn(
@@ -27,94 +46,129 @@ export function OperationFilters({
     >
       <UiField>
         <FieldLabel htmlFor="operation-source">Source</FieldLabel>
-        <NativeSelect
+        <Select
           id="operation-source"
-          className="w-full"
-          value={search.sourceId ?? ""}
+          items={sourceItems}
+          value={search.sourceId || null}
           disabled={pending}
-          onChange={(event) => onChange({ sourceId: event.currentTarget.value })}
+          onValueChange={(value) => onChange({ sourceId: value ?? "" })}
         >
-          <NativeSelectOption value="">Any source</NativeSelectOption>
-          {configuration.sources.map((source) => (
-            <NativeSelectOption key={source.id} value={source.id}>
-              {source.name}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Any source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value={null}>Any source</SelectItem>
+              {configuration.sources.map((source) => (
+                <SelectItem key={source.id} value={source.id}>
+                  {source.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </UiField>
       <UiField>
         <FieldLabel htmlFor="operation-severity">Severity</FieldLabel>
-        <NativeSelect
+        <Select
           id="operation-severity"
-          className="w-full"
-          value={search.severity ?? ""}
+          items={operationSeverityItems}
+          value={search.severity || null}
           disabled={pending}
-          onChange={(event) =>
+          onValueChange={(value) =>
             onChange({
-              severity: event.currentTarget.value as DashboardOperationSearch["severity"],
+              severity: (value ?? "") as DashboardOperationSearch["severity"],
             })
           }
         >
-          <NativeSelectOption value="">Any severity</NativeSelectOption>
-          <NativeSelectOption value="critical">Critical</NativeSelectOption>
-          <NativeSelectOption value="warning">Warning</NativeSelectOption>
-          <NativeSelectOption value="info">Info</NativeSelectOption>
-          <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
-        </NativeSelect>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Any severity" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value={null}>Any severity</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+              <SelectItem value="unknown">Unknown</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </UiField>
       <UiField>
         <FieldLabel htmlFor="operation-status">Status</FieldLabel>
-        <NativeSelect
+        <Select
           id="operation-status"
-          className="w-full"
-          value={search.status ?? ""}
+          items={operationStatusItems}
+          value={search.status || null}
           disabled={pending}
-          onChange={(event) =>
-            onChange({ status: event.currentTarget.value as DashboardOperationSearch["status"] })
+          onValueChange={(value) =>
+            onChange({ status: (value ?? "") as DashboardOperationSearch["status"] })
           }
         >
-          <NativeSelectOption value="">Any status</NativeSelectOption>
-          <NativeSelectOption value="firing">Firing</NativeSelectOption>
-          <NativeSelectOption value="resolved">Resolved</NativeSelectOption>
-          <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
-        </NativeSelect>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Any status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value={null}>Any status</SelectItem>
+              <SelectItem value="firing">Firing</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="unknown">Unknown</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </UiField>
       <UiField>
         <FieldLabel htmlFor="operation-destination">Destination</FieldLabel>
-        <NativeSelect
+        <Select
           id="operation-destination"
-          className="w-full"
-          value={search.destinationId ?? ""}
+          items={destinationItems}
+          value={search.destinationId || null}
           disabled={pending}
-          onChange={(event) => onChange({ destinationId: event.currentTarget.value })}
+          onValueChange={(value) => onChange({ destinationId: value ?? "" })}
         >
-          <NativeSelectOption value="">Any destination</NativeSelectOption>
-          {configuration.destinations.map((destination) => (
-            <NativeSelectOption key={destination.id} value={destination.id}>
-              {destination.name}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Any destination" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value={null}>Any destination</SelectItem>
+              {configuration.destinations.map((destination) => (
+                <SelectItem key={destination.id} value={destination.id}>
+                  {destination.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </UiField>
       <UiField>
         <FieldLabel htmlFor="operation-delivery-state">Delivery state</FieldLabel>
-        <NativeSelect
+        <Select
           id="operation-delivery-state"
-          className="w-full"
-          value={search.deliveryState ?? ""}
+          items={operationDeliveryStateItems}
+          value={search.deliveryState || null}
           disabled={pending}
-          onChange={(event) =>
+          onValueChange={(value) =>
             onChange({
-              deliveryState: event.currentTarget.value as DashboardOperationSearch["deliveryState"],
+              deliveryState: (value ?? "") as DashboardOperationSearch["deliveryState"],
             })
           }
         >
-          <NativeSelectOption value="">Any state</NativeSelectOption>
-          <NativeSelectOption value="pending">Pending</NativeSelectOption>
-          <NativeSelectOption value="running">Running</NativeSelectOption>
-          <NativeSelectOption value="succeeded">Succeeded</NativeSelectOption>
-          <NativeSelectOption value="failed">Failed</NativeSelectOption>
-        </NativeSelect>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Any state" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value={null}>Any state</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="running">Running</SelectItem>
+              <SelectItem value="succeeded">Succeeded</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </UiField>
       <UiField>
         <FieldLabel htmlFor="operation-search">Search</FieldLabel>
@@ -129,3 +183,26 @@ export function OperationFilters({
     </FieldGroup>
   );
 }
+
+const operationSeverityItems = [
+  { value: null, label: "Any severity" },
+  { value: "critical", label: "Critical" },
+  { value: "warning", label: "Warning" },
+  { value: "info", label: "Info" },
+  { value: "unknown", label: "Unknown" },
+];
+
+const operationStatusItems = [
+  { value: null, label: "Any status" },
+  { value: "firing", label: "Firing" },
+  { value: "resolved", label: "Resolved" },
+  { value: "unknown", label: "Unknown" },
+];
+
+const operationDeliveryStateItems = [
+  { value: null, label: "Any state" },
+  { value: "pending", label: "Pending" },
+  { value: "running", label: "Running" },
+  { value: "succeeded", label: "Succeeded" },
+  { value: "failed", label: "Failed" },
+];

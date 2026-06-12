@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vane - Route Not Found</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&amp;family=Noto+Sans:wght@400;500;600&amp;family=Courier+Prime&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#e5e2e1",
+                    "on-background": "#1c1b1b",
+                    "sidebar-surface": "#fafafa",
+                    "on-secondary-fixed-variant": "#464747",
+                    "on-secondary-container": "#646464",
+                    "tertiary-fixed": "#e2e2e3",
+                    "secondary-fixed": "#e3e2e2",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#ffb693",
+                    "outline": "#8b7266",
+                    "secondary-fixed-dim": "#c7c6c6",
+                    "on-primary-fixed": "#351000",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#a04100",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#7a3000",
+                    "surface": "#fcf8f8",
+                    "background": "#ffffff",
+                    "tertiary": "#555758",
+                    "on-surface-variant": "#574238",
+                    "destructive": "#e7000b",
+                    "on-surface": "#1c1b1b",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#fff1eb",
+                    "surface-container-high": "#ebe7e7",
+                    "surface-container": "#f0edec",
+                    "primary": "#943b00",
+                    "outline-variant": "#dfc0b3",
+                    "surface-container-low": "#f6f3f2",
+                    "sidebar-primary": "#e17100",
+                    "primary-foreground": "#fffbeb",
+                    "surface-dim": "#dcd9d9",
+                    "inverse-surface": "#313030",
+                    "on-tertiary-fixed": "#1a1c1d",
+                    "primary-container": "#bb4d00",
+                    "tertiary-container": "#6e6f70",
+                    "primary-fixed-dim": "#ffb693",
+                    "on-tertiary-container": "#f3f3f4",
+                    "tertiary-fixed-dim": "#c6c6c7",
+                    "on-tertiary-fixed-variant": "#454748",
+                    "inverse-on-surface": "#f3f0ef",
+                    "surface-bright": "#fcf8f8",
+                    "border": "#e5e5e5",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "muted-surface": "#f5f5f5",
+                    "on-tertiary": "#ffffff",
+                    "focus-ring": "#a1a1a1",
+                    "primary-fixed": "#ffdbcc",
+                    "secondary": "#5e5e5e",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#e3e2e2",
+                    "surface-variant": "#e5e2e1",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "container-margin": "1rem",
+                    "row-gap": "0.5rem",
+                    "panel-padding": "1rem",
+                    "gutter": "0.75rem",
+                    "compact-gap": "0.25rem"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Nunito Sans"],
+                    "body-sm": ["Noto Sans"],
+                    "panel-title": ["Nunito Sans"],
+                    "table-header": ["Noto Sans"],
+                    "headline-md": ["Nunito Sans"],
+                    "code-sm": ["Courier Prime"],
+                    "body-md": ["Noto Sans"]
+            },
+            "fontSize": {
+                    "headline-lg": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "panel-title": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                    "table-header": ["11px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "code-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body { font-family: 'Noto Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Shared SideNavBar Shell -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 flex flex-col p-compact-gap bg-sidebar-surface dark:bg-inverse-surface h-screen w-64 border-r border-border dark:border-outline-variant transition-all duration-200 ease-in-out">
+<div class="mb-gutter p-panel-padding">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Vane</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Alert Hub</p>
+</div>
+<nav class="flex-1 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-panel-padding py-2 transition-all duration-200 ease-in-out text-on-secondary-container dark:text-secondary-fixed-dim font-panel-title text-panel-title hover:bg-surface-container dark:hover:bg-secondary-container" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span>Events</span>
+</a>
+<a class="flex items-center gap-3 px-panel-padding py-2 transition-all duration-200 ease-in-out text-on-secondary-container dark:text-secondary-fixed-dim font-panel-title text-panel-title hover:bg-surface-container dark:hover:bg-secondary-container" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span>Deliveries</span>
+</a>
+<a class="flex items-center gap-3 px-panel-padding py-2 transition-all duration-200 ease-in-out text-on-secondary-container dark:text-secondary-fixed-dim font-panel-title text-panel-title hover:bg-surface-container dark:hover:bg-secondary-container" href="#">
+<span class="material-symbols-outlined">input</span>
+<span>Sources</span>
+</a>
+<a class="flex items-center gap-3 px-panel-padding py-2 transition-all duration-200 ease-in-out text-on-secondary-container dark:text-secondary-fixed-dim font-panel-title text-panel-title hover:bg-surface-container dark:hover:bg-secondary-container" href="#">
+<span class="material-symbols-outlined">alt_route</span>
+<span>Routes</span>
+</a>
+<a class="flex items-center gap-3 px-panel-padding py-2 transition-all duration-200 ease-in-out text-on-secondary-container dark:text-secondary-fixed-dim font-panel-title text-panel-title hover:bg-surface-container dark:hover:bg-secondary-container" href="#">
+<span class="material-symbols-outlined">output</span>
+<span>Destinations</span>
+</a>
+<a class="flex items-center gap-3 px-panel-padding py-2 transition-all duration-200 ease-in-out text-on-secondary-container dark:text-secondary-fixed-dim font-panel-title text-panel-title hover:bg-surface-container dark:hover:bg-secondary-container" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-border pt-row-gap px-panel-padding pb-panel-padding space-y-1">
+<a class="flex items-center gap-3 py-1 text-on-secondary-container dark:text-secondary-fixed-dim font-body-sm text-body-sm hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Docs</span>
+</a>
+<a class="flex items-center gap-3 py-1 text-on-secondary-container dark:text-secondary-fixed-dim font-body-sm text-body-sm hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined">check_circle</span>
+<span>Status</span>
+</a>
+</div>
+</aside>
+<main class="ml-64 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar Header Shell -->
+<header class="flex items-center justify-between px-panel-padding sticky top-0 z-50 w-full h-14 bg-background dark:bg-on-background border-b border-border dark:border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Search resources...</span>
+</div>
+<div class="flex items-center gap-gutter">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">help_outline</button>
+<div class="w-8 h-8 rounded-lg overflow-hidden bg-surface-container-highest">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A clean, professional headshot of a technical system administrator with a focused and intelligent expression. The individual is wearing a dark, minimal corporate polo shirt. The background is a soft, out-of-focus server room with subtle blue and orange blinkenlights, reflecting a modern, high-reliability engineering environment. High-key, cinematic lighting provides clarity and a professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbaKpFqJDfP2bxaUy6pGnVbPt2kadscCFpkNxNqEtaYUj5ElmLj4a_IS1sT64lbmXEIYaQwXvWxm3QzGz5nFp8PvaA03Be3Kh4lxwtiONAERuRMXN0a2NGWsUuYEMRYXDXJXsNf7j8zwbinYQSxbyFqPo2zlHZbdh_O5dKANF6YyEY9XDDQSIumMpv_vel1XUmmaAyuh53IVs6s2trVt478-3tBdzvAbFYDIrV0SefcA3NfCRbtR2LgFk8pPCyYhp3AB9Vtu2BwHs"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Split Layout) -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Panel: Diagnostic Information -->
+<section class="w-2/3 p-panel-padding border-r border-border bg-background flex flex-col">
+<div class="flex items-center gap-gutter mb-gutter">
+<div class="px-2 py-0.5 bg-primary rounded-lg">
+<span class="font-code-sm text-code-sm text-on-primary font-bold">404</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Route Not Found</h2>
+</div>
+<div class="mb-gutter p-gutter bg-muted-surface border border-border rounded-lg">
+<p class="font-body-sm text-body-sm text-secondary uppercase mb-1 tracking-wider">Current Request Context</p>
+<code class="font-code-sm text-code-sm bg-surface-container-high px-2 py-1 rounded text-primary border border-outline-variant block w-fit">
+                        /dashboard/unknown-route
+                    </code>
+</div>
+<div class="max-w-xl mb-8">
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                        The requested URL does not match a registered console route. Verify your path or use the navigation to return to an operational view.
+                    </p>
+</div>
+<div class="flex items-center gap-gutter">
+<button class="px-gutter py-2 bg-primary text-on-primary font-panel-title text-panel-title rounded shadow-sm hover:bg-primary-container transition-all">
+                        Return to Sources
+                    </button>
+<div class="h-6 w-px bg-border mx-1"></div>
+<button class="px-gutter py-2 text-on-surface-variant hover:bg-surface-container font-panel-title text-panel-title transition-all rounded">
+                        Events
+                    </button>
+<button class="px-gutter py-2 text-on-surface-variant hover:bg-surface-container font-panel-title text-panel-title transition-all rounded">
+                        Routes
+                    </button>
+<button class="px-gutter py-2 text-on-surface-variant hover:bg-surface-container font-panel-title text-panel-title transition-all rounded">
+                        Settings
+                    </button>
+</div>
+</section>
+<!-- Right Panel: Recovery Checklist -->
+<aside class="w-1/3 p-panel-padding bg-muted-surface flex flex-col">
+<div class="mb-gutter">
+<h3 class="font-panel-title text-panel-title text-on-surface mb-compact-gap">Navigation Check</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Recommended recovery steps for operators.</p>
+</div>
+<ul class="space-y-compact-gap">
+<li class="flex items-start gap-3 p-compact-gap bg-background border border-border rounded transition-colors hover:border-outline">
+<input class="mt-1 h-4 w-4 rounded-sm border-border text-primary focus:ring-focus-ring" type="checkbox"/>
+<div>
+<span class="font-body-md text-body-md text-on-surface">Verify URL path</span>
+<p class="font-body-sm text-body-sm text-secondary">Ensure no typos exist in the browser address bar.</p>
+</div>
+</li>
+<li class="flex items-start gap-3 p-compact-gap bg-background border border-border rounded transition-colors hover:border-outline">
+<input class="mt-1 h-4 w-4 rounded-sm border-border text-primary focus:ring-focus-ring" type="checkbox"/>
+<div>
+<span class="font-body-md text-body-md text-on-surface">Check route permissions</span>
+<p class="font-body-sm text-body-sm text-secondary">Your current session might lack the ACL scope for this view.</p>
+</div>
+</li>
+<li class="flex items-start gap-3 p-compact-gap bg-background border border-border rounded transition-colors hover:border-outline">
+<input class="mt-1 h-4 w-4 rounded-sm border-border text-primary focus:ring-focus-ring" type="checkbox"/>
+<div>
+<span class="font-body-md text-body-md text-on-surface">Review route configuration</span>
+<p class="font-body-sm text-body-sm text-secondary">Confirm the dynamic route is registered in the Vane kernel.</p>
+</div>
+</li>
+</ul>
+<div class="mt-auto pt-gutter border-t border-border flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-secondary-container opacity-60 italic">Vane Console / navigation guard / 404</span>
+<span class="material-symbols-outlined text-on-secondary-container opacity-40 text-lg">shield_with_heart</span>
+</div>
+</aside>
+</div>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const label = e.target.nextElementSibling.querySelector('span');
+                    if (e.target.checked) {
+                        label.classList.add('line-through', 'opacity-50');
+                    } else {
+                        label.classList.remove('line-through', 'opacity-50');
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

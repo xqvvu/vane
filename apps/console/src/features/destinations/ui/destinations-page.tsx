@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import type {
@@ -65,6 +66,7 @@ export function DestinationsPage() {
 
   return (
     <DashboardContentLayout
+      variant="split"
       main={
         <>
           <DestinationsPageToolbar
@@ -73,7 +75,7 @@ export function DestinationsPage() {
             onRefresh={() => void refreshConfiguration()}
           />
           {formError ? (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
               <AlertTitle>Destination operation failed</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
@@ -151,7 +153,7 @@ export function DestinationsPage() {
         </>
       }
       sidebar={
-        <DashboardSidebar>
+        <DashboardSidebar variant="split">
           <CreateDestinationForm
             pending={pending}
             onPreview={(input) =>
@@ -181,13 +183,15 @@ function DestinationsPageToolbar({
   onRefresh: () => void;
 }) {
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold">Destinations</h2>
-          <span className="text-muted-foreground text-xs">{destinationCount} configured</span>
+          <h1 className="font-heading text-2xl leading-none font-semibold">Destinations</h1>
+          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
+            {destinationCount} configured
+          </Badge>
         </div>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="text-muted-foreground mt-2 text-sm">
           Manage outbound notification targets, safe previews, test sends, and server-side secrets.
         </p>
       </div>

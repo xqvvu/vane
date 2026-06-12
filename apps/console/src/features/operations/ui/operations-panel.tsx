@@ -1,6 +1,5 @@
 import { RiPlayLine, RiTimeLine } from "@remixicon/react";
 
-import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
@@ -13,6 +12,7 @@ import type {
 } from "#/features/operations/model/operation-types.ts";
 import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
+import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
 
 export interface OperationsPanelProps {
   configuration: Configuration;

@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
@@ -72,6 +73,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
 
   return (
     <DashboardContentLayout
+      variant="split"
       main={
         <>
           <DeliveriesPageToolbar
@@ -91,7 +93,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             onResetFilters={resetFilters}
           />
           {formError ? (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
               <AlertTitle>Operation failed</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
@@ -129,7 +131,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
         </>
       }
       sidebar={
-        <DashboardSidebar>
+        <DashboardSidebar variant="split">
           <OperationFilters
             configuration={configuration}
             search={search}
@@ -155,13 +157,15 @@ function DeliveriesPageToolbar({
   onResetFilters: () => void;
 }) {
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold">Deliveries</h2>
-          <span className="text-muted-foreground text-xs">{deliveryCount} loaded</span>
+          <h1 className="font-heading text-2xl leading-none font-semibold">Deliveries</h1>
+          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
+            {deliveryCount} loaded
+          </Badge>
         </div>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="text-muted-foreground mt-2 text-sm">
           Inspect outbound notification jobs, rendered payloads, attempts, and retry schedules.
         </p>
       </div>

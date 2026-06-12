@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
@@ -67,6 +68,7 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
 
   return (
     <DashboardContentLayout
+      variant="split"
       main={
         <>
           <EventsPageToolbar
@@ -76,7 +78,7 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
             onResetFilters={resetFilters}
           />
           {formError ? (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
               <AlertTitle>Operation failed</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
@@ -104,7 +106,7 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
         </>
       }
       sidebar={
-        <DashboardSidebar>
+        <DashboardSidebar variant="split">
           <OperationFilters
             configuration={configuration}
             search={search}
@@ -131,13 +133,15 @@ function EventsPageToolbar({
   onResetFilters: () => void;
 }) {
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold">Events</h2>
-          <span className="text-muted-foreground text-xs">{eventCount} loaded</span>
+          <h1 className="font-heading text-2xl leading-none font-semibold">Events</h1>
+          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
+            {eventCount} loaded
+          </Badge>
         </div>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="text-muted-foreground mt-2 text-sm">
           Triage normalized alerts, route matches, delivery jobs, and redacted raw debug data.
         </p>
       </div>

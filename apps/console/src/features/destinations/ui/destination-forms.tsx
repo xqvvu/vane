@@ -12,7 +12,14 @@ import {
   FieldLabel,
 } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { NativeSelect, NativeSelectOption } from "#/components/ui/native-select.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import {
@@ -317,21 +324,27 @@ function DestinationForm({
                 {(field) => (
                   <UiField>
                     <FieldLabel htmlFor={field.name}>Method</FieldLabel>
-                    <NativeSelect
+                    <Select
                       id={field.name}
                       name={field.name}
-                      className="w-full"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.currentTarget.value)}
+                      items={mode === "edit" ? webhookMethodEditItems : webhookMethodCreateItems}
+                      value={field.state.value || null}
+                      onValueChange={(value) => field.handleChange(value ?? "")}
                     >
-                      {mode === "edit" ? (
-                        <NativeSelectOption value="">Keep existing</NativeSelectOption>
-                      ) : null}
-                      <NativeSelectOption value="POST">POST</NativeSelectOption>
-                      <NativeSelectOption value="PUT">PUT</NativeSelectOption>
-                      <NativeSelectOption value="PATCH">PATCH</NativeSelectOption>
-                    </NativeSelect>
+                      <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                        <SelectValue placeholder="Keep existing" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {mode === "edit" ? (
+                            <SelectItem value={null}>Keep existing</SelectItem>
+                          ) : null}
+                          <SelectItem value="POST">POST</SelectItem>
+                          <SelectItem value="PUT">PUT</SelectItem>
+                          <SelectItem value="PATCH">PATCH</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                     <FieldDescription>
                       HTTP method for generic webhook delivery attempts.
                     </FieldDescription>
@@ -406,21 +419,25 @@ function DestinationForm({
             {(field) => (
               <UiField>
                 <FieldLabel htmlFor={field.name}>Kind</FieldLabel>
-                <NativeSelect
+                <Select
                   id={field.name}
                   name={field.name}
-                  className="w-full"
+                  items={destinationKindItems}
                   value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) =>
-                    field.handleChange(event.currentTarget.value as DestinationFormKind)
-                  }
+                  onValueChange={(value) => field.handleChange(value as DestinationFormKind)}
                 >
-                  <NativeSelectOption value="generic_webhook">Generic webhook</NativeSelectOption>
-                  <NativeSelectOption value="feishu">Feishu</NativeSelectOption>
-                  <NativeSelectOption value="slack">Slack</NativeSelectOption>
-                  <NativeSelectOption value="email">Email</NativeSelectOption>
-                </NativeSelect>
+                  <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="generic_webhook">Generic webhook</SelectItem>
+                      <SelectItem value="feishu">Feishu</SelectItem>
+                      <SelectItem value="slack">Slack</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
                 <FieldDescription>
                   Adapter type determines the required delivery fields.
                 </FieldDescription>
@@ -499,6 +516,24 @@ function createDestinationDefaults(): DestinationFormValues {
     messageTemplate: "",
   };
 }
+
+const webhookMethodCreateItems = [
+  { value: "POST", label: "POST" },
+  { value: "PUT", label: "PUT" },
+  { value: "PATCH", label: "PATCH" },
+];
+
+const webhookMethodEditItems = [
+  { value: null, label: "Keep existing" },
+  ...webhookMethodCreateItems,
+];
+
+const destinationKindItems = [
+  { value: "generic_webhook", label: "Generic webhook" },
+  { value: "feishu", label: "Feishu" },
+  { value: "slack", label: "Slack" },
+  { value: "email", label: "Email" },
+];
 
 function destinationValuesToFormData(values: DestinationFormValues): FormData {
   const data = new FormData();

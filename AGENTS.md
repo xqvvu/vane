@@ -236,6 +236,17 @@ Keep the visual system compact and utilitarian:
   explicit.
 - Do not introduce one-off styling systems, icon sets, chart libraries, or
   animation layers unless the existing stack cannot cover the product need.
+- Keep loading skeletons colocated with the component they stand in for. Expose
+  them as static component properties such as `LoginForm.Skeleton`,
+  `DashboardUserMenu.Skeleton`, or `DashboardContentLayout.Skeleton`; route
+  `pendingComponent`, `ClientOnly` fallback, and `React.Suspense` fallback
+  should reference those properties instead of importing from a shared
+  `loading-skeletons` grab bag. If the real component must stay lazy or
+  client-only, keep a server-safe wrapper next to it, put the skeleton on that
+  wrapper, and lazy-load the client implementation through
+  `createClientOnlyFn`. Do not import a `*.client.tsx` file from a wrapper that
+  is itself imported by server-rendered routes, because TanStack Start import
+  protection still traces that dynamic import.
 
 ## shadcn UI
 

@@ -24,12 +24,13 @@ export function DeliveriesTable({
   onLatest: () => void;
 }) {
   return (
-    <section>
-      <div className="mb-2 flex items-center justify-between gap-3">
+    <section className="bg-background">
+      <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
         <h3 className="text-xs font-semibold">Delivery jobs</h3>
         <span className="text-muted-foreground text-xs">Newest updated first</span>
       </div>
       <DashboardTable
+        variant="flush"
         empty="No deliveries yet"
         headers={["Target", "Event", "State", "Attempts", "Next", "Last error", "Updated", ""]}
         columnClassNames={[
@@ -145,7 +146,7 @@ function HistoryPaginationControls({
   onLatest: () => void;
 }) {
   return (
-    <div className="mt-2 flex items-center justify-end gap-1">
+    <div className="border-border flex items-center justify-end gap-1 border-t px-3 py-3">
       <Button
         type="button"
         variant="outline"

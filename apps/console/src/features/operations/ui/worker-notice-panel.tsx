@@ -5,7 +5,7 @@ import type { WorkerRunNotice } from "#/features/operations/model/operation-type
 
 export function WorkerNoticePanel({ notice }: { notice: WorkerRunNotice }) {
   return (
-    <Alert>
+    <Alert className="mx-3 mt-4">
       <RiInformationLine aria-hidden />
       <AlertTitle>Worker run complete</AlertTitle>
       <AlertDescription>

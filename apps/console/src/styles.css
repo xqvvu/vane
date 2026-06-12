@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/noto-sans";
 @import "@fontsource-variable/nunito-sans";
+@import "@fontsource-variable/noto-sans-sc";
 
 @plugin "@tailwindcss/typography";
 
@@ -79,7 +79,7 @@
 }
 
 @theme inline {
-  --font-sans: "Noto Sans Variable", sans-serif;
+  --font-sans: "Noto Sans SC Variable", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

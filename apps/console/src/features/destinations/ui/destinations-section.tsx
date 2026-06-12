@@ -20,7 +20,6 @@ import type { Configuration } from "#/features/configuration/model/configuration
 import { ConfigurationStateBadge } from "#/features/configuration/ui/configuration-state-badge.tsx";
 import type { DestinationFormKind } from "#/features/destinations/model/destination-form.ts";
 import { EditDestinationForm } from "#/features/destinations/ui/destination-forms.tsx";
-import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
 import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 type DestinationSummary = Configuration["destinations"][number];
@@ -56,14 +55,9 @@ export function DestinationsSection({
   onSubmitEdit,
 }: DestinationsSectionProps) {
   return (
-    <DashboardPanel
-      title="Destinations"
-      icon={<RiArrowRightLine className="size-4" aria-hidden />}
-      action={
-        <span className="text-muted-foreground text-xs">{destinations.length} configured</span>
-      }
-    >
+    <section className="bg-background">
       <DashboardTable
+        variant="flush"
         empty={<DestinationsEmptyState />}
         headers={["Destination", "Kind", "Safe configuration", "State", ""]}
         columnClassNames={["w-[24%]", "w-[15%]", "w-[25%]", "w-[12%]", "w-[24%] text-right"]}
@@ -76,7 +70,7 @@ export function DestinationsSection({
             <ConfigurationStateBadge key="state" enabled={destination.enabled} />,
             <div key="actions" className="flex min-w-0 justify-end gap-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="xs"
                 disabled={pending}
                 title={`Test ${destination.name}`}
@@ -86,7 +80,7 @@ export function DestinationsSection({
                 Test
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="xs"
                 disabled={pending}
                 title={`Preview ${destination.name}`}
@@ -96,7 +90,7 @@ export function DestinationsSection({
                 Preview
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon-xs"
                 disabled={pending}
                 title="Edit destination"
@@ -105,7 +99,7 @@ export function DestinationsSection({
                 <RiEditLine data-icon aria-hidden />
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="xs"
                 disabled={pending}
                 title={destination.enabled ? "Disable destination" : "Enable destination"}
@@ -118,17 +112,26 @@ export function DestinationsSection({
           ],
         }))}
       />
-      {editingDestination ? (
-        <EditDestinationForm
-          key={editingDestination.id}
-          destination={editingDestination}
-          pending={pending}
-          onCancel={onCancelEdit}
-          onPreview={onPreviewEdit}
-          onSubmit={onSubmitEdit}
-        />
+      {destinations.length > 0 ? (
+        <div className="border-border bg-background border-t py-4 text-center">
+          <span className="text-muted-foreground text-[11px] font-bold tracking-[0.18em] uppercase">
+            End of destinations
+          </span>
+        </div>
       ) : null}
-    </DashboardPanel>
+      {editingDestination ? (
+        <div className="border-border border-t p-3">
+          <EditDestinationForm
+            key={editingDestination.id}
+            destination={editingDestination}
+            pending={pending}
+            onCancel={onCancelEdit}
+            onPreview={onPreviewEdit}
+            onSubmit={onSubmitEdit}
+          />
+        </div>
+      ) : null}
+    </section>
   );
 }
 

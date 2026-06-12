@@ -29,6 +29,36 @@
   },
   "screens": [
     {
+      "id": "375ab2b7e9e14fa691770e82e442d7b4",
+      "name": "projects/8189408707632940093/screens/375ab2b7e9e14fa691770e82e442d7b4",
+      "title": "Vane Console - Application Error",
+      "promptFile": ".stitch/prompts/application-error.md",
+      "localScreenshot": ".stitch/designs/application-error.png",
+      "localHtml": ".stitch/designs/application-error.html",
+      "status": "accepted-for-implementation",
+      "qaNotes": [
+        "Screenshot keeps the authenticated console context with compact Vane navigation and avoids a marketing hero or decorative illustration.",
+        "Recovery actions are limited to retry, reload, and existing console routes: Events, Sources, Routes, and Settings.",
+        "Error summary is intentionally redacted and does not show stack traces, source tokens, provider secrets, webhook URLs, raw payloads, or credentials.",
+        "No incident-management, on-call, billing, organization, SaaS, or Create Alert actions are present."
+      ]
+    },
+    {
+      "id": "4d9dee9e5d4549818c34109c0fc873b7",
+      "name": "projects/8189408707632940093/screens/4d9dee9e5d4549818c34109c0fc873b7",
+      "title": "Vane Console - 404 Not Found",
+      "promptFile": ".stitch/prompts/not-found-page.md",
+      "localScreenshot": ".stitch/designs/not-found-404.png",
+      "localHtml": ".stitch/designs/not-found-404.html",
+      "status": "accepted-for-implementation",
+      "qaNotes": [
+        "Screenshot keeps the authenticated console context and avoids a marketing hero or decorative illustration.",
+        "Recovery actions are limited to existing console routes: Sources, Events, Routes, and Settings.",
+        "Implementation reuses the existing DashboardLayout and top navigation rather than introducing a second sidebar shell.",
+        "No incident, on-call, billing, organization, SaaS, or Create Alert actions are present."
+      ]
+    },
+    {
       "id": "f91ad904e5de4495b959f9aeef0d05b3",
       "name": "projects/8189408707632940093/screens/f91ad904e5de4495b959f9aeef0d05b3",
       "title": "Vane Console - Settings",
@@ -139,7 +169,8 @@
       "b3e5e550bc6949b2b320c82e57501c8b",
       "c3d296d573e343beb20988389a29ac02",
       "aa110c6e81b9402ca9c1784f8074a231",
-      "3b7c694a52d34bf3aef2d7526cb338bd"
+      "3b7c694a52d34bf3aef2d7526cb338bd",
+      "375ab2b7e9e14fa691770e82e442d7b4"
     ],
     "implementedTracerBullet": {
       "screenId": "aa110c6e81b9402ca9c1784f8074a231",
@@ -280,6 +311,32 @@
         "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
       ]
     },
-    "nextActionAfterConfirmation": "Core console pages covered by Stitch prompts and implementation: Events, Deliveries, Sources, Routes, Destinations, and Settings."
+    "nextActionAfterConfirmation": "Application error page implemented from Stitch design and verified locally.",
+    "implementedApplicationErrorPage": {
+      "screenId": "375ab2b7e9e14fa691770e82e442d7b4",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/shell/dashboard-error.tsx",
+        "apps/console/src/shell/dashboard-error.test.tsx",
+        "apps/console/src/routes/__root.tsx",
+        "apps/console/src/routes/_dashboard.tsx",
+        ".stitch/prompts/application-error.md",
+        ".stitch/designs/application-error.html",
+        ".stitch/designs/application-error.png"
+      ],
+      "validation": [
+        "npx shadcn@latest docs button badge alert separator",
+        "pnpm --filter @vane/console fmt",
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build",
+        "Browser check: /routes renders the Routes page on localhost:6180 with no browser error logs after wiring the router error boundary."
+      ],
+      "implementationNotes": [
+        "Used the Stitch two-column error boundary layout while mapping Material Symbols to Remix Icon and shadcn primitives.",
+        "Configured root and dashboard TanStack Router error components so runtime and loader failures use the custom console fallback.",
+        "Displayed only safe error class summaries; raw error messages and stack traces are not rendered in the UI."
+      ]
+    }
   }
 }

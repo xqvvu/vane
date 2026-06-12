@@ -17,13 +17,15 @@ describe("dashboard server function auth gates", () => {
     (fileName) => {
       const source = readFileSync(path.join(functionsDir, fileName), "utf8");
       const chunks = serverFunctionChunks(source);
+      const publicFunctionNames = new Set(["getAuthBootstrapFn"]);
 
       expect(chunks.map((chunk) => chunk.name)).not.toHaveLength(0);
 
       for (const chunk of chunks) {
-        expect(chunk.source, `${fileName}:${chunk.name}`).toContain(
-          "requireDashboardRequestContext(",
-        );
+        expect(
+          chunk.source.includes("requireDashboardRequestContext("),
+          `${fileName}:${chunk.name}`,
+        ).toBe(!publicFunctionNames.has(chunk.name));
       }
     },
   );
@@ -31,6 +33,8 @@ describe("dashboard server function auth gates", () => {
   it("protects the dashboard route loader with a login redirect", () => {
     const indexRoute = readFileSync(path.join(routesDir, "index.tsx"), "utf8");
     const dashboardRoute = readFileSync(path.join(routesDir, "_dashboard.tsx"), "utf8");
+    const loginRoute = readFileSync(path.join(routesDir, "login.tsx"), "utf8");
+    const setupRoute = readFileSync(path.join(routesDir, "setup.tsx"), "utf8");
     const authQueries = readFileSync(
       path.join(srcDir, "features/auth/api/auth.queries.ts"),
       "utf8",
@@ -41,8 +45,13 @@ describe("dashboard server function auth gates", () => {
       "const session = await context.queryClient.ensureQueryData(dashboardSessionQueryOptions())",
     );
     expect(authQueries).toContain("getDashboardSessionFn()");
+    expect(authQueries).toContain("getAuthBootstrapFn()");
     expect(dashboardRoute).toContain("throw redirect({");
     expect(dashboardRoute).toContain('to: "/login"');
+    expect(loginRoute).toContain("authBootstrapQueryOptions()");
+    expect(loginRoute).toContain('to: "/setup"');
+    expect(setupRoute).toContain("authBootstrapQueryOptions()");
+    expect(setupRoute).toContain('to: "/login"');
   });
 });
 
