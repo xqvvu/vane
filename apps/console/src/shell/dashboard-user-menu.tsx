@@ -1,5 +1,6 @@
 import "@tanstack/react-start/client-only";
 import { RiLogoutCircleLine, RiUser3Line } from "@remixicon/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
@@ -14,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu.tsx";
+import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import { authClient } from "#/lib/auth.client.ts";
 
 export interface DashboardUserMenuProps {
@@ -27,6 +29,7 @@ export interface DashboardUserMenuProps {
 
 export function DashboardUserMenu({ user }: DashboardUserMenuProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [pending, setPending] = React.useState(false);
 
   async function signOut() {
@@ -35,12 +38,17 @@ export function DashboardUserMenu({ user }: DashboardUserMenuProps) {
     try {
       await authClient.signOut({
         fetchOptions: {
-          onSuccess: () => {
-            void navigate({
+          onSuccess: async () => {
+            queryClient.setQueryData(dashboardSessionQueryOptions().queryKey, null);
+            await queryClient.invalidateQueries({
+              queryKey: authQueryKeys.all,
+            });
+            await navigate({
               to: "/login",
               search: {
                 redirect: "/",
               },
+              replace: true,
             });
           },
         },
