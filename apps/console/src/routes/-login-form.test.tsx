@@ -39,7 +39,7 @@ describe("login form", () => {
   it("switches into first setup mode for owner registration", () => {
     render(<LoginForm redirectTo="/" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "First setup" }));
+    fireEvent.click(screen.getByRole("tab", { name: "First setup" }));
 
     expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Vane Owner");
     expect(screen.getByRole("button", { name: "Create owner" })).toBeTruthy();
@@ -49,7 +49,7 @@ describe("login form", () => {
     testState.authClient.signUp.email.mockResolvedValueOnce({ error: null });
     render(<LoginForm redirectTo="/" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "First setup" }));
+    fireEvent.click(screen.getByRole("tab", { name: "First setup" }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Vane Owner" },
     });
@@ -63,9 +63,9 @@ describe("login form", () => {
 
     await vi.waitFor(() => {
       expect(testState.authClient.signUp.email).toHaveBeenCalledWith({
-        name: "Admin",
-        email: "admin@example.test",
-        password: "111111aa",
+        name: "Vane Owner",
+        email: "owner@example.test",
+        password: "correct horse battery staple",
       });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/",

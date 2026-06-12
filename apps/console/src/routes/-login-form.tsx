@@ -1,130 +1,214 @@
 import "@tanstack/react-start/client-only";
-import { RiLoginCircleLine, RiUserAddLine } from "@remixicon/react";
+import { RiErrorWarningLine, RiLoginCircleLine, RiUserAddLine } from "@remixicon/react";
+import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
+import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { authClient } from "#/lib/auth.client.ts";
-import { cn } from "#/lib/utils.ts";
+
+type LoginMode = "sign-in" | "sign-up";
+
+type LoginFormValues = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+const defaultValues: LoginFormValues = {
+  name: "Vane Owner",
+  email: "",
+  password: "",
+};
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const navigate = useNavigate();
-  const [mode, setMode] = React.useState<"sign-in" | "sign-up">("sign-in");
+  const [mode, setMode] = React.useState<LoginMode>("sign-in");
   const [error, setError] = React.useState<string | null>(null);
-  const [pending, setPending] = React.useState(false);
+  const form = useForm({
+    defaultValues,
+    onSubmit: async ({ value }) => {
+      setError(null);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setPending(true);
+      try {
+        const result =
+          mode === "sign-in"
+            ? await authClient.signIn.email({
+                email: value.email.trim(),
+                password: value.password,
+              })
+            : await authClient.signUp.email({
+                name: value.name.trim() || defaultValues.name,
+                email: value.email.trim(),
+                password: value.password,
+              });
 
-    const form = new FormData(event.currentTarget);
-    const email = formString(form, "email");
-    const password = formString(form, "password");
-    const name = formString(form, "name") || "Vane Owner";
+        if (result.error) {
+          setError(result.error.message ?? "Authentication failed");
+          return;
+        }
 
-    try {
-      const result =
-        mode === "sign-in"
-          ? await authClient.signIn.email({
-              email,
-              password,
-            })
-          : await authClient.signUp.email({
-              name,
-              email,
-              password,
-            });
-
-      if (result.error) {
-        setError(result.error.message ?? "Authentication failed");
-        return;
+        await navigate({
+          to: redirectTo as never,
+        });
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : String(caught));
       }
-
-      await navigate({
-        to: redirectTo as never,
-      });
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
-    } finally {
-      setPending(false);
-    }
-  }
+    },
+  });
 
   return (
-    <div className="space-y-4">
-      <div className="border-border grid grid-cols-2 border">
-        <button
-          type="button"
-          className={cn(
-            "flex h-8 items-center justify-center gap-1.5 text-xs font-medium",
-            mode === "sign-in" ? "bg-primary text-primary-foreground" : "hover:bg-muted",
-          )}
-          onClick={() => setMode("sign-in")}
-        >
-          <RiLoginCircleLine className="size-3.5" aria-hidden />
+    <Tabs value={mode} onValueChange={(value) => setMode(value as LoginMode)}>
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="sign-in">
+          <RiLoginCircleLine data-icon="inline-start" aria-hidden />
           Sign in
-        </button>
-        <button
-          type="button"
-          className={cn(
-            "border-border flex h-8 items-center justify-center gap-1.5 border-l text-xs font-medium",
-            mode === "sign-up" ? "bg-primary text-primary-foreground" : "hover:bg-muted",
-          )}
-          onClick={() => setMode("sign-up")}
-        >
-          <RiUserAddLine className="size-3.5" aria-hidden />
+        </TabsTrigger>
+        <TabsTrigger value="sign-up">
+          <RiUserAddLine data-icon="inline-start" aria-hidden />
           First setup
-        </button>
-      </div>
+        </TabsTrigger>
+      </TabsList>
 
       {error ? (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive border px-3 py-2 text-xs">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <RiErrorWarningLine aria-hidden />
+          <AlertTitle>Authentication failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <form className="space-y-3" onSubmit={(event) => void submit(event)}>
-        {mode === "sign-up" ? (
-          <Field label="Name">
-            <Input name="name" autoComplete="name" defaultValue="Vane Owner" required />
-          </Field>
-        ) : null}
+      <TabsContent value={mode}>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <FieldGroup className="gap-3">
+            {mode === "sign-up" ? (
+              <form.Field
+                name="name"
+                validators={{
+                  onSubmit: ({ value }) =>
+                    value.trim().length === 0 ? "Name is required" : undefined,
+                }}
+              >
+                {(field) => (
+                  <UiField data-invalid={field.state.meta.errors.length > 0}>
+                    <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      autoComplete="name"
+                      required
+                      value={field.state.value}
+                      aria-invalid={field.state.meta.errors.length > 0}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.currentTarget.value)}
+                    />
+                    <FieldError
+                      errors={field.state.meta.errors.map((fieldError) => ({
+                        message: String(fieldError),
+                      }))}
+                    />
+                  </UiField>
+                )}
+              </form.Field>
+            ) : null}
+            <form.Field
+              name="email"
+              validators={{
+                onSubmit: ({ value }) => {
+                  const email = value.trim();
 
-        <Field label="Email">
-          <Input name="email" type="email" autoComplete="email" required />
-        </Field>
+                  if (email.length === 0) {
+                    return "Email is required";
+                  }
 
-        <Field label="Password">
-          <Input
-            name="password"
-            type="password"
-            autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-            minLength={8}
-            required
-          />
-        </Field>
+                  return email.includes("@") ? undefined : "Enter a valid email address";
+                },
+              }}
+            >
+              {(field) => (
+                <UiField data-invalid={field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={field.state.value}
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.currentTarget.value)}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors.map((fieldError) => ({
+                      message: String(fieldError),
+                    }))}
+                  />
+                </UiField>
+              )}
+            </form.Field>
+            <form.Field
+              name="password"
+              validators={{
+                onSubmit: ({ value }) =>
+                  value.length < 8 ? "Password must be at least 8 characters" : undefined,
+              }}
+            >
+              {(field) => (
+                <UiField data-invalid={field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="password"
+                    autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                    minLength={8}
+                    required
+                    value={field.state.value}
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.currentTarget.value)}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors.map((fieldError) => ({
+                      message: String(fieldError),
+                    }))}
+                  />
+                </UiField>
+              )}
+            </form.Field>
+          </FieldGroup>
 
-        <Button className="w-full" type="submit" disabled={pending}>
-          {mode === "sign-in" ? <RiLoginCircleLine aria-hidden /> : <RiUserAddLine aria-hidden />}
-          {pending ? "Working" : mode === "sign-in" ? "Sign in" : "Create owner"}
-        </Button>
-      </form>
-    </div>
+          <form.Subscribe
+            selector={(state) => ({
+              canSubmit: state.canSubmit,
+              isSubmitting: state.isSubmitting,
+            })}
+          >
+            {({ canSubmit, isSubmitting }) => (
+              <Button className="w-full" type="submit" disabled={!canSubmit || isSubmitting}>
+                {mode === "sign-in" ? (
+                  <RiLoginCircleLine data-icon="inline-start" aria-hidden />
+                ) : (
+                  <RiUserAddLine data-icon="inline-start" aria-hidden />
+                )}
+                {isSubmitting ? "Working" : mode === "sign-in" ? "Sign in" : "Create owner"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </form>
+      </TabsContent>
+    </Tabs>
   );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-1.5 text-xs font-medium">
-      <span>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function formString(form: FormData, key: string): string {
-  const value = form.get(key);
-  return typeof value === "string" ? value : "";
 }
