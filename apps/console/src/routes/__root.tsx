@@ -1,9 +1,12 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import type { QueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, type QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
+import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import TanStackQueryDevtools from "#/integrations/tanstack/query/devtools";
 import TanStackRouterDevtools from "#/integrations/tanstack/router/devtools";
+import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
 
 import appCss from "#/styles.css?url";
 
@@ -31,6 +34,7 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   shellComponent: Root,
+  notFoundComponent: RootNotFound,
 });
 
 function Root({ children }: { children: React.ReactNode }) {
@@ -51,5 +55,19 @@ function Root({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+function RootNotFound() {
+  const { data: session } = useSuspenseQuery(dashboardSessionQueryOptions());
+
+  if (!session) {
+    return <DashboardNotFoundPage />;
+  }
+
+  return (
+    <DashboardLayout user={session.user}>
+      <DashboardNotFoundPage />
+    </DashboardLayout>
   );
 }

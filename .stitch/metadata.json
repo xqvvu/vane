@@ -29,6 +29,21 @@
   },
   "screens": [
     {
+      "id": "4d9dee9e5d4549818c34109c0fc873b7",
+      "name": "projects/8189408707632940093/screens/4d9dee9e5d4549818c34109c0fc873b7",
+      "title": "Vane Console - 404 Not Found",
+      "promptFile": ".stitch/prompts/not-found-page.md",
+      "localScreenshot": ".stitch/designs/not-found-404.png",
+      "localHtml": ".stitch/designs/not-found-404.html",
+      "status": "accepted-for-implementation",
+      "qaNotes": [
+        "Screenshot keeps the authenticated console context and avoids a marketing hero or decorative illustration.",
+        "Recovery actions are limited to existing console routes: Sources, Events, Routes, and Settings.",
+        "Implementation reuses the existing DashboardLayout and top navigation rather than introducing a second sidebar shell.",
+        "No incident, on-call, billing, organization, SaaS, or Create Alert actions are present."
+      ]
+    },
+    {
       "id": "f91ad904e5de4495b959f9aeef0d05b3",
       "name": "projects/8189408707632940093/screens/f91ad904e5de4495b959f9aeef0d05b3",
       "title": "Vane Console - Settings",

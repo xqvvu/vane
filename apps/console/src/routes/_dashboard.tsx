@@ -4,6 +4,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
 
 export const Route = createFileRoute("/_dashboard")({
   loader: async ({ context, location }) => {
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_dashboard")({
     await context.queryClient.ensureQueryData(configurationQueryOptions());
   },
   component: DashboardRouteLayout,
+  notFoundComponent: DashboardNotFoundPage,
 });
 
 function DashboardRouteLayout() {
