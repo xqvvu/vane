@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root";
+import { Route as SetupRouteImport } from "./routes/setup";
 import { Route as LoginRouteImport } from "./routes/login";
 import { Route as DashboardRouteImport } from "./routes/_dashboard";
 import { Route as IndexRouteImport } from "./routes/index";
@@ -21,6 +22,11 @@ import { Route as DashboardDeliveriesRouteImport } from "./routes/_dashboard.del
 import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
 import { Route as ApiSourcesSourceIdWebhookRouteImport } from "./routes/api/sources/$sourceId/webhook";
 
+const SetupRoute = SetupRouteImport.update({
+  id: "/setup",
+  path: "/setup",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const LoginRoute = LoginRouteImport.update({
   id: "/login",
   path: "/login",
@@ -80,6 +86,7 @@ const ApiSourcesSourceIdWebhookRoute =
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
+  "/setup": typeof SetupRoute;
   "/deliveries": typeof DashboardDeliveriesRoute;
   "/destinations": typeof DashboardDestinationsRoute;
   "/events": typeof DashboardEventsRoute;
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
+  "/setup": typeof SetupRoute;
   "/deliveries": typeof DashboardDeliveriesRoute;
   "/destinations": typeof DashboardDestinationsRoute;
   "/events": typeof DashboardEventsRoute;
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   "/": typeof IndexRoute;
   "/_dashboard": typeof DashboardRouteWithChildren;
   "/login": typeof LoginRoute;
+  "/setup": typeof SetupRoute;
   "/_dashboard/deliveries": typeof DashboardDeliveriesRoute;
   "/_dashboard/destinations": typeof DashboardDestinationsRoute;
   "/_dashboard/events": typeof DashboardEventsRoute;
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
   fullPaths:
     | "/"
     | "/login"
+    | "/setup"
     | "/deliveries"
     | "/destinations"
     | "/events"
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
   to:
     | "/"
     | "/login"
+    | "/setup"
     | "/deliveries"
     | "/destinations"
     | "/events"
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | "/"
     | "/_dashboard"
     | "/login"
+    | "/setup"
     | "/_dashboard/deliveries"
     | "/_dashboard/destinations"
     | "/_dashboard/events"
@@ -159,12 +171,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   DashboardRoute: typeof DashboardRouteWithChildren;
   LoginRoute: typeof LoginRoute;
+  SetupRoute: typeof SetupRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   ApiSourcesSourceIdWebhookRoute: typeof ApiSourcesSourceIdWebhookRoute;
 }
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
+    "/setup": {
+      id: "/setup";
+      path: "/setup";
+      fullPath: "/setup";
+      preLoaderRoute: typeof SetupRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/login": {
       id: "/login";
       path: "/login";
@@ -271,6 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
+  SetupRoute: SetupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiSourcesSourceIdWebhookRoute: ApiSourcesSourceIdWebhookRoute,
 };

@@ -11,12 +11,6 @@ const testState = vi.hoisted(() => ({
     signIn: {
       email: vi.fn<(input: { email: string; password: string }) => Promise<{ error: null }>>(),
     },
-    signUp: {
-      email:
-        vi.fn<
-          (input: { name: string; email: string; password: string }) => Promise<{ error: null }>
-        >(),
-    },
   },
 }));
 
@@ -33,37 +27,32 @@ describe("login form", () => {
     cleanup();
     testState.navigate.mockClear();
     testState.authClient.signIn.email.mockReset();
-    testState.authClient.signUp.email.mockReset();
   });
 
-  it("switches into first setup mode for owner registration", () => {
+  it("renders a sign-in only form", () => {
     render(<LoginForm redirectTo="/" />);
 
-    fireEvent.click(screen.getByRole("tab", { name: "First setup" }));
-
-    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Vane Owner");
-    expect(screen.getByRole("button", { name: "Create owner" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Login" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Create owner" })).toBeNull();
+    expect(screen.queryByText("First setup")).toBeNull();
+    expect(screen.queryByText("Login with Google")).toBeNull();
+    expect(screen.queryByText("Sign up")).toBeNull();
   });
 
-  it("submits first setup through Better Auth sign-up and returns to the dashboard", async () => {
-    testState.authClient.signUp.email.mockResolvedValueOnce({ error: null });
+  it("submits credentials through Better Auth sign-in and returns to the dashboard", async () => {
+    testState.authClient.signIn.email.mockResolvedValueOnce({ error: null });
     render(<LoginForm redirectTo="/" />);
 
-    fireEvent.click(screen.getByRole("tab", { name: "First setup" }));
-    fireEvent.change(screen.getByLabelText("Name"), {
-      target: { value: "Vane Owner" },
-    });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "owner@example.test" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "correct horse battery staple" },
     });
-    fireEvent.submit(screen.getByRole("button", { name: "Create owner" }).closest("form")!);
+    fireEvent.submit(screen.getByRole("button", { name: "Login" }).closest("form")!);
 
     await vi.waitFor(() => {
-      expect(testState.authClient.signUp.email).toHaveBeenCalledWith({
-        name: "Vane Owner",
+      expect(testState.authClient.signIn.email).toHaveBeenCalledWith({
         email: "owner@example.test",
         password: "correct horse battery staple",
       });

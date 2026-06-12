@@ -1,9 +1,11 @@
-import { RiShieldUserLine } from "@remixicon/react";
 import { ClientOnly, createFileRoute, redirect } from "@tanstack/react-router";
 import * as React from "react";
 import { z } from "zod";
 
-import { getDashboardSessionFn } from "#/application/functions/auth.functions.ts";
+import {
+  authBootstrapQueryOptions,
+  dashboardSessionQueryOptions,
+} from "#/features/auth/api/auth.queries.ts";
 
 const LoginSearchSchema = z.object({
   redirect: z.string().catch("/"),
@@ -11,8 +13,19 @@ const LoginSearchSchema = z.object({
 
 export const Route = createFileRoute("/login")({
   validateSearch: LoginSearchSchema,
-  beforeLoad: async ({ search }) => {
-    const session = await getDashboardSessionFn();
+  beforeLoad: async ({ context, search }) => {
+    const bootstrap = await context.queryClient.ensureQueryData(authBootstrapQueryOptions());
+
+    if (bootstrap.setupRequired) {
+      throw redirect({
+        to: "/setup" as const,
+        search: {
+          redirect: search.redirect || "/",
+        } as never,
+      });
+    }
+
+    const session = await context.queryClient.ensureQueryData(dashboardSessionQueryOptions());
 
     if (session) {
       throw redirect({
@@ -34,23 +47,11 @@ function LoginPage() {
 
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-5 py-8">
-      <section className="border-border bg-card w-full max-w-sm border">
-        <div className="border-border border-b px-4 py-3">
-          <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-            <RiShieldUserLine className="size-4" aria-hidden />
-            Owner dashboard
-          </div>
-          <h1 className="mt-1 text-lg font-semibold">Vane Console</h1>
-        </div>
-
-        <div className="p-4">
-          <ClientOnly>
-            <React.Suspense fallback={null}>
-              <LoginForm redirectTo={search.redirect || "/"} />
-            </React.Suspense>
-          </ClientOnly>
-        </div>
-      </section>
+      <ClientOnly>
+        <React.Suspense fallback={null}>
+          <LoginForm redirectTo={search.redirect || "/"} />
+        </React.Suspense>
+      </ClientOnly>
     </main>
   );
 }

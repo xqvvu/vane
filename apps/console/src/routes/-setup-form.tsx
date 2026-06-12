@@ -1,6 +1,7 @@
 import "@tanstack/react-start/client-only";
-import { RiErrorWarningLine, RiLoginCircleLine } from "@remixicon/react";
+import { RiErrorWarningLine, RiUserAddLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
@@ -15,20 +16,24 @@ import {
 } from "#/components/ui/card.tsx";
 import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
+import { authQueryKeys } from "#/features/auth/api/auth.queries.ts";
 import { authClient } from "#/lib/auth.client.ts";
 
-type LoginFormValues = {
+type SetupFormValues = {
+  name: string;
   email: string;
   password: string;
 };
 
-const defaultValues: LoginFormValues = {
+const defaultValues: SetupFormValues = {
+  name: "Vane Owner",
   email: "",
   password: "",
 };
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
+export function SetupForm({ redirectTo }: { redirectTo: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [error, setError] = React.useState<string | null>(null);
   const form = useForm({
     defaultValues,
@@ -36,16 +41,20 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       setError(null);
 
       try {
-        const result = await authClient.signIn.email({
+        const result = await authClient.signUp.email({
+          name: value.name.trim() || defaultValues.name,
           email: value.email.trim(),
           password: value.password,
         });
 
         if (result.error) {
-          setError(result.error.message ?? "Authentication failed");
+          setError(result.error.message ?? "Setup failed");
           return;
         }
 
+        await queryClient.invalidateQueries({
+          queryKey: authQueryKeys.all,
+        });
         await navigate({
           to: redirectTo as never,
         });
@@ -56,10 +65,10 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   });
 
   return (
-    <Card className="w-full max-w-sm" data-testid="login-card">
+    <Card className="w-full max-w-sm" data-testid="setup-card">
       <CardHeader>
-        <CardTitle>Login to Vane</CardTitle>
-        <CardDescription>Enter your dashboard credentials to continue.</CardDescription>
+        <CardTitle>Create owner account</CardTitle>
+        <CardDescription>Register the first dashboard user for this deployment.</CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -73,12 +82,41 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           {error ? (
             <Alert variant="destructive">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Authentication failed</AlertTitle>
+              <AlertTitle>Setup failed</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}
 
           <FieldGroup>
+            <form.Field
+              name="name"
+              validators={{
+                onSubmit: ({ value }) =>
+                  value.trim().length === 0 ? "Name is required" : undefined,
+              }}
+            >
+              {(field) => (
+                <UiField data-invalid={field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    autoComplete="name"
+                    required
+                    value={field.state.value}
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.currentTarget.value)}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors.map((fieldError) => ({
+                      message: String(fieldError),
+                    }))}
+                  />
+                </UiField>
+              )}
+            </form.Field>
+
             <form.Field
               name="email"
               validators={{
@@ -131,7 +169,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
                     id={field.name}
                     name={field.name}
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                     minLength={8}
                     required
                     value={field.state.value}
@@ -157,8 +195,8 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
               {({ canSubmit, isSubmitting }) => (
                 <UiField>
                   <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                    <RiLoginCircleLine data-icon="inline-start" aria-hidden />
-                    {isSubmitting ? "Signing in" : "Login"}
+                    <RiUserAddLine data-icon="inline-start" aria-hidden />
+                    {isSubmitting ? "Creating owner" : "Create owner"}
                   </Button>
                 </UiField>
               )}

@@ -27,7 +27,7 @@ import { createSqliteDatabase, type SqliteDatabase } from "#/infra/sqlite/connec
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";
-import { assignOwnerRoleBeforeUserCreate } from "#/lib/auth-owner-bootstrap.ts";
+import { assignOwnerRoleBeforeUserCreate, hasRegisteredUsers } from "#/lib/auth-owner-bootstrap.ts";
 
 export interface VaneAuth {
   handler(request: Request): Promise<Response>;
@@ -51,6 +51,7 @@ export interface ApplicationContainer {
   ): DeliveryWorker;
   ensureDeliveryWorkerRunner(): DeliveryWorkerRunner;
   getBetterAuthDatabase(): SqliteDatabase;
+  hasRegisteredUsers(): boolean;
   getAuth(): VaneAuth;
   dispose(): void;
 }
@@ -173,6 +174,10 @@ export function createApplicationContainer(
       return authDatabase;
     },
 
+    hasRegisteredUsers() {
+      return hasRegisteredUsers(container.getBetterAuthDatabase());
+    },
+
     getAuth() {
       auth ??= createAuth({
         database: container.getBetterAuthDatabase(),
@@ -280,12 +285,4 @@ function createDefaultAuth(input: { database: SqliteDatabase }): VaneAuth {
     secret: requireBetterAuthSecret(env.BETTER_AUTH_SECRET),
     plugins: [tanstackStartCookies()],
   }) as VaneAuth;
-}
-
-function hasRegisteredUsers(database: SqliteDatabase): boolean {
-  const row = database.prepare('SELECT COUNT(*) AS count FROM "user"').get() as
-    | { count: number }
-    | undefined;
-
-  return (row?.count ?? 0) > 0;
 }

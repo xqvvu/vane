@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { getApplicationContainer } from "#/application/runtime/container.ts";
 import { requireDashboardRequestContext } from "#/application/runtime/request-context.ts";
 
 export const getDashboardSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -19,3 +20,7 @@ export const getDashboardSessionFn = createServerFn({ method: "GET" }).handler(a
     return null;
   }
 });
+
+export const getAuthBootstrapFn = createServerFn({ method: "GET" }).handler(async () => ({
+  setupRequired: !getApplicationContainer().hasRegisteredUsers(),
+}));
