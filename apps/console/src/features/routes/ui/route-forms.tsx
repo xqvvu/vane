@@ -16,7 +16,14 @@ import {
   FieldTitle,
 } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { NativeSelect, NativeSelectOption } from "#/components/ui/native-select.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import {
   routeFormDefaultsFromRule,
@@ -160,6 +167,10 @@ function RouteForm({
   onSubmit: (values: RouteFormValues) => void;
   onCancel?: () => void;
 }) {
+  const sourceItems = [
+    { value: null, label: "Any source" },
+    ...sources.map((source) => ({ value: source.id, label: source.name })),
+  ];
   const form = useForm({
     defaultValues,
     onSubmit: ({ value }) => {
@@ -214,22 +225,28 @@ function RouteForm({
           {(field) => (
             <UiField data-disabled={sources.length === 0}>
               <FieldLabel htmlFor={field.name}>Source</FieldLabel>
-              <NativeSelect
+              <Select
                 id={field.name}
                 name={field.name}
-                className="w-full"
+                items={sourceItems}
                 disabled={sources.length === 0}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.currentTarget.value)}
+                value={field.state.value || null}
+                onValueChange={(value) => field.handleChange(value ?? "")}
               >
-                <NativeSelectOption value="">Any source</NativeSelectOption>
-                {sources.map((source) => (
-                  <NativeSelectOption key={source.id} value={source.id}>
-                    {source.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                  <SelectValue placeholder="Any source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value={null}>Any source</SelectItem>
+                    {sources.map((source) => (
+                      <SelectItem key={source.id} value={source.id}>
+                        {source.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <FieldDescription>Leave as any source for catch-all routing.</FieldDescription>
             </UiField>
           )}
@@ -238,22 +255,28 @@ function RouteForm({
           {(field) => (
             <UiField>
               <FieldLabel htmlFor={field.name}>Severity</FieldLabel>
-              <NativeSelect
+              <Select
                 id={field.name}
                 name={field.name}
-                className="w-full"
+                items={routeSeverityItems}
                 value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) =>
-                  field.handleChange(event.currentTarget.value as RouteRuleFormValues["severity"])
+                onValueChange={(value) =>
+                  field.handleChange(value as RouteRuleFormValues["severity"])
                 }
               >
-                <NativeSelectOption value="any">Any</NativeSelectOption>
-                <NativeSelectOption value="critical">Critical</NativeSelectOption>
-                <NativeSelectOption value="warning">Warning</NativeSelectOption>
-                <NativeSelectOption value="info">Info</NativeSelectOption>
-                <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
-              </NativeSelect>
+                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="info">Info</SelectItem>
+                    <SelectItem value="unknown">Unknown</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <FieldDescription>Empty severity conditions match every severity.</FieldDescription>
             </UiField>
           )}
@@ -262,21 +285,27 @@ function RouteForm({
           {(field) => (
             <UiField>
               <FieldLabel htmlFor={field.name}>Status</FieldLabel>
-              <NativeSelect
+              <Select
                 id={field.name}
                 name={field.name}
-                className="w-full"
+                items={routeStatusItems}
                 value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) =>
-                  field.handleChange(event.currentTarget.value as RouteRuleFormValues["status"])
+                onValueChange={(value) =>
+                  field.handleChange(value as RouteRuleFormValues["status"])
                 }
               >
-                <NativeSelectOption value="any">Any</NativeSelectOption>
-                <NativeSelectOption value="firing">Firing</NativeSelectOption>
-                <NativeSelectOption value="resolved">Resolved</NativeSelectOption>
-                <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
-              </NativeSelect>
+                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="firing">Firing</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="unknown">Unknown</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <FieldDescription>Match firing, resolved, or unknown alert states.</FieldDescription>
             </UiField>
           )}
@@ -302,21 +331,25 @@ function RouteForm({
             {(field) => (
               <UiField>
                 <FieldLabel htmlFor={field.name}>Operator</FieldLabel>
-                <NativeSelect
+                <Select
                   id={field.name}
                   name={field.name}
-                  className="w-full"
+                  items={labelOperatorItems}
                   value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) =>
-                    field.handleChange(
-                      event.currentTarget.value as RouteRuleFormValues["labelOperator"],
-                    )
+                  onValueChange={(value) =>
+                    field.handleChange(value as RouteRuleFormValues["labelOperator"])
                   }
                 >
-                  <NativeSelectOption value="equals">Equals</NativeSelectOption>
-                  <NativeSelectOption value="contains">Contains</NativeSelectOption>
-                </NativeSelect>
+                  <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="equals">Equals</SelectItem>
+                      <SelectItem value="contains">Contains</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
                 <FieldDescription>Comparison mode.</FieldDescription>
               </UiField>
             )}
@@ -437,3 +470,23 @@ function RouteForm({
     </form>
   );
 }
+
+const routeSeverityItems = [
+  { value: "any", label: "Any" },
+  { value: "critical", label: "Critical" },
+  { value: "warning", label: "Warning" },
+  { value: "info", label: "Info" },
+  { value: "unknown", label: "Unknown" },
+];
+
+const routeStatusItems = [
+  { value: "any", label: "Any" },
+  { value: "firing", label: "Firing" },
+  { value: "resolved", label: "Resolved" },
+  { value: "unknown", label: "Unknown" },
+];
+
+const labelOperatorItems = [
+  { value: "equals", label: "Equals" },
+  { value: "contains", label: "Contains" },
+];

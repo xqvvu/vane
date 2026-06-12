@@ -12,12 +12,20 @@ import {
   FieldLabel,
 } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { NativeSelect, NativeSelectOption } from "#/components/ui/native-select.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import {
   sourceConfigFromForm,
   sourceConfigPatchFromForm,
 } from "#/features/sources/model/source-form.ts";
+import { cn } from "#/lib/utils.ts";
 
 export function CreateSourceForm({
   pending,
@@ -201,25 +209,31 @@ function SourceForm({
               <FieldLabel className={labelClassName(layout)} htmlFor={field.name}>
                 Provider
               </FieldLabel>
-              <NativeSelect
+              <Select
                 id={field.name}
                 name={field.name}
-                className="w-full"
-                selectClassName={inputClassName(layout)}
+                items={sourceProviderItems}
                 value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) =>
-                  field.handleChange(
-                    event.currentTarget.value as Configuration["sources"][number]["provider"],
-                  )
+                onValueChange={(value) =>
+                  field.handleChange(value as Configuration["sources"][number]["provider"])
                 }
               >
-                <NativeSelectOption value="generic">Generic Webhook</NativeSelectOption>
-                <NativeSelectOption value="grafana">Grafana</NativeSelectOption>
-                <NativeSelectOption value="signoz">SigNoz</NativeSelectOption>
-                <NativeSelectOption value="uptime_kuma">Uptime Kuma</NativeSelectOption>
-                <NativeSelectOption value="alertmanager">Alertmanager</NativeSelectOption>
-              </NativeSelect>
+                <SelectTrigger
+                  className={cn("w-full", inputClassName(layout))}
+                  onBlur={field.handleBlur}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="generic">Generic Webhook</SelectItem>
+                    <SelectItem value="grafana">Grafana</SelectItem>
+                    <SelectItem value="signoz">SigNoz</SelectItem>
+                    <SelectItem value="uptime_kuma">Uptime Kuma</SelectItem>
+                    <SelectItem value="alertmanager">Alertmanager</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               {layout === "compact" ? (
                 <FieldDescription>
                   Provider parsers normalize inbound webhook payloads.
@@ -276,3 +290,11 @@ function labelClassName(layout: "compact" | "rail"): string | undefined {
 function inputClassName(layout: "compact" | "rail"): string | undefined {
   return layout === "rail" ? "h-12 bg-background px-3 text-sm" : undefined;
 }
+
+const sourceProviderItems = [
+  { value: "generic", label: "Generic Webhook" },
+  { value: "grafana", label: "Grafana" },
+  { value: "signoz", label: "SigNoz" },
+  { value: "uptime_kuma", label: "Uptime Kuma" },
+  { value: "alertmanager", label: "Alertmanager" },
+];

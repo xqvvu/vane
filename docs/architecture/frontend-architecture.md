@@ -136,7 +136,7 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 ### `components/ui`
 
 `components/ui` 只存放 shadcn primitives 和项目从 shadcn registry 接管的原子组件，例如
-`Button`、`Field`、`Input`、`NativeSelect`、`Table`、`Badge`、`Skeleton`、`Alert`、`Tabs`、
+`Button`、`Field`、`Input`、`Select`、`Table`、`Badge`、`Skeleton`、`Alert`、`Tabs`、
 `Dialog`、`Sheet`、`Drawer`。
 
 这一层必须保持领域无知：
