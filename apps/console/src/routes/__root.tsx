@@ -5,6 +5,7 @@ import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/reac
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import TanStackQueryDevtools from "#/integrations/tanstack/query/devtools";
 import TanStackRouterDevtools from "#/integrations/tanstack/router/devtools";
+import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
 import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
 
@@ -34,6 +35,7 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   shellComponent: Root,
+  errorComponent: DashboardErrorPage,
   notFoundComponent: RootNotFound,
 });
 
