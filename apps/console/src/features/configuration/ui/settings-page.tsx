@@ -8,6 +8,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
@@ -56,26 +57,29 @@ export function SettingsPage() {
 
   return (
     <DashboardContentLayout
+      variant="split"
       main={
         <>
           <SettingsPageToolbar pending={pending} onRefresh={() => void refreshConfiguration()} />
           {formError ? (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
               <AlertTitle>Settings operation failed</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
           {importNotice ? <ImportNoticePanel notice={importNotice} /> : null}
-          <OperationalSummary
-            configuration={configuration}
-            retentionDays={configuration.settings.rawPayloadRetentionDays}
-          />
-          <PortabilitySafetyPanel />
+          <div className="flex flex-col gap-4 p-3">
+            <OperationalSummary
+              configuration={configuration}
+              retentionDays={configuration.settings.rawPayloadRetentionDays}
+            />
+            <PortabilitySafetyPanel />
+          </div>
         </>
       }
       sidebar={
-        <DashboardSidebar>
+        <DashboardSidebar variant="split">
           <AppSettingsForm
             settings={configuration.settings}
             pending={pending}
@@ -118,13 +122,15 @@ export function SettingsPage() {
 
 function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefresh: () => void }) {
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold">Settings</h2>
-          <span className="text-muted-foreground text-xs">Configuration</span>
+          <h1 className="font-heading text-2xl leading-none font-semibold">Settings</h1>
+          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
+            Configuration
+          </Badge>
         </div>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="text-muted-foreground mt-2 text-sm">
           Manage raw payload retention, TOML portability, and secret-safe configuration transfer.
         </p>
       </div>

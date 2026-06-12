@@ -12,7 +12,7 @@ export function DestinationTestNoticePanel({ notice }: { notice: DestinationTest
     : `Test ${notice.destination.name}: failed`;
 
   return (
-    <Alert variant={notice.success ? "default" : "destructive"}>
+    <Alert variant={notice.success ? "default" : "destructive"} className="mx-3 mt-4">
       {notice.success ? <RiCheckboxCircleLine aria-hidden /> : <RiErrorWarningLine aria-hidden />}
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
@@ -36,7 +36,7 @@ export function DestinationTestNoticePanel({ notice }: { notice: DestinationTest
 
 export function DestinationPreviewNoticePanel({ notice }: { notice: DestinationPreviewNotice }) {
   return (
-    <Alert>
+    <Alert className="mx-3 mt-4">
       <RiEyeLine aria-hidden />
       <AlertTitle>Preview {notice.destination.name}</AlertTitle>
       <AlertDescription>Rendered payload for a deterministic test event.</AlertDescription>

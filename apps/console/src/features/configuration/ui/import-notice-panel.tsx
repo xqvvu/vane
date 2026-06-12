@@ -10,7 +10,7 @@ import { CopyableCodeLine } from "#/shell/copyable-code-line.tsx";
 
 export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResult }) {
   return (
-    <Alert>
+    <Alert className="mx-3 mt-4">
       <RiCheckboxCircleLine aria-hidden />
       <AlertTitle>Imported configuration</AlertTitle>
       <AlertDescription>

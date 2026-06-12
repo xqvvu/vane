@@ -63,9 +63,9 @@ describe("login form", () => {
 
     await vi.waitFor(() => {
       expect(testState.authClient.signUp.email).toHaveBeenCalledWith({
-        name: "Vane Owner",
-        email: "owner@example.test",
-        password: "correct horse battery staple",
+        name: "Admin",
+        email: "admin@example.test",
+        password: "111111aa",
       });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/",

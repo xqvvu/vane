@@ -14,7 +14,6 @@ import type { Configuration } from "#/features/configuration/model/configuration
 import { ConfigurationStateBadge } from "#/features/configuration/ui/configuration-state-badge.tsx";
 import { describeRule } from "#/features/routes/model/route-rule-summary.ts";
 import { EditRouteForm } from "#/features/routes/ui/route-forms.tsx";
-import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
 import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 type RouteSummary = Configuration["routes"][number];
@@ -49,12 +48,9 @@ export function RoutesSection({
   onSubmitEdit,
 }: RoutesSectionProps) {
   return (
-    <DashboardPanel
-      title="Routes"
-      icon={<RiRouteLine className="size-4" aria-hidden />}
-      action={<span className="text-muted-foreground text-xs">{routes.length} configured</span>}
-    >
+    <section className="bg-background">
       <DashboardTable
+        variant="flush"
         empty={<RoutesEmptyState hasDestinations={destinations.length > 0} />}
         headers={["Name", "Rule", "Destinations", "State", ""]}
         columnClassNames={["w-[22%]", "w-[34%]", "w-[20%]", "w-[10%]", "w-[14%]"]}
@@ -93,18 +89,27 @@ export function RoutesSection({
           ],
         }))}
       />
-      {editingRoute ? (
-        <EditRouteForm
-          key={editingRoute.id}
-          route={editingRoute}
-          sources={sources}
-          destinations={destinations}
-          pending={pending}
-          onCancel={onCancelEdit}
-          onSubmit={onSubmitEdit}
-        />
+      {routes.length > 0 ? (
+        <div className="border-border bg-background border-t py-4 text-center">
+          <span className="text-muted-foreground text-[11px] font-bold tracking-[0.18em] uppercase">
+            End of routes
+          </span>
+        </div>
       ) : null}
-    </DashboardPanel>
+      {editingRoute ? (
+        <div className="border-border border-t p-3">
+          <EditRouteForm
+            key={editingRoute.id}
+            route={editingRoute}
+            sources={sources}
+            destinations={destinations}
+            pending={pending}
+            onCancel={onCancelEdit}
+            onSubmit={onSubmitEdit}
+          />
+        </div>
+      ) : null}
+    </section>
   );
 }
 

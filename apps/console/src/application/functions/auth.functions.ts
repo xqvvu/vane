@@ -9,7 +9,9 @@ export const getDashboardSessionFn = createServerFn({ method: "GET" }).handler(a
     return {
       user: {
         id: context.currentUser.id,
+        name: context.currentUser.name ?? null,
         email: context.currentUser.email,
+        image: context.currentUser.image ?? null,
         role: context.currentUser.role ?? null,
       },
     };

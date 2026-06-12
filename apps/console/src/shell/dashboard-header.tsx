@@ -12,7 +12,9 @@ const DashboardUserMenu = React.lazy(async () => {
 
 export interface DashboardHeaderProps {
   user: {
+    name: string | null;
     email: string;
+    image: string | null;
     role: string | null;
   };
 }

@@ -99,7 +99,7 @@ Use shadcn primitives as the mental component set:
 - Button with small size and variants for primary, outline, ghost, destructive
 - Badge for state, severity, provider, enabled/disabled, route match, retry state
 - Table for Events, Deliveries, Sources, Routes, Destinations
-- Field, FieldGroup, Input, NativeSelect, Textarea, Checkbox, Switch-like
+- Field, FieldGroup, Input, Select, Textarea, Checkbox, Switch-like
   enabled controls for forms
 - Separator for structural division
 - Alert for warnings, import notices, token-once notices, and delivery errors

@@ -23,12 +23,13 @@ export function EventsTable({
   onLatest: () => void;
 }) {
   return (
-    <section>
-      <div className="mb-2 flex items-center justify-between gap-3">
+    <section className="bg-background">
+      <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
         <h3 className="text-xs font-semibold">Event stream</h3>
         <span className="text-muted-foreground text-xs">Newest first</span>
       </div>
       <DashboardTable
+        variant="flush"
         empty="No events yet"
         headers={["Event", "Source", "State", "Deliveries", "Received", ""]}
         columnClassNames={["w-[34%]", "w-[14%]", "w-[10%]", "w-[20%]", "w-[16%]", "w-[6%]"]}
@@ -185,7 +186,7 @@ function HistoryPaginationControls({
   onLatest: () => void;
 }) {
   return (
-    <div className="mt-2 flex items-center justify-end gap-1">
+    <div className="border-border flex items-center justify-end gap-1 border-t px-3 py-3">
       <Button
         type="button"
         variant="outline"

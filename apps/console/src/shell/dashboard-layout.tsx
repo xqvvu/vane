@@ -4,7 +4,9 @@ import { DashboardHeader } from "#/shell/dashboard-header.tsx";
 
 export interface DashboardLayoutProps {
   user: {
+    name: string | null;
     email: string;
+    image: string | null;
     role: string | null;
   };
   children: ReactNode;

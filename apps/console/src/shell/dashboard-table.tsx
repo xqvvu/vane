@@ -16,6 +16,7 @@ export interface DashboardTableProps {
   rows: Array<{ key: string; cells: React.ReactNode[] }>;
   empty: React.ReactNode;
   columnClassNames?: string[];
+  variant?: "default" | "flush";
 }
 
 export function DashboardTable({
@@ -23,6 +24,7 @@ export function DashboardTable({
   rows,
   empty,
   columnClassNames = [],
+  variant = "default",
 }: DashboardTableProps) {
   const columns = React.useMemo<Array<ColumnDef<(typeof rows)[number]>>>(
     () =>
@@ -44,11 +46,22 @@ export function DashboardTable({
     <Table className="table-fixed">
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id} className="hover:bg-transparent">
+          <TableRow
+            key={headerGroup.id}
+            className={
+              variant === "flush" ? "bg-muted/60 hover:bg-muted/60" : "hover:bg-transparent"
+            }
+          >
             {headerGroup.headers.map((header, index) => (
               <TableHead
                 key={header.id}
-                className={cn("text-muted-foreground h-8", columnClassNames[index])}
+                className={cn(
+                  "text-muted-foreground h-8",
+                  variant === "flush"
+                    ? "px-3 text-[11px] font-semibold tracking-wider uppercase"
+                    : null,
+                  columnClassNames[index],
+                )}
               >
                 {header.isPlaceholder
                   ? null
@@ -62,7 +75,10 @@ export function DashboardTable({
         {table.getRowModel().rows.length === 0 ? (
           <TableRow>
             <TableCell
-              className="text-muted-foreground py-6 text-center"
+              className={cn(
+                "text-muted-foreground text-center",
+                variant === "flush" ? "py-8" : "py-6",
+              )}
               colSpan={table.getAllColumns().length}
             >
               {empty}
@@ -70,9 +86,18 @@ export function DashboardTable({
           </TableRow>
         ) : (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              className={variant === "flush" ? "hover:bg-muted/50" : undefined}
+            >
               {row.getVisibleCells().map((cell, index) => (
-                <TableCell key={cell.id} className={cn("truncate", columnClassNames[index])}>
+                <TableCell
+                  key={cell.id}
+                  className={cn(
+                    variant === "flush" ? "px-3 py-3" : "truncate",
+                    columnClassNames[index],
+                  )}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}
