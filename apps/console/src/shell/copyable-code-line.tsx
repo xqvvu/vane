@@ -36,7 +36,7 @@ export function CopyableCodeLine({
         title={title}
         onClick={() => void copyText(copyValue)}
       >
-        <RiFileCopyLine aria-hidden />
+        <RiFileCopyLine data-icon="inline-start" aria-hidden />
       </Button>
     </div>
   );

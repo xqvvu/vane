@@ -89,7 +89,7 @@ frontend DI container.
 Recommended shape inside `apps/console/src`:
 
 ```txt
-app/shell           dashboard layout, sidebar, header, user menu
+shell               dashboard layout, sidebar, header, user menu
 components/ui       shadcn primitives only; no Vane domain knowledge
 features            Sources, Routes, Destinations, Events, Deliveries, Settings
 integrations        TanStack Query/Router, Better Auth, and library adapters
@@ -245,9 +245,9 @@ Use shadcn for shared UI primitives and app composition.
   open `shadcn` or `shadcn-ui` and follow its workflow.
 - Run shadcn CLI commands from `apps/console`, so the CLI reads
   `apps/console/components.json`.
-- Use the workspace package runner. Prefer `pnpm dlx shadcn@latest ...` unless
+- Use the workspace package runner. Always `npx shadcn@latest ...` unless
   an existing script or skill specifies a more precise command.
-- Use `pnpm dlx shadcn@latest info` or `info --json` to inspect local config
+- Use `npx shadcn@latest info` or `info --json` to inspect local config
   before adding registry items or applying examples.
 - Follow the current config: `style` is `base-lyra`, `baseColor` is `neutral`,
   `iconLibrary` is `remixicon`, menu color is `default`, menu accent is
@@ -335,6 +335,11 @@ Use pnpm and the existing workspace scripts.
 
 Prefer package-scoped commands while working on a focused area. Run broader
 checks when touching shared packages or cross-package contracts.
+
+## Browser Test Credentials
+
+- When local browser automation or Computer Use needs to create or sign in to a
+  dashboard account, use `admin@example.test` with password `111111aa`.
 
 ## Engineering Workflow
 
@@ -483,7 +488,7 @@ Required MCP triggers:
   `.stitch/metadata.json` after creating or changing Stitch projects or
   screens, and store downloaded design assets under `.stitch/designs`.
 - shadcn MCP: use for registry search, item lookup, examples, audit checklists,
-  and install-command discovery. Use `pnpm dlx shadcn@latest info` from
+  and install-command discovery. Use `npx shadcn@latest info` from
   `apps/console` for local project configuration because the shadcn MCP does
   not replace local config inspection.
 - Browser or Chrome DevTools MCP: use for meaningful frontend verification

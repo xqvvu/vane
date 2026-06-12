@@ -1,8 +1,9 @@
+import { RiErrorWarningLine, RiFilterOffLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
-import { DashboardContentLayout } from "#/app/shell/dashboard-layout.tsx";
-import { DashboardSidebar } from "#/app/shell/dashboard-sidebar.tsx";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
 import { EventsTable } from "#/features/events/ui/events-table.tsx";
@@ -15,6 +16,8 @@ import type {
 import type { EventDetail } from "#/features/operations/model/operation-types.ts";
 import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
+import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export interface EventsPageProps {
   search: DashboardOperationSearch;
@@ -33,6 +36,17 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
 
   async function refreshOperations() {
     await invalidateOperations();
+  }
+
+  function resetFilters() {
+    onSearchChange({
+      sourceId: "",
+      severity: "",
+      status: "",
+      destinationId: "",
+      deliveryState: "",
+      q: "",
+    });
   }
 
   async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
@@ -55,10 +69,18 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
     <DashboardContentLayout
       main={
         <>
+          <EventsPageToolbar
+            eventCount={operations.events.items.length}
+            pending={pending}
+            onRefresh={() => void refreshOperations()}
+            onResetFilters={resetFilters}
+          />
           {formError ? (
-            <div className="border-destructive/40 bg-destructive/10 text-destructive border px-3 py-2 text-xs">
-              {formError}
-            </div>
+            <Alert variant="destructive">
+              <RiErrorWarningLine aria-hidden />
+              <AlertTitle>Operation failed</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
           ) : null}
           <EventsTable
             events={operations.events.items}
@@ -88,10 +110,61 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
             search={search}
             pending={pending}
             onChange={onSearchChange}
+            layout="rail"
           />
-          <OperationalSummary configuration={configuration} />
+          <OperationalSummary configuration={configuration} layout="rail" />
         </DashboardSidebar>
       }
     />
+  );
+}
+
+function EventsPageToolbar({
+  eventCount,
+  pending,
+  onRefresh,
+  onResetFilters,
+}: {
+  eventCount: number;
+  pending: boolean;
+  onRefresh: () => void;
+  onResetFilters: () => void;
+}) {
+  return (
+    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold">Events</h2>
+          <span className="text-muted-foreground text-xs">{eventCount} loaded</span>
+        </div>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Triage normalized alerts, route matches, delivery jobs, and redacted raw debug data.
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={onRefresh}
+          title="Refresh event history"
+        >
+          <RiRefreshLine data-icon="inline-start" aria-hidden />
+          Refresh
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={onResetFilters}
+          title="Reset event filters"
+        >
+          <RiFilterOffLine data-icon="inline-start" aria-hidden />
+          Reset filters
+        </Button>
+      </div>
+    </header>
   );
 }

@@ -1,11 +1,17 @@
-import { RiDatabase2Line } from "@remixicon/react";
+import { RiDatabase2Line, RiSave3Line } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 
-import { DashboardFormPanel } from "#/app/shell/dashboard-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
-import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
+import {
+  Field as UiField,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function AppSettingsForm({
   settings,
@@ -32,8 +38,12 @@ export function AppSettingsForm({
       title="App settings"
       icon={<RiDatabase2Line className="size-4" aria-hidden />}
     >
+      <p className="text-muted-foreground mb-3 text-xs leading-5">
+        Bound raw webhook payload storage while keeping normalized Events and Delivery history
+        reviewable.
+      </p>
       <form
-        className="flex flex-col gap-2"
+        className="flex flex-col gap-3"
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -66,6 +76,9 @@ export function AppSettingsForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.currentTarget.valueAsNumber)}
                 />
+                <FieldDescription>
+                  Allowed range is 0 to 3650 days. This applies to raw payload debug data.
+                </FieldDescription>
                 <FieldError
                   errors={field.state.meta.errors.map((error) => ({
                     message: String(error),
@@ -76,6 +89,7 @@ export function AppSettingsForm({
           </form.Field>
         </FieldGroup>
         <Button type="submit" size="sm" disabled={pending} className="w-full">
+          <RiSave3Line data-icon="inline-start" aria-hidden />
           Save settings
         </Button>
       </form>

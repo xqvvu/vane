@@ -1,3 +1,5 @@
+import { Badge } from "#/components/ui/badge.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { DeliveryAttemptStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
 import {
   formatDateTime,
@@ -7,31 +9,60 @@ import type { DeliveryDetail } from "#/features/operations/model/operation-types
 
 export function DeliveryDetailView({ detail }: { detail: NonNullable<DeliveryDetail> }) {
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      <div>
-        <h3 className="text-xs font-semibold">Delivery detail</h3>
-        <dl className="mt-2 grid grid-cols-[112px_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
-          <DetailTerm label="Destination" value={detail.destination.name} />
-          <DetailTerm label="Kind" value={detail.destination.kind} />
-          <DetailTerm label="Route" value={detail.route?.name ?? "Manual"} />
-          <DetailTerm label="Source" value={detail.source.name} />
-          <DetailTerm label="State" value={detail.job.state} />
-          <DetailTerm
-            label="Attempts"
-            value={`${detail.job.attemptCount}/${detail.job.maxAttempts}`}
-          />
-          <DetailTerm
-            label="Next attempt"
-            value={detail.job.nextAttemptAt ? formatDateTime(detail.job.nextAttemptAt) : "—"}
-          />
-          <DetailTerm label="Last error" value={detail.job.lastError ?? "—"} />
-        </dl>
+    <div className="grid gap-3">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="truncate text-xs font-semibold">{detail.destination.name}</h3>
+          <p className="text-muted-foreground mt-1 truncate text-xs">
+            {detail.source.name} / {detail.route?.name ?? "Manual"} /{" "}
+            {detail.event.normalized.title}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Badge variant={detail.job.state === "failed" ? "destructive" : "secondary"}>
+            {detail.job.state}
+          </Badge>
+          <Badge variant="outline">
+            {detail.job.attemptCount}/{detail.job.maxAttempts} attempts
+          </Badge>
+        </div>
       </div>
-      <div className="grid gap-2">
-        <JsonBlock title="Destination metadata" value={detail.destinationMetadata} />
-        <JsonBlock title="Rendered payload" value={detail.renderedPayload ?? {}} />
-        <DeliveryAttemptsTable attempts={detail.attempts} />
-      </div>
+      <Tabs defaultValue="summary">
+        <TabsList variant="line" className="w-full justify-start">
+          <TabsTrigger value="summary">Summary</TabsTrigger>
+          <TabsTrigger value="payload">Rendered payload</TabsTrigger>
+          <TabsTrigger value="attempts">Attempts</TabsTrigger>
+          <TabsTrigger value="metadata">Metadata</TabsTrigger>
+        </TabsList>
+        <TabsContent value="summary" className="pt-2">
+          <dl className="grid grid-cols-[112px_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs lg:max-w-2xl">
+            <DetailTerm label="Destination" value={detail.destination.name} />
+            <DetailTerm label="Kind" value={detail.destination.kind} />
+            <DetailTerm label="Route" value={detail.route?.name ?? "Manual"} />
+            <DetailTerm label="Source" value={detail.source.name} />
+            <DetailTerm label="Event" value={detail.event.normalized.title} />
+            <DetailTerm label="State" value={detail.job.state} />
+            <DetailTerm
+              label="Attempts"
+              value={`${detail.job.attemptCount}/${detail.job.maxAttempts}`}
+            />
+            <DetailTerm
+              label="Next attempt"
+              value={detail.job.nextAttemptAt ? formatDateTime(detail.job.nextAttemptAt) : "—"}
+            />
+            <DetailTerm label="Last error" value={detail.job.lastError ?? "—"} />
+          </dl>
+        </TabsContent>
+        <TabsContent value="payload" className="pt-2">
+          <JsonBlock title="Rendered payload" value={detail.renderedPayload ?? {}} />
+        </TabsContent>
+        <TabsContent value="attempts" className="pt-2">
+          <DeliveryAttemptsTable attempts={detail.attempts} />
+        </TabsContent>
+        <TabsContent value="metadata" className="pt-2">
+          <JsonBlock title="Destination metadata" value={detail.destinationMetadata} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

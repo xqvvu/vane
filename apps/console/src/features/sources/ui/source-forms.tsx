@@ -1,12 +1,16 @@
-import { RiAddLine, RiEditLine, RiWebhookLine } from "@remixicon/react";
+import { RiAddCircleLine, RiAddLine, RiEditLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import type { JsonObject } from "@vane/core";
 import * as React from "react";
 
-import { DashboardFormPanel } from "#/app/shell/dashboard-panel.tsx";
-import { FormTextField } from "#/app/shell/form-text-field.tsx";
 import { Button } from "#/components/ui/button.tsx";
-import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
+import {
+  Field as UiField,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { NativeSelect, NativeSelectOption } from "#/components/ui/native-select.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
@@ -27,18 +31,31 @@ export function CreateSourceForm({
   }) => void;
 }) {
   return (
-    <DashboardFormPanel title="New source" icon={<RiWebhookLine className="size-4" aria-hidden />}>
+    <section>
+      <div className="mb-6">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <RiAddCircleLine className="size-4" aria-hidden />
+          New Source
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Configure a new inbound pipeline to ingest alerts.
+        </p>
+      </div>
       <SourceForm
         defaultValues={{
           name: "",
           provider: "generic",
         }}
         pending={pending}
-        submitLabel="Create source"
-        submitIcon={<RiAddLine aria-hidden />}
+        submitLabel="Create Source"
+        submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
+        layout="rail"
         onSubmit={onSubmit}
       />
-    </DashboardFormPanel>
+      <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
+        The source token is generated after create and shown once.
+      </p>
+    </section>
   );
 }
 
@@ -59,11 +76,14 @@ export function EditSourceForm({
   }) => void;
 }) {
   return (
-    <section className="border-border mt-3 border-t pt-3">
-      <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold">
+    <section className="border-border bg-muted/30 mt-3 border p-3">
+      <h3 className="flex items-center gap-2 text-xs font-semibold">
         <RiEditLine className="size-3.5" aria-hidden />
         Edit source
       </h3>
+      <p className="text-muted-foreground mt-1 mb-3 text-xs">
+        Update the intake label, provider parser, or provider secret override for this source.
+      </p>
       <SourceForm
         defaultValues={{
           name: source.name,
@@ -71,7 +91,7 @@ export function EditSourceForm({
         }}
         pending={pending}
         submitLabel="Save source"
-        submitIcon={<RiEditLine aria-hidden />}
+        submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
             id: source.id,
@@ -96,6 +116,7 @@ function SourceForm({
   submitIcon,
   onSubmit,
   onCancel,
+  layout = "compact",
 }: {
   defaultValues: SourceFormValues;
   pending: boolean;
@@ -103,6 +124,7 @@ function SourceForm({
   submitIcon: React.ReactNode;
   onSubmit: (input: SourceFormValues & { config?: JsonObject }) => void;
   onCancel?: () => void;
+  layout?: "compact" | "rail";
 }) {
   const pendingConfig = React.useRef<JsonObject | undefined>(undefined);
   const form = useForm({
@@ -125,7 +147,7 @@ function SourceForm({
 
   return (
     <form
-      className="flex flex-col gap-2"
+      className={layout === "rail" ? "flex flex-col gap-5" : "flex flex-col gap-2"}
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -136,7 +158,7 @@ function SourceForm({
         void form.handleSubmit();
       }}
     >
-      <FieldGroup className="gap-2">
+      <FieldGroup className={layout === "rail" ? "gap-5" : "gap-2"}>
         <form.Field
           name="name"
           validators={{
@@ -147,16 +169,24 @@ function SourceForm({
         >
           {(field) => (
             <UiField data-invalid={field.state.meta.errors.length > 0}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel className={labelClassName(layout)} htmlFor={field.name}>
+                Name
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
-                placeholder="Grafana prod"
+                className={inputClassName(layout)}
+                placeholder={layout === "rail" ? "e.g. Sentry Production" : "Production Grafana"}
                 value={field.state.value}
                 aria-invalid={field.state.meta.errors.length > 0}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
+              {layout === "compact" ? (
+                <FieldDescription>
+                  Use the upstream system name operators will recognize during triage.
+                </FieldDescription>
+              ) : null}
               <FieldError
                 errors={field.state.meta.errors.map((error) => ({
                   message: String(error),
@@ -168,11 +198,14 @@ function SourceForm({
         <form.Field name="provider">
           {(field) => (
             <UiField>
-              <FieldLabel htmlFor={field.name}>Provider</FieldLabel>
+              <FieldLabel className={labelClassName(layout)} htmlFor={field.name}>
+                Provider
+              </FieldLabel>
               <NativeSelect
                 id={field.name}
                 name={field.name}
                 className="w-full"
+                selectClassName={inputClassName(layout)}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) =>
@@ -181,33 +214,65 @@ function SourceForm({
                   )
                 }
               >
-                <NativeSelectOption value="generic">Generic</NativeSelectOption>
+                <NativeSelectOption value="generic">Generic Webhook</NativeSelectOption>
                 <NativeSelectOption value="grafana">Grafana</NativeSelectOption>
                 <NativeSelectOption value="signoz">SigNoz</NativeSelectOption>
                 <NativeSelectOption value="uptime_kuma">Uptime Kuma</NativeSelectOption>
                 <NativeSelectOption value="alertmanager">Alertmanager</NativeSelectOption>
               </NativeSelect>
+              {layout === "compact" ? (
+                <FieldDescription>
+                  Provider parsers normalize inbound webhook payloads.
+                </FieldDescription>
+              ) : null}
             </UiField>
           )}
         </form.Field>
       </FieldGroup>
-      <FormTextField
-        label={onCancel ? "Provider secret override" : "Provider secret"}
-        name="signingSecret"
-        type="password"
-        placeholder={onCancel ? "Leave blank to keep current" : "optional shared secret"}
-      />
+      <UiField>
+        <FieldLabel
+          className={labelClassName(layout)}
+          htmlFor={onCancel ? "edit-signingSecret" : "create-signingSecret"}
+        >
+          {onCancel ? "Signing secret override" : "Signing secret"}
+        </FieldLabel>
+        <Input
+          id={onCancel ? "edit-signingSecret" : "create-signingSecret"}
+          name="signingSecret"
+          type="password"
+          className={inputClassName(layout)}
+          placeholder={onCancel ? "Leave blank to keep current" : "Enter secret or leave blank"}
+        />
+        <FieldDescription>
+          Stored server-side only. Leave blank when the provider does not sign payloads.
+        </FieldDescription>
+      </UiField>
       <div className={onCancel ? "grid grid-cols-2 gap-2" : undefined}>
         {onCancel ? (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
             Cancel
           </Button>
         ) : null}
-        <Button type="submit" size="sm" disabled={pending} className={onCancel ? "" : "w-full"}>
+        <Button
+          type="submit"
+          size={layout === "rail" ? "lg" : "sm"}
+          disabled={pending}
+          className={onCancel ? "" : "w-full font-bold"}
+        >
           {submitIcon}
           {submitLabel}
         </Button>
       </div>
     </form>
   );
+}
+
+function labelClassName(layout: "compact" | "rail"): string | undefined {
+  return layout === "rail"
+    ? "text-muted-foreground text-[11px] font-semibold tracking-wider uppercase"
+    : undefined;
+}
+
+function inputClassName(layout: "compact" | "rail"): string | undefined {
+  return layout === "rail" ? "h-12 bg-background px-3 text-sm" : undefined;
 }

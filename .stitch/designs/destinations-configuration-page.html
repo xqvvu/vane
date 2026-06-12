@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Destinations | Vane Console</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600&family=Courier+Prime&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&family=Nunito+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-tertiary-fixed-variant": "#454748",
+                        "surface-container-high": "#ebe7e7",
+                        "primary-fixed": "#ffdbcc",
+                        "on-tertiary-container": "#f3f3f4",
+                        "on-primary-fixed": "#351000",
+                        "on-error": "#ffffff",
+                        "border": "#e5e5e5",
+                        "error-container": "#ffdad6",
+                        "outline": "#8b7266",
+                        "inverse-on-surface": "#f3f0ef",
+                        "tertiary-fixed": "#e2e2e3",
+                        "sidebar-primary": "#e17100",
+                        "inverse-surface": "#313030",
+                        "surface-variant": "#e5e2e1",
+                        "surface-container-low": "#f6f3f2",
+                        "secondary-fixed": "#e3e2e2",
+                        "surface-bright": "#fcf8f8",
+                        "primary": "#943b00",
+                        "focus-ring": "#a1a1a1",
+                        "secondary": "#5e5e5e",
+                        "on-secondary-fixed-variant": "#464747",
+                        "surface-dim": "#dcd9d9",
+                        "primary-fixed-dim": "#ffb693",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#646464",
+                        "surface": "#fcf8f8",
+                        "on-background": "#1c1b1b",
+                        "tertiary-container": "#6e6f70",
+                        "primary-container": "#bb4d00",
+                        "on-surface-variant": "#574238",
+                        "sidebar-surface": "#fafafa",
+                        "on-primary-container": "#fff1eb",
+                        "tertiary": "#555758",
+                        "secondary-container": "#e3e2e2",
+                        "on-secondary": "#ffffff",
+                        "muted-surface": "#f5f5f5",
+                        "surface-tint": "#a04100",
+                        "outline-variant": "#dfc0b3",
+                        "surface-container": "#f0edec",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#ffffff",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-primary": "#ffb693",
+                        "on-tertiary-fixed": "#1a1c1d",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "surface-container-highest": "#e5e2e1",
+                        "primary-foreground": "#fffbeb",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1c1b1b",
+                        "destructive": "#e7000b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "0.75rem",
+                        "container-margin": "1rem",
+                        "row-gap": "0.5rem",
+                        "panel-padding": "1rem",
+                        "compact-gap": "0.25rem"
+                    },
+                    "fontFamily": {
+                        "panel-title": ["Nunito Sans"],
+                        "headline-lg": ["Nunito Sans"],
+                        "body-sm": ["Noto Sans"],
+                        "table-header": ["Noto Sans"],
+                        "body-md": ["Noto Sans"],
+                        "code-sm": ["Courier Prime"],
+                        "headline-md": ["Nunito Sans"]
+                    },
+                    "fontSize": {
+                        "panel-title": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "headline-lg": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "table-header": ["11px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "code-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d1d1;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center px-gutter w-full sticky top-0 z-50 bg-background border-b border-border h-14">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md text-primary tracking-tight">Vane Console</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Events</a>
+<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Deliveries</a>
+<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Sources</a>
+<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Routes</a>
+<a class="text-primary border-b-2 border-primary font-bold py-4 font-body-md text-body-md" href="#">Destinations</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150">
+<span class="material-symbols-outlined">info</span>
+</button>
+<button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-surface-container overflow-hidden border border-border">
+<img alt="User profile avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY1j0PqoIoMgEV9USmgA1JKJ_qaA659HGPp-l9jWbklxakFtcDPxDhfubw0tzpZx0Wgq_W5OiOrITYyDs8yeuS_7uZLD3uA0SGy-zjMcL2nfudWpzn3tTNpfo4B6hMsdV-aDCdmDb01JavYYGDgGMK6nTOUCg07RBTqAMWY5BMW95bJ7nBFMwSVSdUVSxqCAUee-jQdSWd8Lp7ydTkdqxdj_kPv-rkgoQnGm3wz-Xt5wUXlnGhNxbEO-lbWL4WC3BD-aq24u6CpbE"/>
+</div>
+</div>
+</header>
+<main class="flex flex-col md:flex-row min-h-[calc(100vh-3.5rem)]">
+<!-- Left Column: Primary Content (70%) -->
+<section class="flex-1 md:w-[70%] bg-background p-panel-padding border-r border-border">
+<!-- Page Toolbar -->
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Destinations</h1>
+<span class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm rounded-full">4 configured</span>
+</div>
+<p class="text-secondary font-body-md text-body-md mt-1">Manage outbound notification targets, templates, and safe secret handling.</p>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-border hover:bg-muted-surface rounded font-body-md text-body-md transition-all">
+<span class="material-symbols-outlined">refresh</span>
+                    Refresh
+                </button>
+</div>
+<!-- Notice Area -->
+<div class="space-y-row-gap mb-8">
+<!-- Test Result Alert -->
+<div class="flex items-center gap-3 p-3 bg-surface-container-low border-l-4 border-primary-container">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<div class="flex gap-2 font-body-md text-body-md">
+<span class="font-bold text-on-surface">Test result:</span>
+<span class="text-secondary">'Slack Ops' -</span>
+<span class="text-primary font-semibold">Accepted (200)</span>
+</div>
+</div>
+<!-- Preview Area -->
+<div class="border border-border bg-muted-surface p-3">
+<div class="flex items-center gap-2 mb-2 text-on-surface-variant">
+<span class="material-symbols-outlined">preview</span>
+<span class="font-panel-title text-panel-title">Preview: Feishu Destination</span>
+</div>
+<pre class="font-code-sm text-code-sm bg-surface-container-lowest p-3 border border-border overflow-x-auto text-on-secondary-fixed">{
+  "destination_id": "dst_01hj9v",
+  "name": "Feishu Alerts",
+  "kind": "feishu",
+  "config": {
+    "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/[REDACTED]",
+    "secret": "[REDACTED]",
+    "msg_type": "interactive"
+  },
+  "retry_policy": "standard_exponential",
+  "state": "enabled"
+}</pre>
+</div>
+</div>
+<!-- Primary Destinations Table -->
+<div class="overflow-hidden border border-border">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-border">
+<tr>
+<th class="px-3 py-2 font-table-header text-table-header text-secondary uppercase tracking-wider">Destination</th>
+<th class="px-3 py-2 font-table-header text-table-header text-secondary uppercase tracking-wider">Kind</th>
+<th class="px-3 py-2 font-table-header text-table-header text-secondary uppercase tracking-wider">Safe Config</th>
+<th class="px-3 py-2 font-table-header text-table-header text-secondary uppercase tracking-wider">State</th>
+<th class="px-3 py-2 font-table-header text-table-header text-secondary uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border">
+<!-- Row 1 -->
+<tr class="hover:bg-muted-surface transition-colors">
+<td class="px-3 py-2.5">
+<div class="flex flex-col">
+<span class="font-semibold text-on-background">Slack Ops</span>
+<span class="font-code-sm text-[10px] text-secondary">ID: 01hj9v...</span>
+</div>
+</td>
+<td class="px-3 py-2.5">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant font-body-sm text-body-sm rounded">Slack</span>
+</td>
+<td class="px-3 py-2.5 text-secondary font-body-sm">Stored server-side</td>
+<td class="px-3 py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-primary-fixed text-on-primary-fixed-variant font-body-sm text-body-sm rounded font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                    Enabled
+                                </span>
+</td>
+<td class="px-3 py-2.5 text-right space-x-1">
+<button class="p-1 hover:text-primary transition-colors" title="Test"><span class="material-symbols-outlined">send</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Preview"><span class="material-symbols-outlined">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Edit"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Toggle"><span class="material-symbols-outlined">toggle_on</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-muted-surface transition-colors">
+<td class="px-3 py-2.5">
+<div class="flex flex-col">
+<span class="font-semibold text-on-background">Feishu Marketing</span>
+<span class="font-code-sm text-[10px] text-secondary">ID: 02xk2m...</span>
+</div>
+</td>
+<td class="px-3 py-2.5">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant font-body-sm text-body-sm rounded">Feishu</span>
+</td>
+<td class="px-3 py-2.5 text-secondary font-body-sm">Stored server-side</td>
+<td class="px-3 py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-primary-fixed text-on-primary-fixed-variant font-body-sm text-body-sm rounded font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                    Enabled
+                                </span>
+</td>
+<td class="px-3 py-2.5 text-right space-x-1">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">send</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">toggle_on</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-muted-surface transition-colors">
+<td class="px-3 py-2.5">
+<div class="flex flex-col">
+<span class="font-semibold text-on-background">PostgreSQL Webhook</span>
+<span class="font-code-sm text-[10px] text-secondary">ID: 03ll5z...</span>
+</div>
+</td>
+<td class="px-3 py-2.5">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant font-body-sm text-body-sm rounded">Webhook</span>
+</td>
+<td class="px-3 py-2.5 text-secondary font-body-sm">Stored server-side</td>
+<td class="px-3 py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-secondary-container text-on-secondary-container font-body-sm text-body-sm rounded font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                    Disabled
+                                </span>
+</td>
+<td class="px-3 py-2.5 text-right space-x-1">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">send</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined">toggle_off</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Right Column: Settings/Form (30%) -->
+<aside class="md:w-[30%] bg-muted-surface p-panel-padding">
+<div class="sticky top-20">
+<div class="flex items-center gap-2 mb-6 text-on-surface">
+<span class="material-symbols-outlined text-primary">add_circle</span>
+<h2 class="font-headline-md text-headline-md">New Destination</h2>
+</div>
+<form class="space-y-4">
+<div class="space-y-1">
+<label class="block font-panel-title text-panel-title text-on-surface-variant">Name</label>
+<input class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded" placeholder="e.g. Production Slack" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="block font-panel-title text-panel-title text-on-surface-variant">Kind</label>
+<select class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23555%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1rem_1rem] bg-[right_0.5rem_center] bg-no-repeat">
+<option>Slack</option>
+<option>Feishu</option>
+<option>Email</option>
+<option>Webhook</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="block font-panel-title text-panel-title text-on-surface-variant">Webhook URL</label>
+<div class="relative">
+<input class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded" type="password" value="••••••••••••••••"/>
+<span class="absolute right-2 top-1.5 material-symbols-outlined text-secondary cursor-pointer">visibility_off</span>
+</div>
+</div>
+<div class="space-y-1">
+<label class="block font-panel-title text-panel-title text-on-surface-variant">Feishu Secret</label>
+<input class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded" placeholder="Optional" type="password"/>
+</div>
+<div class="pt-4 border-t border-border">
+<button class="w-full h-10 bg-primary text-on-primary font-bold rounded shadow-sm hover:bg-primary-container transition-colors duration-150" type="submit">
+                            Create Destination
+                        </button>
+</div>
+</form>
+<div class="mt-8 p-4 bg-surface-container-high rounded border border-border">
+<h3 class="font-panel-title text-panel-title mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">security</span>
+                        Security Policy
+                    </h3>
+<p class="font-body-sm text-body-sm text-on-tertiary-fixed-variant">
+                        All configuration secrets are encrypted at rest using AES-256-GCM.
+                        Once saved, tokens are redacted in the UI and only accessible to the engine worker processes.
+                    </p>
+</div>
+</div>
+</aside>
+</main>
+<footer class="h-8 border-t border-border bg-surface-container-lowest flex items-center justify-between px-gutter">
+<div class="flex items-center gap-4 text-secondary font-body-sm text-[11px]">
+<span>Version 1.4.2-stable</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> System Healthy</span>
+</div>
+<div class="text-secondary font-body-sm text-[11px]">
+            © 2024 Vane Console. Operationalized Awareness.
+        </div>
+</footer>
+<script>
+        // Micro-interaction for refresh button rotation
+        const refreshBtn = document.querySelector('button:has(.material-symbols-outlined:contains("refresh"))');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                const icon = refreshBtn.querySelector('.material-symbols-outlined');
+                icon.style.transition = 'transform 0.5s ease-in-out';
+                icon.style.transform = 'rotate(360deg)';
+                setTimeout(() => {
+                    icon.style.transition = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                }, 500);
+            });
+        }
+    </script>
+</body></html>
