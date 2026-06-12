@@ -3,12 +3,7 @@ import { ClientOnly, Link } from "@tanstack/react-router";
 import * as React from "react";
 
 import { Button } from "#/components/ui/button.tsx";
-
-const DashboardUserMenu = React.lazy(async () => {
-  const module = await import("#/shell/dashboard-user-menu.tsx");
-
-  return { default: module.DashboardUserMenu };
-});
+import { DashboardUserMenu } from "#/shell/dashboard-user-menu.tsx";
 
 export interface DashboardHeaderProps {
   user: {
@@ -49,8 +44,8 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <Button type="button" variant="ghost" size="icon-sm" title="Help">
             <RiQuestionLine aria-hidden />
           </Button>
-          <ClientOnly>
-            <React.Suspense fallback={null}>
+          <ClientOnly fallback={<DashboardUserMenu.Skeleton />}>
+            <React.Suspense fallback={<DashboardUserMenu.Skeleton />}>
               <DashboardUserMenu user={user} />
             </React.Suspense>
           </ClientOnly>

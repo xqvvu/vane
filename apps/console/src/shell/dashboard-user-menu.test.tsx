@@ -5,10 +5,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
+import { DashboardUserMenuClient } from "#/shell/dashboard-user-menu-impl.tsx";
 import { DashboardUserMenu } from "#/shell/dashboard-user-menu.tsx";
 
 const testState = vi.hoisted(() => ({
   navigate: vi.fn<() => Promise<void>>(async () => {}),
+  toast: {
+    error: vi.fn<(title: string, options?: { description?: string }) => void>(),
+    success: vi.fn<(title: string, options?: { description?: string }) => void>(),
+  },
   authClient: {
     signOut: vi.fn<(input?: { fetchOptions?: { onSuccess?: () => void | Promise<void> } }) => void>(
       (input) => {
@@ -24,6 +29,10 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("#/lib/auth.client.ts", () => ({
   authClient: testState.authClient,
+}));
+
+vi.mock("sonner", () => ({
+  toast: testState.toast,
 }));
 
 vi.mock("#/components/ui/avatar.tsx", () => ({
@@ -75,6 +84,8 @@ describe("dashboard user menu", () => {
   afterEach(() => {
     cleanup();
     testState.navigate.mockClear();
+    testState.toast.error.mockClear();
+    testState.toast.success.mockClear();
     testState.authClient.signOut.mockClear();
   });
 
@@ -95,7 +106,7 @@ describe("dashboard user menu", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <DashboardUserMenu user={session.user} />
+        <DashboardUserMenuClient user={session.user} />
       </QueryClientProvider>,
     );
 
@@ -107,6 +118,9 @@ describe("dashboard user menu", () => {
       expect(invalidateQueries).toHaveBeenCalledWith({
         queryKey: authQueryKeys.all,
       });
+      expect(testState.toast.success).toHaveBeenCalledWith("Signed out", {
+        description: "You have been returned to the login page.",
+      });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/login",
         search: {
@@ -115,5 +129,11 @@ describe("dashboard user menu", () => {
         replace: true,
       });
     });
+  });
+
+  it("exposes a colocated skeleton", () => {
+    const { container } = render(<DashboardUserMenu.Skeleton />);
+
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
   });
 });

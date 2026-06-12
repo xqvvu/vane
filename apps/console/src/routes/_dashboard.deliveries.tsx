@@ -8,6 +8,7 @@ import {
   mergeOperationSearch,
   operationFiltersFromSearch,
 } from "#/features/operations/model/operation-search.ts";
+import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export const Route = createFileRoute("/_dashboard/deliveries")({
   validateSearch: (search) => DashboardOperationSearchSchema.parse(search),
@@ -23,6 +24,9 @@ export const Route = createFileRoute("/_dashboard/deliveries")({
     return { filters };
   },
   component: DeliveriesRoute,
+  pendingComponent: DashboardContentLayout.Skeleton,
+  pendingMs: 120,
+  pendingMinMs: 250,
 });
 
 function DeliveriesRoute() {

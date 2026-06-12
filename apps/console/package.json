@@ -18,7 +18,7 @@
   "dependencies": {
     "@base-ui/react": "catalog:ui",
     "@faker-js/faker": "catalog:",
-    "@fontsource-variable/noto-sans": "catalog:ui",
+    "@fontsource-variable/noto-sans-sc": "catalog:ui",
     "@fontsource-variable/nunito-sans": "catalog:ui",
     "@remixicon/react": "catalog:ui",
     "@t3-oss/env-core": "catalog:",
@@ -46,6 +46,7 @@
     "react": "catalog:react",
     "react-dom": "catalog:react",
     "smol-toml": "catalog:",
+    "sonner": "catalog:",
     "tailwind-merge": "catalog:tailwind",
     "tailwindcss": "catalog:tailwind",
     "tw-animate-css": "catalog:tailwind",

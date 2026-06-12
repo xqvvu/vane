@@ -2,6 +2,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import { useSuspenseQuery, type QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
+import { Toaster } from "#/components/ui/sonner.tsx";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import TanStackQueryDevtools from "#/integrations/tanstack/query/devtools";
 import TanStackRouterDevtools from "#/integrations/tanstack/router/devtools";
@@ -48,6 +49,7 @@ function Root({ children }: { children: React.ReactNode }) {
       <body>
         {children}
 
+        <Toaster position="top-right" />
         <TanStackDevtools
           config={{
             position: "bottom-right",

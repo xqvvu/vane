@@ -6,6 +6,7 @@ import {
   authBootstrapQueryOptions,
   dashboardSessionQueryOptions,
 } from "#/features/auth/api/auth.queries.ts";
+import { LoginForm } from "#/routes/-login-form.tsx";
 
 const LoginSearchSchema = z.object({
   redirect: z.string().catch("/"),
@@ -36,19 +37,13 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-const LoginForm = React.lazy(async () => {
-  const module = await import("#/routes/-login-form.tsx");
-
-  return { default: module.LoginForm };
-});
-
 function LoginPage() {
   const search = Route.useSearch();
 
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-5 py-8">
-      <ClientOnly>
-        <React.Suspense fallback={null}>
+      <ClientOnly fallback={<LoginForm.Skeleton />}>
+        <React.Suspense fallback={<LoginForm.Skeleton />}>
           <LoginForm redirectTo={search.redirect || "/"} />
         </React.Suspense>
       </ClientOnly>

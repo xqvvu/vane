@@ -26,6 +26,9 @@ export const Route = createFileRoute("/_dashboard")({
   component: DashboardRouteLayout,
   errorComponent: DashboardRouteError,
   notFoundComponent: DashboardNotFoundPage,
+  pendingComponent: DashboardLayout.Skeleton,
+  pendingMs: 120,
+  pendingMinMs: 250,
 });
 
 function DashboardRouteLayout() {

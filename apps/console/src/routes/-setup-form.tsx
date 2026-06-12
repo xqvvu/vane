@@ -1,209 +1,54 @@
-import "@tanstack/react-start/client-only";
-import { RiErrorWarningLine, RiUserAddLine } from "@remixicon/react";
-import { useForm } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "#/components/ui/card.tsx";
-import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
-import { Input } from "#/components/ui/input.tsx";
-import { authQueryKeys } from "#/features/auth/api/auth.queries.ts";
-import { authClient } from "#/lib/auth.client.ts";
+import { Card, CardContent, CardHeader } from "#/components/ui/card.tsx";
+import { Skeleton } from "#/components/ui/skeleton.tsx";
+import { cn } from "#/lib/utils.ts";
 
-type SetupFormValues = {
-  name: string;
-  email: string;
-  password: string;
-};
+export interface SetupFormProps {
+  redirectTo: string;
+}
 
-const defaultValues: SetupFormValues = {
-  name: "Vane Owner",
-  email: "",
-  password: "",
-};
+const SetupFormClient = React.lazy(
+  createClientOnlyFn(async () => {
+    const module = await import("#/routes/-setup-form-impl.tsx");
 
-export function SetupForm({ redirectTo }: { redirectTo: string }) {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [error, setError] = React.useState<string | null>(null);
-  const form = useForm({
-    defaultValues,
-    onSubmit: async ({ value }) => {
-      setError(null);
+    return { default: module.SetupFormClient };
+  }),
+);
 
-      try {
-        const result = await authClient.signUp.email({
-          name: value.name.trim() || defaultValues.name,
-          email: value.email.trim(),
-          password: value.password,
-        });
+function SetupFormRoot(props: SetupFormProps) {
+  return <SetupFormClient {...props} />;
+}
 
-        if (result.error) {
-          setError(result.error.message ?? "Setup failed");
-          return;
-        }
-
-        await queryClient.invalidateQueries({
-          queryKey: authQueryKeys.all,
-        });
-        await navigate({
-          to: redirectTo as never,
-        });
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : String(caught));
-      }
-    },
-  });
-
+function SetupFormSkeleton() {
   return (
-    <Card className="w-full max-w-sm" data-testid="setup-card">
+    <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Create owner account</CardTitle>
-        <CardDescription>Register the first dashboard user for this deployment.</CardDescription>
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-72 max-w-full" />
       </CardHeader>
       <CardContent>
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            void form.handleSubmit();
-          }}
-        >
-          {error ? (
-            <Alert variant="destructive">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Setup failed</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <FieldGroup>
-            <form.Field
-              name="name"
-              validators={{
-                onSubmit: ({ value }) =>
-                  value.trim().length === 0 ? "Name is required" : undefined,
-              }}
-            >
-              {(field) => (
-                <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    autoComplete="name"
-                    required
-                    value={field.state.value}
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.currentTarget.value)}
-                  />
-                  <FieldError
-                    errors={field.state.meta.errors.map((fieldError) => ({
-                      message: String(fieldError),
-                    }))}
-                  />
-                </UiField>
-              )}
-            </form.Field>
-
-            <form.Field
-              name="email"
-              validators={{
-                onSubmit: ({ value }) => {
-                  const email = value.trim();
-
-                  if (email.length === 0) {
-                    return "Email is required";
-                  }
-
-                  return email.includes("@") ? undefined : "Enter a valid email address";
-                },
-              }}
-            >
-              {(field) => (
-                <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="email"
-                    autoComplete="email"
-                    placeholder="admin@example.test"
-                    required
-                    value={field.state.value}
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.currentTarget.value)}
-                  />
-                  <FieldError
-                    errors={field.state.meta.errors.map((fieldError) => ({
-                      message: String(fieldError),
-                    }))}
-                  />
-                </UiField>
-              )}
-            </form.Field>
-
-            <form.Field
-              name="password"
-              validators={{
-                onSubmit: ({ value }) =>
-                  value.length < 8 ? "Password must be at least 8 characters" : undefined,
-              }}
-            >
-              {(field) => (
-                <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="password"
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                    value={field.state.value}
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.currentTarget.value)}
-                  />
-                  <FieldError
-                    errors={field.state.meta.errors.map((fieldError) => ({
-                      message: String(fieldError),
-                    }))}
-                  />
-                </UiField>
-              )}
-            </form.Field>
-
-            <form.Subscribe
-              selector={(state) => ({
-                canSubmit: state.canSubmit,
-                isSubmitting: state.isSubmitting,
-              })}
-            >
-              {({ canSubmit, isSubmitting }) => (
-                <UiField>
-                  <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                    <RiUserAddLine data-icon="inline-start" aria-hidden />
-                    {isSubmitting ? "Creating owner" : "Create owner"}
-                  </Button>
-                </UiField>
-              )}
-            </form.Subscribe>
-          </FieldGroup>
-        </form>
+        <div className="flex flex-col gap-4">
+          <FormFieldSkeleton labelClassName="w-12" />
+          <FormFieldSkeleton labelClassName="w-14" />
+          <FormFieldSkeleton labelClassName="w-20" />
+          <Skeleton className="h-8 w-full" />
+        </div>
       </CardContent>
     </Card>
   );
 }
+
+function FormFieldSkeleton({ labelClassName }: { labelClassName: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={cn("h-3", labelClassName)} />
+      <Skeleton className="h-8 w-full" />
+    </div>
+  );
+}
+
+export const SetupForm = Object.assign(SetupFormRoot, {
+  Skeleton: SetupFormSkeleton,
+});

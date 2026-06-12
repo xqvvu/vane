@@ -6,6 +6,7 @@ import {
   authBootstrapQueryOptions,
   dashboardSessionQueryOptions,
 } from "#/features/auth/api/auth.queries.ts";
+import { SetupForm } from "#/routes/-setup-form.tsx";
 
 const SetupSearchSchema = z.object({
   redirect: z.string().catch("/"),
@@ -36,19 +37,13 @@ export const Route = createFileRoute("/setup")({
   component: SetupPage,
 });
 
-const SetupForm = React.lazy(async () => {
-  const module = await import("#/routes/-setup-form.tsx");
-
-  return { default: module.SetupForm };
-});
-
 function SetupPage() {
   const search = Route.useSearch();
 
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-5 py-8">
-      <ClientOnly>
-        <React.Suspense fallback={null}>
+      <ClientOnly fallback={<SetupForm.Skeleton />}>
+        <React.Suspense fallback={<SetupForm.Skeleton />}>
           <SetupForm redirectTo={search.redirect || "/"} />
         </React.Suspense>
       </ClientOnly>
