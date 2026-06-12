@@ -96,7 +96,7 @@ integrations        TanStack Query/Router, Better Auth, and library adapters
 routes              file routes, layouts, validateSearch, loaders, thin screens
 application         server functions, server usecases, container, request context
 infra               SQLite and server-only runtime infrastructure
-lib                 small shared helpers; split .server/.client when needed
+lib                 small shared helpers; split same-name .server/.client pairs only when needed
 ```
 
 Route files should own URL concerns:
@@ -132,8 +132,19 @@ Server functions are the client/server boundary for console data.
 
 - `*.functions.ts` files may be imported by client-safe route, feature, query,
   and component code.
-- `*.server.ts` files are server-only and must not be imported by client-safe
-  code.
+- Server-only modules must use exactly one TanStack Start import-protection
+  mechanism: either a `.server.ts(x)` suffix or
+  `import "@tanstack/react-start/server-only";`.
+- Use `.server.ts(x)` / `.client.ts(x)` suffixes only when matching files need
+  the same basename to distinguish environment-specific implementations, such
+  as `auth.server.ts` and `auth.client.ts`.
+- If there is no same-basename server/client pair, keep the normal filename and
+  use the `server-only` or `client-only` side-effect import instead.
+- Do not also add `import "@tanstack/react-start/server-only";` inside
+  `.server.ts(x)` files, or `import "@tanstack/react-start/client-only";` inside
+  `.client.ts(x)` files.
+- `*.server.ts(x)` files and modules marked with `server-only` are server-only
+  and must not be imported by client-safe code.
 - `*.schema.ts`, `*.types.ts`, and `*.model.ts` may be shared only when they do
   not import server-only modules.
 - Server functions must validate inputs and perform their own server-side auth
@@ -272,10 +283,13 @@ Use shadcn for shared UI primitives and app composition.
 - Redact raw payloads and headers before ordinary UI display or logging.
 - Do not expose secrets through route loader data, client components, query
   data, route context, serialized route data, TOML exports, or console logs.
-- Mark secret-touching and runtime infrastructure files with
-  `import "@tanstack/react-start/server-only";`.
-- Mark browser-only modules with `import "@tanstack/react-start/client-only";`
-  when they depend on browser APIs or must never run on the server.
+- Protect secret-touching and runtime infrastructure files with TanStack Start
+  import protection. Prefer `import "@tanstack/react-start/server-only";` unless
+  the file is one side of a same-basename server/client pair that needs a
+  `.server.ts(x)` suffix.
+- Protect browser-only modules with TanStack Start import protection. Prefer
+  `import "@tanstack/react-start/client-only";` unless the file is one side of a
+  same-basename server/client pair that needs a `.client.ts(x)` suffix.
 - Treat `beforeLoad` route guards as user-experience guards only. They do not
   replace server-side authorization in server functions or API routes.
 - Validate all external input, config blobs, route rules, TOML input, webhook
@@ -304,6 +318,9 @@ Use shadcn for shared UI primitives and app composition.
   current compiler settings.
 - Keep server-only imports out of client components, feature UI, route loaders,
   query option files, and serialized route data.
+- Keep `.server` / `.client` suffixes rare and pair-driven. For one-off
+  server-only or browser-only modules, use a normal filename plus the matching
+  TanStack Start side-effect import.
 
 ## Toolchain
 

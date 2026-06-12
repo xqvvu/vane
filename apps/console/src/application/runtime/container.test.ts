@@ -7,7 +7,7 @@ import {
   disposeApplicationContainer,
   getApplicationContainer,
   type ApplicationContainerOptions,
-} from "#/application/runtime/container.server.ts";
+} from "#/application/runtime/container.ts";
 import { WebhookIntakeService } from "#/application/services/intake.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 

@@ -5,7 +5,7 @@ import * as React from "react";
 import { Button } from "#/components/ui/button.tsx";
 
 const DashboardUserMenu = React.lazy(async () => {
-  const module = await import("#/app/shell/dashboard-user-menu.client.tsx");
+  const module = await import("#/app/shell/dashboard-user-menu.tsx");
 
   return { default: module.DashboardUserMenu };
 });

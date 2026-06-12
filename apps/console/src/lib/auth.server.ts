@@ -1,4 +1,3 @@
-import "@tanstack/react-start/server-only";
-import { getApplicationContainer } from "#/application/runtime/container.server.ts";
+import { getApplicationContainer } from "#/application/runtime/container.ts";
 
 export const auth = getApplicationContainer().getAuth();

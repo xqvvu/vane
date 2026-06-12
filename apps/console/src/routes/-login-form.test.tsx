@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { LoginForm } from "#/routes/-login-form.client.tsx";
+import { LoginForm } from "#/routes/-login-form.tsx";
 
 const testState = vi.hoisted(() => ({
   navigate: vi.fn<() => Promise<void>>(async () => {}),

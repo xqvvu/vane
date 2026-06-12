@@ -2,7 +2,7 @@ import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { ApplicationContainer, VaneAuth } from "#/application/runtime/container.server.ts";
+import type { ApplicationContainer, VaneAuth } from "#/application/runtime/container.ts";
 import {
   DashboardAuthError,
   DashboardAuthorizationError,
@@ -11,7 +11,7 @@ import {
 import {
   createWebhookRequestContext,
   requireDashboardRequestContext,
-} from "#/application/runtime/request-context.server.ts";
+} from "#/application/runtime/request-context.ts";
 
 const session: DashboardSession = {
   session: {

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { requireDashboardRequestContext } from "#/application/runtime/request-context.server.ts";
+import { requireDashboardRequestContext } from "#/application/runtime/request-context.ts";
 import {
   CreateDestinationCommandSchema,
   CreateRouteCommandSchema,

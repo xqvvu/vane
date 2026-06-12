@@ -12,7 +12,7 @@ const container = {
   ensureDeliveryWorkerRunner: vi.fn<() => typeof runner>(() => runner),
 };
 
-vi.mock("#/application/runtime/container.server.ts", () => ({
+vi.mock("#/application/runtime/container.ts", () => ({
   getApplicationContainer: () => container,
 }));
 

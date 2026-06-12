@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { AlertSeveritySchema, AlertStatusSchema, DeliveryStateSchema } from "@vane/core";
 import { z } from "zod";
 
-import { requireDashboardRequestContext } from "#/application/runtime/request-context.server.ts";
+import { requireDashboardRequestContext } from "#/application/runtime/request-context.ts";
 
 const ListOperationsInputSchema = z
   .object({

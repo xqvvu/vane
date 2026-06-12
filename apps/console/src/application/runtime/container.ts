@@ -26,8 +26,8 @@ import { env } from "#/env.ts";
 import { createSqliteDatabase, type SqliteDatabase } from "#/infra/sqlite/connection.ts";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
-import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.server.ts";
-import { assignOwnerRoleBeforeUserCreate } from "#/lib/auth-owner-bootstrap.server.ts";
+import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";
+import { assignOwnerRoleBeforeUserCreate } from "#/lib/auth-owner-bootstrap.ts";
 
 export interface VaneAuth {
   handler(request: Request): Promise<Response>;

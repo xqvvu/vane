@@ -53,7 +53,7 @@ apps/console/src/
       dashboard-shell.tsx
       dashboard-sidebar.tsx
       dashboard-header.tsx
-      dashboard-user-menu.client.tsx
+      dashboard-user-menu.tsx
   features/
     sources/
       model.ts
@@ -94,9 +94,9 @@ apps/console/src/
 - 渲染薄入口：把 loader/search/params 交给 feature screen 或 app shell，不在 route 文件里写
   大型表单、表格、详情面板和业务状态机。
 
-`routes` 不直接导入 `#/infra/*`、`#/application/runtime/container.server.ts`、SQLite store、仓储、
-worker、secret helper 或任何 `*.server.ts` 基础设施。route 文件可以导入 server functions
-和 feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
+`routes` 不直接导入 `#/infra/*`、`#/application/runtime/container.ts`、SQLite store、仓储、
+worker、secret helper 或任何 server-only 基础设施。route 文件可以导入 server functions 和
+feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
 
 ### `features`
 
@@ -205,7 +205,7 @@ route validateSearch/params
 route loader 的职责是把 URL 状态转成 query 输入，并通过 QueryClient
 `ensureQueryData(queryOptions(...))` 预取需要的数据。loader 不直接读
 `openSqliteStore()`、`getApplicationContainer()`、repositories、worker runner 或任何
-`*.server.ts` infra 模块。
+server-only infra 模块。
 
 查询规则：
 

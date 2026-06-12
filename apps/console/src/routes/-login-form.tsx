@@ -1,3 +1,4 @@
+import "@tanstack/react-start/client-only";
 import { RiLoginCircleLine, RiUserAddLine } from "@remixicon/react";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";

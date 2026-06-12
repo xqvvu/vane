@@ -24,7 +24,7 @@ export const Route = createFileRoute("/login")({
 });
 
 const LoginForm = React.lazy(async () => {
-  const module = await import("#/routes/-login-form.client.tsx");
+  const module = await import("#/routes/-login-form.tsx");
 
   return { default: module.LoginForm };
 });

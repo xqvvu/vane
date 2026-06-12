@@ -1,7 +1,7 @@
 import { APIError } from "better-auth/api";
 import { describe, expect, it } from "vitest";
 
-import { assignOwnerRoleBeforeUserCreate } from "#/lib/auth-owner-bootstrap.server.ts";
+import { assignOwnerRoleBeforeUserCreate } from "#/lib/auth-owner-bootstrap.ts";
 
 const user = {
   id: "user-1",

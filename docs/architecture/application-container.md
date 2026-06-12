@@ -31,7 +31,7 @@ Vane 的 MVP 约束不变：单进程、SQLite-first、server-only 后端运行�
 
 ## 2. App Container 负责什么
 
-`apps/console/src/application/runtime/container.server.ts` 是默认运行时的 composition root。它只
+`apps/console/src/application/runtime/container.ts` 是默认运行时的 composition root。它只
 在服务端导入，负责组装这些长期依赖：
 
 默认 container 使用 ESM module cache 做懒加载：第一次调用 `getApplicationContainer()`
@@ -53,9 +53,9 @@ delivery worker runner，并关闭已打开的 SQLite store / Better Auth databa
 ```txt
 apps/console/src/application/
   runtime/
-    container.server.ts       # 默认 composition root，缓存长期依赖
-    request-context.server.ts # 每次请求创建 dashboard/webhook context
-    dashboard-auth.ts         # dashboard session 与角色检查
+    container.ts         # 默认 composition root，缓存长期依赖
+    request-context.ts   # 每次请求创建 dashboard/webhook context
+    dashboard-auth.ts    # dashboard session 与角色检查
   functions/
     *.functions.ts            # TanStack Start server functions，入口薄
   services/
@@ -100,7 +100,7 @@ return service.acceptWebhook({
 
 ## 3. Request Context 负责什么
 
-`apps/console/src/application/runtime/request-context.server.ts` 每次请求创建，不缓存到全局对象。它
+`apps/console/src/application/runtime/request-context.ts` 每次请求创建，不缓存到全局对象。它
 负责请求级信息：
 
 | 字段 | 说明 |
@@ -167,7 +167,7 @@ Delivery worker 是进程级后台循环，默认通过 container 组装：
 const runner = getApplicationContainer().ensureDeliveryWorkerRunner();
 ```
 
-默认 container dispose 时必须停止该 runner。`container.server.ts` 在支持 HMR 的运行时中会注册
+默认 container dispose 时必须停止该 runner。`container.ts` 在支持 HMR 的运行时中会注册
 `import.meta.hot.dispose(disposeApplicationContainer)`，避免开发模式热替换后遗留旧 interval
 和旧 SQLite 连接。
 
@@ -232,5 +232,5 @@ dispose 钩子里，避免不可见的全局挂载状态。
 - dashboard server functions 必须通过 dashboard request context 认证。
 - webhook route 不导入也不调用 dashboard request context，Source token / provider secret
   认证路径保持独立。
-- client components、route loaders、serialized data 不导入 `*.server.ts` container，也不返回
+- client components、route loaders、serialized data 不导入 server-only container，也不返回
   token hash、Destination secret、raw sensitive config。

@@ -5,8 +5,8 @@ import {
   readWebhookJsonPayload,
   WebhookPayloadTooLargeError,
 } from "#/application/http/webhook-request.ts";
-import type { ApplicationContainer } from "#/application/runtime/container.server.ts";
-import { createWebhookRequestContext } from "#/application/runtime/request-context.server.ts";
+import type { ApplicationContainer } from "#/application/runtime/container.ts";
+import { createWebhookRequestContext } from "#/application/runtime/request-context.ts";
 import { WebhookIntakeError } from "#/application/services/intake.ts";
 import { env } from "#/env.ts";
 

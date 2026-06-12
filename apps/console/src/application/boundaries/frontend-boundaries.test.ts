@@ -7,8 +7,8 @@ const srcDir = path.resolve(import.meta.dirname, "../..");
 const scannedRoots = ["routes", "features", "app/shell", "components/ui"];
 const forbiddenImports = [
   "#/infra/",
-  "#/application/runtime/container.server.ts",
-  "#/application/runtime/request-context.server.ts",
+  "#/application/runtime/container.ts",
+  "#/application/runtime/request-context.ts",
   "#/lib/auth.server.ts",
 ];
 

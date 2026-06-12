@@ -4,7 +4,7 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 import {
   getApplicationContainer,
   type ApplicationContainer,
-} from "#/application/runtime/container.server.ts";
+} from "#/application/runtime/container.ts";
 import {
   DashboardAuthError,
   DashboardAuthorizationError,

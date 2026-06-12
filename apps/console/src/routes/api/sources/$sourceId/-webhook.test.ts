@@ -7,7 +7,7 @@ import {
 } from "@vane/providers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ApplicationContainer } from "#/application/runtime/container.server.ts";
+import type { ApplicationContainer } from "#/application/runtime/container.ts";
 import { DeliveryWorker } from "#/application/services/delivery-worker.ts";
 import { hashSourceToken, WebhookIntakeService } from "#/application/services/intake.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";

@@ -33,7 +33,7 @@ export class DashboardAuthorizationError extends Error {
 
 export async function requireDashboardSession() {
   const { requireDashboardRequestContext } =
-    await import("#/application/runtime/request-context.server.ts");
+    await import("#/application/runtime/request-context.ts");
   const context = await requireDashboardRequestContext({
     headers: getRequestHeaders(),
   });
@@ -46,7 +46,7 @@ export async function requireDashboardSessionForHeaders(
   getSession: GetDashboardSession = getBetterAuthSession,
 ): Promise<DashboardSession> {
   const { requireDashboardRequestContext } =
-    await import("#/application/runtime/request-context.server.ts");
+    await import("#/application/runtime/request-context.ts");
   const context = await requireDashboardRequestContext({
     headers,
     getSession,
@@ -56,7 +56,7 @@ export async function requireDashboardSessionForHeaders(
 }
 
 async function getBetterAuthSession(input: { headers: HeadersInit }) {
-  const { getApplicationContainer } = await import("#/application/runtime/container.server.ts");
+  const { getApplicationContainer } = await import("#/application/runtime/container.ts");
 
   return getApplicationContainer().getAuth().api.getSession(input);
 }
