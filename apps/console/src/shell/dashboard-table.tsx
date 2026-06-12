@@ -9,14 +9,21 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table.tsx";
+import { cn } from "#/lib/utils.ts";
 
 export interface DashboardTableProps {
   headers: string[];
   rows: Array<{ key: string; cells: React.ReactNode[] }>;
-  empty: string;
+  empty: React.ReactNode;
+  columnClassNames?: string[];
 }
 
-export function DashboardTable({ headers, rows, empty }: DashboardTableProps) {
+export function DashboardTable({
+  headers,
+  rows,
+  empty,
+  columnClassNames = [],
+}: DashboardTableProps) {
   const columns = React.useMemo<Array<ColumnDef<(typeof rows)[number]>>>(
     () =>
       headers.map((header, index) => ({
@@ -38,8 +45,11 @@ export function DashboardTable({ headers, rows, empty }: DashboardTableProps) {
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id} className="hover:bg-transparent">
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} className="text-muted-foreground h-8">
+            {headerGroup.headers.map((header, index) => (
+              <TableHead
+                key={header.id}
+                className={cn("text-muted-foreground h-8", columnClassNames[index])}
+              >
                 {header.isPlaceholder
                   ? null
                   : flexRender(header.column.columnDef.header, header.getContext())}
@@ -61,8 +71,8 @@ export function DashboardTable({ headers, rows, empty }: DashboardTableProps) {
         ) : (
           table.getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="truncate">
+              {row.getVisibleCells().map((cell, index) => (
+                <TableCell key={cell.id} className={cn("truncate", columnClassNames[index])}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}

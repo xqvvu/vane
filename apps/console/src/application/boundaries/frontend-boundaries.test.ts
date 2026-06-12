@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const srcDir = path.resolve(import.meta.dirname, "../..");
-const scannedRoots = ["routes", "features", "app/shell", "components/ui"];
+const scannedRoots = ["routes", "features", "shell", "components/ui"];
 const forbiddenImports = [
   "#/infra/",
   "#/application/runtime/container.ts",

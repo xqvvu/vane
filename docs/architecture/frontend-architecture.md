@@ -119,9 +119,9 @@ feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
 server functions；但它不能导入 `infra`、SQLite store、application container 或 server-only
 runtime。需要服务端数据时，feature 通过自己的 query/mutation 文件集中调用 server functions。
 
-### `app/shell`
+### `shell`
 
-`app/shell` 承担 dashboard 的稳定应用外壳：
+`shell` 承担 dashboard 的稳定应用外壳：
 
 - dashboard layout。
 - sidebar / primary nav。
@@ -146,7 +146,7 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 - 不放业务 badge、业务表格、业务空状态或业务 form model。
 - 不读取 auth session、SQLite、env、secret 或 raw payload。
 
-领域 UI 属于 `features/*` 或 `app/shell`。例如 `DeliveryStateBadge` 应在
+领域 UI 属于 `features/*` 或 `shell`。例如 `DeliveryStateBadge` 应在
 `features/deliveries`，不是 `components/ui`。
 
 ### `integrations`
@@ -298,7 +298,7 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 
 建议按风险从低到高迁移：
 
-1. 抽出 `app/shell`：把 dashboard layout、导航、header、user menu 从 root index route 移走。
+1. 抽出 `shell`：把 dashboard layout、导航、header、user menu 从 root index route 移走。
 2. 抽出纯展示组件：将 `StateBadge`、`DeliveryStateBadge`、`JsonBlock` 等移动到对应
    feature，不改变数据流。
 3. 抽出 form model 与 UI：把当前 `routes/-source-form.ts`、`-destination-form.ts`、

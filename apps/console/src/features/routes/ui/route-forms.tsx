@@ -2,12 +2,12 @@ import { RiAddLine, RiEditLine, RiGitBranchLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
 
-import { DashboardFormPanel } from "#/app/shell/dashboard-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Checkbox } from "#/components/ui/checkbox.tsx";
 import {
   Field as UiField,
   FieldContent,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -24,6 +24,7 @@ import {
   routeRulePatchFromValues,
   type RouteRuleFormValues,
 } from "#/features/routes/model/route-form.ts";
+import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function CreateRouteForm({
   sources,
@@ -42,6 +43,9 @@ export function CreateRouteForm({
 }) {
   return (
     <DashboardFormPanel title="New route" icon={<RiGitBranchLine className="size-4" aria-hidden />}>
+      <p className="text-muted-foreground mb-3 text-xs">
+        Match normalized event fields and send matching events to selected destinations.
+      </p>
       <RouteForm
         sources={sources}
         destinations={destinations}
@@ -61,7 +65,7 @@ export function CreateRouteForm({
           destinationIds: [],
         }}
         submitLabel="Create route"
-        submitIcon={<RiAddLine aria-hidden />}
+        submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
         resetOnSubmit
         onSubmit={(values) => {
           onSubmit({
@@ -96,11 +100,14 @@ export function EditRouteForm({
   }) => void;
 }) {
   return (
-    <section className="border-border mt-3 border-t pt-3">
-      <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold">
+    <section className="border-border bg-muted/30 mt-3 border p-3">
+      <h3 className="flex items-center gap-2 text-xs font-semibold">
         <RiEditLine className="size-3.5" aria-hidden />
         Edit route
       </h3>
+      <p className="text-muted-foreground mt-1 mb-3 text-xs">
+        Update the first editable condition while preserving any additional rule conditions.
+      </p>
       <RouteForm
         sources={sources}
         destinations={destinations}
@@ -111,7 +118,7 @@ export function EditRouteForm({
           destinationIds: route.destinationIds,
         }}
         submitLabel="Save route"
-        submitIcon={<RiEditLine aria-hidden />}
+        submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
             id: route.id,
@@ -194,6 +201,7 @@ function RouteForm({
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
+              <FieldDescription>A short operational name for this routing rule.</FieldDescription>
               <FieldError
                 errors={field.state.meta.errors.map((error) => ({
                   message: String(error),
@@ -222,6 +230,7 @@ function RouteForm({
                   </NativeSelectOption>
                 ))}
               </NativeSelect>
+              <FieldDescription>Leave as any source for catch-all routing.</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -245,6 +254,7 @@ function RouteForm({
                 <NativeSelectOption value="info">Info</NativeSelectOption>
                 <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
               </NativeSelect>
+              <FieldDescription>Empty severity conditions match every severity.</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -267,6 +277,7 @@ function RouteForm({
                 <NativeSelectOption value="resolved">Resolved</NativeSelectOption>
                 <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
               </NativeSelect>
+              <FieldDescription>Match firing, resolved, or unknown alert states.</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -283,6 +294,7 @@ function RouteForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.currentTarget.value)}
                 />
+                <FieldDescription>Normalized label key.</FieldDescription>
               </UiField>
             )}
           </form.Field>
@@ -305,6 +317,7 @@ function RouteForm({
                   <NativeSelectOption value="equals">Equals</NativeSelectOption>
                   <NativeSelectOption value="contains">Contains</NativeSelectOption>
                 </NativeSelect>
+                <FieldDescription>Comparison mode.</FieldDescription>
               </UiField>
             )}
           </form.Field>
@@ -320,6 +333,7 @@ function RouteForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.currentTarget.value)}
                 />
+                <FieldDescription>Required with a label key.</FieldDescription>
               </UiField>
             )}
           </form.Field>
@@ -336,6 +350,7 @@ function RouteForm({
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
+              <FieldDescription>Simple substring match against normalized title.</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -351,12 +366,18 @@ function RouteForm({
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
+              <FieldDescription>
+                Simple substring match against normalized message.
+              </FieldDescription>
             </UiField>
           )}
         </form.Field>
         <form.Field name="destinationIds">
           {(field) => (
-            <FieldSet className="border-border gap-2 border p-2">
+            <FieldSet
+              className="border-border gap-2 border p-2"
+              data-disabled={destinations.length === 0}
+            >
               <FieldLegend className="text-muted-foreground">Destinations</FieldLegend>
               {destinations.length === 0 ? (
                 <div className="text-muted-foreground text-xs">Create a destination first</div>
@@ -392,6 +413,7 @@ function RouteForm({
                   })}
                 </FieldGroup>
               )}
+              <FieldDescription>Routes must select at least one destination.</FieldDescription>
             </FieldSet>
           )}
         </form.Field>

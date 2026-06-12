@@ -1,0 +1,285 @@
+{
+  "projectId": "8189408707632940093",
+  "title": "Vane Console UI",
+  "createdAt": "2026-06-11",
+  "sourceDocs": [
+    "AGENTS.md",
+    "docs/prd/self-hosted-alert-hub-mvp.md",
+    "docs/architecture/frontend-architecture.md",
+    "docs/architecture/application-container.md",
+    "docs/architecture/sqlite-store.md"
+  ],
+  "designSystem": {
+    "status": "uploaded",
+    "file": ".stitch/DESIGN.md",
+    "summary": "shadcn base-lyra, neutral, Remix Icon, compact SRE operations console",
+    "stitchAsset": "assets/c53b2ce16f154fe6a124ffea9d67f066",
+    "uploadedScreenInstance": {
+      "id": "15882026163223598060",
+      "sourceScreen": "projects/8189408707632940093/screens/15882026163223598060"
+    },
+    "confirmationRequired": false
+  },
+  "prompts": {
+    "main": ".stitch/prompts/vane-console.md",
+    "implementationMap": ".stitch/prompts/implementation-map.md",
+    "implementationBacklog": ".stitch/prompts/implementation-backlog.md",
+    "readyToRun": ".stitch/prompts/ready-to-run.md",
+    "designQa": ".stitch/prompts/design-qa.md"
+  },
+  "screens": [
+    {
+      "id": "f91ad904e5de4495b959f9aeef0d05b3",
+      "name": "projects/8189408707632940093/screens/f91ad904e5de4495b959f9aeef0d05b3",
+      "title": "Vane Console - Settings",
+      "promptFile": ".stitch/prompts/settings-page.md",
+      "localScreenshot": ".stitch/designs/settings-configuration-page.png",
+      "localHtml": ".stitch/designs/settings-configuration-page.html",
+      "status": "accepted-with-implementation-corrections",
+      "qaNotes": [
+        "Screenshot passes the main product boundary: no Create Alert action and no incident, on-call, silence, workflow, tenant, organization, or billing controls.",
+        "Screenshot keeps the desired Settings toolbar, operational summary, raw payload retention form, TOML import/export rail, and one-time import token notice.",
+        "Downloaded HTML includes sample TOML keys such as [server], archive_enabled, and runtime version or memory text that are not current Vane configuration boundaries; implementation keeps the existing settings and TOML service model.",
+        "Implementation does not add a Secrets Omitted toggle because the current server function always requests includeSecrets=false and plaintext secret export is unsupported."
+      ]
+    },
+    {
+      "id": "23196e4036204b93bf868347b4c75834",
+      "name": "projects/8189408707632940093/screens/23196e4036204b93bf868347b4c75834",
+      "title": "Vane Console - Destinations",
+      "promptFile": ".stitch/prompts/destinations-page.md",
+      "localScreenshot": ".stitch/designs/destinations-configuration-page.png",
+      "localHtml": ".stitch/designs/destinations-configuration-page.html",
+      "status": "accepted-with-implementation-corrections",
+      "qaNotes": [
+        "Screenshot passes product boundary: no Create Alert action and no incident, silence, workflow, tenant, or billing controls.",
+        "Screenshot keeps the desired Destinations table, explicit test and preview actions, right rail creation form, and redacted preview payloads.",
+        "Implementation intentionally avoids the screenshot's AES-256-GCM claim because the current code does not expose or document that specific storage algorithm.",
+        "No destination webhook URLs, signing secrets, headers, SMTP passwords, token hashes, or raw sensitive payloads are shown."
+      ]
+    },
+    {
+      "id": "c4f88749d59843e7ac6c18535fecc0fc",
+      "name": "projects/8189408707632940093/screens/c4f88749d59843e7ac6c18535fecc0fc",
+      "title": "Vane Console - Routes",
+      "promptFile": ".stitch/prompts/routes-page.md",
+      "localScreenshot": ".stitch/designs/routes-configuration-page.png",
+      "localHtml": ".stitch/designs/routes-configuration-page.html",
+      "status": "accepted-with-implementation-corrections",
+      "qaNotes": [
+        "Screenshot passes the main product boundary: no Create Alert action and no incident, silence, workflow, tenant, or billing controls.",
+        "Screenshot keeps the desired Routes table plus right rail creation form and explicit enable/disable row actions.",
+        "Right rail screenshot includes an HTTP Status / Code field, but current route model uses normalized alert status values; implementation keeps the existing Status select for any/firing/resolved/unknown.",
+        "No source tokens, token hashes, destination secrets, provider signing secrets, or raw sensitive payloads are shown."
+      ]
+    },
+    {
+      "id": "b3e5e550bc6949b2b320c82e57501c8b",
+      "name": "projects/8189408707632940093/screens/b3e5e550bc6949b2b320c82e57501c8b",
+      "title": "Vane Console - Sources",
+      "promptFile": ".stitch/prompts/sources-page.md",
+      "localScreenshot": ".stitch/designs/sources-configuration-page.png",
+      "localHtml": ".stitch/designs/sources-configuration-page.html",
+      "status": "accepted-with-implementation-corrections",
+      "qaNotes": [
+        "Initial Sources generation included a global Create Alert action; Stitch edit removed it from the refreshed screenshot.",
+        "Downloaded HTML artifact still contains a stale Create Alert string, so implementation uses screenshot, prompt, and corrected Stitch feedback as source of truth.",
+        "Screenshot keeps the desired Sources table plus right rail creation form and one-time token notice.",
+        "Implementation must not fake last-received or provider-secret state because SourceSummary currently exposes only id, name, provider, and enabled."
+      ]
+    },
+    {
+      "id": "c3d296d573e343beb20988389a29ac02",
+      "name": "projects/8189408707632940093/screens/c3d296d573e343beb20988389a29ac02",
+      "title": "Vane Console - Deliveries",
+      "promptFile": ".stitch/prompts/deliveries-page.md",
+      "localScreenshot": ".stitch/designs/deliveries-operations-page.png",
+      "localHtml": ".stitch/designs/deliveries-operations-page.html",
+      "status": "accepted-for-implementation",
+      "qaNotes": [
+        "Screenshot matches Events shell direction with active Deliveries navigation, compact table, right filter rail, worker notice, and detail tabs.",
+        "No manual delivery creation, incident management, on-call scheduling, silence, or suppression controls are present.",
+        "Implementation should keep current URL-backed select filters instead of Stitch's visual Apply Filters checkbox rail."
+      ]
+    },
+    {
+      "id": "aa110c6e81b9402ca9c1784f8074a231",
+      "name": "projects/8189408707632940093/screens/aa110c6e81b9402ca9c1784f8074a231",
+      "title": "Vane Console - Events (Operational)",
+      "promptFile": ".stitch/prompts/ready-to-run.md",
+      "localScreenshot": ".stitch/designs/events-operations-page.png",
+      "localHtml": ".stitch/designs/events-operations-page.html",
+      "status": "accepted-for-implementation",
+      "qaNotes": [
+        "Screenshot passes product boundary: header uses Refresh and Reset filters, not Create Alert.",
+        "Two-column layout, events table, filter rail, and detail tabs are visible.",
+        "Raw debug and secret-like fields are redacted.",
+        "Downloaded HTML artifact still contains stale Create Alert text from an earlier generation; use screenshot, prompt, and screen metadata as implementation reference."
+      ]
+    },
+    {
+      "id": "3b7c694a52d34bf3aef2d7526cb338bd",
+      "name": "projects/8189408707632940093/screens/3b7c694a52d34bf3aef2d7526cb338bd",
+      "title": "Vane Console - Events",
+      "status": "rejected-product-drift",
+      "qaNotes": [
+        "Initial generation included Create Alert, which conflicts with Vane's inbound-webhook Events scope."
+      ]
+    }
+  ],
+  "workflow": {
+    "externalStateCheckedAt": "2026-06-11",
+    "stitchDesignSystems": [
+      "assets/c53b2ce16f154fe6a124ffea9d67f066"
+    ],
+    "stitchScreens": [
+      "f91ad904e5de4495b959f9aeef0d05b3",
+      "23196e4036204b93bf868347b4c75834",
+      "c4f88749d59843e7ac6c18535fecc0fc",
+      "b3e5e550bc6949b2b320c82e57501c8b",
+      "c3d296d573e343beb20988389a29ac02",
+      "aa110c6e81b9402ca9c1784f8074a231",
+      "3b7c694a52d34bf3aef2d7526cb338bd"
+    ],
+    "implementedTracerBullet": {
+      "screenId": "aa110c6e81b9402ca9c1784f8074a231",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/events/ui/events-page.tsx",
+        "apps/console/src/features/events/ui/events-table.tsx",
+        "apps/console/src/features/events/ui/event-detail-view.tsx",
+        "apps/console/src/features/operations/ui/operation-filters.tsx",
+        "apps/console/src/features/configuration/ui/operational-summary.tsx",
+        "apps/console/src/shell/dashboard-table.tsx",
+        "apps/console/src/components/ui/alert.tsx",
+        "apps/console/src/components/ui/empty.tsx",
+        "apps/console/src/components/ui/skeleton.tsx",
+        "apps/console/src/components/ui/tabs.tsx"
+      ],
+      "validation": [
+        "npx shadcn@latest info --json",
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build",
+        "Browser check: /events redirects to /login?redirect=%2Fevents without console warnings or errors because dashboard auth is required."
+      ]
+    },
+    "implementedDeliveriesFollowOn": {
+      "screenId": "c3d296d573e343beb20988389a29ac02",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/deliveries/ui/deliveries-page.tsx",
+        "apps/console/src/features/deliveries/ui/deliveries-table.tsx",
+        "apps/console/src/features/deliveries/ui/delivery-detail-view.tsx",
+        "apps/console/src/features/operations/ui/worker-notice-panel.tsx",
+        "apps/console/src/features/operations/ui/operation-filters.tsx"
+      ],
+      "validation": [
+        "npx shadcn@latest info --json",
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build",
+        "Browser check: /deliveries redirects to /login?redirect=%2Fdeliveries without console warnings or errors because dashboard auth is required."
+      ],
+      "implementationNotes": [
+        "Did not implement Stitch suggestion for Retry All Failed because current client/server boundary exposes single-delivery retry only.",
+        "Kept existing URL-backed select filters instead of Stitch's visual Apply Filters checkbox rail."
+      ]
+    },
+    "implementedSourcesFollowOn": {
+      "screenId": "b3e5e550bc6949b2b320c82e57501c8b",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/sources/ui/sources-page.tsx",
+        "apps/console/src/features/sources/ui/sources-section.tsx",
+        "apps/console/src/features/sources/ui/source-forms.tsx",
+        "apps/console/src/features/sources/ui/source-token-notice-panel.tsx",
+        "apps/console/src/features/sources/ui/source-webhook-cell.tsx",
+        "apps/console/src/features/configuration/ui/configuration-state-badge.tsx",
+        "apps/console/src/shell/dashboard-table.tsx",
+        "apps/console/src/shell/copyable-code-line.tsx"
+      ],
+      "validation": [
+        "npx shadcn@latest info --json",
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build",
+        "Browser check attempted for /sources, but Browser Use URL policy blocked localhost:6180 access in this session."
+      ],
+      "implementationNotes": [
+        "Did not implement Stitch suggestion for Test Connection because current Sources client/server boundary does not expose a source test action.",
+        "Kept Source auth display generic and safe because source list DTO does not expose token, token hash, provider secret, or secret presence.",
+        "Did not implement last-received column because SourceSummary does not currently include activity timestamps."
+      ]
+    },
+    "implementedRoutesFollowOn": {
+      "screenId": "c4f88749d59843e7ac6c18535fecc0fc",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/routes/ui/routes-page.tsx",
+        "apps/console/src/features/routes/ui/routes-section.tsx",
+        "apps/console/src/features/routes/ui/route-forms.tsx",
+        "apps/console/src/features/configuration/ui/configuration-state-badge.tsx",
+        "apps/console/src/shell/dashboard-table.tsx"
+      ],
+      "validation": [
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build"
+      ],
+      "implementationNotes": [
+        "Kept route matching limited to existing normalized fields: source, severity, status, label equals/contains, title contains, and message contains.",
+        "Did not implement workflow graphs, expression editors, code editors, schedules, silences, or incident management controls.",
+        "Used destination names/counts from existing configuration query data; no destination secret data is displayed.",
+        "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
+      ]
+    },
+    "implementedDestinationsFollowOn": {
+      "screenId": "23196e4036204b93bf868347b4c75834",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/destinations/ui/destinations-page.tsx",
+        "apps/console/src/features/destinations/ui/destinations-section.tsx",
+        "apps/console/src/features/destinations/ui/destination-forms.tsx",
+        "apps/console/src/features/destinations/ui/destination-notices.tsx"
+      ],
+      "validation": [
+        "npx shadcn@latest docs alert empty field badge table button",
+        "npx shadcn@latest info --json",
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build"
+      ],
+      "implementationNotes": [
+        "Kept destination create/edit behavior on the existing TanStack Form model and patch helpers; empty secret fields in edit mode keep stored values.",
+        "Used safe configuration summaries instead of showing destination config, secret refs, webhook URLs, signing secrets, or headers.",
+        "Used shadcn Alert, Empty, Badge, Field, Button, and Table composition under the existing base-lyra preset.",
+        "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
+      ]
+    },
+    "implementedSettingsFollowOn": {
+      "screenId": "f91ad904e5de4495b959f9aeef0d05b3",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/configuration/ui/settings-page.tsx",
+        "apps/console/src/features/configuration/ui/operational-summary.tsx",
+        "apps/console/src/features/configuration/ui/app-settings-form.tsx",
+        "apps/console/src/features/configuration/ui/portable-config-form.tsx",
+        "apps/console/src/features/configuration/ui/import-notice-panel.tsx"
+      ],
+      "validation": [
+        "npx shadcn@latest info --json",
+        "pnpm --filter @vane/console lint",
+        "pnpm --filter @vane/console test",
+        "pnpm --filter @vane/console build"
+      ],
+      "implementationNotes": [
+        "Kept Settings focused on current app settings and TOML portability: raw payload retention, export without plaintext secrets, import validation, and generated source tokens.",
+        "Used shadcn Alert, Field, Input, Textarea, Button, and existing compact bordered shell panels under the base-lyra preset.",
+        "Did not implement Stitch suggestions for a dark-mode variant, Secrets Omitted toggle, or failed-import detail view during this pass.",
+        "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
+      ]
+    },
+    "nextActionAfterConfirmation": "Core console pages covered by Stitch prompts and implementation: Events, Deliveries, Sources, Routes, Destinations, and Settings."
+  }
+}

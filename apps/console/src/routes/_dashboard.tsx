@@ -1,12 +1,9 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-import { DashboardLayout } from "#/app/shell/dashboard-layout.tsx";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import {
-  configurationQueryKeys,
-  configurationQueryOptions,
-} from "#/features/configuration/api/configuration.queries.ts";
+import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
+import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
 
 export const Route = createFileRoute("/_dashboard")({
   loader: async ({ context, location }) => {
@@ -27,7 +24,6 @@ export const Route = createFileRoute("/_dashboard")({
 });
 
 function DashboardRouteLayout() {
-  const queryClient = useQueryClient();
   const { data: session } = useSuspenseQuery(dashboardSessionQueryOptions());
 
   if (!session) {
@@ -35,12 +31,7 @@ function DashboardRouteLayout() {
   }
 
   return (
-    <DashboardLayout
-      user={session.user}
-      onRefresh={() => {
-        void queryClient.invalidateQueries({ queryKey: configurationQueryKeys.all });
-      }}
-    >
+    <DashboardLayout user={session.user}>
       <Outlet />
     </DashboardLayout>
   );

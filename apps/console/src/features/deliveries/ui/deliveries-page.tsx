@@ -1,9 +1,8 @@
-import { RiPlayLine } from "@remixicon/react";
+import { RiErrorWarningLine, RiFilterOffLine, RiPlayLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
-import { DashboardContentLayout } from "#/app/shell/dashboard-layout.tsx";
-import { DashboardSidebar } from "#/app/shell/dashboard-sidebar.tsx";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
@@ -20,6 +19,8 @@ import type {
 import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
 import { WorkerNoticePanel } from "#/features/operations/ui/worker-notice-panel.tsx";
+import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export interface DeliveriesPageProps {
   search: DashboardOperationSearch;
@@ -42,6 +43,17 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
     await invalidateOperations();
   }
 
+  function resetFilters() {
+    onSearchChange({
+      sourceId: "",
+      severity: "",
+      status: "",
+      destinationId: "",
+      deliveryState: "",
+      q: "",
+    });
+  }
+
   async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
     setPendingAction(action);
     setFormError(null);
@@ -62,10 +74,28 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
     <DashboardContentLayout
       main={
         <>
+          <DeliveriesPageToolbar
+            deliveryCount={operations.deliveries.items.length}
+            pending={pending}
+            onRunWorker={() =>
+              void submitAction("run-worker", async () => {
+                const result = await runDeliveryWorker({
+                  data: {
+                    limit: 10,
+                  },
+                });
+                setWorkerNotice(result);
+                return result;
+              })
+            }
+            onResetFilters={resetFilters}
+          />
           {formError ? (
-            <div className="border-destructive/40 bg-destructive/10 text-destructive border px-3 py-2 text-xs">
-              {formError}
-            </div>
+            <Alert variant="destructive">
+              <RiErrorWarningLine aria-hidden />
+              <AlertTitle>Operation failed</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
           ) : null}
           {workerNotice ? <WorkerNoticePanel notice={workerNotice} /> : null}
           <DeliveriesTable
@@ -100,33 +130,65 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
       }
       sidebar={
         <DashboardSidebar>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              void submitAction("run-worker", async () => {
-                const result = await runDeliveryWorker({
-                  data: {
-                    limit: 10,
-                  },
-                });
-                setWorkerNotice(result);
-                return result;
-              })
-            }
-          >
-            <RiPlayLine aria-hidden />
-            Run worker
-          </Button>
           <OperationFilters
             configuration={configuration}
             search={search}
             pending={pending}
             onChange={onSearchChange}
+            layout="rail"
           />
         </DashboardSidebar>
       }
     />
+  );
+}
+
+function DeliveriesPageToolbar({
+  deliveryCount,
+  pending,
+  onRunWorker,
+  onResetFilters,
+}: {
+  deliveryCount: number;
+  pending: boolean;
+  onRunWorker: () => void;
+  onResetFilters: () => void;
+}) {
+  return (
+    <header className="border-border bg-background flex flex-col gap-3 border p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold">Deliveries</h2>
+          <span className="text-muted-foreground text-xs">{deliveryCount} loaded</span>
+        </div>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Inspect outbound notification jobs, rendered payloads, attempts, and retry schedules.
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={onResetFilters}
+          title="Reset delivery filters"
+        >
+          <RiFilterOffLine data-icon="inline-start" aria-hidden />
+          Reset filters
+        </Button>
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          disabled={pending}
+          onClick={onRunWorker}
+          title="Run delivery worker"
+        >
+          <RiPlayLine data-icon="inline-start" aria-hidden />
+          Run worker
+        </Button>
+      </div>
+    </header>
   );
 }

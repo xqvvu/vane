@@ -3,20 +3,28 @@ import { Input } from "#/components/ui/input.tsx";
 import { NativeSelect, NativeSelectOption } from "#/components/ui/native-select.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
+import { cn } from "#/lib/utils.ts";
 
 export function OperationFilters({
   configuration,
   search,
   pending,
   onChange,
+  layout = "grid",
 }: {
   configuration: Configuration;
   search: DashboardOperationSearch;
   pending: boolean;
   onChange: (next: Partial<DashboardOperationSearch>) => void;
+  layout?: "grid" | "rail";
 }) {
   return (
-    <FieldGroup className="border-border bg-background grid gap-2 border p-2 md:grid-cols-3 xl:grid-cols-6">
+    <FieldGroup
+      className={cn(
+        "border-border bg-background grid gap-2 border p-2",
+        layout === "grid" ? "md:grid-cols-3 xl:grid-cols-6" : null,
+      )}
+    >
       <UiField>
         <FieldLabel htmlFor="operation-source">Source</FieldLabel>
         <NativeSelect
