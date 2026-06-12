@@ -41,8 +41,12 @@ describe("dashboard error page", () => {
     render(<DashboardErrorPage error={error} reset={reset} />);
 
     expect(screen.getByRole("heading", { name: "Application error" })).toBeTruthy();
-    expect(screen.getByText("Internal rendering failure: Error")).toBeTruthy();
+    expect(
+      screen.getByText("Internal rendering failure: sqlite failed token=[REDACTED]"),
+    ).toBeTruthy();
+    expect(screen.getByText("/routes?token=[REDACTED]")).toBeTruthy();
     expect(screen.queryByText(/super-secret/)).toBeNull();
+    expect(screen.queryByText(/route-token/)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 

@@ -9,6 +9,7 @@ import {
   RiTerminalBoxLine,
 } from "@remixicon/react";
 import { Link, useLocation, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
+import { redactText } from "@vane/core";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
@@ -55,6 +56,7 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
   const currentPath = useLocation({
     select: (location) => location.href,
   });
+  const redactedCurrentPath = redactText(currentPath);
 
   function tryAgain() {
     reset();
@@ -120,7 +122,7 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
               Vane Console / error boundary / runtime failure
             </span>
             <code className="border-border bg-muted max-w-full truncate border px-2 py-1 font-mono">
-              {currentPath}
+              {redactedCurrentPath}
             </code>
             <code className="border-border bg-muted border px-2 py-1 font-mono">
               timestamp unavailable
@@ -174,8 +176,10 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
 }
 
 function safeErrorSummary(error: unknown): string {
-  if (error instanceof Error && error.name) {
-    return `Internal rendering failure: ${error.name}`;
+  if (error instanceof Error) {
+    const message = error.message ? redactText(error.message) : error.name || "Error";
+
+    return `Internal rendering failure: ${message}`;
   }
 
   return "Internal rendering failure: Unknown error";

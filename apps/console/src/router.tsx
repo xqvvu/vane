@@ -3,6 +3,8 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 
 import { getContext } from "#/integrations/tanstack/query/provider";
 import { routeTree } from "#/route-tree.gen.ts";
+import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
 
 export function getRouter() {
   const context = getContext();
@@ -13,6 +15,8 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
+    defaultErrorComponent: DashboardErrorPage,
+    defaultNotFoundComponent: DashboardNotFoundPage,
   });
 
   setupRouterSsrQueryIntegration({
