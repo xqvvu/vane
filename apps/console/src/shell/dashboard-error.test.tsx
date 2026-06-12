@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
 
 const routerState = vi.hoisted(() => ({
   invalidate: vi.fn<() => Promise<void>>(async () => {}),
@@ -45,6 +46,7 @@ describe("dashboard error page", () => {
       screen.getByText("Internal rendering failure: sqlite failed token=[REDACTED]"),
     ).toBeTruthy();
     expect(screen.getByText("/routes?token=[REDACTED]")).toBeTruthy();
+    expect(screen.queryByText("Operational checklist")).toBeNull();
     expect(screen.queryByText(/super-secret/)).toBeNull();
     expect(screen.queryByText(/route-token/)).toBeNull();
 
@@ -52,5 +54,22 @@ describe("dashboard error page", () => {
 
     expect(reset).toHaveBeenCalledOnce();
     expect(routerState.invalidate).toHaveBeenCalledOnce();
+  });
+});
+
+describe("dashboard not found page", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders a centered 404 page without the checklist column", () => {
+    render(<DashboardNotFoundPage />);
+
+    expect(screen.getByRole("heading", { name: "Route not found" })).toBeTruthy();
+    expect(screen.getByText("/routes?token=[REDACTED]")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Return to Sources" })).toBeTruthy();
+    expect(screen.queryByText("Navigation check")).toBeNull();
+    expect(screen.queryByText("Recommended recovery steps for operators.")).toBeNull();
+    expect(screen.queryByText(/route-token/)).toBeNull();
   });
 });
