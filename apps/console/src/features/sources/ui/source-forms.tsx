@@ -25,6 +25,7 @@ import {
   sourceConfigFromForm,
   sourceConfigPatchFromForm,
 } from "#/features/sources/model/source-form.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
 export function CreateSourceForm({
@@ -38,16 +39,16 @@ export function CreateSourceForm({
     config?: JsonObject;
   }) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <section>
       <div className="mb-6">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
           <RiAddCircleLine className="size-4" aria-hidden />
-          New Source
+          {t("sources.form.create.title")}
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Configure a new inbound pipeline to ingest alerts.
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("sources.form.create.description")}</p>
       </div>
       <SourceForm
         defaultValues={{
@@ -55,13 +56,13 @@ export function CreateSourceForm({
           provider: "generic",
         }}
         pending={pending}
-        submitLabel="Create Source"
+        submitLabel={t("sources.form.create.submit")}
         submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
         layout="rail"
         onSubmit={onSubmit}
       />
       <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
-        The source token is generated after create and shown once.
+        {t("sources.form.create.afterCreateHint")}
       </p>
     </section>
   );
@@ -83,14 +84,16 @@ export function EditSourceForm({
     config?: JsonObject;
   }) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <section className="border-border bg-muted/30 mt-3 border p-3">
       <h3 className="flex items-center gap-2 text-xs font-semibold">
         <RiEditLine className="size-3.5" aria-hidden />
-        Edit source
+        {t("sources.form.edit.title")}
       </h3>
       <p className="text-muted-foreground mt-1 mb-3 text-xs">
-        Update the intake label, provider parser, or provider secret override for this source.
+        {t("sources.form.edit.description")}
       </p>
       <SourceForm
         defaultValues={{
@@ -98,7 +101,7 @@ export function EditSourceForm({
           provider: source.provider,
         }}
         pending={pending}
-        submitLabel="Save source"
+        submitLabel={t("sources.form.edit.submit")}
         submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
@@ -134,7 +137,19 @@ function SourceForm({
   onCancel?: () => void;
   layout?: "compact" | "rail";
 }) {
+  const t = useTranslations();
+
   const pendingConfig = React.useRef<JsonObject | undefined>(undefined);
+  const providerItems = React.useMemo(
+    () => [
+      { value: "generic", label: t("sources.providers.genericWebhook") },
+      { value: "grafana", label: t("sources.providers.grafana") },
+      { value: "signoz", label: t("sources.providers.signoz") },
+      { value: "uptime_kuma", label: t("sources.providers.uptime_kuma") },
+      { value: "alertmanager", label: t("sources.providers.alertmanager") },
+    ],
+    [t],
+  );
   const form = useForm({
     defaultValues,
     onSubmit: ({ value }) => {
@@ -171,29 +186,33 @@ function SourceForm({
           name="name"
           validators={{
             onSubmit: ({ value }) => {
-              return value.trim().length === 0 ? "Source name is required" : undefined;
+              return value.trim().length === 0
+                ? t("sources.form.validation.nameRequired")
+                : undefined;
             },
           }}
         >
           {(field) => (
             <UiField data-invalid={field.state.meta.errors.length > 0}>
               <FieldLabel className={labelClassName(layout)} htmlFor={field.name}>
-                Name
+                {t("sources.form.nameLabel")}
               </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
                 className={inputClassName(layout)}
-                placeholder={layout === "rail" ? "e.g. Sentry Production" : "Production Grafana"}
+                placeholder={
+                  layout === "rail"
+                    ? t("sources.form.namePlaceholderRail")
+                    : t("sources.form.namePlaceholderCompact")
+                }
                 value={field.state.value}
                 aria-invalid={field.state.meta.errors.length > 0}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
               {layout === "compact" ? (
-                <FieldDescription>
-                  Use the upstream system name operators will recognize during triage.
-                </FieldDescription>
+                <FieldDescription>{t("sources.form.nameDescription")}</FieldDescription>
               ) : null}
               <FieldError
                 errors={field.state.meta.errors.map((error) => ({
@@ -207,12 +226,12 @@ function SourceForm({
           {(field) => (
             <UiField>
               <FieldLabel className={labelClassName(layout)} htmlFor={field.name}>
-                Provider
+                {t("sources.form.providerLabel")}
               </FieldLabel>
               <Select
                 id={field.name}
                 name={field.name}
-                items={sourceProviderItems}
+                items={providerItems}
                 value={field.state.value}
                 onValueChange={(value) =>
                   field.handleChange(value as Configuration["sources"][number]["provider"])
@@ -226,18 +245,20 @@ function SourceForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="generic">Generic Webhook</SelectItem>
-                    <SelectItem value="grafana">Grafana</SelectItem>
-                    <SelectItem value="signoz">SigNoz</SelectItem>
-                    <SelectItem value="uptime_kuma">Uptime Kuma</SelectItem>
-                    <SelectItem value="alertmanager">Alertmanager</SelectItem>
+                    <SelectItem value="generic">{t("sources.providers.genericWebhook")}</SelectItem>
+                    <SelectItem value="grafana">{t("sources.providers.grafana")}</SelectItem>
+                    <SelectItem value="signoz">{t("sources.providers.signoz")}</SelectItem>
+                    <SelectItem value="uptime_kuma">
+                      {t("sources.providers.uptime_kuma")}
+                    </SelectItem>
+                    <SelectItem value="alertmanager">
+                      {t("sources.providers.alertmanager")}
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
               {layout === "compact" ? (
-                <FieldDescription>
-                  Provider parsers normalize inbound webhook payloads.
-                </FieldDescription>
+                <FieldDescription>{t("sources.form.providerDescription")}</FieldDescription>
               ) : null}
             </UiField>
           )}
@@ -248,23 +269,27 @@ function SourceForm({
           className={labelClassName(layout)}
           htmlFor={onCancel ? "edit-signingSecret" : "create-signingSecret"}
         >
-          {onCancel ? "Signing secret override" : "Signing secret"}
+          {onCancel
+            ? t("sources.form.signingSecretOverrideLabel")
+            : t("sources.form.signingSecretLabel")}
         </FieldLabel>
         <Input
           id={onCancel ? "edit-signingSecret" : "create-signingSecret"}
           name="signingSecret"
           type="password"
           className={inputClassName(layout)}
-          placeholder={onCancel ? "Leave blank to keep current" : "Enter secret or leave blank"}
+          placeholder={
+            onCancel
+              ? t("sources.form.signingSecretOverridePlaceholder")
+              : t("sources.form.signingSecretPlaceholder")
+          }
         />
-        <FieldDescription>
-          Stored server-side only. Leave blank when the provider does not sign payloads.
-        </FieldDescription>
+        <FieldDescription>{t("sources.form.signingSecretDescription")}</FieldDescription>
       </UiField>
       <div className={onCancel ? "grid grid-cols-2 gap-2" : undefined}>
         {onCancel ? (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
-            Cancel
+            {t("sources.form.cancel")}
           </Button>
         ) : null}
         <Button
@@ -290,11 +315,3 @@ function labelClassName(layout: "compact" | "rail"): string | undefined {
 function inputClassName(layout: "compact" | "rail"): string | undefined {
   return layout === "rail" ? "h-12 bg-background px-3 text-sm" : undefined;
 }
-
-const sourceProviderItems = [
-  { value: "generic", label: "Generic Webhook" },
-  { value: "grafana", label: "Grafana" },
-  { value: "signoz", label: "SigNoz" },
-  { value: "uptime_kuma", label: "Uptime Kuma" },
-  { value: "alertmanager", label: "Alertmanager" },
-];

@@ -6,6 +6,7 @@ import {
   authBootstrapQueryOptions,
   dashboardSessionQueryOptions,
 } from "#/features/auth/api/auth.queries.ts";
+import { LanguageSelector } from "#/i18n/language-switcher.tsx";
 import { SetupForm } from "#/routes/-setup-form.tsx";
 
 const SetupSearchSchema = z.object({
@@ -42,6 +43,13 @@ function SetupPage() {
 
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-5 py-8">
+      <div className="absolute top-4 right-4">
+        <ClientOnly fallback={<LanguageSelector.Skeleton />}>
+          <React.Suspense fallback={<LanguageSelector.Skeleton />}>
+            <LanguageSelector />
+          </React.Suspense>
+        </ClientOnly>
+      </div>
       <ClientOnly fallback={<SetupForm.Skeleton />}>
         <React.Suspense fallback={<SetupForm.Skeleton />}>
           <SetupForm redirectTo={search.redirect || "/"} />

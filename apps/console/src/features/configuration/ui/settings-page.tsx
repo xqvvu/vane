@@ -5,6 +5,7 @@ import {
   RiShieldKeyholeLine,
 } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
@@ -17,11 +18,14 @@ import { AppSettingsForm } from "#/features/configuration/ui/app-settings-form.t
 import { ImportNoticePanel } from "#/features/configuration/ui/import-notice-panel.tsx";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
 import { PortableConfigForm } from "#/features/configuration/ui/portable-config-form.tsx";
+import { LanguageSelector } from "#/i18n/language-switcher.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
+import { DashboardFormPanel, DashboardPanel } from "#/shell/dashboard-panel.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function SettingsPage() {
+  const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const {
     exportConfigurationToml,
@@ -64,7 +68,7 @@ export function SettingsPage() {
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Settings operation failed</AlertTitle>
+              <AlertTitle>{t("configuration.settings.operationFailed")}</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -87,6 +91,7 @@ export function SettingsPage() {
               void submitAction("update-settings", () => updateAppSettings({ data: input }))
             }
           />
+          <LanguageSettingsPanel />
           <PortableConfigForm
             value={configToml}
             pending={pending}
@@ -121,17 +126,21 @@ export function SettingsPage() {
 }
 
 function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefresh: () => void }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Settings</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("configuration.safety.title")}
+          </h1>
           <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            Configuration
+            {t("configuration.settings.badge")}
           </Badge>
         </div>
         <p className="text-muted-foreground mt-2 text-sm">
-          Manage raw payload retention, TOML portability, and secret-safe configuration transfer.
+          {t("configuration.settings.description")}
         </p>
       </div>
       <Button
@@ -140,38 +149,60 @@ function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefre
         size="sm"
         disabled={pending}
         onClick={onRefresh}
-        title="Refresh configuration"
+        title={t("configuration.settings.refreshTitle")}
         className="w-fit"
       >
         <RiRefreshLine data-icon="inline-start" aria-hidden />
-        Refresh
+        {t("common.actions.refresh")}
       </Button>
     </header>
   );
 }
 
+function LanguageSettingsPanel() {
+  const t = useTranslations();
+
+  return (
+    <DashboardFormPanel
+      title={t("configuration.settings.languageTitle")}
+      icon={<RiShieldKeyholeLine className="size-4" aria-hidden />}
+    >
+      <p className="text-muted-foreground mb-3 text-xs leading-5">
+        {t("configuration.settings.languageDescription")}
+      </p>
+      <ClientOnly fallback={<LanguageSelector.Skeleton />}>
+        <React.Suspense fallback={<LanguageSelector.Skeleton />}>
+          <LanguageSelector />
+        </React.Suspense>
+      </ClientOnly>
+    </DashboardFormPanel>
+  );
+}
+
 function PortabilitySafetyPanel() {
+  const t = useTranslations();
+
   return (
     <DashboardPanel
-      title="Portability and safety"
+      title={t("configuration.safety.title")}
       icon={<RiShieldKeyholeLine className="size-4" aria-hidden />}
     >
       <div className="grid gap-3 md:grid-cols-2">
         <SafetyFact
-          title="TOML integrity"
-          description="Vane-owned configuration imports and exports use TOML for reviewable, self-hosted config-as-code workflows."
+          title={t("configuration.safety.facts.tomlIntegrity.title")}
+          description={t("configuration.safety.facts.tomlIntegrity.description")}
         />
         <SafetyFact
-          title="Secret-safe exports"
-          description="Exports request secrets omitted by default. Secret references can be resolved from environment variables during import."
+          title={t("configuration.safety.facts.secretSafeExports.title")}
+          description={t("configuration.safety.facts.secretSafeExports.description")}
         />
         <SafetyFact
-          title="Validated imports"
-          description="TOML is parsed and validated before stored Sources, Routes, Destinations, or settings are changed."
+          title={t("configuration.safety.facts.validatedImports.title")}
+          description={t("configuration.safety.facts.validatedImports.description")}
         />
         <SafetyFact
-          title="One-time source tokens"
-          description="New Sources created during import may return source tokens once; token hashes are never displayed."
+          title={t("configuration.safety.facts.oneTimeSourceTokens.title")}
+          description={t("configuration.safety.facts.oneTimeSourceTokens.description")}
         />
       </div>
     </DashboardPanel>

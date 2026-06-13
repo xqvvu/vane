@@ -17,6 +17,7 @@ import type {
 import type { WorkerRunNotice } from "#/features/operations/model/operation-types.ts";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
 import { WorkerNoticePanel } from "#/features/operations/ui/worker-notice-panel.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
@@ -27,6 +28,7 @@ export interface DeliveriesPageProps {
 }
 
 export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPageProps) {
+  const t = useTranslations();
   const navigate = useNavigate();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
@@ -91,7 +93,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Operation failed</AlertTitle>
+              <AlertTitle>{t("deliveries.page.operationFailed")}</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -148,18 +150,20 @@ function DeliveriesPageToolbar({
   onRunWorker: () => void;
   onResetFilters: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Deliveries</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("deliveries.page.title")}
+          </h1>
           <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {deliveryCount} loaded
+            {t("deliveries.page.loaded", { count: deliveryCount })}
           </Badge>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Inspect outbound notification jobs, rendered payloads, attempts, and retry schedules.
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{t("deliveries.page.description")}</p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Button
@@ -168,10 +172,10 @@ function DeliveriesPageToolbar({
           size="sm"
           disabled={pending}
           onClick={onResetFilters}
-          title="Reset delivery filters"
+          title={t("deliveries.page.resetTitle")}
         >
           <RiFilterOffLine data-icon="inline-start" aria-hidden />
-          Reset filters
+          {t("common.actions.resetFilters")}
         </Button>
         <Button
           type="button"
@@ -179,10 +183,10 @@ function DeliveriesPageToolbar({
           size="sm"
           disabled={pending}
           onClick={onRunWorker}
-          title="Run delivery worker"
+          title={t("deliveries.page.runWorkerTitle")}
         >
           <RiPlayLine data-icon="inline-start" aria-hidden />
-          Run worker
+          {t("common.actions.runWorker")}
         </Button>
       </div>
     </header>

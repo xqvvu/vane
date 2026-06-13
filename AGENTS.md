@@ -126,6 +126,19 @@ configuration/settings as they grow. Route-colocated `routes/-*.ts(x)` files are
 acceptable only for truly route-local helpers. Promote reusable domain code to
 `features/*`.
 
+### Frontend i18n
+
+- Use a single translation function per component or helper scope:
+  `const t = useTranslations();`.
+- Put the namespace in the message key, such as
+  `t("common.actions.refresh")` or `t("sources.form.nameLabel")`.
+- Do not create multiple namespaced translation variables in the same scope,
+  such as `tActions`, `tRoutes`, `statusT`, or
+  `useTranslations("common.actions")`, unless an exceptional case is documented
+  next to the call.
+- Keep machine values, API enum values, route ids, and persistence values
+  untranslated; translate only their display labels at the UI boundary.
+
 ### Server Function Boundary
 
 Server functions are the client/server boundary for console data.

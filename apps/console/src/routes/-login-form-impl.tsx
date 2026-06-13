@@ -16,6 +16,7 @@ import {
 import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { authQueryKeys } from "#/features/auth/api/auth.queries.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { authClient } from "#/lib/auth.client.ts";
 import type { LoginFormProps } from "#/routes/-login-form.tsx";
 
@@ -30,6 +31,7 @@ const defaultValues: LoginFormValues = {
 };
 
 export function LoginFormClient({ redirectTo }: LoginFormProps) {
+  const t = useTranslations();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -42,8 +44,8 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
         });
 
         if (result.error) {
-          toast.error("Login failed", {
-            description: result.error.message ?? "Check your email and password, then try again.",
+          toast.error(t("auth.login.failureTitle"), {
+            description: result.error.message ?? t("auth.login.failureDescription"),
           });
           return;
         }
@@ -54,15 +56,15 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
         await queryClient.invalidateQueries({
           queryKey: authQueryKeys.all,
         });
-        toast.success("Logged in", {
-          description: "Opening the dashboard.",
+        toast.success(t("auth.login.successTitle"), {
+          description: t("auth.login.successDescription"),
         });
         await navigate({
           to: redirectTo as never,
           replace: true,
         });
       } catch (caught) {
-        toast.error("Login failed", {
+        toast.error(t("auth.login.failureTitle"), {
           description: caught instanceof Error ? caught.message : String(caught),
         });
       }
@@ -72,8 +74,8 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
   return (
     <Card className="w-full max-w-sm" data-testid="login-card">
       <CardHeader>
-        <CardTitle>Login to Vane</CardTitle>
-        <CardDescription>Enter your dashboard credentials to continue.</CardDescription>
+        <CardTitle>{t("auth.login.title")}</CardTitle>
+        <CardDescription>{t("auth.login.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -92,22 +94,22 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
                   const email = value.trim();
 
                   if (email.length === 0) {
-                    return "Email is required";
+                    return t("auth.login.validation.emailRequired");
                   }
 
-                  return email.includes("@") ? undefined : "Enter a valid email address";
+                  return email.includes("@") ? undefined : t("auth.login.validation.emailInvalid");
                 },
               }}
             >
               {(field) => (
                 <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t("auth.login.emailLabel")}</FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
                     type="email"
                     autoComplete="email"
-                    placeholder="admin@example.test"
+                    placeholder={t("auth.login.emailPlaceholder")}
                     required
                     value={field.state.value}
                     aria-invalid={field.state.meta.errors.length > 0}
@@ -127,12 +129,12 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
               name="password"
               validators={{
                 onSubmit: ({ value }) =>
-                  value.length < 8 ? "Password must be at least 8 characters" : undefined,
+                  value.length < 8 ? t("auth.login.validation.passwordMin") : undefined,
               }}
             >
               {(field) => (
                 <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t("auth.login.passwordLabel")}</FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -164,7 +166,7 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
                 <UiField>
                   <Button type="submit" disabled={!canSubmit || isSubmitting}>
                     <RiLoginCircleLine data-icon="inline-start" aria-hidden />
-                    {isSubmitting ? "Signing in" : "Login"}
+                    {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
                   </Button>
                 </UiField>
               )}

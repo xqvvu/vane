@@ -20,6 +20,7 @@ import type { Configuration } from "#/features/configuration/model/configuration
 import { ConfigurationStateBadge } from "#/features/configuration/ui/configuration-state-badge.tsx";
 import type { DestinationFormKind } from "#/features/destinations/model/destination-form.ts";
 import { EditDestinationForm } from "#/features/destinations/ui/destination-forms.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 type DestinationSummary = Configuration["destinations"][number];
@@ -54,12 +55,20 @@ export function DestinationsSection({
   onPreviewEdit,
   onSubmitEdit,
 }: DestinationsSectionProps) {
+  const t = useTranslations();
+
   return (
     <section className="bg-background">
       <DashboardTable
         variant="flush"
         empty={<DestinationsEmptyState />}
-        headers={["Destination", "Kind", "Safe configuration", "State", ""]}
+        headers={[
+          t("destinations.table.headers.destination"),
+          t("destinations.table.headers.kind"),
+          t("destinations.table.headers.safeConfiguration"),
+          t("destinations.table.headers.state"),
+          t("destinations.table.headers.actions"),
+        ]}
         columnClassNames={["w-[24%]", "w-[15%]", "w-[25%]", "w-[12%]", "w-[24%] text-right"]}
         rows={destinations.map((destination) => ({
           key: destination.id,
@@ -73,27 +82,29 @@ export function DestinationsSection({
                 variant="ghost"
                 size="xs"
                 disabled={pending}
-                title={`Test ${destination.name}`}
+                title={t("destinations.table.actions.testTitle", { name: destination.name })}
                 onClick={() => onTest(destination)}
               >
                 <RiPlayLine data-icon="inline-start" aria-hidden />
-                Test
+                {t("destinations.table.actions.test")}
               </Button>
               <Button
                 variant="ghost"
                 size="xs"
                 disabled={pending}
-                title={`Preview ${destination.name}`}
+                title={t("destinations.table.actions.previewTitle", {
+                  name: destination.name,
+                })}
                 onClick={() => onPreview(destination)}
               >
                 <RiEyeLine data-icon="inline-start" aria-hidden />
-                Preview
+                {t("destinations.table.actions.preview")}
               </Button>
               <Button
                 variant="ghost"
                 size="icon-xs"
                 disabled={pending}
-                title="Edit destination"
+                title={t("destinations.table.actions.edit")}
                 onClick={() => onEdit(destination.id)}
               >
                 <RiEditLine data-icon aria-hidden />
@@ -102,11 +113,17 @@ export function DestinationsSection({
                 variant="ghost"
                 size="xs"
                 disabled={pending}
-                title={destination.enabled ? "Disable destination" : "Enable destination"}
+                title={
+                  destination.enabled
+                    ? t("destinations.table.actions.disableTitle")
+                    : t("destinations.table.actions.enableTitle")
+                }
                 onClick={() => onToggle(destination)}
               >
                 <RiShutDownLine data-icon="inline-start" aria-hidden />
-                {destination.enabled ? "Disable" : "Enable"}
+                {destination.enabled
+                  ? t("destinations.table.actions.disable")
+                  : t("destinations.table.actions.enable")}
               </Button>
             </div>,
           ],
@@ -115,7 +132,7 @@ export function DestinationsSection({
       {destinations.length > 0 ? (
         <div className="border-border bg-background border-t py-4 text-center">
           <span className="text-muted-foreground text-[11px] font-bold tracking-[0.18em] uppercase">
-            End of destinations
+            {t("destinations.table.end")}
           </span>
         </div>
       ) : null}
@@ -147,62 +164,40 @@ function DestinationIdentityCell({ destination }: { destination: DestinationSumm
 }
 
 function KindBadge({ kind }: { kind: DestinationFormKind }) {
+  const t = useTranslations();
+
   return (
     <Badge variant="outline" className="max-w-full truncate font-normal">
-      {destinationKindLabel(kind)}
+      {t(`destinations.kinds.${kind}`)}
     </Badge>
   );
 }
 
 function SafeConfigCell({ destination }: { destination: DestinationSummary }) {
+  const t = useTranslations();
+
   return (
     <div className="min-w-0">
-      <div className="truncate text-xs">{safeConfigSummary(destination.kind)}</div>
+      <div className="truncate text-xs">{t(`destinations.kinds.${destination.kind}`)}</div>
       <div className="text-muted-foreground mt-0.5 truncate text-[11px]">
-        Secrets stay server-side and are omitted from UI data.
+        {t("destinations.table.safeConfig.secrets")}
       </div>
     </div>
   );
 }
 
 function DestinationsEmptyState() {
+  const t = useTranslations();
+
   return (
     <Empty className="border-0 py-3">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <RiArrowRightLine aria-hidden />
         </EmptyMedia>
-        <EmptyTitle>No destinations configured</EmptyTitle>
-        <EmptyDescription>
-          Create a destination before routes can send delivery jobs.
-        </EmptyDescription>
+        <EmptyTitle>{t("destinations.table.empty.title")}</EmptyTitle>
+        <EmptyDescription>{t("destinations.table.empty.description")}</EmptyDescription>
       </EmptyHeader>
     </Empty>
   );
-}
-
-function destinationKindLabel(kind: DestinationFormKind) {
-  switch (kind) {
-    case "email":
-      return "Email";
-    case "feishu":
-      return "Feishu";
-    case "generic_webhook":
-      return "Generic webhook";
-    case "slack":
-      return "Slack";
-  }
-}
-
-function safeConfigSummary(kind: DestinationFormKind) {
-  switch (kind) {
-    case "email":
-      return "Gateway, recipients, and headers are redacted";
-    case "feishu":
-      return "Robot webhook and optional signing secret are redacted";
-    case "generic_webhook":
-      return "Webhook endpoint, method, and headers are redacted";
-    case "slack":
-      return "Slack webhook endpoint is redacted";
-  }
 }

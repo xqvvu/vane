@@ -2,6 +2,7 @@ import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
 import { Skeleton } from "#/components/ui/skeleton.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export interface DashboardUserMenuProps {
   user: {
@@ -25,7 +26,9 @@ function DashboardUserMenuRoot(props: DashboardUserMenuProps) {
 }
 
 function DashboardUserMenuSkeleton() {
-  return <Skeleton className="size-7 rounded-full" aria-label="Loading profile menu" />;
+  const t = useTranslations();
+
+  return <Skeleton className="size-7 rounded-full" aria-label={t("shell.userMenu.loading")} />;
 }
 
 export const DashboardUserMenu = Object.assign(DashboardUserMenuRoot, {

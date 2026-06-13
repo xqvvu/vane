@@ -37,6 +37,7 @@ import { ConfigurationStateBadge } from "#/features/configuration/ui/configurati
 import { sourceWebhookUrl } from "#/features/sources/model/source-webhook.ts";
 import { EditSourceForm } from "#/features/sources/ui/source-forms.tsx";
 import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { copyText } from "#/lib/browser.ts";
 import { cn } from "#/lib/utils.ts";
 
@@ -68,36 +69,37 @@ export function SourcesSection({
   onRotateToken,
   onSubmitEdit,
 }: SourcesSectionProps) {
+  const t = useTranslations();
   const columns = React.useMemo<Array<ColumnDef<SourceSummary>>>(
     () => [
       {
         id: "source",
-        header: "Source",
+        header: t("sources.table.headers.source"),
         cell: ({ row }) => <SourceIdentityCell source={row.original} />,
       },
       {
         id: "webhook",
-        header: "Webhook",
+        header: t("sources.table.headers.webhook"),
         cell: ({ row }) => <SourceWebhookCell sourceId={row.original.id} compact />,
       },
       {
         id: "auth",
-        header: "Auth",
+        header: t("sources.table.headers.auth"),
         cell: () => <SourceAuthCell />,
       },
       {
         id: "status",
-        header: "Status",
+        header: t("sources.table.headers.status"),
         cell: ({ row }) => <ConfigurationStateBadge enabled={row.original.enabled} />,
       },
       {
         id: "last-received",
-        header: "Last received",
+        header: t("sources.table.headers.lastReceived"),
         cell: () => <span className="text-muted-foreground text-xs">--</span>,
       },
       {
         id: "actions",
-        header: "Actions",
+        header: t("sources.table.headers.actions"),
         cell: ({ row }) => (
           <SourceActions
             source={row.original}
@@ -109,7 +111,7 @@ export function SourcesSection({
         ),
       },
     ],
-    [onEdit, onRotateToken, onToggle, pending],
+    [onEdit, onRotateToken, onToggle, pending, t],
   );
   const table = useReactTable({
     data: sources,
@@ -171,7 +173,7 @@ export function SourcesSection({
       {sources.length > 0 ? (
         <div className="border-border bg-background border-t py-4 text-center">
           <span className="text-muted-foreground text-[11px] font-bold tracking-[0.18em] uppercase">
-            End of sources
+            {t("sources.table.end")}
           </span>
         </div>
       ) : null}
@@ -191,6 +193,7 @@ export function SourcesSection({
 }
 
 function SourceIdentityCell({ source }: { source: SourceSummary }) {
+  const t = useTranslations();
   const Icon = sourceProviderIcon(source.provider);
 
   return (
@@ -203,7 +206,7 @@ function SourceIdentityCell({ source }: { source: SourceSummary }) {
           {source.name}
         </div>
         <div className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] font-medium uppercase">
-          <span>{sourceProviderLabel(source.provider)}</span>
+          <span>{t(source.provider)}</span>
           <span aria-hidden>|</span>
           <span className="truncate font-mono lowercase" title={source.id}>
             {source.id.slice(0, 12)}
@@ -215,11 +218,13 @@ function SourceIdentityCell({ source }: { source: SourceSummary }) {
 }
 
 function SourceAuthCell() {
+  const t = useTranslations();
+
   return (
     <div className="min-w-0">
       <Badge variant="outline" className="bg-muted/40 text-[11px] font-semibold">
         <RiLockLine data-icon="inline-start" aria-hidden />
-        Token configured
+        {t("sources.table.tokenConfigured")}
       </Badge>
     </div>
   );
@@ -238,6 +243,8 @@ function SourceActions({
   onToggle: (source: SourceSummary) => void;
   onRotateToken: (source: SourceSummary) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <div className="flex justify-end gap-1">
       <Button
@@ -245,7 +252,7 @@ function SourceActions({
         variant="ghost"
         size="icon-xs"
         disabled={pending}
-        title="Copy webhook URL"
+        title={t("sources.table.actions.copyWebhookUrl")}
         onClick={() => void copyText(sourceWebhookUrl(source.id))}
       >
         <RiFileCopyLine data-icon="inline-start" aria-hidden />
@@ -255,7 +262,7 @@ function SourceActions({
         variant="ghost"
         size="icon-xs"
         disabled={pending}
-        title="Edit source"
+        title={t("sources.table.actions.edit")}
         onClick={() => onEdit(source.id)}
       >
         <RiEditLine data-icon="inline-start" aria-hidden />
@@ -265,7 +272,7 @@ function SourceActions({
         variant="ghost"
         size="icon-xs"
         disabled={pending}
-        title="Rotate source token"
+        title={t("sources.table.actions.rotateToken")}
         onClick={() => onRotateToken(source)}
       >
         <RiKey2Line data-icon="inline-start" aria-hidden />
@@ -275,7 +282,9 @@ function SourceActions({
         variant="ghost"
         size="icon-xs"
         disabled={pending}
-        title={source.enabled ? "Disable source intake" : "Enable source intake"}
+        title={
+          source.enabled ? t("sources.table.actions.disable") : t("sources.table.actions.enable")
+        }
         onClick={() => onToggle(source)}
       >
         <RiShutDownLine data-icon="inline-start" aria-hidden />
@@ -285,35 +294,20 @@ function SourceActions({
 }
 
 function SourcesEmptyState() {
+  const t = useTranslations();
+
   return (
     <Empty className="border-none p-4">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <RiWebhookLine aria-hidden />
         </EmptyMedia>
-        <EmptyTitle>No sources configured</EmptyTitle>
-        <EmptyDescription>
-          Create a source to receive authenticated webhook events from upstream monitors.
-        </EmptyDescription>
+        <EmptyTitle>{t("sources.table.empty.title")}</EmptyTitle>
+        <EmptyDescription>{t("sources.table.empty.description")}</EmptyDescription>
       </EmptyHeader>
-      <EmptyContent>New source setup stays available in the right rail.</EmptyContent>
+      <EmptyContent>{t("sources.table.empty.content")}</EmptyContent>
     </Empty>
   );
-}
-
-function sourceProviderLabel(provider: SourceSummary["provider"]): string {
-  switch (provider) {
-    case "alertmanager":
-      return "Alertmanager";
-    case "grafana":
-      return "Grafana";
-    case "signoz":
-      return "SigNoz";
-    case "uptime_kuma":
-      return "Uptime Kuma";
-    case "generic":
-      return "Generic";
-  }
 }
 
 function sourceProviderIcon(provider: SourceSummary["provider"]) {

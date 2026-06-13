@@ -17,10 +17,13 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu.tsx";
 import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
+import { LanguageMenuGroupClient } from "#/i18n/language-switcher-impl.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { authClient } from "#/lib/auth.client.ts";
 import type { DashboardUserMenuProps } from "#/shell/dashboard-user-menu.tsx";
 
 export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
+  const t = useTranslations();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [pending, setPending] = React.useState(false);
@@ -36,8 +39,8 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
             await queryClient.invalidateQueries({
               queryKey: authQueryKeys.all,
             });
-            toast.success("Signed out", {
-              description: "You have been returned to the login page.",
+            toast.success(t("shell.userMenu.signedOutTitle"), {
+              description: t("shell.userMenu.signedOutDescription"),
             });
             await navigate({
               to: "/login",
@@ -50,7 +53,7 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
         },
       });
     } catch (caught) {
-      toast.error("Sign out failed", {
+      toast.error(t("shell.userMenu.signOutFailureTitle"), {
         description: caught instanceof Error ? caught.message : String(caught),
       });
     } finally {
@@ -67,17 +70,17 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
             variant="ghost"
             size="icon-sm"
             className="rounded-full"
-            aria-label="Open profile menu"
+            aria-label={t("shell.userMenu.open")}
           />
         }
       >
-        <UserAvatar user={user} />
+        <UserAvatar fallbackInitial={t("shell.userMenu.fallbackInitial")} user={user} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>
             <div className="flex min-w-0 items-center gap-2">
-              <UserAvatar user={user} />
+              <UserAvatar fallbackInitial={t("shell.userMenu.fallbackInitial")} user={user} />
               <div className="min-w-0">
                 <div className="text-foreground truncate font-medium">
                   {user.name ?? user.email}
@@ -88,14 +91,16 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
           </DropdownMenuLabel>
           <DropdownMenuItem disabled>
             <RiUser3Line aria-hidden />
-            {user.role ?? "member"}
+            {user.role ?? t("shell.userMenu.defaultRole")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <LanguageMenuGroupClient />
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem disabled={pending} onClick={() => void signOut()}>
             <RiLogoutCircleLine aria-hidden />
-            {pending ? "Signing out" : "Sign out"}
+            {pending ? t("shell.userMenu.signingOut") : t("shell.userMenu.signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -103,16 +108,19 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
   );
 }
 
-function UserAvatar({ user }: Pick<DashboardUserMenuProps, "user">) {
+function UserAvatar({
+  fallbackInitial,
+  user,
+}: Pick<DashboardUserMenuProps, "user"> & { fallbackInitial: string }) {
   return (
     <Avatar size="sm">
       {user.image ? <AvatarImage src={user.image} alt={user.name ?? user.email} /> : null}
-      <AvatarFallback>{userInitial(user)}</AvatarFallback>
+      <AvatarFallback>{userInitial(user, fallbackInitial)}</AvatarFallback>
     </Avatar>
   );
 }
 
-function userInitial(user: DashboardUserMenuProps["user"]): string {
+function userInitial(user: DashboardUserMenuProps["user"], fallbackInitial: string): string {
   const label = user.name || user.email;
-  return label.trim().charAt(0).toUpperCase() || "U";
+  return label.trim().charAt(0).toUpperCase() || fallbackInitial;
 }

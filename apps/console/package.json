@@ -50,6 +50,7 @@
     "tailwind-merge": "catalog:tailwind",
     "tailwindcss": "catalog:tailwind",
     "tw-animate-css": "catalog:tailwind",
+    "use-intl": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

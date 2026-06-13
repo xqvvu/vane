@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
+import { VaneIntlProvider } from "#/i18n/provider.tsx";
 import { LoginFormClient } from "#/routes/-login-form-impl.tsx";
 import { LoginForm } from "#/routes/-login-form.tsx";
 
@@ -52,7 +53,9 @@ describe("login form", () => {
     const queryClient = new QueryClient();
     render(
       <QueryClientProvider client={queryClient}>
-        <LoginFormClient redirectTo="/" />
+        <VaneIntlProvider locale="en-US">
+          <LoginFormClient redirectTo="/" />
+        </VaneIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -61,6 +64,20 @@ describe("login form", () => {
     expect(screen.queryByText("First setup")).toBeNull();
     expect(screen.queryByText("Login with Google")).toBeNull();
     expect(screen.queryByText("Sign up")).toBeNull();
+  });
+
+  it("renders zh-Hans messages when the provider locale is zh-Hans", () => {
+    const queryClient = new QueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <VaneIntlProvider locale="zh-Hans">
+          <LoginFormClient redirectTo="/" />
+        </VaneIntlProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "登录" })).toBeTruthy();
+    expect(screen.getByText("登录 Vane")).toBeTruthy();
   });
 
   it("exposes a colocated skeleton", () => {
@@ -77,7 +94,9 @@ describe("login form", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <LoginFormClient redirectTo="/" />
+        <VaneIntlProvider locale="en-US">
+          <LoginFormClient redirectTo="/" />
+        </VaneIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -118,7 +137,9 @@ describe("login form", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <LoginFormClient redirectTo="/" />
+        <VaneIntlProvider locale="en-US">
+          <LoginFormClient redirectTo="/" />
+        </VaneIntlProvider>
       </QueryClientProvider>,
     );
 

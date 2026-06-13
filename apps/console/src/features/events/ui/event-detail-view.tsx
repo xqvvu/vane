@@ -3,8 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.t
 import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
 import { formatDateTime, formatTime } from "#/features/operations/model/operation-format.ts";
 import type { EventDetail } from "#/features/operations/model/operation-types.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function EventDetailView({ detail }: { detail: NonNullable<EventDetail> }) {
+  const t = useTranslations();
+
   return (
     <div className="grid gap-3">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
@@ -18,36 +21,58 @@ export function EventDetailView({ detail }: { detail: NonNullable<EventDetail> }
           <Badge
             variant={detail.event.normalized.status === "firing" ? "destructive" : "secondary"}
           >
-            {detail.event.normalized.status}
+            {t(`common.alertStatus.${detail.event.normalized.status}`)}
           </Badge>
           <Badge variant="outline">
-            {detail.routeMatches.filter((match) => match.matched).length} matched
+            {t("events.detail.match.matched", {
+              count: detail.routeMatches.filter((match) => match.matched).length,
+            })}
           </Badge>
-          <Badge variant="outline">{detail.deliveries.length} deliveries</Badge>
+          <Badge variant="outline">
+            {t("events.detail.deliveries", { count: detail.deliveries.length })}
+          </Badge>
         </div>
       </div>
       <Tabs defaultValue="normalized">
         <TabsList variant="line" className="w-full justify-start">
-          <TabsTrigger value="normalized">Normalized fields</TabsTrigger>
-          <TabsTrigger value="matches">Route matches</TabsTrigger>
-          <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
-          <TabsTrigger value="raw">Raw debug</TabsTrigger>
+          <TabsTrigger value="normalized">{t("events.detail.tabs.normalized")}</TabsTrigger>
+          <TabsTrigger value="matches">{t("events.detail.tabs.matches")}</TabsTrigger>
+          <TabsTrigger value="deliveries">{t("events.detail.tabs.deliveries")}</TabsTrigger>
+          <TabsTrigger value="raw">{t("events.detail.tabs.raw")}</TabsTrigger>
         </TabsList>
         <TabsContent value="normalized" className="pt-2">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
             <dl className="grid grid-cols-[96px_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
-              <DetailTerm label="Source" value={detail.source.name} />
-              <DetailTerm label="Severity" value={detail.event.normalized.severity} />
-              <DetailTerm label="Status" value={detail.event.normalized.status} />
-              <DetailTerm label="Fingerprint" value={detail.event.normalized.fingerprint} />
+              <DetailTerm label={t("events.detail.terms.source")} value={detail.source.name} />
               <DetailTerm
-                label="Occurred"
+                label={t("events.detail.terms.severity")}
+                value={t(`common.severity.${detail.event.normalized.severity}`)}
+              />
+              <DetailTerm
+                label={t("events.detail.terms.status")}
+                value={t(`common.alertStatus.${detail.event.normalized.status}`)}
+              />
+              <DetailTerm
+                label={t("events.detail.terms.fingerprint")}
+                value={detail.event.normalized.fingerprint}
+              />
+              <DetailTerm
+                label={t("events.detail.terms.occurred")}
                 value={formatDateTime(detail.event.normalized.occurredAt)}
               />
-              <DetailTerm label="Received" value={formatDateTime(detail.event.receivedAt)} />
-              <DetailTerm label="Deliveries" value={String(detail.deliveries.length)} />
+              <DetailTerm
+                label={t("events.detail.terms.received")}
+                value={formatDateTime(detail.event.receivedAt)}
+              />
+              <DetailTerm
+                label={t("events.detail.terms.deliveries")}
+                value={String(detail.deliveries.length)}
+              />
             </dl>
-            <JsonBlock title="Normalized event" value={detail.event.normalized} />
+            <JsonBlock
+              title={t("events.detail.json.normalizedEvent")}
+              value={detail.event.normalized}
+            />
           </div>
         </TabsContent>
         <TabsContent value="matches" className="pt-2">
@@ -59,12 +84,10 @@ export function EventDetailView({ detail }: { detail: NonNullable<EventDetail> }
         <TabsContent value="raw" className="pt-2">
           <div className="grid gap-2 lg:grid-cols-2">
             <div className="lg:col-span-2">
-              <p className="text-muted-foreground text-xs">
-                Raw provider data is displayed only after server-side redaction.
-              </p>
+              <p className="text-muted-foreground text-xs">{t("events.detail.rawNotice")}</p>
             </div>
-            <JsonBlock title="Raw payload" value={detail.event.rawPayload} />
-            <JsonBlock title="Raw headers" value={detail.event.rawHeaders} />
+            <JsonBlock title={t("events.detail.json.rawPayload")} value={detail.event.rawPayload} />
+            <JsonBlock title={t("events.detail.json.rawHeaders")} value={detail.event.rawHeaders} />
           </div>
         </TabsContent>
       </Tabs>
@@ -77,33 +100,51 @@ function EventDeliveriesTable({
 }: {
   deliveries: NonNullable<EventDetail>["deliveries"];
 }) {
+  const t = useTranslations();
+
   return (
     <section>
-      <h4 className="text-muted-foreground mb-1 text-xs font-medium">Event deliveries</h4>
+      <h4 className="text-muted-foreground mb-1 text-xs font-medium">
+        {t("events.detail.eventDeliveriesTitle")}
+      </h4>
       <div className="border-border bg-card max-h-64 overflow-auto border">
         <table className="w-full table-fixed text-left text-[11px]">
           <thead className="bg-muted/50 text-muted-foreground sticky top-0">
             <tr>
-              <th className="w-[23%] px-2 py-1.5 font-medium">Destination</th>
-              <th className="w-[20%] px-2 py-1.5 font-medium">Route</th>
-              <th className="w-[16%] px-2 py-1.5 font-medium">State</th>
-              <th className="w-[13%] px-2 py-1.5 font-medium">Attempts</th>
-              <th className="w-[18%] px-2 py-1.5 font-medium">Next</th>
-              <th className="px-2 py-1.5 font-medium">Last error</th>
+              <th className="w-[23%] px-2 py-1.5 font-medium">
+                {t("events.detail.deliveryHeaders.destination")}
+              </th>
+              <th className="w-[20%] px-2 py-1.5 font-medium">
+                {t("events.detail.deliveryHeaders.route")}
+              </th>
+              <th className="w-[16%] px-2 py-1.5 font-medium">
+                {t("events.detail.deliveryHeaders.state")}
+              </th>
+              <th className="w-[13%] px-2 py-1.5 font-medium">
+                {t("events.detail.deliveryHeaders.attempts")}
+              </th>
+              <th className="w-[18%] px-2 py-1.5 font-medium">
+                {t("events.detail.deliveryHeaders.next")}
+              </th>
+              <th className="px-2 py-1.5 font-medium">
+                {t("events.detail.deliveryHeaders.lastError")}
+              </th>
             </tr>
           </thead>
           <tbody>
             {deliveries.length === 0 ? (
               <tr>
                 <td className="text-muted-foreground px-2 py-2" colSpan={6}>
-                  No deliveries created
+                  {t("events.detail.empty.deliveries")}
                 </td>
               </tr>
             ) : (
               deliveries.map((delivery) => (
                 <tr key={delivery.id} className="border-border/70 border-t align-top">
                   <td className="truncate px-2 py-2 font-medium">{delivery.destinationName}</td>
-                  <td className="truncate px-2 py-2">{delivery.routeName ?? "Manual"}</td>
+                  <td className="truncate px-2 py-2">
+                    {delivery.routeName ?? t("events.detail.manual")}
+                  </td>
                   <td className="px-2 py-2">
                     <DeliveryStateBadge state={delivery.state} />
                   </td>
@@ -127,24 +168,34 @@ function EventDeliveriesTable({
 }
 
 function RouteMatchesTable({ matches }: { matches: NonNullable<EventDetail>["routeMatches"] }) {
+  const t = useTranslations();
+
   return (
     <section>
-      <h4 className="text-muted-foreground mb-1 text-xs font-medium">Route matches</h4>
+      <h4 className="text-muted-foreground mb-1 text-xs font-medium">
+        {t("events.detail.routeMatchesTitle")}
+      </h4>
       <div className="border-border bg-card max-h-64 overflow-auto border">
         <table className="w-full table-fixed text-left text-[11px]">
           <thead className="bg-muted/50 text-muted-foreground sticky top-0">
             <tr>
-              <th className="w-[30%] px-2 py-1.5 font-medium">Route</th>
-              <th className="w-[18%] px-2 py-1.5 font-medium">Result</th>
-              <th className="w-[16%] px-2 py-1.5 font-medium">Targets</th>
-              <th className="px-2 py-1.5 font-medium">Checks</th>
+              <th className="w-[30%] px-2 py-1.5 font-medium">
+                {t("events.detail.routeHeaders.route")}
+              </th>
+              <th className="w-[18%] px-2 py-1.5 font-medium">
+                {t("events.detail.routeHeaders.result")}
+              </th>
+              <th className="w-[16%] px-2 py-1.5 font-medium">
+                {t("events.detail.routeHeaders.targets")}
+              </th>
+              <th className="px-2 py-1.5 font-medium">{t("events.detail.routeHeaders.checks")}</th>
             </tr>
           </thead>
           <tbody>
             {matches.length === 0 ? (
               <tr>
                 <td className="text-muted-foreground px-2 py-2" colSpan={4}>
-                  No routes evaluated
+                  {t("events.detail.empty.routes")}
                 </td>
               </tr>
             ) : (
@@ -176,8 +227,12 @@ function RouteMatchesTable({ matches }: { matches: NonNullable<EventDetail>["rou
 }
 
 function MatchBadge({ matched }: { matched: boolean }) {
+  const t = useTranslations();
+
   return (
-    <Badge variant={matched ? "secondary" : "destructive"}>{matched ? "Matched" : "Missed"}</Badge>
+    <Badge variant={matched ? "secondary" : "destructive"}>
+      {matched ? t("events.detail.match.matched") : t("events.detail.match.missed")}
+    </Badge>
   );
 }
 

@@ -17,10 +17,12 @@ import {
   DestinationTestNoticePanel,
 } from "#/features/destinations/ui/destination-notices.tsx";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function DestinationsPage() {
+  const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const {
     createDestination,
@@ -77,7 +79,7 @@ export function DestinationsPage() {
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Destination operation failed</AlertTitle>
+              <AlertTitle>{t("destinations.page.operationFailed")}</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -182,18 +184,20 @@ function DestinationsPageToolbar({
   pending: boolean;
   onRefresh: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Destinations</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("destinations.page.title")}
+          </h1>
           <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {destinationCount} configured
+            {t("destinations.page.configured", { count: destinationCount })}
           </Badge>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Manage outbound notification targets, safe previews, test sends, and server-side secrets.
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{t("destinations.page.description")}</p>
       </div>
       <Button
         type="button"
@@ -201,11 +205,11 @@ function DestinationsPageToolbar({
         size="sm"
         disabled={pending}
         onClick={onRefresh}
-        title="Refresh destination configuration"
+        title={t("destinations.page.refreshTitle")}
         className="w-fit"
       >
         <RiRefreshLine data-icon="inline-start" aria-hidden />
-        Refresh
+        {t("common.actions.refresh")}
       </Button>
     </header>
   );

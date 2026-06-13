@@ -12,6 +12,7 @@ import type {
 } from "#/features/operations/model/operation-types.ts";
 import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
 
 export interface OperationsPanelProps {
@@ -49,14 +50,16 @@ export function OperationsPanel({
   onOlderDeliveries,
   onLatestDeliveries,
 }: OperationsPanelProps) {
+  const t = useTranslations();
+
   return (
     <DashboardPanel
-      title="Operations"
+      title={t("operations.title")}
       icon={<RiTimeLine className="size-4" aria-hidden />}
       action={
         <Button variant="outline" size="sm" disabled={pending} onClick={onRunWorker}>
           <RiPlayLine aria-hidden />
-          Run worker
+          {t("common.actions.runWorker")}
         </Button>
       }
     >

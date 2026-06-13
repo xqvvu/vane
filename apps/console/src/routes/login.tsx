@@ -6,6 +6,7 @@ import {
   authBootstrapQueryOptions,
   dashboardSessionQueryOptions,
 } from "#/features/auth/api/auth.queries.ts";
+import { LanguageSelector } from "#/i18n/language-switcher.tsx";
 import { LoginForm } from "#/routes/-login-form.tsx";
 
 const LoginSearchSchema = z.object({
@@ -42,6 +43,13 @@ function LoginPage() {
 
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-5 py-8">
+      <div className="absolute top-4 right-4">
+        <ClientOnly fallback={<LanguageSelector.Skeleton />}>
+          <React.Suspense fallback={<LanguageSelector.Skeleton />}>
+            <LanguageSelector />
+          </React.Suspense>
+        </ClientOnly>
+      </div>
       <ClientOnly fallback={<LoginForm.Skeleton />}>
         <React.Suspense fallback={<LoginForm.Skeleton />}>
           <LoginForm redirectTo={search.redirect || "/"} />

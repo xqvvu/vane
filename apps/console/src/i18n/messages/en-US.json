@@ -1,0 +1,650 @@
+{
+  "app": {
+    "title": "Vane Console"
+  },
+  "auth": {
+    "login": {
+      "title": "Login to Vane",
+      "description": "Enter your dashboard credentials to continue.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "admin@example.test",
+      "passwordLabel": "Password",
+      "submit": "Login",
+      "submitting": "Signing in",
+      "failureTitle": "Login failed",
+      "failureDescription": "Check your email and password, then try again.",
+      "successTitle": "Logged in",
+      "successDescription": "Opening the dashboard.",
+      "validation": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email address",
+        "passwordMin": "Password must be at least 8 characters"
+      }
+    },
+    "setup": {
+      "title": "Create owner account",
+      "description": "Register the first dashboard user for this deployment.",
+      "nameLabel": "Name",
+      "defaultName": "Vane Owner",
+      "emailLabel": "Email",
+      "emailPlaceholder": "admin@example.test",
+      "passwordLabel": "Password",
+      "submit": "Create owner",
+      "submitting": "Creating owner",
+      "failureTitle": "Setup failed",
+      "failureDescription": "The owner account could not be created.",
+      "successTitle": "Owner account created",
+      "successDescription": "Opening the dashboard.",
+      "validation": {
+        "nameRequired": "Name is required",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email address",
+        "passwordMin": "Password must be at least 8 characters"
+      }
+    }
+  },
+  "common": {
+    "routes": {
+      "events": "Events",
+      "deliveries": "Deliveries",
+      "sources": "Sources",
+      "routes": "Routes",
+      "destinations": "Destinations",
+      "settings": "Settings"
+    },
+    "state": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "severity": {
+      "any": "Any severity",
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info",
+      "unknown": "Unknown"
+    },
+    "alertStatus": {
+      "any": "Any status",
+      "firing": "Firing",
+      "resolved": "Resolved",
+      "unknown": "Unknown"
+    },
+    "deliveryState": {
+      "any": "Any state",
+      "pending": "Pending",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
+    "actions": {
+      "tryAgain": "Try again",
+      "reloadPage": "Reload page",
+      "refresh": "Refresh",
+      "resetFilters": "Reset filters",
+      "export": "Export",
+      "import": "Import",
+      "saveSettings": "Save settings",
+      "runWorker": "Run worker"
+    },
+    "placeholder": {
+      "empty": "—"
+    }
+  },
+  "locale": {
+    "label": "Language",
+    "current": "Current language",
+    "en-US": "English",
+    "zh-Hans": "Simplified Chinese"
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Dashboard",
+      "notifications": "Notifications",
+      "help": "Help"
+    },
+    "userMenu": {
+      "loading": "Loading profile menu",
+      "open": "Open profile menu",
+      "fallbackInitial": "U",
+      "defaultRole": "member",
+      "signOut": "Sign out",
+      "signingOut": "Signing out",
+      "signedOutTitle": "Signed out",
+      "signedOutDescription": "You have been returned to the login page.",
+      "signOutFailureTitle": "Sign out failed"
+    },
+    "error": {
+      "badge": "ERROR",
+      "title": "Application error",
+      "description": "An unexpected runtime failure occurred while rendering this view.",
+      "summaryLabel": "Redacted summary",
+      "traceId": "[REDACTED_TRACE_ID: generated_server_side]",
+      "actionsLabel": "Error recovery actions",
+      "context": "Vane Console / error boundary / runtime failure",
+      "summaryKnown": "Internal rendering failure: {message}",
+      "summaryUnknown": "Internal rendering failure: Unknown error"
+    },
+    "notFound": {
+      "title": "Route not found",
+      "description": "The requested URL does not match a registered console route.",
+      "contextLabel": "Current request context",
+      "actionsLabel": "404 recovery actions",
+      "returnToSources": "Return to Sources",
+      "context": "Vane Console / navigation guard / 404"
+    }
+  },
+  "configuration": {
+    "stateBadge": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "settings": {
+      "title": "Settings",
+      "badge": "Configuration",
+      "description": "Manage raw payload retention, TOML portability, and secret-safe configuration transfer.",
+      "refreshTitle": "Refresh configuration",
+      "operationFailed": "Settings operation failed",
+      "languageTitle": "Language",
+      "languageDescription": "Language is stored in this browser, not as a deployment-wide setting."
+    },
+    "appSettings": {
+      "title": "App settings",
+      "description": "Bound raw webhook payload storage while keeping normalized Events and Delivery history reviewable.",
+      "rawPayloadRetentionDays": "Raw payload retention days",
+      "rawPayloadRetentionDescription": "Allowed range is 0 to 3650 days. This applies to raw payload debug data.",
+      "rawPayloadRetentionValidation": "Retention must be between 0 and 3650 days"
+    },
+    "portableConfig": {
+      "title": "Portable config",
+      "tomlLabel": "TOML",
+      "tomlPlaceholder": "[settings]\nraw_payload_retention_days = 30",
+      "description": "Export omits plaintext secrets by default. Import validates structure before applying changes."
+    },
+    "importNotice": {
+      "title": "Imported configuration",
+      "empty": "No new source tokens were generated.",
+      "generated": "Copy generated source tokens now. They are shown once and token hashes are never displayed.",
+      "webhookUrl": "Webhook URL",
+      "sourceToken": "Source token",
+      "copyWebhookUrl": "Copy webhook URL",
+      "copySourceToken": "Copy source token"
+    },
+    "summary": {
+      "enabledSources": "Enabled sources",
+      "enabledDestinations": "Enabled destinations",
+      "enabledRoutes": "Enabled routes",
+      "rawPayloadRetention": "Raw payload retention",
+      "days": "days"
+    },
+    "safety": {
+      "title": "Portability and safety",
+      "facts": {
+        "tomlIntegrity": {
+          "title": "TOML integrity",
+          "description": "Vane-owned configuration imports and exports use TOML for reviewable, self-hosted config-as-code workflows."
+        },
+        "secretSafeExports": {
+          "title": "Secret-safe exports",
+          "description": "Exports request secrets omitted by default. Secret references can be resolved from environment variables during import."
+        },
+        "validatedImports": {
+          "title": "Validated imports",
+          "description": "TOML is parsed and validated before stored Sources, Routes, Destinations, or settings are changed."
+        },
+        "oneTimeSourceTokens": {
+          "title": "One-time source tokens",
+          "description": "New Sources created during import may return source tokens once; token hashes are never displayed."
+        }
+      }
+    }
+  },
+  "operations": {
+    "title": "Operations",
+    "filters": {
+      "source": "Source",
+      "anySource": "Any source",
+      "severity": "Severity",
+      "status": "Status",
+      "destination": "Destination",
+      "anyDestination": "Any destination",
+      "deliveryState": "Delivery state",
+      "search": "Search",
+      "searchPlaceholder": "title or message"
+    },
+    "workerNotice": {
+      "title": "Worker run complete",
+      "description": "{claimed} claimed, {succeeded} succeeded, {failed} failed, {retrying} retrying."
+    },
+    "history": {
+      "latest": "Latest",
+      "older": "Older",
+      "showLatest": "Show latest history",
+      "showOlder": "Show older history"
+    }
+  },
+  "sources": {
+    "page": {
+      "operationFailed": "Source operation failed",
+      "title": "Sources",
+      "configured": "{count} configured",
+      "description": "Manage inbound webhook senders and secure intake.",
+      "refreshTitle": "Refresh source configuration",
+      "quickTip": {
+        "title": "Quick tip",
+        "beforeLink": "Generic sources support JSON mapping. Once created, define how Vane interprets custom payload structures in ",
+        "routeSettings": "Route Settings",
+        "afterLink": "."
+      }
+    },
+    "providers": {
+      "generic": "Generic",
+      "genericWebhook": "Generic Webhook",
+      "grafana": "Grafana",
+      "signoz": "SigNoz",
+      "uptime_kuma": "Uptime Kuma",
+      "alertmanager": "Alertmanager"
+    },
+    "table": {
+      "headers": {
+        "source": "Source",
+        "webhook": "Webhook",
+        "auth": "Auth",
+        "status": "Status",
+        "lastReceived": "Last received",
+        "actions": "Actions"
+      },
+      "end": "End of sources",
+      "tokenConfigured": "Token configured",
+      "actions": {
+        "copyWebhookUrl": "Copy webhook URL",
+        "edit": "Edit source",
+        "rotateToken": "Rotate source token",
+        "disable": "Disable source intake",
+        "enable": "Enable source intake"
+      },
+      "empty": {
+        "title": "No sources configured",
+        "description": "Create a source to receive authenticated webhook events from upstream monitors.",
+        "content": "New source setup stays available in the right rail."
+      }
+    },
+    "form": {
+      "create": {
+        "title": "New Source",
+        "description": "Configure a new inbound pipeline to ingest alerts.",
+        "submit": "Create Source",
+        "afterCreateHint": "The source token is generated after create and shown once."
+      },
+      "edit": {
+        "title": "Edit source",
+        "description": "Update the intake label, provider parser, or provider secret override for this source.",
+        "submit": "Save source"
+      },
+      "nameLabel": "Name",
+      "namePlaceholderRail": "e.g. Sentry Production",
+      "namePlaceholderCompact": "Production Grafana",
+      "nameDescription": "Use the upstream system name operators will recognize during triage.",
+      "providerLabel": "Provider",
+      "providerDescription": "Provider parsers normalize inbound webhook payloads.",
+      "signingSecretLabel": "Signing secret",
+      "signingSecretOverrideLabel": "Signing secret override",
+      "signingSecretPlaceholder": "Enter secret or leave blank",
+      "signingSecretOverridePlaceholder": "Leave blank to keep current",
+      "signingSecretDescription": "Stored server-side only. Leave blank when the provider does not sign payloads.",
+      "cancel": "Cancel",
+      "validation": {
+        "nameRequired": "Source name is required"
+      }
+    },
+    "notice": {
+      "createdTitle": "Source created successfully",
+      "createdDescription": "Copy your webhook URL and token for {sourceName}. These secrets will not be shown again.",
+      "copyToken": "Copy Token",
+      "copyUrl": "Copy URL",
+      "dismiss": "Dismiss notice"
+    }
+  },
+  "routing": {
+    "page": {
+      "operationFailed": "Route operation failed",
+      "title": "Routes",
+      "configured": "{count} configured",
+      "description": "Match normalized event fields and fan out matching events to destinations.",
+      "refreshTitle": "Refresh route configuration"
+    },
+    "table": {
+      "headers": {
+        "name": "Name",
+        "rule": "Rule",
+        "destinations": "Destinations",
+        "state": "State",
+        "actions": ""
+      },
+      "actions": {
+        "edit": "Edit route",
+        "disableTitle": "Disable route matching",
+        "enableTitle": "Enable route matching",
+        "disable": "Disable",
+        "enable": "Enable"
+      },
+      "end": "End of routes",
+      "allEvents": "All events",
+      "noDestinations": "No destinations",
+      "empty": {
+        "title": "No routes configured",
+        "description": "Create a route to match normalized events and send them to one or more destinations.",
+        "withDestinations": "New route setup stays available in the right rail.",
+        "withoutDestinations": "Create at least one destination before enabling a route."
+      },
+      "rulePrefix": {
+        "source": "source",
+        "sources": "sources",
+        "severity": "severity",
+        "status": "status",
+        "labels": "labels",
+        "title": "title",
+        "message": "message"
+      }
+    },
+    "form": {
+      "create": {
+        "title": "New route",
+        "description": "Match normalized event fields and send matching events to selected destinations.",
+        "submit": "Create route"
+      },
+      "edit": {
+        "title": "Edit route",
+        "description": "Update the first editable condition while preserving any additional rule conditions.",
+        "submit": "Save route"
+      },
+      "nameLabel": "Name",
+      "namePlaceholder": "Critical to ops",
+      "nameDescription": "A short operational name for this routing rule.",
+      "sourceLabel": "Source",
+      "anySource": "Any source",
+      "sourceDescription": "Leave as any source for catch-all routing.",
+      "severityLabel": "Severity",
+      "severityAny": "Any",
+      "severityDescription": "Empty severity conditions match every severity.",
+      "statusLabel": "Status",
+      "statusAny": "Any",
+      "statusDescription": "Match firing, resolved, or unknown alert states.",
+      "labelKeyLabel": "Label key",
+      "labelKeyDescription": "Normalized label key.",
+      "operatorLabel": "Operator",
+      "operatorEquals": "Equals",
+      "operatorContains": "Contains",
+      "operatorDescription": "Comparison mode.",
+      "labelValueLabel": "Label value",
+      "labelValueDescription": "Required with a label key.",
+      "titleContainsLabel": "Title contains",
+      "titleContainsDescription": "Simple substring match against normalized title.",
+      "messageContainsLabel": "Message contains",
+      "messageContainsDescription": "Simple substring match against normalized message.",
+      "destinationsLegend": "Destinations",
+      "createDestinationFirst": "Create a destination first",
+      "destinationsDescription": "Routes must select at least one destination.",
+      "cancel": "Cancel",
+      "validation": {
+        "nameRequired": "Route name is required"
+      }
+    }
+  },
+  "destinations": {
+    "page": {
+      "operationFailed": "Destination operation failed",
+      "title": "Destinations",
+      "configured": "{count} configured",
+      "description": "Manage outbound notification targets, safe previews, test sends, and server-side secrets.",
+      "refreshTitle": "Refresh destination configuration"
+    },
+    "kinds": {
+      "email": "Email",
+      "feishu": "Feishu",
+      "generic_webhook": "Generic webhook",
+      "slack": "Slack"
+    },
+    "table": {
+      "headers": {
+        "destination": "Destination",
+        "kind": "Kind",
+        "safeConfiguration": "Safe configuration",
+        "state": "State",
+        "actions": ""
+      },
+      "actions": {
+        "test": "Test",
+        "testTitle": "Test {name}",
+        "preview": "Preview",
+        "previewTitle": "Preview {name}",
+        "edit": "Edit destination",
+        "disableTitle": "Disable destination",
+        "enableTitle": "Enable destination",
+        "disable": "Disable",
+        "enable": "Enable"
+      },
+      "safeConfig": {
+        "email": "Gateway, recipients, and headers are redacted",
+        "feishu": "Robot webhook and optional signing secret are redacted",
+        "generic_webhook": "Webhook endpoint, method, and headers are redacted",
+        "slack": "Slack webhook endpoint is redacted",
+        "secrets": "Secrets stay server-side and are omitted from UI data."
+      },
+      "end": "End of destinations",
+      "empty": {
+        "title": "No destinations configured",
+        "description": "Create a destination before routes can send delivery jobs."
+      }
+    },
+    "form": {
+      "create": {
+        "title": "New destination",
+        "description": "Configure one outbound adapter. Secret-bearing values stay server-side and are not shown again after save.",
+        "submit": "Create destination"
+      },
+      "edit": {
+        "title": "Edit destination",
+        "description": "Leave secret fields blank to keep existing values.",
+        "submit": "Save destination"
+      },
+      "secretDescriptionCreate": "Stored server-side and omitted from configuration query data.",
+      "secretDescriptionEdit": "Leave blank to keep the current stored value.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Ops destination",
+      "nameDescription": "Short label shown in routes and delivery history.",
+      "kindLabel": "Kind",
+      "kindDescription": "Adapter type determines the required delivery fields.",
+      "kindReadonlyDescription": "Adapter kind cannot be changed after creation.",
+      "emailGatewayUrl": "Email gateway URL",
+      "to": "To",
+      "toDescription": "Comma-separated or newline-separated delivery recipients.",
+      "from": "From",
+      "fromDescription": "Sender address used by the email gateway.",
+      "replyTo": "Reply-To",
+      "replyToDescription": "Optional reply address for operator responses.",
+      "subjectPrefix": "Subject prefix",
+      "subjectPrefixDescription": "Prepended to rendered email subjects.",
+      "headers": "Headers",
+      "headersDescription": "One Name: value header per line. Values stay server-side.",
+      "slackWebhookUrl": "Slack webhook URL",
+      "feishuWebhookUrl": "Feishu webhook URL",
+      "webhookUrl": "Webhook URL",
+      "method": "Method",
+      "keepExisting": "Keep existing",
+      "methodDescription": "HTTP method for generic webhook delivery attempts.",
+      "signSecret": "Sign secret",
+      "optionalPlaceholder": "optional",
+      "messageTemplate": "Message template",
+      "messageTemplateDescription": "Deterministic interpolation only; templates do not execute code.",
+      "cancel": "Cancel",
+      "preview": "Preview",
+      "validation": {
+        "nameRequired": "Destination name is required"
+      }
+    },
+    "notice": {
+      "testAcceptedTitle": "Test {name}: accepted",
+      "testFailedTitle": "Test {name}: failed",
+      "testAccepted": "Sender accepted the test.",
+      "testAcceptedWithStatus": "Sender accepted the test with HTTP {statusCode}.",
+      "testRejected": "Destination sender rejected the test.",
+      "previewTitle": "Preview {name}",
+      "previewDescription": "Rendered payload for a deterministic test event."
+    }
+  },
+  "events": {
+    "page": {
+      "operationFailed": "Operation failed",
+      "title": "Events",
+      "loaded": "{count} loaded",
+      "description": "Triage normalized alerts, route matches, delivery jobs, and redacted raw debug data.",
+      "refreshTitle": "Refresh event history",
+      "resetTitle": "Reset event filters"
+    },
+    "table": {
+      "title": "Event stream",
+      "order": "Newest first",
+      "empty": "No events yet",
+      "headers": {
+        "event": "Event",
+        "source": "Source",
+        "state": "State",
+        "deliveries": "Deliveries",
+        "received": "Received",
+        "actions": ""
+      },
+      "inspect": "Inspect event",
+      "deliveryShort": {
+        "pending": "P",
+        "running": "R",
+        "succeeded": "S",
+        "failed": "F"
+      }
+    },
+    "detail": {
+      "notFoundTitle": "Event not found",
+      "notFoundDescription": "The event may have been deleted or the URL points to a different Vane database.",
+      "title": "Event detail",
+      "description": "Inspect normalized fields, intake-time route matches, deliveries, and redacted raw data.",
+      "back": "Events",
+      "matched": "{count} matched",
+      "deliveries": "{count} deliveries",
+      "tabs": {
+        "normalized": "Normalized fields",
+        "matches": "Route matches",
+        "deliveries": "Deliveries",
+        "raw": "Raw debug"
+      },
+      "terms": {
+        "source": "Source",
+        "severity": "Severity",
+        "status": "Status",
+        "fingerprint": "Fingerprint",
+        "occurred": "Occurred",
+        "received": "Received",
+        "deliveries": "Deliveries"
+      },
+      "json": {
+        "normalizedEvent": "Normalized event",
+        "rawPayload": "Raw payload",
+        "rawHeaders": "Raw headers"
+      },
+      "rawNotice": "Raw provider data is displayed only after server-side redaction.",
+      "eventDeliveriesTitle": "Event deliveries",
+      "routeMatchesTitle": "Route matches",
+      "manual": "Manual",
+      "deliveryHeaders": {
+        "destination": "Destination",
+        "route": "Route",
+        "state": "State",
+        "attempts": "Attempts",
+        "next": "Next",
+        "lastError": "Last error"
+      },
+      "routeHeaders": {
+        "route": "Route",
+        "result": "Result",
+        "targets": "Targets",
+        "checks": "Checks"
+      },
+      "empty": {
+        "deliveries": "No deliveries created",
+        "routes": "No routes evaluated"
+      },
+      "match": {
+        "matched": "Matched",
+        "missed": "Missed"
+      }
+    }
+  },
+  "deliveries": {
+    "page": {
+      "operationFailed": "Operation failed",
+      "title": "Deliveries",
+      "loaded": "{count} loaded",
+      "description": "Inspect outbound notification jobs, rendered payloads, attempts, and retry schedules.",
+      "resetTitle": "Reset delivery filters",
+      "runWorkerTitle": "Run delivery worker"
+    },
+    "table": {
+      "title": "Delivery jobs",
+      "order": "Newest updated first",
+      "empty": "No deliveries yet",
+      "headers": {
+        "target": "Target",
+        "event": "Event",
+        "state": "State",
+        "attempts": "Attempts",
+        "next": "Next",
+        "lastError": "Last error",
+        "updated": "Updated",
+        "actions": ""
+      },
+      "manual": "Manual",
+      "retry": "Retry delivery",
+      "inspect": "Inspect delivery"
+    },
+    "detail": {
+      "notFoundTitle": "Delivery not found",
+      "notFoundDescription": "The delivery may have been deleted or the URL points to a different Vane database.",
+      "title": "Delivery detail",
+      "description": "Inspect rendered payloads, attempts, destination metadata, and retry schedule.",
+      "back": "Deliveries",
+      "manual": "Manual",
+      "attemptCount": "{attemptCount}/{maxAttempts} attempts",
+      "tabs": {
+        "summary": "Summary",
+        "payload": "Rendered payload",
+        "attempts": "Attempts",
+        "metadata": "Metadata"
+      },
+      "terms": {
+        "destination": "Destination",
+        "kind": "Kind",
+        "route": "Route",
+        "source": "Source",
+        "event": "Event",
+        "state": "State",
+        "attempts": "Attempts",
+        "nextAttempt": "Next attempt",
+        "lastError": "Last error"
+      },
+      "json": {
+        "renderedPayload": "Rendered payload",
+        "destinationMetadata": "Destination metadata"
+      },
+      "attemptsTitle": "Attempts",
+      "attemptHeaders": {
+        "number": "#",
+        "state": "State",
+        "http": "HTTP",
+        "started": "Started",
+        "finished": "Finished",
+        "errorResponse": "Error / response"
+      },
+      "empty": {
+        "attempts": "No attempts recorded"
+      }
+    }
+  }
+}

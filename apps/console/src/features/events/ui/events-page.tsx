@@ -16,6 +16,7 @@ import type {
   OperationFilterData,
 } from "#/features/operations/model/operation-search.ts";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
@@ -26,6 +27,7 @@ export interface EventsPageProps {
 }
 
 export function EventsPage({ search, filters, onSearchChange }: EventsPageProps) {
+  const t = useTranslations();
   const navigate = useNavigate();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
@@ -72,7 +74,7 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Operation failed</AlertTitle>
+              <AlertTitle>{t("events.page.operationFailed")}</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -120,18 +122,20 @@ function EventsPageToolbar({
   onRefresh: () => void;
   onResetFilters: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Events</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("events.page.title")}
+          </h1>
           <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {eventCount} loaded
+            {t("events.page.loaded", { count: eventCount })}
           </Badge>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Triage normalized alerts, route matches, delivery jobs, and redacted raw debug data.
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{t("events.page.description")}</p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Button
@@ -140,10 +144,10 @@ function EventsPageToolbar({
           size="sm"
           disabled={pending}
           onClick={onRefresh}
-          title="Refresh event history"
+          title={t("events.page.refreshTitle")}
         >
           <RiRefreshLine data-icon="inline-start" aria-hidden />
-          Refresh
+          {t("common.actions.refresh")}
         </Button>
         <Button
           type="button"
@@ -151,10 +155,10 @@ function EventsPageToolbar({
           size="sm"
           disabled={pending}
           onClick={onResetFilters}
-          title="Reset event filters"
+          title={t("events.page.resetTitle")}
         >
           <RiFilterOffLine data-icon="inline-start" aria-hidden />
-          Reset filters
+          {t("common.actions.resetFilters")}
         </Button>
       </div>
     </header>

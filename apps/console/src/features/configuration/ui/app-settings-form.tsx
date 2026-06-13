@@ -11,6 +11,7 @@ import {
 } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function AppSettingsForm({
@@ -22,6 +23,8 @@ export function AppSettingsForm({
   pending: boolean;
   onSubmit: (input: { rawPayloadRetentionDays: number }) => void;
 }) {
+  const t = useTranslations();
+
   const form = useForm({
     defaultValues: {
       rawPayloadRetentionDays: settings.rawPayloadRetentionDays,
@@ -35,12 +38,11 @@ export function AppSettingsForm({
 
   return (
     <DashboardFormPanel
-      title="App settings"
+      title={t("configuration.appSettings.title")}
       icon={<RiDatabase2Line className="size-4" aria-hidden />}
     >
       <p className="text-muted-foreground mb-3 text-xs leading-5">
-        Bound raw webhook payload storage while keeping normalized Events and Delivery history
-        reviewable.
+        {t("configuration.appSettings.description")}
       </p>
       <form
         className="flex flex-col gap-3"
@@ -57,13 +59,15 @@ export function AppSettingsForm({
               onSubmit: ({ value }) => {
                 return Number.isFinite(value) && value >= 0 && value <= 3650
                   ? undefined
-                  : "Retention must be between 0 and 3650 days";
+                  : t("configuration.appSettings.rawPayloadRetentionValidation");
               },
             }}
           >
             {(field) => (
               <UiField data-invalid={field.state.meta.errors.length > 0}>
-                <FieldLabel htmlFor={field.name}>Raw payload retention days</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t("configuration.appSettings.rawPayloadRetentionDays")}
+                </FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -77,7 +81,7 @@ export function AppSettingsForm({
                   onChange={(event) => field.handleChange(event.currentTarget.valueAsNumber)}
                 />
                 <FieldDescription>
-                  Allowed range is 0 to 3650 days. This applies to raw payload debug data.
+                  {t("configuration.appSettings.rawPayloadRetentionDescription")}
                 </FieldDescription>
                 <FieldError
                   errors={field.state.meta.errors.map((error) => ({
@@ -90,7 +94,7 @@ export function AppSettingsForm({
         </FieldGroup>
         <Button type="submit" size="sm" disabled={pending} className="w-full">
           <RiSave3Line data-icon="inline-start" aria-hidden />
-          Save settings
+          {t("common.actions.saveSettings")}
         </Button>
       </form>
     </DashboardFormPanel>

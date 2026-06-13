@@ -10,6 +10,7 @@ import {
 } from "#/components/ui/select.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
 export function OperationFilters({
@@ -25,12 +26,14 @@ export function OperationFilters({
   onChange: (next: Partial<DashboardOperationSearch>) => void;
   layout?: "grid" | "rail";
 }) {
+  const t = useTranslations();
+
   const sourceItems = [
-    { value: null, label: "Any source" },
+    { value: null, label: t("operations.filters.anySource") },
     ...configuration.sources.map((source) => ({ value: source.id, label: source.name })),
   ];
   const destinationItems = [
-    { value: null, label: "Any destination" },
+    { value: null, label: t("operations.filters.anyDestination") },
     ...configuration.destinations.map((destination) => ({
       value: destination.id,
       label: destination.name,
@@ -45,7 +48,7 @@ export function OperationFilters({
       )}
     >
       <UiField>
-        <FieldLabel htmlFor="operation-source">Source</FieldLabel>
+        <FieldLabel htmlFor="operation-source">{t("operations.filters.source")}</FieldLabel>
         <Select
           id="operation-source"
           items={sourceItems}
@@ -54,11 +57,11 @@ export function OperationFilters({
           onValueChange={(value) => onChange({ sourceId: value ?? "" })}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any source" />
+            <SelectValue placeholder={t("operations.filters.anySource")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={null}>Any source</SelectItem>
+              <SelectItem value={null}>{t("operations.filters.anySource")}</SelectItem>
               {configuration.sources.map((source) => (
                 <SelectItem key={source.id} value={source.id}>
                   {source.name}
@@ -69,10 +72,16 @@ export function OperationFilters({
         </Select>
       </UiField>
       <UiField>
-        <FieldLabel htmlFor="operation-severity">Severity</FieldLabel>
+        <FieldLabel htmlFor="operation-severity">{t("operations.filters.severity")}</FieldLabel>
         <Select
           id="operation-severity"
-          items={operationSeverityItems}
+          items={[
+            { value: null, label: t("common.severity.any") },
+            { value: "critical", label: t("common.severity.critical") },
+            { value: "warning", label: t("common.severity.warning") },
+            { value: "info", label: t("common.severity.info") },
+            { value: "unknown", label: t("common.severity.unknown") },
+          ]}
           value={search.severity || null}
           disabled={pending}
           onValueChange={(value) =>
@@ -82,24 +91,29 @@ export function OperationFilters({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any severity" />
+            <SelectValue placeholder={t("common.severity.any")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={null}>Any severity</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="info">Info</SelectItem>
-              <SelectItem value="unknown">Unknown</SelectItem>
+              <SelectItem value={null}>{t("common.severity.any")}</SelectItem>
+              <SelectItem value="critical">{t("common.severity.critical")}</SelectItem>
+              <SelectItem value="warning">{t("common.severity.warning")}</SelectItem>
+              <SelectItem value="info">{t("common.severity.info")}</SelectItem>
+              <SelectItem value="unknown">{t("common.severity.unknown")}</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
       </UiField>
       <UiField>
-        <FieldLabel htmlFor="operation-status">Status</FieldLabel>
+        <FieldLabel htmlFor="operation-status">{t("operations.filters.status")}</FieldLabel>
         <Select
           id="operation-status"
-          items={operationStatusItems}
+          items={[
+            { value: null, label: t("common.alertStatus.any") },
+            { value: "firing", label: t("common.alertStatus.firing") },
+            { value: "resolved", label: t("common.alertStatus.resolved") },
+            { value: "unknown", label: t("common.alertStatus.unknown") },
+          ]}
           value={search.status || null}
           disabled={pending}
           onValueChange={(value) =>
@@ -107,20 +121,22 @@ export function OperationFilters({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any status" />
+            <SelectValue placeholder={t("common.alertStatus.any")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={null}>Any status</SelectItem>
-              <SelectItem value="firing">Firing</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="unknown">Unknown</SelectItem>
+              <SelectItem value={null}>{t("common.alertStatus.any")}</SelectItem>
+              <SelectItem value="firing">{t("common.alertStatus.firing")}</SelectItem>
+              <SelectItem value="resolved">{t("common.alertStatus.resolved")}</SelectItem>
+              <SelectItem value="unknown">{t("common.alertStatus.unknown")}</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
       </UiField>
       <UiField>
-        <FieldLabel htmlFor="operation-destination">Destination</FieldLabel>
+        <FieldLabel htmlFor="operation-destination">
+          {t("operations.filters.destination")}
+        </FieldLabel>
         <Select
           id="operation-destination"
           items={destinationItems}
@@ -129,11 +145,11 @@ export function OperationFilters({
           onValueChange={(value) => onChange({ destinationId: value ?? "" })}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any destination" />
+            <SelectValue placeholder={t("operations.filters.anyDestination")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={null}>Any destination</SelectItem>
+              <SelectItem value={null}>{t("operations.filters.anyDestination")}</SelectItem>
               {configuration.destinations.map((destination) => (
                 <SelectItem key={destination.id} value={destination.id}>
                   {destination.name}
@@ -144,10 +160,18 @@ export function OperationFilters({
         </Select>
       </UiField>
       <UiField>
-        <FieldLabel htmlFor="operation-delivery-state">Delivery state</FieldLabel>
+        <FieldLabel htmlFor="operation-delivery-state">
+          {t("operations.filters.deliveryState")}
+        </FieldLabel>
         <Select
           id="operation-delivery-state"
-          items={operationDeliveryStateItems}
+          items={[
+            { value: null, label: t("common.deliveryState.any") },
+            { value: "pending", label: t("common.deliveryState.pending") },
+            { value: "running", label: t("common.deliveryState.running") },
+            { value: "succeeded", label: t("common.deliveryState.succeeded") },
+            { value: "failed", label: t("common.deliveryState.failed") },
+          ]}
           value={search.deliveryState || null}
           disabled={pending}
           onValueChange={(value) =>
@@ -157,52 +181,29 @@ export function OperationFilters({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any state" />
+            <SelectValue placeholder={t("common.deliveryState.any")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={null}>Any state</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="running">Running</SelectItem>
-              <SelectItem value="succeeded">Succeeded</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value={null}>{t("common.deliveryState.any")}</SelectItem>
+              <SelectItem value="pending">{t("common.deliveryState.pending")}</SelectItem>
+              <SelectItem value="running">{t("common.deliveryState.running")}</SelectItem>
+              <SelectItem value="succeeded">{t("common.deliveryState.succeeded")}</SelectItem>
+              <SelectItem value="failed">{t("common.deliveryState.failed")}</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
       </UiField>
       <UiField>
-        <FieldLabel htmlFor="operation-search">Search</FieldLabel>
+        <FieldLabel htmlFor="operation-search">{t("operations.filters.search")}</FieldLabel>
         <Input
           id="operation-search"
           value={search.q ?? ""}
           disabled={pending}
-          placeholder="title or message"
+          placeholder={t("operations.filters.searchPlaceholder")}
           onChange={(event) => onChange({ q: event.currentTarget.value })}
         />
       </UiField>
     </FieldGroup>
   );
 }
-
-const operationSeverityItems = [
-  { value: null, label: "Any severity" },
-  { value: "critical", label: "Critical" },
-  { value: "warning", label: "Warning" },
-  { value: "info", label: "Info" },
-  { value: "unknown", label: "Unknown" },
-];
-
-const operationStatusItems = [
-  { value: null, label: "Any status" },
-  { value: "firing", label: "Firing" },
-  { value: "resolved", label: "Resolved" },
-  { value: "unknown", label: "Unknown" },
-];
-
-const operationDeliveryStateItems = [
-  { value: null, label: "Any state" },
-  { value: "pending", label: "Pending" },
-  { value: "running", label: "Running" },
-  { value: "succeeded", label: "Succeeded" },
-  { value: "failed", label: "Failed" },
-];

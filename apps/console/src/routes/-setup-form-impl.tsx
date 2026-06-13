@@ -16,6 +16,7 @@ import {
 import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { authQueryKeys } from "#/features/auth/api/auth.queries.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { authClient } from "#/lib/auth.client.ts";
 import type { SetupFormProps } from "#/routes/-setup-form.tsx";
 
@@ -25,15 +26,15 @@ type SetupFormValues = {
   password: string;
 };
 
-const defaultValues: SetupFormValues = {
-  name: "Vane Owner",
-  email: "",
-  password: "",
-};
-
 export function SetupFormClient({ redirectTo }: SetupFormProps) {
+  const t = useTranslations();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const defaultValues: SetupFormValues = {
+    name: t("auth.setup.defaultName"),
+    email: "",
+    password: "",
+  };
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
@@ -45,8 +46,8 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
         });
 
         if (result.error) {
-          toast.error("Setup failed", {
-            description: result.error.message ?? "The owner account could not be created.",
+          toast.error(t("auth.setup.failureTitle"), {
+            description: result.error.message ?? t("auth.setup.failureDescription"),
           });
           return;
         }
@@ -54,14 +55,14 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
         await queryClient.invalidateQueries({
           queryKey: authQueryKeys.all,
         });
-        toast.success("Owner account created", {
-          description: "Opening the dashboard.",
+        toast.success(t("auth.setup.successTitle"), {
+          description: t("auth.setup.successDescription"),
         });
         await navigate({
           to: redirectTo as never,
         });
       } catch (caught) {
-        toast.error("Setup failed", {
+        toast.error(t("auth.setup.failureTitle"), {
           description: caught instanceof Error ? caught.message : String(caught),
         });
       }
@@ -71,8 +72,8 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
   return (
     <Card className="w-full max-w-sm" data-testid="setup-card">
       <CardHeader>
-        <CardTitle>Create owner account</CardTitle>
-        <CardDescription>Register the first dashboard user for this deployment.</CardDescription>
+        <CardTitle>{t("auth.setup.title")}</CardTitle>
+        <CardDescription>{t("auth.setup.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -88,12 +89,12 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
               name="name"
               validators={{
                 onSubmit: ({ value }) =>
-                  value.trim().length === 0 ? "Name is required" : undefined,
+                  value.trim().length === 0 ? t("auth.setup.validation.nameRequired") : undefined,
               }}
             >
               {(field) => (
                 <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t("auth.setup.nameLabel")}</FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -120,22 +121,22 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
                   const email = value.trim();
 
                   if (email.length === 0) {
-                    return "Email is required";
+                    return t("auth.setup.validation.emailRequired");
                   }
 
-                  return email.includes("@") ? undefined : "Enter a valid email address";
+                  return email.includes("@") ? undefined : t("auth.setup.validation.emailInvalid");
                 },
               }}
             >
               {(field) => (
                 <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t("auth.setup.emailLabel")}</FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
                     type="email"
                     autoComplete="email"
-                    placeholder="admin@example.test"
+                    placeholder={t("auth.setup.emailPlaceholder")}
                     required
                     value={field.state.value}
                     aria-invalid={field.state.meta.errors.length > 0}
@@ -155,12 +156,12 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
               name="password"
               validators={{
                 onSubmit: ({ value }) =>
-                  value.length < 8 ? "Password must be at least 8 characters" : undefined,
+                  value.length < 8 ? t("auth.setup.validation.passwordMin") : undefined,
               }}
             >
               {(field) => (
                 <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t("auth.setup.passwordLabel")}</FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -192,7 +193,7 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
                 <UiField>
                   <Button type="submit" disabled={!canSubmit || isSubmitting}>
                     <RiUserAddLine data-icon="inline-start" aria-hidden />
-                    {isSubmitting ? "Creating owner" : "Create owner"}
+                    {isSubmitting ? t("auth.setup.submitting") : t("auth.setup.submit")}
                   </Button>
                 </UiField>
               )}

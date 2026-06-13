@@ -2,6 +2,7 @@ import { RiCloseLine, RiShieldCheckLine } from "@remixicon/react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { sourceWebhookUrlFromPath } from "#/features/sources/model/source-webhook.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { copyText } from "#/lib/browser.ts";
 
 export interface SourceTokenNotice {
@@ -17,6 +18,7 @@ export function SourceTokenNoticePanel({
   notice: SourceTokenNotice;
   onDismiss: () => void;
 }) {
+  const t = useTranslations();
   const webhookUrl = sourceWebhookUrlFromPath(notice.webhookPath);
 
   return (
@@ -25,10 +27,9 @@ export function SourceTokenNoticePanel({
         <div className="flex min-w-0 items-start gap-3">
           <RiShieldCheckLine className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold">Source created successfully</h2>
+            <h2 className="text-sm font-semibold">{t("sources.notice.createdTitle")}</h2>
             <p className="text-muted-foreground mt-1 text-xs">
-              Copy your webhook URL and token for {notice.sourceName}. These secrets will not be
-              shown again.
+              {t("sources.notice.createdDescription", { sourceName: notice.sourceName })}
             </p>
           </div>
         </div>
@@ -37,24 +38,24 @@ export function SourceTokenNoticePanel({
             type="button"
             variant="outline"
             size="sm"
-            title="Copy source token"
+            title={t("sources.notice.copyToken")}
             onClick={() => void copyText(notice.token)}
           >
-            Copy Token
+            {t("sources.notice.copyToken")}
           </Button>
           <Button
             type="button"
             size="sm"
-            title="Copy webhook URL"
+            title={t("sources.notice.copyUrl")}
             onClick={() => void copyText(webhookUrl)}
           >
-            Copy URL
+            {t("sources.notice.copyUrl")}
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            title="Dismiss notice"
+            title={t("sources.notice.dismiss")}
             onClick={onDismiss}
           >
             <RiCloseLine aria-hidden />
