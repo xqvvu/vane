@@ -1,12 +1,23 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { listOperationsFn } from "#/application/functions/operations.functions.ts";
+import {
+  getDeliveryDetailFn,
+  getEventDetailFn,
+  listOperationsFn,
+} from "#/application/functions/operations.functions.ts";
 import type { OperationFilterData } from "#/features/operations/model/operation-search.ts";
 
 export const operationsQueryKeys = {
   all: ["operations"] as const,
   list: (filters: OperationFilterData) =>
     [...operationsQueryKeys.all, "list", normalizeOperationFilters(filters)] as const,
+  eventDetail: (eventId: string) => [...operationsQueryKeys.all, "events", "detail", eventId],
+  deliveryDetail: (deliveryId: string) => [
+    ...operationsQueryKeys.all,
+    "deliveries",
+    "detail",
+    deliveryId,
+  ],
 };
 
 export function operationsQueryOptions(filters: OperationFilterData) {
@@ -19,6 +30,30 @@ export function operationsQueryOptions(filters: OperationFilterData) {
         data: {
           limit: 20,
           ...normalizedFilters,
+        },
+      }),
+  });
+}
+
+export function eventDetailQueryOptions(eventId: string) {
+  return queryOptions({
+    queryKey: operationsQueryKeys.eventDetail(eventId),
+    queryFn: () =>
+      getEventDetailFn({
+        data: {
+          id: eventId,
+        },
+      }),
+  });
+}
+
+export function deliveryDetailQueryOptions(deliveryId: string) {
+  return queryOptions({
+    queryKey: operationsQueryKeys.deliveryDetail(deliveryId),
+    queryFn: () =>
+      getDeliveryDetailFn({
+        data: {
+          id: deliveryId,
         },
       }),
   });

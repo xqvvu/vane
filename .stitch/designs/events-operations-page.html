@@ -128,8 +128,7 @@
 <header class="flex justify-between items-center px-panel-padding w-full h-12 bg-background border-b border-border z-30">
 <div class="flex items-center gap-6">
 <div class="flex flex-col">
-<span class="font-headline-md text-headline-md font-bold text-primary leading-tight">Vane Console</span>
-<span class="text-[10px] text-on-surface-variant leading-none">SQLite-first alert hub</span>
+<span class="font-headline-md text-headline-md font-bold text-primary leading-tight">Vane</span>
 </div>
 <nav class="hidden md:flex items-center gap-5 h-full">
 <a class="text-primary font-bold border-b-2 border-primary pb-3 mt-3 px-1" href="#">Events</a>
@@ -141,14 +140,9 @@
 </nav>
 </div>
 <div class="flex items-center gap-4">
-<div class="flex items-center gap-3 text-on-surface-variant">
-<span class="material-symbols-outlined cursor-pointer hover:text-primary">settings</span>
-<span class="material-symbols-outlined cursor-pointer hover:text-primary">help_outline</span>
-<span class="material-symbols-outlined cursor-pointer hover:text-primary">notifications</span>
-</div>
-<div class="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-border cursor-pointer">
-<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAV_wzst48EyCGznov7jmPhYtbKYTP4RHAZGXER7orefAq0A8HIeNIf2WB6n9ak01teDfc_pPZOxuh3lH1PtQ9JuJQjQZZyxYjSSH2NAaH__VbPs139kkm3-eLbN0UyWaOC1QuuxzEzFYxloJZItoCzrVhznf_sxDTr1EIPqVjNp4JSyfG2pQqpwvBAk7M1_TOP6tW-mq3s5YivRf_ZsSaQlSLoWcvd7y7mi8SpwZNyR7ll4yuXoO-K6Oa5wr-tmIvWelsl63XwolM"/>
-</div>
+<div class="flex items-center gap-3 text-on-surface-variant"><span class="material-symbols-outlined cursor-pointer hover:bg-muted-surface p-1.5 rounded-full transition-colors">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-muted-surface p-1.5 rounded-full transition-colors">help_outline</span></div>
+<div class="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center border border-border cursor-pointer text-[11px] font-bold text-secondary">AD</div>
 </div>
 </header>
 <div class="flex flex-1 overflow-hidden">
@@ -158,20 +152,19 @@
 <section class="w-[75%] flex flex-col border-r border-border h-full relative">
 <!-- Page Toolbar -->
 <div class="px-panel-padding py-3 border-b border-border flex justify-between items-center bg-surface-bright">
-<div>
-<h1 class="font-headline-lg text-headline-lg text-on-surface leading-tight">Events</h1>
-<p class="text-[11px] text-on-surface-variant">Immutable inbound webhook history</p>
+<div class="flex items-center gap-3">
+<h1 class="text-[24px] font-semibold text-on-surface">Events</h1>
+<span class="px-2 py-0.5 border border-border rounded text-[12px] text-secondary font-medium">128 loaded</span>
 </div>
-<div class="flex gap-2">
-<button class="border border-border bg-background px-3 py-1.5 flex items-center gap-2 hover:bg-muted-surface transition-colors rounded shadow-sm">
-<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
-<span class="text-body-sm font-medium">Refresh</span>
+<p class="text-body-md text-secondary mt-1">Immutable inbound webhook history</p>
+<div class="flex gap-2"><button class="border border-border bg-background px-3 py-1.5 flex items-center gap-2 hover:bg-muted-surface transition-colors rounded text-body-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+    Refresh
 </button>
-<button class="border border-border bg-background px-3 py-1.5 flex items-center gap-2 hover:bg-muted-surface transition-colors rounded shadow-sm">
-<span class="material-symbols-outlined text-[18px]" data-icon="filter_list_off">filter_list_off</span>
-<span class="text-body-sm font-medium">Reset filters</span>
-</button>
-</div>
+<button class="border border-border bg-background px-3 py-1.5 flex items-center gap-2 hover:bg-muted-surface transition-colors rounded text-body-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">filter_list_off</span>
+    Reset filters
+</button></div>
 </div>
 <!-- Table Area (Main View) -->
 <div class="flex-1 overflow-auto hide-scrollbar">
@@ -344,7 +337,7 @@
 </div>
 </section>
 <!-- Right Column: Sidebar Filters & Summary -->
-<section class="w-[25%] bg-sidebar-surface flex flex-col h-full overflow-hidden">
+<section class="w-[25%] bg-sidebar-surface flex flex-col h-full overflow-hidden" style="width: 360px;">
 <!-- Operational Summary -->
 <div class="p-panel-padding border-b border-border space-y-4">
 <h2 class="font-panel-title text-panel-title text-on-surface flex items-center gap-2">
@@ -430,12 +423,6 @@
 </div>
 </div>
 <!-- Apply Button -->
-<div class="p-panel-padding border-t border-border bg-muted-surface/40">
-<button class="w-full bg-primary text-on-primary font-bold py-2 rounded flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.98] transition-all shadow-md">
-<span class="material-symbols-outlined text-[20px]">filter_alt</span>
-                    Apply Filters
-                </button>
-</div>
 </section>
 </main>
 </div>

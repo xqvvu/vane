@@ -5,69 +5,68 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Vane - Deliveries</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&amp;family=Noto+Sans:ital,wght@0,100..900;1,100..900&amp;family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
           theme: {
             extend: {
               "colors": {
-                      "surface-container-low": "#f6f3f2",
-                      "secondary-fixed": "#e3e2e2",
-                      "surface-variant": "#e5e2e1",
-                      "focus-ring": "#a1a1a1",
-                      "primary": "#943b00",
-                      "surface-bright": "#fcf8f8",
-                      "secondary": "#5e5e5e",
-                      "surface-dim": "#dcd9d9",
                       "on-secondary-fixed-variant": "#464747",
                       "surface-container-high": "#ebe7e7",
-                      "on-tertiary-fixed-variant": "#454748",
-                      "secondary-fixed-dim": "#c7c6c6",
+                      "surface-bright": "#fcf8f8",
                       "on-error": "#ffffff",
-                      "on-primary-fixed": "#351000",
-                      "primary-fixed": "#ffdbcc",
-                      "on-tertiary-container": "#f3f3f4",
-                      "inverse-on-surface": "#f3f0ef",
-                      "outline": "#8b7266",
                       "error-container": "#ffdad6",
-                      "border": "#e5e5e5",
-                      "tertiary-fixed": "#e2e2e3",
-                      "sidebar-primary": "#e17100",
-                      "inverse-surface": "#313030",
-                      "muted-surface": "#f5f5f5",
-                      "tertiary": "#555758",
-                      "secondary-container": "#e3e2e2",
-                      "on-secondary": "#ffffff",
-                      "surface-container": "#f0edec",
-                      "outline-variant": "#dfc0b3",
-                      "surface-tint": "#a04100",
-                      "inverse-primary": "#ffb693",
-                      "on-secondary-fixed": "#1b1c1c",
-                      "background": "#ffffff",
-                      "surface-container-lowest": "#ffffff",
-                      "destructive": "#e7000b",
-                      "on-surface": "#1c1b1b",
-                      "surface-container-highest": "#e5e2e1",
-                      "primary-foreground": "#fffbeb",
-                      "on-primary": "#ffffff",
                       "tertiary-fixed-dim": "#c6c6c7",
-                      "on-tertiary-fixed": "#1a1c1d",
-                      "on-tertiary": "#ffffff",
-                      "error": "#ba1a1a",
-                      "primary-fixed-dim": "#ffb693",
-                      "on-primary-fixed-variant": "#7a3000",
-                      "on-error-container": "#93000a",
-                      "on-background": "#1c1b1b",
-                      "surface": "#fcf8f8",
-                      "on-secondary-container": "#646464",
-                      "sidebar-surface": "#fafafa",
                       "on-primary-container": "#fff1eb",
+                      "focus-ring": "#a1a1a1",
+                      "inverse-primary": "#ffb693",
+                      "on-primary-fixed": "#351000",
+                      "surface": "#ffffff",
+                      "surface-container-highest": "#e5e2e1",
+                      "muted-surface": "#fafafa",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed": "#1b1c1c",
                       "on-surface-variant": "#574238",
+                      "destructive": "#e7000b",
                       "primary-container": "#bb4d00",
-                      "tertiary-container": "#6e6f70"
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed-variant": "#454748",
+                      "sidebar-primary": "#e17100",
+                      "primary-fixed": "#ffdbcc",
+                      "on-surface": "#1c1b1b",
+                      "tertiary": "#555758",
+                      "tertiary-fixed": "#e2e2e3",
+                      "outline-variant": "#dfc0b3",
+                      "inverse-surface": "#313030",
+                      "on-secondary": "#ffffff",
+                      "background": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#1c1b1b",
+                      "secondary-fixed": "#e3e2e2",
+                      "surface-container-low": "#f6f3f2",
+                      "secondary": "#5e5e5e",
+                      "surface-container": "#f0edec",
+                      "surface-dim": "#dcd9d9",
+                      "inverse-on-surface": "#f3f0ef",
+                      "on-secondary-container": "#646464",
+                      "on-tertiary-container": "#f3f3f4",
+                      "primary": "#bb4d00",
+                      "primary-foreground": "#ffffff",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "outline": "#8b7266",
+                      "on-tertiary-fixed": "#1a1c1d",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed-dim": "#c7c6c6",
+                      "border": "#e5e5e5",
+                      "surface-tint": "#a04100",
+                      "surface-variant": "#e5e2e1",
+                      "secondary-container": "#e3e2e2",
+                      "on-primary": "#ffffff",
+                      "primary-fixed-dim": "#ffb693",
+                      "tertiary-container": "#6e6f70",
+                      "sidebar-surface": "#fafafa"
               },
               "borderRadius": {
                       "DEFAULT": "0.125rem",
@@ -76,36 +75,43 @@
                       "full": "0.75rem"
               },
               "spacing": {
-                      "compact-gap": "0.25rem",
                       "row-gap": "0.5rem",
                       "panel-padding": "1rem",
                       "gutter": "0.75rem",
-                      "container-margin": "1rem"
+                      "container-margin": "1rem",
+                      "compact-gap": "0.25rem"
               },
               "fontFamily": {
+                      "panel-title": [
+                              "Nunito Sans"
+                      ],
                       "code-sm": [
                               "Courier Prime"
                       ],
-                      "headline-md": [
-                              "Nunito Sans"
-                      ],
-                      "panel-title": [
-                              "Nunito Sans"
+                      "body-sm": [
+                              "Noto Sans"
                       ],
                       "headline-lg": [
                               "Nunito Sans"
                       ],
-                      "body-sm": [
+                      "body-md": [
                               "Noto Sans"
                       ],
                       "table-header": [
                               "Noto Sans"
                       ],
-                      "body-md": [
-                              "Noto Sans"
+                      "headline-md": [
+                              "Nunito Sans"
                       ]
               },
               "fontSize": {
+                      "panel-title": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "600"
+                              }
+                      ],
                       "code-sm": [
                               "12px",
                               {
@@ -113,18 +119,11 @@
                                       "fontWeight": "400"
                               }
                       ],
-                      "headline-md": [
-                              "18px",
+                      "body-sm": [
+                              "12px",
                               {
-                                      "lineHeight": "24px",
-                                      "fontWeight": "600"
-                              }
-                      ],
-                      "panel-title": [
-                              "14px",
-                              {
-                                      "lineHeight": "20px",
-                                      "fontWeight": "600"
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
                               }
                       ],
                       "headline-lg": [
@@ -134,10 +133,10 @@
                                       "fontWeight": "600"
                               }
                       ],
-                      "body-sm": [
-                              "12px",
+                      "body-md": [
+                              "14px",
                               {
-                                      "lineHeight": "18px",
+                                      "lineHeight": "20px",
                                       "fontWeight": "400"
                               }
                       ],
@@ -149,11 +148,11 @@
                                       "fontWeight": "500"
                               }
                       ],
-                      "body-md": [
-                              "14px",
+                      "headline-md": [
+                              "24px",
                               {
-                                      "lineHeight": "20px",
-                                      "fontWeight": "400"
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
                               }
                       ]
               }
@@ -161,232 +160,221 @@
           }
         }
       </script>
-<style>
-        .material-symbols-outlined {
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .material-symbols-outlined.filled {
-          font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-      </style>
 </head>
 <body class="bg-background text-on-background font-body-md h-screen flex flex-col overflow-hidden">
 <!-- App Shell: TopNavBar -->
-<nav class="flex items-center justify-between px-panel-padding w-full sticky top-0 z-50 bg-background h-12 border-b border-border dark:border-outline-variant font-body-md text-body-md text-primary dark:text-primary-fixed">
-<div class="flex items-center h-full gap-4">
-<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed tracking-tight">Vane</span>
-<div class="hidden md:flex h-full gap-2">
-<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant px-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 flex items-center" href="#">Events</a>
-<a class="text-on-surface dark:text-on-surface font-semibold border-b-2 border-primary dark:border-primary-fixed h-full flex items-center px-2 cursor-pointer active:opacity-80" href="#">Deliveries</a>
-<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant px-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 flex items-center" href="#">Sources</a>
-<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant px-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 flex items-center" href="#">Routes</a>
-<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant px-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 flex items-center" href="#">Destinations</a>
-<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant px-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 flex items-center" href="#">Settings</a>
+<nav class="flex items-center justify-between px-4 w-full sticky top-0 z-50 bg-surface h-12 border-b border-border">
+<div class="flex items-center h-full gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">Vane</span>
+<div class="hidden md:flex h-full gap-1">
+<a class="text-secondary hover:text-on-surface px-3 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 flex items-center font-body-sm text-body-sm" href="#">Events</a>
+<a class="text-primary font-semibold border-b-2 border-primary h-full flex items-center px-3 cursor-pointer active:opacity-80 font-body-sm text-body-sm" href="#">Deliveries</a>
+<a class="text-secondary hover:text-on-surface px-3 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 flex items-center font-body-sm text-body-sm" href="#">Sources</a>
+<a class="text-secondary hover:text-on-surface px-3 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 flex items-center font-body-sm text-body-sm" href="#">Routes</a>
+<a class="text-secondary hover:text-on-surface px-3 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 flex items-center font-body-sm text-body-sm" href="#">Destinations</a>
+<a class="text-secondary hover:text-on-surface px-3 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 flex items-center font-body-sm text-body-sm" href="#">Settings</a>
 </div>
 </div>
-<div class="flex items-center gap-4">
-<button class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 p-1 rounded-full"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
-<button class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 p-1 rounded-full"><span class="material-symbols-outlined" data-icon="help">help</span></button>
-<button class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer active:opacity-80 p-1 rounded-full"><span class="material-symbols-outlined" data-icon="account_circle">account_circle</span></button>
+<div class="flex items-center gap-2 text-secondary">
+<button class="hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 p-1.5 rounded"><i class="ri-notification-3-line text-lg"></i></button>
+<button class="hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 p-1.5 rounded"><i class="ri-question-line text-lg"></i></button>
+<button class="hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80 p-1.5 rounded flex items-center justify-center w-8 h-8 bg-surface-container-highest rounded-full text-on-surface font-medium text-body-sm">AD</button>
 </div>
 </nav>
 <!-- Page Content -->
-<main class="flex-1 flex flex-col min-h-0">
+<main class="flex-1 flex min-h-0">
+<!-- Left Main Column -->
+<div class="flex-1 flex flex-col min-w-0 border-r border-border bg-surface">
 <!-- Page Toolbar -->
-<header class="flex items-center justify-between px-panel-padding py-row-gap border-b border-border bg-surface-bright flex-shrink-0">
-<div class="flex flex-col gap-1">
-<div class="flex items-baseline gap-2">
+<header class="flex flex-col gap-3 px-3 py-4 border-b border-border bg-surface flex-shrink-0">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
 <h1 class="font-headline-md text-headline-md text-on-surface">Deliveries</h1>
-<span class="font-body-sm text-body-sm text-secondary">128 loaded</span>
-</div>
-<p class="font-body-sm text-body-sm text-tertiary">Manage outbound notification jobs, inspect rendered payloads, and triage retry attempts.</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded border border-border text-secondary font-body-sm text-body-sm bg-surface">128 loaded</span>
 </div>
 <div class="flex items-center gap-2">
-<button class="px-3 py-1.5 border border-border rounded font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors">Reset filters</button>
-<button class="px-3 py-1.5 bg-primary text-primary-foreground rounded font-body-sm text-body-sm hover:bg-primary-container transition-colors shadow-sm">Run worker</button>
+<button class="px-3 py-1.5 border border-border rounded font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors shadow-sm bg-surface">Reset filters</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded font-body-sm text-body-sm hover:bg-primary-container transition-colors shadow-sm"><i class="ri-play-line"></i> Run worker</button>
 </div>
+</div>
+<p class="font-body-sm text-body-sm text-secondary">Manage outbound notification jobs, inspect rendered payloads, and triage retry attempts.</p>
 </header>
-<!-- Main Workspace (Fluid Grid) -->
-<div class="flex-1 flex min-h-0">
-<!-- Left Column: Alerts & Table -->
-<div class="flex-1 flex flex-col min-w-0 border-r border-border">
+<!-- Workspace Inner -->
+<div class="flex-1 flex flex-col min-h-0 bg-surface">
 <!-- Worker Notice -->
-<div class="mx-gutter mt-gutter mb-2 px-3 py-2 bg-surface-container-lowest border border-border rounded flex items-center justify-between">
+<div class="mx-4 mt-4 mb-2 px-3 py-2 bg-surface-container-low border border-border rounded flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-tertiary text-lg" data-icon="info">info</span>
+<i class="ri-information-line text-secondary text-lg"></i>
 <span class="font-body-sm text-body-sm text-on-surface font-medium">Worker Run Complete</span>
 </div>
 <div class="flex items-center gap-4 font-body-sm text-body-sm">
-<span class="text-tertiary">42 claimed</span>
-<span class="text-primary-container font-medium">38 succeeded</span>
+<span class="text-secondary">42 claimed</span>
+<span class="text-primary font-medium">38 succeeded</span>
 <span class="text-destructive font-medium">2 failed</span>
-<span class="text-outline">2 retrying</span>
+<span class="text-secondary">2 retrying</span>
 </div>
 </div>
 <!-- Primary Table -->
-<div class="flex-1 overflow-auto bg-surface-container-lowest px-gutter">
-<table class="w-full text-left border-collapse">
-<thead class="sticky top-0 bg-surface-container-lowest z-10 border-b border-border shadow-[0_1px_0_#E5E5E5]">
+<div class="flex-1 overflow-auto px-4 pb-4">
+<table class="w-full text-left border-collapse border-b border-border">
+<thead class="sticky top-0 bg-surface z-10 shadow-[0_1px_0_#E5E5E5]">
 <tr>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-48">Target</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-64">Related Event</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-24">State</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-20">Attempts</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-24">Next Attempt</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase">Last Error</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-24">Updated</th>
-<th class="font-table-header text-table-header text-secondary py-2 px-2 font-medium uppercase w-16 text-right">Actions</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-48">Target</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-64">Related Event</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-24">State</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-20">Attempts</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-32">Next Attempt</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase">Last Error</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-24">Updated</th>
+<th class="font-table-header text-table-header text-secondary py-2 px-3 font-medium uppercase w-16 text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="font-body-sm text-body-sm text-on-surface">
+<tbody class="font-body-sm text-body-sm text-on-surface bg-surface">
 <!-- Row 1 -->
 <tr class="border-b border-border hover:bg-surface-container-low transition-colors group">
-<td class="py-2 px-2 flex items-center gap-2 truncate">
-<span class="material-symbols-outlined text-[16px] text-tertiary">chat</span>
+<td class="py-2.5 px-3 flex items-center gap-2 truncate">
+<i class="ri-message-line text-[16px] text-secondary"></i>
 <span class="truncate">Slack Ops</span>
 </td>
-<td class="py-2 px-2 truncate">
-<span class="inline-block px-1 bg-surface-variant rounded font-code-sm text-code-sm text-tertiary mr-1">f2...8e9</span>
-<span class="truncate text-on-surface-variant">Checkout API latency</span>
+<td class="py-2.5 px-3 truncate">
+<span class="inline-block px-1 bg-surface-variant rounded font-code-sm text-code-sm text-secondary mr-1">f2...8e9</span>
+<span class="truncate text-secondary">Checkout API latency</span>
 </td>
-<td class="py-2 px-2">
-<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-primary text-primary font-medium text-[10px] leading-tight bg-primary-fixed">Succeeded</span>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-border text-on-surface font-medium text-[11px] leading-tight bg-surface">Succeeded</span>
 </td>
-<td class="py-2 px-2 text-tertiary">1/5</td>
-<td class="py-2 px-2 text-tertiary">-</td>
-<td class="py-2 px-2 truncate text-tertiary">-</td>
-<td class="py-2 px-2 text-tertiary whitespace-nowrap">14:10:22</td>
-<td class="py-2 px-2 text-right">
-<button class="text-tertiary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+<td class="py-2.5 px-3 text-secondary">1/5</td>
+<td class="py-2.5 px-3 text-secondary">-</td>
+<td class="py-2.5 px-3 truncate text-secondary">-</td>
+<td class="py-2.5 px-3 text-secondary whitespace-nowrap">14:10:22</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><i class="ri-eye-line text-[16px]"></i></button>
 </td>
 </tr>
 <!-- Row 2 -->
 <tr class="border-b border-border hover:bg-surface-container-low transition-colors group">
-<td class="py-2 px-2 flex items-center gap-2 truncate">
-<span class="material-symbols-outlined text-[16px] text-tertiary">notifications_active</span>
+<td class="py-2.5 px-3 flex items-center gap-2 truncate">
+<i class="ri-notification-3-line text-[16px] text-secondary"></i>
 <span class="truncate">PagerDuty P1</span>
 </td>
-<td class="py-2 px-2 truncate">
-<span class="inline-block px-1 bg-surface-variant rounded font-code-sm text-code-sm text-tertiary mr-1">ab...12c</span>
-<span class="truncate text-on-surface-variant">Database CPU Spiked</span>
+<td class="py-2.5 px-3 truncate">
+<span class="inline-block px-1 bg-surface-variant rounded font-code-sm text-code-sm text-secondary mr-1">ab...12c</span>
+<span class="truncate text-secondary">Database CPU Spiked</span>
 </td>
-<td class="py-2 px-2">
-<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-destructive text-destructive font-medium text-[10px] leading-tight bg-error-container">Failed</span>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-border text-destructive font-medium text-[11px] leading-tight bg-surface">Failed</span>
 </td>
-<td class="py-2 px-2 text-tertiary">5/5</td>
-<td class="py-2 px-2 text-tertiary">-</td>
-<td class="py-2 px-2 truncate text-destructive">404 Not Found: Webhook disabled</td>
-<td class="py-2 px-2 text-tertiary whitespace-nowrap">14:05:11</td>
-<td class="py-2 px-2 text-right flex items-center justify-end gap-1">
-<button class="text-tertiary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
-<button class="text-tertiary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">refresh</span></button>
+<td class="py-2.5 px-3 text-secondary">5/5</td>
+<td class="py-2.5 px-3 text-secondary">-</td>
+<td class="py-2.5 px-3 truncate text-destructive">404 Not Found: Webhook disabled</td>
+<td class="py-2.5 px-3 text-secondary whitespace-nowrap">14:05:11</td>
+<td class="py-2.5 px-3 text-right flex items-center justify-end gap-2">
+<button class="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><i class="ri-eye-line text-[16px]"></i></button>
+<button class="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><i class="ri-refresh-line text-[16px]"></i></button>
 </td>
 </tr>
 <!-- Row 3 -->
 <tr class="border-b border-border hover:bg-surface-container-low transition-colors group">
-<td class="py-2 px-2 flex items-center gap-2 truncate">
-<span class="material-symbols-outlined text-[16px] text-tertiary">mail</span>
+<td class="py-2.5 px-3 flex items-center gap-2 truncate">
+<i class="ri-mail-line text-[16px] text-secondary"></i>
 <span class="truncate">Email Alerts</span>
 </td>
-<td class="py-2 px-2 truncate">
-<span class="inline-block px-1 bg-surface-variant rounded font-code-sm text-code-sm text-tertiary mr-1">9d...4f1</span>
-<span class="truncate text-on-surface-variant">Daily Report Generation Failed</span>
+<td class="py-2.5 px-3 truncate">
+<span class="inline-block px-1 bg-surface-variant rounded font-code-sm text-code-sm text-secondary mr-1">9d...4f1</span>
+<span class="truncate text-secondary">Daily Report Generation Failed</span>
 </td>
-<td class="py-2 px-2">
-<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-outline text-outline font-medium text-[10px] leading-tight">Retrying</span>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-border text-secondary font-medium text-[11px] leading-tight bg-surface">Retrying</span>
 </td>
-<td class="py-2 px-2 text-tertiary">2/5</td>
-<td class="py-2 px-2 text-on-surface whitespace-nowrap">14:15:00</td>
-<td class="py-2 px-2 truncate text-tertiary">Connection timeout after 30s</td>
-<td class="py-2 px-2 text-tertiary whitespace-nowrap">14:00:05</td>
-<td class="py-2 px-2 text-right">
-<button class="text-tertiary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+<td class="py-2.5 px-3 text-secondary">2/5</td>
+<td class="py-2.5 px-3 text-on-surface whitespace-nowrap">14:15:00</td>
+<td class="py-2.5 px-3 truncate text-secondary">Connection timeout after 30s</td>
+<td class="py-2.5 px-3 text-secondary whitespace-nowrap">14:00:05</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><i class="ri-eye-line text-[16px]"></i></button>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-<!-- Detail Panel (Bottom/Split) - Simulated as attached to bottom of left column -->
-<div class="h-64 border-t border-border bg-surface-container-lowest flex flex-col flex-shrink-0">
-<div class="flex items-center gap-4 px-panel-padding border-b border-border bg-muted-surface">
-<button class="px-2 py-2 border-b-2 border-primary text-on-surface font-panel-title text-panel-title font-medium">Summary</button>
-<button class="px-2 py-2 border-b-2 border-transparent text-secondary hover:text-on-surface font-panel-title text-panel-title">Rendered Payload</button>
-<button class="px-2 py-2 border-b-2 border-transparent text-secondary hover:text-on-surface font-panel-title text-panel-title">Attempts</button>
-<button class="px-2 py-2 border-b-2 border-transparent text-secondary hover:text-on-surface font-panel-title text-panel-title">Metadata</button>
+<!-- Detail Panel (Bottom/Split) -->
+<div class="h-64 border-t border-border bg-surface flex flex-col flex-shrink-0">
+<div class="flex items-center gap-6 px-4 border-b border-border bg-surface">
+<button class="py-2.5 border-b-2 border-primary text-on-surface font-body-sm text-body-sm font-medium">Summary</button>
+<button class="py-2.5 border-b-2 border-transparent text-secondary hover:text-on-surface font-body-sm text-body-sm">Rendered Payload</button>
+<button class="py-2.5 border-b-2 border-transparent text-secondary hover:text-on-surface font-body-sm text-body-sm">Attempts</button>
+<button class="py-2.5 border-b-2 border-transparent text-secondary hover:text-on-surface font-body-sm text-body-sm">Metadata</button>
 </div>
-<div class="p-panel-padding overflow-auto font-body-sm text-body-sm">
-<div class="grid grid-cols-2 gap-x-8 gap-y-2 max-w-2xl">
-<div class="flex flex-col">
-<span class="text-tertiary text-[10px] uppercase tracking-wider font-semibold">Delivery ID</span>
-<span class="font-code-sm text-code-sm text-on-surface">del_01H9Y7X...</span>
+<div class="p-4 overflow-auto font-body-sm text-body-sm">
+<div class="grid grid-cols-2 gap-x-8 gap-y-4 max-w-2xl">
+<div class="flex flex-col gap-1">
+<span class="text-secondary font-medium">Delivery ID</span>
+<span class="font-code-sm text-code-sm text-on-surface">del_********...</span>
 </div>
-<div class="flex flex-col">
-<span class="text-tertiary text-[10px] uppercase tracking-wider font-semibold">Target</span>
+<div class="flex flex-col gap-1">
+<span class="text-secondary font-medium">Target</span>
 <span class="text-on-surface">Slack Ops (Webhook)</span>
 </div>
-<div class="flex flex-col">
-<span class="text-tertiary text-[10px] uppercase tracking-wider font-semibold">Created At</span>
+<div class="flex flex-col gap-1">
+<span class="text-secondary font-medium">Created At</span>
 <span class="text-on-surface">2023-10-27 14:10:20 UTC</span>
 </div>
-<div class="flex flex-col">
-<span class="text-tertiary text-[10px] uppercase tracking-wider font-semibold">State</span>
-<span class="text-primary font-medium">Succeeded</span>
+<div class="flex flex-col gap-1">
+<span class="text-secondary font-medium">State</span>
+<span class="text-on-surface">Succeeded</span>
+</div>
 </div>
 </div>
 </div>
 </div>
 </div>
 <!-- Right Column: Filter Rail -->
-<div class="w-72 bg-muted-surface flex flex-col min-h-0 flex-shrink-0">
-<div class="p-panel-padding flex-1 overflow-auto flex flex-col gap-6">
+<aside class="w-[360px] bg-muted-surface flex flex-col min-h-0 flex-shrink-0">
+<div class="p-6 flex-1 overflow-auto flex flex-col gap-6">
 <!-- Search -->
-<div class="flex flex-col gap-1">
-<label class="font-panel-title text-panel-title text-on-surface">Search Events</label>
+<div class="flex flex-col gap-2">
+<label class="font-body-sm text-body-sm font-medium text-on-surface">Search Events</label>
 <div class="relative">
-<span class="material-symbols-outlined absolute left-2 top-1.5 text-tertiary text-[18px]">search</span>
-<input class="w-full pl-8 pr-2 py-1.5 bg-surface-container-lowest border border-border rounded font-body-sm text-body-sm focus:outline-none focus:border-focus-ring focus:ring-1 focus:ring-focus-ring" placeholder="Fingerprint or title..." type="text"/>
+<i class="ri-search-line absolute left-3 top-2 text-secondary text-[16px]"></i>
+<input class="w-full pl-9 pr-3 py-2 bg-surface border border-border rounded-md font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm" placeholder="Fingerprint or title..." type="text"/>
 </div>
 </div>
 <!-- Delivery State Filter -->
+<div class="flex flex-col gap-3">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Delivery State</span>
 <div class="flex flex-col gap-2">
-<span class="font-panel-title text-panel-title text-on-surface">Delivery State</span>
-<div class="flex flex-col gap-1">
-<label class="flex items-center gap-2 cursor-pointer">
-<input class="rounded border-border text-primary focus:ring-focus-ring w-3.5 h-3.5" type="checkbox"/>
-<span class="font-body-sm text-body-sm text-on-surface-variant">Pending</span>
-<span class="ml-auto font-body-sm text-body-sm text-tertiary">12</span>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input class="rounded border-border text-primary focus:ring-primary w-4 h-4 shadow-sm" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Pending</span>
 </label>
-<label class="flex items-center gap-2 cursor-pointer">
-<input class="rounded border-border text-primary focus:ring-focus-ring w-3.5 h-3.5" type="checkbox"/>
-<span class="font-body-sm text-body-sm text-on-surface-variant">Running</span>
-<span class="ml-auto font-body-sm text-body-sm text-tertiary">4</span>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input class="rounded border-border text-primary focus:ring-primary w-4 h-4 shadow-sm" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Running</span>
 </label>
-<label class="flex items-center gap-2 cursor-pointer">
-<input checked="" class="rounded border-border text-primary focus:ring-focus-ring w-3.5 h-3.5" type="checkbox"/>
-<span class="font-body-sm text-body-sm text-on-surface-variant">Failed</span>
-<span class="ml-auto font-body-sm text-body-sm text-tertiary">8</span>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input checked="" class="rounded border-border text-primary focus:ring-primary w-4 h-4 shadow-sm" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Succeeded</span>
 </label>
-<label class="flex items-center gap-2 cursor-pointer">
-<input checked="" class="rounded border-border text-primary focus:ring-focus-ring w-3.5 h-3.5" type="checkbox"/>
-<span class="font-body-sm text-body-sm text-on-surface-variant">Retrying</span>
-<span class="ml-auto font-body-sm text-body-sm text-tertiary">5</span>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input checked="" class="rounded border-border text-primary focus:ring-primary w-4 h-4 shadow-sm" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Failed</span>
+</label>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input checked="" class="rounded border-border text-primary focus:ring-primary w-4 h-4 shadow-sm" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Retrying</span>
 </label>
 </div>
 </div>
 <!-- Destination Filter -->
-<div class="flex flex-col gap-1">
-<label class="font-panel-title text-panel-title text-on-surface">Destination</label>
-<select class="w-full px-2 py-1.5 bg-surface-container-lowest border border-border rounded font-body-sm text-body-sm focus:outline-none focus:border-focus-ring focus:ring-1 focus:ring-focus-ring">
+<div class="flex flex-col gap-2">
+<label class="font-body-sm text-body-sm font-medium text-on-surface">Destination</label>
+<select class="w-full px-3 py-2 bg-surface border border-border rounded-md font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm appearance-none">
 <option>All Destinations</option>
 <option>Slack Ops</option>
 <option>PagerDuty P1</option>
 </select>
 </div>
 </div>
-<div class="p-panel-padding border-t border-border bg-surface-container-lowest">
-<button class="w-full px-3 py-1.5 bg-surface-variant text-on-surface rounded font-body-sm text-body-sm hover:bg-surface-container-highest transition-colors shadow-sm font-medium">Apply Filters</button>
-</div>
-</div>
-</div>
+</aside>
 </main>
 </body></html>

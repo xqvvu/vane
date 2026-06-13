@@ -1,11 +1,13 @@
-<!DOCTYPE html><html class="light" lang="en"><head>
-<meta charset="utf-8">
-<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Vane Console | Sources</title>
 <!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&amp;family=Nunito+Sans:wght@600;700;800;900&amp;family=Courier+Prime&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&amp;family=Nunito+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&amp;family=Nunito+Sans:wght@600;700;800;900&amp;family=Courier+Prime&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&amp;family=Nunito+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
       tailwind.config = {
@@ -142,20 +144,17 @@
 </nav>
 </div>
 <div class="flex items-center gap-4">
-
 <div class="flex items-center gap-2 text-on-surface-variant">
 <span class="material-symbols-outlined cursor-pointer hover:text-on-surface transition-colors">notifications</span>
 <span class="material-symbols-outlined cursor-pointer hover:text-on-surface transition-colors">help_outline</span>
 </div>
-<div class="w-7 h-7 rounded-full bg-surface-container-highest overflow-hidden border border-border">
-<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional close-up headshot of a software engineer in a clean, high-tech workspace. The lighting is bright and neutral, consistent with a modern corporate console interface. The subject has a calm, focused expression, reflecting a high-reliability engineering environment with a minimalist aesthetic of whites and subtle grays." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlhR5Ni39QvxTB8l0jLMvwSPxyV4gaqytfGIreAEjlZhg8r-Qp_i313SmUf4nLdIPCBLk3BOq1CL0ImG2J807Nw-BPhDvD8d9YcHRwNutC5LPEG4_gKVaA_EfuxBSka9WR-iD-kKw3yU8yL_teMAuGg1tRfdjepSyYrnTeVagwvkWcw551iFOomjqcWjBsEkI-Ei8w9Rn37DyzZjkjKzwoIALUskl712cbm32ZoO4oqjVSr2l-qUAGiYdviobMIDj39R9Svb0IK2A">
-</div>
+<div class="w-7 h-7 rounded-full bg-surface-container-highest border border-border flex items-center justify-center text-[11px] font-bold text-on-surface-variant">AD</div>
 </div>
 </div>
 </header>
 <main class="flex min-h-[calc(100vh-48px)]">
 <!-- Primary Table Column (70%) -->
-<section class="flex-grow w-[70%] border-r border-border">
+<section class="flex-grow border-r border-border">
 <!-- Page Toolbar -->
 <div class="px-gutter py-4 border-b border-border flex justify-between items-end">
 <div>
@@ -172,9 +171,9 @@
 </div>
 <!-- One-Time Token Notice -->
 <div class="px-gutter mt-4" id="notice-container">
-<div class="bg-surface-container-low border-l-4 border-primary p-3 flex items-center justify-between">
+<div class="bg-muted-surface border-l-4 border-[#15803d] p-3 flex items-center justify-between rounded">
 <div class="flex items-start gap-3">
-<span class="material-symbols-outlined text-primary mt-0.5">verified_user</span>
+<span class="material-symbols-outlined text-[#15803d] mt-0.5">check_circle</span>
 <div>
 <p class="font-semibold text-body-md">Source Created Successfully</p>
 <p class="text-body-sm text-secondary">Copy your webhook URL and token now. For security, these secrets will not be shown again.</p>
@@ -352,7 +351,7 @@
 </div>
 </section>
 <!-- Right Rail Form (30%) -->
-<aside class="w-[30%] bg-muted-surface p-6 min-w-[320px]">
+<aside class="w-[360px] bg-muted-surface p-6 border-l border-border">
 <div class="sticky top-20">
 <div class="mb-6">
 <h2 class="font-panel-title text-panel-title flex items-center gap-2">
@@ -364,7 +363,7 @@
 <form class="space-y-5" onsubmit="event.preventDefault()">
 <div class="space-y-1.5">
 <label class="block text-table-header font-table-header uppercase text-on-surface-variant" for="source-name">Name</label>
-<input class="w-full text-body-md px-3 py-2 border border-border focus:ring-1 focus:ring-focus-ring outline-none transition-all" id="source-name" placeholder="e.g. Sentry Production" type="text">
+<input class="w-full text-body-md px-3 py-2 border border-border focus:ring-1 focus:ring-focus-ring outline-none transition-all" id="source-name" placeholder="e.g. Sentry Production" type="text"/>
 </div>
 <div class="space-y-1.5">
 <label class="block text-table-header font-table-header uppercase text-on-surface-variant" for="provider">Provider</label>
@@ -379,7 +378,7 @@
 <div class="space-y-1.5">
 <label class="block text-table-header font-table-header uppercase text-on-surface-variant" for="secret">Signing Secret</label>
 <div class="relative">
-<input class="w-full text-body-md px-3 py-2 pr-10 border border-border focus:ring-1 focus:ring-focus-ring outline-none transition-all" id="secret" placeholder="Enter secret or leave blank to auto-generate" type="password">
+<input class="w-full text-body-md px-3 py-2 pr-10 border border-border focus:ring-1 focus:ring-focus-ring outline-none transition-all" id="secret" placeholder="Enter secret or leave blank to auto-generate" type="password"/>
 <button class="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface" type="button">
 <span class="material-symbols-outlined !text-[18px]">visibility</span>
 </button>
@@ -395,7 +394,7 @@
 <div class="mt-10 p-4 border border-outline-variant bg-surface-container-low">
 <h3 class="text-table-header font-table-header uppercase text-on-surface-variant mb-2">Quick Tip</h3>
 <p class="text-body-sm text-secondary">
-                        Generic sources support JSON mapping. Once created, you can define how Vane interprets custom payload structures in the
+                        Generic sources support JSON mapping. Once created, you can define how Vane interprets custom payload structures in the 
                         <a class="text-primary font-semibold hover:underline" href="#">Route Settings</a>.
                     </p>
 </div>
@@ -425,6 +424,4 @@
             });
         }
     </script>
-
-
 </body></html>

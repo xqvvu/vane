@@ -29,122 +29,122 @@
   },
   "screens": [
     {
-      "id": "375ab2b7e9e14fa691770e82e442d7b4",
-      "name": "projects/8189408707632940093/screens/375ab2b7e9e14fa691770e82e442d7b4",
-      "title": "Vane Console - Application Error",
+      "id": "f8d94b652fd647f3b613374c53447622",
+      "name": "projects/8189408707632940093/screens/f8d94b652fd647f3b613374c53447622",
+      "title": "Vane Console - Application Error (Standardized)",
       "promptFile": ".stitch/prompts/application-error.md",
       "localScreenshot": ".stitch/designs/application-error.png",
       "localHtml": ".stitch/designs/application-error.html",
-      "status": "accepted-for-implementation",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
-        "Screenshot keeps the authenticated console context with compact Vane navigation and avoids a marketing hero or decorative illustration.",
+        "Screenshot now matches the current DashboardErrorPage shape: compact top navigation, centered fallback area, destructive alert, redacted summary, and concise recovery actions.",
         "Recovery actions are limited to retry, reload, and existing console routes: Events, Sources, Routes, and Settings.",
         "Error summary is intentionally redacted and does not show stack traces, source tokens, provider secrets, webhook URLs, raw payloads, or credentials.",
-        "No incident-management, on-call, billing, organization, SaaS, or Create Alert actions are present."
+        "No incident-management, on-call, billing, organization, SaaS, right checklist rail, or Create Alert actions are present."
       ]
     },
     {
-      "id": "4d9dee9e5d4549818c34109c0fc873b7",
-      "name": "projects/8189408707632940093/screens/4d9dee9e5d4549818c34109c0fc873b7",
-      "title": "Vane Console - 404 Not Found",
+      "id": "1c4290d71822470f9e3a2801f635b537",
+      "name": "projects/8189408707632940093/screens/1c4290d71822470f9e3a2801f635b537",
+      "title": "Vane Console - 404 Not Found (Standardized)",
       "promptFile": ".stitch/prompts/not-found-page.md",
       "localScreenshot": ".stitch/designs/not-found-404.png",
       "localHtml": ".stitch/designs/not-found-404.html",
-      "status": "accepted-for-implementation",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
-        "Screenshot keeps the authenticated console context and avoids a marketing hero or decorative illustration.",
-        "Recovery actions are limited to existing console routes: Sources, Events, Routes, and Settings.",
+        "Screenshot now matches the current DashboardNotFoundPage direction: compact top navigation, centered fallback panel, redacted request context, and route recovery links.",
+        "Recovery actions are limited to existing console routes: Events, Deliveries, Sources, Routes, Destinations, and Settings.",
         "Implementation reuses the existing DashboardLayout and top navigation rather than introducing a second sidebar shell.",
         "No incident, on-call, billing, organization, SaaS, or Create Alert actions are present."
       ]
     },
     {
-      "id": "f91ad904e5de4495b959f9aeef0d05b3",
-      "name": "projects/8189408707632940093/screens/f91ad904e5de4495b959f9aeef0d05b3",
-      "title": "Vane Console - Settings",
+      "id": "51d204938b0b4e5ebba372d1b19bb42c",
+      "name": "projects/8189408707632940093/screens/51d204938b0b4e5ebba372d1b19bb42c",
+      "title": "Vane Console - Settings (Standardized)",
       "promptFile": ".stitch/prompts/settings-page.md",
       "localScreenshot": ".stitch/designs/settings-configuration-page.png",
       "localHtml": ".stitch/designs/settings-configuration-page.html",
-      "status": "accepted-with-implementation-corrections",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
         "Screenshot passes the main product boundary: no Create Alert action and no incident, on-call, silence, workflow, tenant, organization, or billing controls.",
-        "Screenshot keeps the desired Settings toolbar, operational summary, raw payload retention form, TOML import/export rail, and one-time import token notice.",
-        "Downloaded HTML includes sample TOML keys such as [server], archive_enabled, and runtime version or memory text that are not current Vane configuration boundaries; implementation keeps the existing settings and TOML service model.",
+        "Screenshot keeps the current Settings structure: toolbar, import notice, operational summary, portability and safety panel, raw payload retention form, and TOML import/export rail.",
+        "Standardized design avoids runtime version, memory usage, archive switches, server config keys, and other system metrics not owned by the current implementation.",
         "Implementation does not add a Secrets Omitted toggle because the current server function always requests includeSecrets=false and plaintext secret export is unsupported."
       ]
     },
     {
-      "id": "23196e4036204b93bf868347b4c75834",
-      "name": "projects/8189408707632940093/screens/23196e4036204b93bf868347b4c75834",
-      "title": "Vane Console - Destinations",
+      "id": "33c7792dc8fc4833864c9080862e05e4",
+      "name": "projects/8189408707632940093/screens/33c7792dc8fc4833864c9080862e05e4",
+      "title": "Vane Console - Destinations (Standardized)",
       "promptFile": ".stitch/prompts/destinations-page.md",
       "localScreenshot": ".stitch/designs/destinations-configuration-page.png",
       "localHtml": ".stitch/designs/destinations-configuration-page.html",
-      "status": "accepted-with-implementation-corrections",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
         "Screenshot passes product boundary: no Create Alert action and no incident, silence, workflow, tenant, or billing controls.",
-        "Screenshot keeps the desired Destinations table, explicit test and preview actions, right rail creation form, and redacted preview payloads.",
-        "Implementation intentionally avoids the screenshot's AES-256-GCM claim because the current code does not expose or document that specific storage algorithm.",
+        "Screenshot keeps the current Destinations toolbar, test and preview notices, compact table, explicit test/preview/edit/toggle actions, and right rail creation form.",
+        "Standardized design removed the prior AES-256-GCM claim because the current code does not expose or document that specific storage algorithm.",
         "No destination webhook URLs, signing secrets, headers, SMTP passwords, token hashes, or raw sensitive payloads are shown."
       ]
     },
     {
-      "id": "c4f88749d59843e7ac6c18535fecc0fc",
-      "name": "projects/8189408707632940093/screens/c4f88749d59843e7ac6c18535fecc0fc",
-      "title": "Vane Console - Routes",
+      "id": "766cd534f892454d961081339e9f1e76",
+      "name": "projects/8189408707632940093/screens/766cd534f892454d961081339e9f1e76",
+      "title": "Vane Console - Routes (Standardized)",
       "promptFile": ".stitch/prompts/routes-page.md",
       "localScreenshot": ".stitch/designs/routes-configuration-page.png",
       "localHtml": ".stitch/designs/routes-configuration-page.html",
-      "status": "accepted-with-implementation-corrections",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
         "Screenshot passes the main product boundary: no Create Alert action and no incident, silence, workflow, tenant, or billing controls.",
-        "Screenshot keeps the desired Routes table plus right rail creation form and explicit enable/disable row actions.",
-        "Right rail screenshot includes an HTTP Status / Code field, but current route model uses normalized alert status values; implementation keeps the existing Status select for any/firing/resolved/unknown.",
+        "Screenshot keeps the current Routes toolbar, compact routes table, readable match chips, right rail creation form, and explicit enable/disable row actions.",
+        "Standardized design removed the prior HTTP Status / Code field; the route form uses normalized alert status values: any, firing, resolved, and unknown.",
         "No source tokens, token hashes, destination secrets, provider signing secrets, or raw sensitive payloads are shown."
       ]
     },
     {
-      "id": "b3e5e550bc6949b2b320c82e57501c8b",
-      "name": "projects/8189408707632940093/screens/b3e5e550bc6949b2b320c82e57501c8b",
-      "title": "Vane Console - Sources",
+      "id": "3d94047d74e54fca9defba28d43da3b5",
+      "name": "projects/8189408707632940093/screens/3d94047d74e54fca9defba28d43da3b5",
+      "title": "Vane Console - Sources (Standardized)",
       "promptFile": ".stitch/prompts/sources-page.md",
       "localScreenshot": ".stitch/designs/sources-configuration-page.png",
       "localHtml": ".stitch/designs/sources-configuration-page.html",
-      "status": "accepted-with-implementation-corrections",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
-        "Initial Sources generation included a global Create Alert action; Stitch edit removed it from the refreshed screenshot.",
-        "Downloaded HTML artifact still contains a stale Create Alert string, so implementation uses screenshot, prompt, and corrected Stitch feedback as source of truth.",
-        "Screenshot keeps the desired Sources table plus right rail creation form and one-time token notice.",
+        "Initial Sources generation included a global Create Alert action; the standardized screen has no Create Alert action.",
+        "Standardized design uses the current top navigation shell, compact source table, right rail Create Source form, quick tip, and one-time token notice.",
+        "Photographic avatar assets were removed in favor of a compact user menu placeholder.",
         "Implementation must not fake last-received or provider-secret state because SourceSummary currently exposes only id, name, provider, and enabled."
       ]
     },
     {
-      "id": "c3d296d573e343beb20988389a29ac02",
-      "name": "projects/8189408707632940093/screens/c3d296d573e343beb20988389a29ac02",
-      "title": "Vane Console - Deliveries",
+      "id": "a40a5b3c6a8f4879b279f67460d5061d",
+      "name": "projects/8189408707632940093/screens/a40a5b3c6a8f4879b279f67460d5061d",
+      "title": "Vane Console - Deliveries (Standardized)",
       "promptFile": ".stitch/prompts/deliveries-page.md",
       "localScreenshot": ".stitch/designs/deliveries-operations-page.png",
       "localHtml": ".stitch/designs/deliveries-operations-page.html",
-      "status": "accepted-for-implementation",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
         "Screenshot matches Events shell direction with active Deliveries navigation, compact table, right filter rail, worker notice, and detail tabs.",
         "No manual delivery creation, incident management, on-call scheduling, silence, or suppression controls are present.",
-        "Implementation should keep current URL-backed select filters instead of Stitch's visual Apply Filters checkbox rail."
+        "Standardized design removed the prior Apply Filters button; implementation keeps current URL-backed filters."
       ]
     },
     {
-      "id": "aa110c6e81b9402ca9c1784f8074a231",
-      "name": "projects/8189408707632940093/screens/aa110c6e81b9402ca9c1784f8074a231",
-      "title": "Vane Console - Events (Operational)",
+      "id": "137cd912ef404cb5804d64fa0fb5902d",
+      "name": "projects/8189408707632940093/screens/137cd912ef404cb5804d64fa0fb5902d",
+      "title": "Vane Console - Events (Standardized)",
       "promptFile": ".stitch/prompts/ready-to-run.md",
       "localScreenshot": ".stitch/designs/events-operations-page.png",
       "localHtml": ".stitch/designs/events-operations-page.html",
-      "status": "accepted-for-implementation",
+      "status": "standardized-to-current-ui",
       "qaNotes": [
         "Screenshot passes product boundary: header uses Refresh and Reset filters, not Create Alert.",
         "Two-column layout, events table, filter rail, and detail tabs are visible.",
         "Raw debug and secret-like fields are redacted.",
-        "Downloaded HTML artifact still contains stale Create Alert text from an earlier generation; use screenshot, prompt, and screen metadata as implementation reference."
+        "Standardized design removed the prior Apply Filters button and keeps URL-backed filter behavior as the implementation reference."
       ]
     },
     {
@@ -158,20 +158,63 @@
     }
   ],
   "workflow": {
-    "externalStateCheckedAt": "2026-06-11",
+    "externalStateCheckedAt": "2026-06-12",
     "stitchDesignSystems": [
       "assets/c53b2ce16f154fe6a124ffea9d67f066"
     ],
     "stitchScreens": [
-      "f91ad904e5de4495b959f9aeef0d05b3",
-      "23196e4036204b93bf868347b4c75834",
-      "c4f88749d59843e7ac6c18535fecc0fc",
-      "b3e5e550bc6949b2b320c82e57501c8b",
-      "c3d296d573e343beb20988389a29ac02",
-      "aa110c6e81b9402ca9c1784f8074a231",
+      "51d204938b0b4e5ebba372d1b19bb42c",
+      "33c7792dc8fc4833864c9080862e05e4",
+      "766cd534f892454d961081339e9f1e76",
+      "3d94047d74e54fca9defba28d43da3b5",
+      "a40a5b3c6a8f4879b279f67460d5061d",
+      "137cd912ef404cb5804d64fa0fb5902d",
+      "1c4290d71822470f9e3a2801f635b537",
+      "f8d94b652fd647f3b613374c53447622",
       "3b7c694a52d34bf3aef2d7526cb338bd",
       "375ab2b7e9e14fa691770e82e442d7b4"
     ],
+    "stitchUiUnification": {
+      "status": "completed",
+      "completedAt": "2026-06-12",
+      "sourceOfTruth": "Current apps/console dashboard UI: 48px top navigation shell, split dashboard layout, compact shadcn base-lyra controls, neutral light theme, right rail forms/filters, redacted sensitive data.",
+      "appliedDesignSystem": "assets/c53b2ce16f154fe6a124ffea9d67f066",
+      "standardizedScreens": {
+        "events": "137cd912ef404cb5804d64fa0fb5902d",
+        "deliveries": "a40a5b3c6a8f4879b279f67460d5061d",
+        "sources": "3d94047d74e54fca9defba28d43da3b5",
+        "routes": "766cd534f892454d961081339e9f1e76",
+        "destinations": "33c7792dc8fc4833864c9080862e05e4",
+        "settings": "51d204938b0b4e5ebba372d1b19bb42c",
+        "notFound": "1c4290d71822470f9e3a2801f635b537",
+        "applicationError": "f8d94b652fd647f3b613374c53447622"
+      },
+      "localAssets": [
+        ".stitch/designs/events-operations-page.html",
+        ".stitch/designs/events-operations-page.png",
+        ".stitch/designs/deliveries-operations-page.html",
+        ".stitch/designs/deliveries-operations-page.png",
+        ".stitch/designs/sources-configuration-page.html",
+        ".stitch/designs/sources-configuration-page.png",
+        ".stitch/designs/routes-configuration-page.html",
+        ".stitch/designs/routes-configuration-page.png",
+        ".stitch/designs/destinations-configuration-page.html",
+        ".stitch/designs/destinations-configuration-page.png",
+        ".stitch/designs/settings-configuration-page.html",
+        ".stitch/designs/settings-configuration-page.png",
+        ".stitch/designs/not-found-404.html",
+        ".stitch/designs/not-found-404.png",
+        ".stitch/designs/application-error.html",
+        ".stitch/designs/application-error.png"
+      ],
+      "notes": [
+        "Stitch apply_design_system updated the project theme and current canvas instance sources.",
+        "Follow-up edit_screens calls generated standardized screen resources that are tracked here and downloaded locally as the implementation reference.",
+        "A final edit_screens pass standardized the shared 48px DashboardHeader shell, navigation order, and initials-only user menu across the accepted screens.",
+        "Local .stitch/designs HTML and PNG mirrors were normalized to remove cached remote avatar assets and match the current console shell.",
+        "No application code was changed during this design unification pass."
+      ]
+    },
     "implementedTracerBullet": {
       "screenId": "aa110c6e81b9402ca9c1784f8074a231",
       "status": "implemented",

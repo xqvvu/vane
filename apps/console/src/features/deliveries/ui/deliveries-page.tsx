@@ -1,5 +1,6 @@
 import { RiErrorWarningLine, RiFilterOffLine, RiPlayLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
@@ -13,11 +14,7 @@ import type {
   DashboardOperationSearch,
   OperationFilterData,
 } from "#/features/operations/model/operation-search.ts";
-import type {
-  DeliveryDetail,
-  WorkerRunNotice,
-} from "#/features/operations/model/operation-types.ts";
-import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
+import type { WorkerRunNotice } from "#/features/operations/model/operation-types.ts";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
 import { WorkerNoticePanel } from "#/features/operations/ui/worker-notice-panel.tsx";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
@@ -30,12 +27,11 @@ export interface DeliveriesPageProps {
 }
 
 export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPageProps) {
+  const navigate = useNavigate();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
-  const { getDeliveryDetail, invalidateOperations, retryDelivery, runDeliveryWorker } =
-    useOperationMutations();
+  const { invalidateOperations, retryDelivery, runDeliveryWorker } = useOperationMutations();
   const [workerNotice, setWorkerNotice] = React.useState<WorkerRunNotice | null>(null);
-  const [deliveryDetail, setDeliveryDetail] = React.useState<DeliveryDetail | null>(null);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const pending = pendingAction !== null;
@@ -105,14 +101,11 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             nextCursor={operations.deliveries.nextCursor}
             pending={pending}
             onInspect={(deliveryId) =>
-              void submitAction(`inspect-delivery-${deliveryId}`, async () => {
-                const result = await getDeliveryDetail({
-                  data: {
-                    id: deliveryId,
-                  },
-                });
-                setDeliveryDetail(result);
-                return result;
+              void navigate({
+                to: "/deliveries/$deliveryId",
+                params: {
+                  deliveryId,
+                },
               })
             }
             onRetry={(deliveryId) =>
@@ -127,7 +120,6 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             onOlder={(cursor) => onSearchChange({ deliveryCursor: cursor })}
             onLatest={() => onSearchChange({ deliveryCursor: "" })}
           />
-          <DetailPanel eventDetail={null} deliveryDetail={deliveryDetail} />
         </>
       }
       sidebar={

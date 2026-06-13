@@ -20,6 +20,8 @@ import { Route as DashboardEventsRouteImport } from "./routes/_dashboard.events"
 import { Route as DashboardDestinationsRouteImport } from "./routes/_dashboard.destinations";
 import { Route as DashboardDeliveriesRouteImport } from "./routes/_dashboard.deliveries";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
+import { Route as DashboardEventsEventIdRouteImport } from "./routes/_dashboard.events_.$eventId";
+import { Route as DashboardDeliveriesDeliveryIdRouteImport } from "./routes/_dashboard.deliveries_.$deliveryId";
 import { Route as ApiSourcesSourceIdWebhookRouteImport } from "./routes/api/sources/$sourceId/webhook";
 
 const SetupRoute = SetupRouteImport.update({
@@ -76,6 +78,17 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: "/api/auth/$",
   getParentRoute: () => rootRouteImport,
 } as any);
+const DashboardEventsEventIdRoute = DashboardEventsEventIdRouteImport.update({
+  id: "/events_/$eventId",
+  path: "/events/$eventId",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardDeliveriesDeliveryIdRoute =
+  DashboardDeliveriesDeliveryIdRouteImport.update({
+    id: "/deliveries_/$deliveryId",
+    path: "/deliveries/$deliveryId",
+    getParentRoute: () => DashboardRoute,
+  } as any);
 const ApiSourcesSourceIdWebhookRoute =
   ApiSourcesSourceIdWebhookRouteImport.update({
     id: "/api/sources/$sourceId/webhook",
@@ -93,6 +106,8 @@ export interface FileRoutesByFullPath {
   "/routes": typeof DashboardRoutesRoute;
   "/settings": typeof DashboardSettingsRoute;
   "/sources": typeof DashboardSourcesRoute;
+  "/deliveries/$deliveryId": typeof DashboardDeliveriesDeliveryIdRoute;
+  "/events/$eventId": typeof DashboardEventsEventIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/sources/$sourceId/webhook": typeof ApiSourcesSourceIdWebhookRoute;
 }
@@ -106,6 +121,8 @@ export interface FileRoutesByTo {
   "/routes": typeof DashboardRoutesRoute;
   "/settings": typeof DashboardSettingsRoute;
   "/sources": typeof DashboardSourcesRoute;
+  "/deliveries/$deliveryId": typeof DashboardDeliveriesDeliveryIdRoute;
+  "/events/$eventId": typeof DashboardEventsEventIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/sources/$sourceId/webhook": typeof ApiSourcesSourceIdWebhookRoute;
 }
@@ -121,6 +138,8 @@ export interface FileRoutesById {
   "/_dashboard/routes": typeof DashboardRoutesRoute;
   "/_dashboard/settings": typeof DashboardSettingsRoute;
   "/_dashboard/sources": typeof DashboardSourcesRoute;
+  "/_dashboard/deliveries_/$deliveryId": typeof DashboardDeliveriesDeliveryIdRoute;
+  "/_dashboard/events_/$eventId": typeof DashboardEventsEventIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/sources/$sourceId/webhook": typeof ApiSourcesSourceIdWebhookRoute;
 }
@@ -136,6 +155,8 @@ export interface FileRouteTypes {
     | "/routes"
     | "/settings"
     | "/sources"
+    | "/deliveries/$deliveryId"
+    | "/events/$eventId"
     | "/api/auth/$"
     | "/api/sources/$sourceId/webhook";
   fileRoutesByTo: FileRoutesByTo;
@@ -149,6 +170,8 @@ export interface FileRouteTypes {
     | "/routes"
     | "/settings"
     | "/sources"
+    | "/deliveries/$deliveryId"
+    | "/events/$eventId"
     | "/api/auth/$"
     | "/api/sources/$sourceId/webhook";
   id:
@@ -163,6 +186,8 @@ export interface FileRouteTypes {
     | "/_dashboard/routes"
     | "/_dashboard/settings"
     | "/_dashboard/sources"
+    | "/_dashboard/deliveries_/$deliveryId"
+    | "/_dashboard/events_/$eventId"
     | "/api/auth/$"
     | "/api/sources/$sourceId/webhook";
   fileRoutesById: FileRoutesById;
@@ -255,6 +280,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/_dashboard/events_/$eventId": {
+      id: "/_dashboard/events_/$eventId";
+      path: "/events/$eventId";
+      fullPath: "/events/$eventId";
+      preLoaderRoute: typeof DashboardEventsEventIdRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/deliveries_/$deliveryId": {
+      id: "/_dashboard/deliveries_/$deliveryId";
+      path: "/deliveries/$deliveryId";
+      fullPath: "/deliveries/$deliveryId";
+      preLoaderRoute: typeof DashboardDeliveriesDeliveryIdRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
     "/api/sources/$sourceId/webhook": {
       id: "/api/sources/$sourceId/webhook";
       path: "/api/sources/$sourceId/webhook";
@@ -272,6 +311,8 @@ interface DashboardRouteChildren {
   DashboardRoutesRoute: typeof DashboardRoutesRoute;
   DashboardSettingsRoute: typeof DashboardSettingsRoute;
   DashboardSourcesRoute: typeof DashboardSourcesRoute;
+  DashboardDeliveriesDeliveryIdRoute: typeof DashboardDeliveriesDeliveryIdRoute;
+  DashboardEventsEventIdRoute: typeof DashboardEventsEventIdRoute;
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -281,6 +322,8 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardRoutesRoute: DashboardRoutesRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardSourcesRoute: DashboardSourcesRoute,
+  DashboardDeliveriesDeliveryIdRoute: DashboardDeliveriesDeliveryIdRoute,
+  DashboardEventsEventIdRoute: DashboardEventsEventIdRoute,
 };
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

@@ -1,5 +1,6 @@
 import { RiErrorWarningLine, RiFilterOffLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
@@ -14,8 +15,6 @@ import type {
   DashboardOperationSearch,
   OperationFilterData,
 } from "#/features/operations/model/operation-search.ts";
-import type { EventDetail } from "#/features/operations/model/operation-types.ts";
-import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
@@ -27,16 +26,25 @@ export interface EventsPageProps {
 }
 
 export function EventsPage({ search, filters, onSearchChange }: EventsPageProps) {
+  const navigate = useNavigate();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
-  const { getEventDetail, invalidateOperations } = useOperationMutations();
-  const [eventDetail, setEventDetail] = React.useState<EventDetail | null>(null);
+  const { invalidateOperations } = useOperationMutations();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const pending = pendingAction !== null;
 
   async function refreshOperations() {
-    await invalidateOperations();
+    setPendingAction("refresh-events");
+    setFormError(null);
+
+    try {
+      await invalidateOperations();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   function resetFilters() {
@@ -48,22 +56,6 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
       deliveryState: "",
       q: "",
     });
-  }
-
-  async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
-    setPendingAction(action);
-    setFormError(null);
-
-    try {
-      const result = await fn();
-      await refreshOperations();
-      return result;
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
-      return null;
-    } finally {
-      setPendingAction(null);
-    }
   }
 
   return (
@@ -89,20 +81,16 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
             nextCursor={operations.events.nextCursor}
             pending={pending}
             onInspect={(eventId) =>
-              void submitAction(`inspect-event-${eventId}`, async () => {
-                const result = await getEventDetail({
-                  data: {
-                    id: eventId,
-                  },
-                });
-                setEventDetail(result);
-                return result;
+              void navigate({
+                to: "/events/$eventId",
+                params: {
+                  eventId,
+                },
               })
             }
             onOlder={(cursor) => onSearchChange({ eventCursor: cursor })}
             onLatest={() => onSearchChange({ eventCursor: "" })}
           />
-          <DetailPanel eventDetail={eventDetail} deliveryDetail={null} />
         </>
       }
       sidebar={

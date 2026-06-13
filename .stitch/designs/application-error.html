@@ -5,9 +5,8 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Vane Console - Error Boundary</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&amp;family=Noto+Sans:wght@400;500&amp;family=Nunito+Sans:wght@600;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -48,7 +47,7 @@
                         "on-tertiary-fixed": "#1a1c1d",
                         "on-tertiary-container": "#f3f3f4",
                         "on-secondary-container": "#646464",
-                        "primary": "#943b00",
+                        "primary": "#bb4d00",
                         "tertiary-container": "#6e6f70",
                         "primary-fixed-dim": "#ffb693",
                         "sidebar-surface": "#fafafa",
@@ -70,14 +69,14 @@
                         "inverse-on-surface": "#f3f0ef"
                     },
                     "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
                     },
                     "spacing": {
                         "panel-padding": "1rem",
-                        "gutter": "0.75rem",
+                        "gutter": "1rem",
                         "row-gap": "0.5rem",
                         "compact-gap": "0.25rem",
                         "container-margin": "1rem"
@@ -110,93 +109,65 @@
 </head>
 <body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md">
 <!-- TopNavBar -->
-<header class="sticky top-0 z-50 flex justify-between items-center px-gutter py-compact-gap w-full bg-background border-b border-border">
+<header class="sticky top-0 z-50 flex justify-between items-center px-gutter h-12 w-full bg-background border-b border-border">
 <div class="flex items-center gap-6">
 <span class="font-headline-md text-headline-md font-bold text-primary">Vane</span>
 <nav class="hidden md:flex gap-4">
-<a class="text-secondary font-body-md text-body-md hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Events</a>
-<a class="text-secondary font-body-md text-body-md hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Deliveries</a>
-<a class="text-secondary font-body-md text-body-md hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Sources</a>
-<a class="text-primary font-bold border-b-2 border-primary pb-1 font-body-md text-body-md cursor-pointer active:opacity-80" href="#">Routes</a>
-<a class="text-secondary font-body-md text-body-md hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Destinations</a>
-<a class="text-secondary font-body-md text-body-md hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Settings</a>
+<a class="text-secondary font-body-sm text-body-sm hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Events</a>
+<a class="text-secondary font-body-sm text-body-sm hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Deliveries</a>
+<a class="text-secondary font-body-sm text-body-sm hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Sources</a>
+<a class="text-primary font-bold border-b-2 border-primary h-12 inline-flex items-center font-body-sm text-body-sm cursor-pointer active:opacity-80" href="#">Routes</a>
+<a class="text-secondary font-body-sm text-body-sm hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Destinations</a>
+<a class="text-secondary font-body-sm text-body-sm hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Settings</a>
 </nav>
 </div>
-<div class="flex items-center gap-4 text-secondary">
-<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors active:opacity-80" data-icon="notifications">notifications</span>
-<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors active:opacity-80" data-icon="help">help</span>
-<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors active:opacity-80" data-icon="person">person</span>
+<div class="flex items-center gap-2 text-secondary">
+<button class="w-8 h-8 inline-flex items-center justify-center rounded hover:bg-muted-surface transition-colors text-secondary hover:text-primary"><i class="ri-notification-3-line text-lg"></i></button>
+<button class="w-8 h-8 inline-flex items-center justify-center rounded hover:bg-muted-surface transition-colors text-secondary hover:text-primary"><i class="ri-question-line text-lg"></i></button>
+<div class="w-7 h-7 ml-2 rounded-full bg-surface-variant flex items-center justify-center text-[11px] font-bold text-on-surface-variant">AD</div>
 </div>
 </header>
 <!-- Main Operational Layout -->
-<main class="flex-1 flex flex-col md:flex-row overflow-hidden">
-<!-- Primary Error Panel (Left) -->
-<section class="flex-1 p-panel-padding bg-background overflow-y-auto">
-<div class="max-w-4xl border border-error/30 rounded-DEFAULT bg-error-container/5 p-6 mt-8 ml-8">
-<div class="flex items-center gap-3 mb-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded-DEFAULT bg-destructive text-on-error font-table-header text-table-header uppercase tracking-wider">ERROR</span>
-<h1 class="font-headline-lg text-headline-lg text-error">Application error</h1>
+<main class="flex-1 flex flex-col overflow-y-auto px-4 py-12 items-center">
+<div class="w-full max-w-[768px] flex flex-col">
+<!-- Destructive Alert -->
+<div class="border border-destructive rounded-lg bg-error-container/20 p-4 mb-6">
+<div class="flex items-center gap-3 mb-2">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-destructive text-on-error uppercase tracking-wide">ERROR</span>
+<h1 class="font-headline-md text-destructive">Application error</h1>
 </div>
-<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+<p class="font-body-sm text-on-error-container">
                     An unexpected runtime failure occurred while rendering this view.
                 </p>
+</div>
 <!-- Redacted Summary Box -->
-<div class="border border-border bg-muted-surface p-4 rounded-DEFAULT mb-8 font-code-sm text-code-sm text-secondary">
-<div class="mb-2 text-on-surface font-semibold">Internal rendering failure: Component failed to load</div>
-<div class="opacity-70">[REDACTED_TRACE_ID: err_01hz8x9k2m4n5p6q7r8s9t0u1v]</div>
+<div class="border border-border bg-muted-surface p-4 rounded-lg mb-6">
+<div class="text-on-surface font-panel-title mb-2">Redacted summary</div>
+<div class="font-code-sm text-secondary opacity-80">
+                    [REDACTED_TRACE_ID: generated_server_side]
+                </div>
 </div>
 <!-- Recovery Toolbar -->
-<div class="flex flex-wrap items-center gap-4 mt-8 pt-4 border-t border-border">
-<button class="px-4 py-2 bg-primary text-on-primary font-panel-title text-panel-title rounded-DEFAULT hover:opacity-90 transition-opacity active:scale-95 focus:outline-none focus:ring-2 focus:ring-focus-ring">
-                        Try again
-                    </button>
-<button class="px-4 py-2 border border-border text-on-surface font-panel-title text-panel-title rounded-DEFAULT hover:bg-muted-surface transition-colors active:scale-95 focus:outline-none focus:ring-2 focus:ring-focus-ring">
-                        Reload page
-                    </button>
-<div class="h-4 w-px bg-border mx-2"></div>
-<div class="flex gap-3 text-secondary font-body-sm text-body-sm">
-<a class="hover:text-primary transition-colors underline decoration-border underline-offset-2" href="#">Events</a>
-<a class="hover:text-primary transition-colors underline decoration-border underline-offset-2" href="#">Sources</a>
-<a class="hover:text-primary transition-colors underline decoration-border underline-offset-2" href="#">Routes</a>
-<a class="hover:text-primary transition-colors underline decoration-border underline-offset-2" href="#">Settings</a>
-</div>
+<div class="flex flex-wrap items-center gap-3 mb-10">
+<button class="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-primary text-on-primary font-body-sm font-medium rounded hover:opacity-90 transition-opacity active:scale-95 focus:outline-none focus:ring-2 focus:ring-focus-ring">
+<i class="ri-refresh-line"></i> Try again
+                </button>
+<button class="inline-flex items-center justify-center px-3 py-1.5 border border-border bg-transparent text-on-surface font-body-sm font-medium rounded hover:bg-muted-surface transition-colors active:scale-95 focus:outline-none focus:ring-2 focus:ring-focus-ring">
+                    Reload page
+                </button>
+<div class="h-4 w-px bg-border mx-1"></div>
+<div class="flex gap-4 text-secondary font-body-sm">
+<a class="hover:text-primary transition-colors" href="#">Events</a>
+<a class="hover:text-primary transition-colors" href="#">Sources</a>
+<a class="hover:text-primary transition-colors" href="#">Routes</a>
+<a class="hover:text-primary transition-colors" href="#">Settings</a>
 </div>
 </div>
 <!-- Metadata Strip -->
-<div class="mt-auto pt-8 ml-8 flex items-center gap-4 text-tertiary font-body-sm text-body-sm">
-<span>Vane Console / error boundary / runtime failure</span>
-<span class="px-2 py-1 bg-muted-surface border border-border rounded-DEFAULT font-code-sm text-code-sm">/dashboard/routes/rt_0x892a</span>
-<span class="px-2 py-1 bg-muted-surface border border-border rounded-DEFAULT font-code-sm text-code-sm">2023-10-27T14:32:01Z</span>
+<div class="flex flex-wrap items-center gap-3 text-tertiary font-body-sm mt-auto pt-6 border-t border-border">
+<span class="text-xs">Vane Console / error boundary / runtime failure</span>
+<span class="px-1.5 py-0.5 bg-muted-surface border border-border rounded text-xs font-code-sm text-secondary">/dashboard/routes/rt_0x892a</span>
 </div>
-</section>
-<!-- Diagnostic Panel (Right) -->
-<aside class="w-full md:w-80 bg-muted-surface border-l border-border p-panel-padding flex flex-col shrink-0">
-<h2 class="font-panel-title text-panel-title text-on-surface mb-6 flex items-center gap-2 border-b border-border pb-2">
-<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="fact_check">fact_check</span>
-                Operational Checklist
-            </h2>
-<ul class="space-y-4 font-body-md text-body-md text-on-surface-variant">
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-tertiary text-[16px] mt-0.5" data-icon="refresh">refresh</span>
-<span>Retry request</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-tertiary text-[16px] mt-0.5" data-icon="key">key</span>
-<span>Confirm session validity</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-tertiary text-[16px] mt-0.5" data-icon="database">database</span>
-<span>Verify SQLite configuration</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-tertiary text-[16px] mt-0.5" data-icon="terminal">terminal</span>
-<span>Check server logs</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-tertiary text-[16px] mt-0.5" data-icon="code_blocks">code_blocks</span>
-<span>Review recent TOML changes</span>
-</li>
-</ul>
-</aside>
+</div>
 </main>
 </body></html>

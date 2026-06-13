@@ -5,9 +5,9 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Destinations | Vane Console</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600&family=Courier+Prime&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&family=Nunito+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&amp;family=Noto+Sans:wght@400;500;600&amp;family=Courier+Prime&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&amp;family=Nunito+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -127,35 +127,17 @@
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen">
 <!-- TopNavBar Shell -->
-<header class="flex justify-between items-center px-gutter w-full sticky top-0 z-50 bg-background border-b border-border h-14">
+<header class="flex justify-between items-center px-gutter w-full sticky top-0 z-50 bg-background border-b border-border h-12">
 <div class="flex items-center gap-8">
-<span class="font-headline-md text-headline-md text-primary tracking-tight">Vane Console</span>
-<nav class="hidden md:flex items-center gap-6 h-full">
-<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Events</a>
-<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Deliveries</a>
-<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Sources</a>
-<a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Routes</a>
-<a class="text-primary border-b-2 border-primary font-bold py-4 font-body-md text-body-md" href="#">Destinations</a>
-</nav>
+<span class="font-headline-md text-headline-md text-primary tracking-tight">Vane</span>
+<nav class="hidden md:flex items-center gap-6 h-full"><a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Events</a><a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Deliveries</a><a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Sources</a><a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Routes</a><a class="text-primary border-b-2 border-primary font-bold py-4 font-body-md text-body-md" href="#">Destinations</a><a class="text-secondary hover:text-primary transition-colors duration-150 py-4 font-body-md text-body-md" href="#">Settings</a></nav>
 </div>
 <div class="flex items-center gap-4">
-<div class="flex items-center gap-2">
-<button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150">
-<span class="material-symbols-outlined">info</span>
-</button>
-<button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150">
-<span class="material-symbols-outlined">settings</span>
-</button>
-</div>
-<div class="h-8 w-8 rounded-full bg-surface-container overflow-hidden border border-border">
-<img alt="User profile avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY1j0PqoIoMgEV9USmgA1JKJ_qaA659HGPp-l9jWbklxakFtcDPxDhfubw0tzpZx0Wgq_W5OiOrITYyDs8yeuS_7uZLD3uA0SGy-zjMcL2nfudWpzn3tTNpfo4B6hMsdV-aDCdmDb01JavYYGDgGMK6nTOUCg07RBTqAMWY5BMW95bJ7nBFMwSVSdUVSxqCAUee-jQdSWd8Lp7ydTkdqxdj_kPv-rkgoQnGm3wz-Xt5wUXlnGhNxbEO-lbWL4WC3BD-aq24u6CpbE"/>
-</div>
+<div class="flex items-center gap-2"><button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150"><span class="material-symbols-outlined">notifications</span></button><button class="p-1.5 text-secondary hover:bg-muted-surface rounded transition-colors duration-150"><span class="material-symbols-outlined">help</span></button></div>
+<div class="h-8 w-8 rounded-full bg-surface-container border border-border flex items-center justify-center text-[11px] font-bold text-secondary">AD</div>
 </div>
 </header>
-<main class="flex flex-col md:flex-row min-h-[calc(100vh-3.5rem)]">
+<main class="flex flex-col md:flex-row min-h-[calc(100vh-48px)]">
 <!-- Left Column: Primary Content (70%) -->
 <section class="flex-1 md:w-[70%] bg-background p-panel-padding border-r border-border">
 <!-- Page Toolbar -->
@@ -194,7 +176,7 @@
   "name": "Feishu Alerts",
   "kind": "feishu",
   "config": {
-    "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/[REDACTED]",
+    "webhook_url": "[REDACTED]",
     "secret": "[REDACTED]",
     "msg_type": "interactive"
   },
@@ -296,7 +278,7 @@
 </div>
 </section>
 <!-- Right Column: Settings/Form (30%) -->
-<aside class="md:w-[30%] bg-muted-surface p-panel-padding">
+<aside class="md:w-[360px] bg-muted-surface p-6 border-l border-border">
 <div class="sticky top-20">
 <div class="flex items-center gap-2 mb-6 text-on-surface">
 <span class="material-symbols-outlined text-primary">add_circle</span>
@@ -319,7 +301,7 @@
 <div class="space-y-1">
 <label class="block font-panel-title text-panel-title text-on-surface-variant">Webhook URL</label>
 <div class="relative">
-<input class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded" type="password" value="••••••••••••••••"/>
+<input class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded" type="password" value=""/>
 <span class="absolute right-2 top-1.5 material-symbols-outlined text-secondary cursor-pointer">visibility_off</span>
 </div>
 </div>
@@ -328,7 +310,7 @@
 <input class="w-full h-9 px-3 bg-background border border-border focus:ring-2 focus:ring-focus-ring focus:border-outline-variant outline-none font-body-md rounded" placeholder="Optional" type="password"/>
 </div>
 <div class="pt-4 border-t border-border">
-<button class="w-full h-10 bg-primary text-on-primary font-bold rounded shadow-sm hover:bg-primary-container transition-colors duration-150" type="submit">
+<button class="w-full h-10 bg-primary text-on-primary font-bold rounded shadow-sm hover:bg-primary-container transition-colors duration-150 bg-primary-container" type="submit">
                             Create Destination
                         </button>
 </div>
@@ -338,10 +320,7 @@
 <span class="material-symbols-outlined text-secondary">security</span>
                         Security Policy
                     </h3>
-<p class="font-body-sm text-body-sm text-on-tertiary-fixed-variant">
-                        All configuration secrets are encrypted at rest using AES-256-GCM.
-                        Once saved, tokens are redacted in the UI and only accessible to the engine worker processes.
-                    </p>
+<p class="font-body-sm text-body-sm text-on-tertiary-fixed-variant">Secrets are stored server-side and not returned to browser code.</p>
 </div>
 </div>
 </aside>
