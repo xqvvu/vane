@@ -5,6 +5,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { SeverityBadge } from "#/features/events/ui/severity-badge.tsx";
 import { formatDateTime } from "#/features/operations/model/operation-format.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 export function EventsTable({
@@ -22,16 +23,25 @@ export function EventsTable({
   onOlder: (cursor: string) => void;
   onLatest: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <section className="bg-background">
       <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
-        <h3 className="text-xs font-semibold">Event stream</h3>
-        <span className="text-muted-foreground text-xs">Newest first</span>
+        <h3 className="text-xs font-semibold">{t("events.table.title")}</h3>
+        <span className="text-muted-foreground text-xs">{t("events.table.order")}</span>
       </div>
       <DashboardTable
         variant="flush"
-        empty="No events yet"
-        headers={["Event", "Source", "State", "Deliveries", "Received", ""]}
+        empty={t("events.table.empty")}
+        headers={[
+          t("events.table.headers.event"),
+          t("events.table.headers.source"),
+          t("events.table.headers.state"),
+          t("events.table.headers.deliveries"),
+          t("events.table.headers.received"),
+          t("events.table.headers.actions"),
+        ]}
         columnClassNames={["w-[34%]", "w-[14%]", "w-[10%]", "w-[20%]", "w-[16%]", "w-[6%]"]}
         rows={events.map((event) => ({
           key: event.id,
@@ -55,7 +65,7 @@ export function EventsTable({
                 variant="outline"
                 size="icon-xs"
                 disabled={pending}
-                title="Inspect event"
+                title={t("events.table.inspect")}
                 onClick={() => onInspect(event.id)}
               >
                 <RiEyeLine aria-hidden />
@@ -99,7 +109,13 @@ function EventTitleCell({
 }
 
 function EventStateCell({ status }: { status: Operations["events"]["items"][number]["status"] }) {
-  return <Badge variant={status === "firing" ? "destructive" : "secondary"}>{status}</Badge>;
+  const t = useTranslations();
+
+  return (
+    <Badge variant={status === "firing" ? "destructive" : "secondary"}>
+      {t(`common.alertStatus.${status}`)}
+    </Badge>
+  );
 }
 
 function DeliveryCountsCell({
@@ -130,6 +146,8 @@ function DeliveryStateCount({
   state: keyof Operations["events"]["items"][number]["deliveryCounts"];
   value: number;
 }) {
+  const t = useTranslations();
+
   if (value === 0) {
     return null;
   }
@@ -137,35 +155,13 @@ function DeliveryStateCount({
   return (
     <Badge
       variant={deliveryCountVariant(state)}
-      title={`${deliveryCountLabel(state)}: ${value}`}
+      title={`${t(`common.deliveryState.${state}`)}: ${value}`}
       className="px-1.5"
     >
-      {deliveryCountShortLabel(state)}
+      {t(`events.table.deliveryShort.${state}`)}
       <span className="text-muted-foreground">{value}</span>
     </Badge>
   );
-}
-
-function deliveryCountShortLabel(
-  state: keyof Operations["events"]["items"][number]["deliveryCounts"],
-): string {
-  return {
-    pending: "P",
-    running: "R",
-    succeeded: "S",
-    failed: "F",
-  }[state];
-}
-
-function deliveryCountLabel(
-  state: keyof Operations["events"]["items"][number]["deliveryCounts"],
-): string {
-  return {
-    pending: "Pending",
-    running: "Running",
-    succeeded: "Succeeded",
-    failed: "Failed",
-  }[state];
 }
 
 function deliveryCountVariant(
@@ -185,6 +181,8 @@ function HistoryPaginationControls({
   onOlder?: () => void;
   onLatest: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <div className="border-border flex items-center justify-end gap-1 border-t px-3 py-3">
       <Button
@@ -193,10 +191,10 @@ function HistoryPaginationControls({
         size="xs"
         disabled={pending}
         onClick={onLatest}
-        title="Show latest history"
+        title={t("operations.history.showLatest")}
       >
         <RiRefreshLine data-icon="inline-start" aria-hidden />
-        Latest
+        {t("operations.history.latest")}
       </Button>
       <Button
         type="button"
@@ -204,9 +202,9 @@ function HistoryPaginationControls({
         size="xs"
         disabled={pending || !hasPrevious || !onOlder}
         onClick={onOlder}
-        title="Show older history"
+        title={t("operations.history.showOlder")}
       >
-        Older
+        {t("operations.history.older")}
         <RiArrowRightLine data-icon="inline-end" aria-hidden />
       </Button>
     </div>

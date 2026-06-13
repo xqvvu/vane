@@ -17,7 +17,7 @@ describe("dashboard server function auth gates", () => {
     (fileName) => {
       const source = readFileSync(path.join(functionsDir, fileName), "utf8");
       const chunks = serverFunctionChunks(source);
-      const publicFunctionNames = new Set(["getAuthBootstrapFn"]);
+      const publicFunctionNames = new Set(["getAuthBootstrapFn", "getRequestLocaleFn"]);
 
       expect(chunks.map((chunk) => chunk.name)).not.toHaveLength(0);
 

@@ -1,8 +1,11 @@
 import type { AlertSeverity } from "@vane/core";
 
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
 export function SeverityBadge({ severity }: { severity: AlertSeverity }) {
+  const t = useTranslations();
+
   return (
     <span
       className={cn(
@@ -14,7 +17,7 @@ export function SeverityBadge({ severity }: { severity: AlertSeverity }) {
             : "border-slate-300 bg-slate-100 text-slate-600",
       )}
     >
-      {severity}
+      {t(`common.severity.${severity}`)}
     </span>
   );
 }

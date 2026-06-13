@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
+import { VaneIntlProvider } from "#/i18n/provider.tsx";
 import { DashboardUserMenuClient } from "#/shell/dashboard-user-menu-impl.tsx";
 import { DashboardUserMenu } from "#/shell/dashboard-user-menu.tsx";
 
@@ -106,7 +107,9 @@ describe("dashboard user menu", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <DashboardUserMenuClient user={session.user} />
+        <VaneIntlProvider locale="en-US">
+          <DashboardUserMenuClient user={session.user} />
+        </VaneIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -132,7 +135,11 @@ describe("dashboard user menu", () => {
   });
 
   it("exposes a colocated skeleton", () => {
-    const { container } = render(<DashboardUserMenu.Skeleton />);
+    const { container } = render(
+      <VaneIntlProvider locale="en-US">
+        <DashboardUserMenu.Skeleton />
+      </VaneIntlProvider>,
+    );
 
     expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
   });

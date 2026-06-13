@@ -1,4 +1,5 @@
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
 export function OperationalSummary({
@@ -10,6 +11,7 @@ export function OperationalSummary({
   layout?: "grid" | "rail";
   retentionDays?: number;
 }) {
+  const t = useTranslations();
   const enabledSources = configuration.sources.filter((source) => source.enabled).length;
   const enabledDestinations = configuration.destinations.filter(
     (destination) => destination.enabled,
@@ -24,15 +26,27 @@ export function OperationalSummary({
 
   return (
     <div className={cn("grid gap-3", gridClassName)}>
-      <Metric label="Enabled sources" value={enabledSources} total={configuration.sources.length} />
       <Metric
-        label="Enabled destinations"
+        label={t("configuration.summary.enabledSources")}
+        value={enabledSources}
+        total={configuration.sources.length}
+      />
+      <Metric
+        label={t("configuration.summary.enabledDestinations")}
         value={enabledDestinations}
         total={configuration.destinations.length}
       />
-      <Metric label="Enabled routes" value={enabledRoutes} total={configuration.routes.length} />
+      <Metric
+        label={t("configuration.summary.enabledRoutes")}
+        value={enabledRoutes}
+        total={configuration.routes.length}
+      />
       {retentionDays === undefined ? null : (
-        <Metric label="Raw payload retention" value={retentionDays} suffix="days" />
+        <Metric
+          label={t("configuration.summary.rawPayloadRetention")}
+          value={retentionDays}
+          suffix={t("configuration.summary.days")}
+        />
       )}
     </div>
   );

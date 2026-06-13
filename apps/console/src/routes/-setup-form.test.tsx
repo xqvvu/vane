@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { VaneIntlProvider } from "#/i18n/provider.tsx";
 import { SetupFormClient } from "#/routes/-setup-form-impl.tsx";
 import { SetupForm } from "#/routes/-setup-form.tsx";
 
@@ -53,7 +54,9 @@ describe("setup form", () => {
     testState.authClient.signUp.email.mockResolvedValueOnce({ error: null });
     render(
       <QueryClientProvider client={queryClient}>
-        <SetupFormClient redirectTo="/" />
+        <VaneIntlProvider locale="en-US">
+          <SetupFormClient redirectTo="/" />
+        </VaneIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -98,7 +101,9 @@ describe("setup form", () => {
     });
     render(
       <QueryClientProvider client={queryClient}>
-        <SetupFormClient redirectTo="/" />
+        <VaneIntlProvider locale="en-US">
+          <SetupFormClient redirectTo="/" />
+        </VaneIntlProvider>
       </QueryClientProvider>,
     );
 

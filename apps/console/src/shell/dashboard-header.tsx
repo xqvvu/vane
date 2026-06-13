@@ -3,6 +3,7 @@ import { ClientOnly, Link } from "@tanstack/react-router";
 import * as React from "react";
 
 import { Button } from "#/components/ui/button.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardUserMenu } from "#/shell/dashboard-user-menu.tsx";
 
 export interface DashboardHeaderProps {
@@ -15,6 +16,8 @@ export interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-card sticky top-0 z-50 h-12 border-b">
       <div className="flex h-12 w-full items-center justify-between gap-4 px-3">
@@ -27,21 +30,23 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           </Link>
           <nav
             className="flex h-full min-w-0 items-center overflow-x-auto text-sm"
-            aria-label="Dashboard"
+            aria-label={t("shell.nav.ariaLabel")}
           >
-            <DashboardNavLink to="/events">Events</DashboardNavLink>
-            <DashboardNavLink to="/deliveries">Deliveries</DashboardNavLink>
-            <DashboardNavLink to="/sources">Sources</DashboardNavLink>
-            <DashboardNavLink to="/routes">Routes</DashboardNavLink>
-            <DashboardNavLink to="/destinations">Destinations</DashboardNavLink>
-            <DashboardNavLink to="/settings">Settings</DashboardNavLink>
+            <DashboardNavLink to="/events">{t("common.routes.events")}</DashboardNavLink>
+            <DashboardNavLink to="/deliveries">{t("common.routes.deliveries")}</DashboardNavLink>
+            <DashboardNavLink to="/sources">{t("common.routes.sources")}</DashboardNavLink>
+            <DashboardNavLink to="/routes">{t("common.routes.routes")}</DashboardNavLink>
+            <DashboardNavLink to="/destinations">
+              {t("common.routes.destinations")}
+            </DashboardNavLink>
+            <DashboardNavLink to="/settings">{t("common.routes.settings")}</DashboardNavLink>
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <Button type="button" variant="ghost" size="icon-sm" title="Notifications">
+          <Button type="button" variant="ghost" size="icon-sm" title={t("shell.nav.notifications")}>
             <RiNotification3Line aria-hidden />
           </Button>
-          <Button type="button" variant="ghost" size="icon-sm" title="Help">
+          <Button type="button" variant="ghost" size="icon-sm" title={t("shell.nav.help")}>
             <RiQuestionLine aria-hidden />
           </Button>
           <ClientOnly fallback={<DashboardUserMenu.Skeleton />}>

@@ -4,6 +4,8 @@ import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/reac
 
 import { Toaster } from "#/components/ui/sonner.tsx";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
+import { requestLocaleQueryOptions } from "#/i18n/i18n.queries.ts";
+import { VaneIntlProvider } from "#/i18n/provider.tsx";
 import TanStackQueryDevtools from "#/integrations/tanstack/query/devtools";
 import TanStackRouterDevtools from "#/integrations/tanstack/router/devtools";
 import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
@@ -15,6 +17,7 @@ import appCss from "#/styles.css?url";
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
+  loader: ({ context }) => context.queryClient.ensureQueryData(requestLocaleQueryOptions()),
   head: () => ({
     meta: [
       {
@@ -41,13 +44,15 @@ export const Route = createRootRouteWithContext<{
 });
 
 function Root({ children }: { children: React.ReactNode }) {
+  const { data } = useSuspenseQuery(requestLocaleQueryOptions());
+
   return (
-    <html lang="en">
+    <html lang={data.locale}>
       <head>
         <HeadContent />
       </head>
       <body>
-        {children}
+        <VaneIntlProvider locale={data.locale}>{children}</VaneIntlProvider>
 
         <Toaster position="top-right" />
         <TanStackDevtools

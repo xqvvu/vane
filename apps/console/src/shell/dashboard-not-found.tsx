@@ -6,15 +6,18 @@ import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { buttonVariants } from "#/components/ui/button.tsx";
 import { Separator } from "#/components/ui/separator.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
 const recoveryLinks = [
-  { label: "Events", to: "/events" },
-  { label: "Routes", to: "/routes" },
-  { label: "Settings", to: "/settings" },
+  { labelKey: "events", to: "/events" },
+  { labelKey: "routes", to: "/routes" },
+  { labelKey: "settings", to: "/settings" },
 ] as const;
 
 export function DashboardNotFoundPage() {
+  const t = useTranslations();
+
   const currentPath = useLocation({
     select: (location) => location.href,
   });
@@ -27,26 +30,27 @@ export function DashboardNotFoundPage() {
           <RiCompass3Line aria-hidden />
           <AlertTitle className="flex flex-wrap items-center gap-3">
             <Badge className="font-mono font-bold">404</Badge>
-            <h1 className="font-heading text-xl font-semibold">Route not found</h1>
+            <h1 className="font-heading text-xl font-semibold">{t("shell.notFound.title")}</h1>
           </AlertTitle>
-          <AlertDescription className="text-sm">
-            The requested URL does not match a registered console route.
-          </AlertDescription>
+          <AlertDescription className="text-sm">{t("shell.notFound.description")}</AlertDescription>
         </Alert>
 
         <section className="border-border bg-muted/40 border p-4">
           <div className="text-muted-foreground text-[11px] font-bold tracking-[0.14em] uppercase">
-            Current request context
+            {t("shell.notFound.contextLabel")}
           </div>
           <code className="border-border bg-background text-primary mt-3 block w-fit max-w-full truncate border px-3 py-2 font-mono text-xs">
             {redactedCurrentPath}
           </code>
         </section>
 
-        <nav className="flex flex-wrap items-center gap-2" aria-label="404 recovery actions">
+        <nav
+          className="flex flex-wrap items-center gap-2"
+          aria-label={t("shell.notFound.actionsLabel")}
+        >
           <Link to="/sources" className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}>
             <RiHomeLine data-icon="inline-start" aria-hidden />
-            Return to Sources
+            {t("shell.notFound.returnToSources")}
           </Link>
           <Separator orientation="vertical" className="mx-2 hidden h-7 sm:block" />
           {recoveryLinks.map((link) => (
@@ -55,13 +59,13 @@ export function DashboardNotFoundPage() {
               to={link.to}
               className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
-              {link.label}
+              {t(`common.routes.${link.labelKey}`)}
             </Link>
           ))}
         </nav>
 
         <section className="flex flex-wrap items-center gap-3 text-xs">
-          <span className="text-muted-foreground">Vane Console / navigation guard / 404</span>
+          <span className="text-muted-foreground">{t("shell.notFound.context")}</span>
         </section>
       </main>
     </div>

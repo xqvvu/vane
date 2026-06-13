@@ -9,10 +9,12 @@ import { configurationQueryOptions } from "#/features/configuration/api/configur
 import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
 import { CreateRouteForm } from "#/features/routes/ui/route-forms.tsx";
 import { RoutesSection } from "#/features/routes/ui/routes-section.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function RoutesPage() {
+  const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { createRoute, invalidateRoutes, updateRoute } = useRouteMutations();
   const [editingRouteId, setEditingRouteId] = React.useState<string | null>(null);
@@ -56,7 +58,7 @@ export function RoutesPage() {
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Route operation failed</AlertTitle>
+              <AlertTitle>{t("routing.page.operationFailed")}</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -113,18 +115,20 @@ function RoutesPageToolbar({
   pending: boolean;
   onRefresh: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Routes</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("routing.page.title")}
+          </h1>
           <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {routeCount} configured
+            {t("routing.page.configured", { count: routeCount })}
           </Badge>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Match normalized event fields and fan out matching events to destinations.
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{t("routing.page.description")}</p>
       </div>
       <Button
         type="button"
@@ -132,11 +136,11 @@ function RoutesPageToolbar({
         size="sm"
         disabled={pending}
         onClick={onRefresh}
-        title="Refresh route configuration"
+        title={t("routing.page.refreshTitle")}
         className="w-fit"
       >
         <RiRefreshLine data-icon="inline-start" aria-hidden />
-        Refresh
+        {t("common.actions.refresh")}
       </Button>
     </header>
   );

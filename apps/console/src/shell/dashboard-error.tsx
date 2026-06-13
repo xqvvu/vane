@@ -6,16 +6,19 @@ import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import { Separator } from "#/components/ui/separator.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { hardReloadPage } from "#/lib/browser.ts";
 
 const recoveryLinks = [
-  { label: "Events", to: "/events" },
-  { label: "Sources", to: "/sources" },
-  { label: "Routes", to: "/routes" },
-  { label: "Settings", to: "/settings" },
+  { labelKey: "events", to: "/events" },
+  { labelKey: "sources", to: "/sources" },
+  { labelKey: "routes", to: "/routes" },
+  { labelKey: "settings", to: "/settings" },
 ] as const;
 
 export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
+  const t = useTranslations();
+
   const router = useRouter();
   const currentPath = useLocation({
     select: (location) => location.href,
@@ -34,36 +37,42 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
           <RiErrorWarningLine aria-hidden />
           <AlertTitle className="flex flex-wrap items-center gap-3">
             <Badge variant="destructive" className="font-mono font-bold">
-              ERROR
+              {t("shell.error.badge")}
             </Badge>
-            <h1 className="font-heading text-xl font-semibold">Application error</h1>
+            <h1 className="font-heading text-xl font-semibold">{t("shell.error.title")}</h1>
           </AlertTitle>
           <AlertDescription className="mt-3 text-sm">
-            An unexpected runtime failure occurred while rendering this view.
+            {t("shell.error.description")}
           </AlertDescription>
         </Alert>
 
         <section className="border-border bg-muted/40 border p-4">
           <div className="text-muted-foreground text-[11px] font-bold tracking-[0.14em] uppercase">
-            Redacted summary
+            {t("shell.error.summaryLabel")}
           </div>
           <div className="border-border bg-background mt-3 border p-4">
             <div className="font-mono text-xs font-semibold wrap-break-word">
-              {safeErrorSummary(error)}
+              {safeErrorSummary(error, {
+                known: (message) => t("shell.error.summaryKnown", { message }),
+                unknown: t("shell.error.summaryUnknown"),
+              })}
             </div>
             <code className="text-muted-foreground mt-2 block truncate font-mono text-xs">
-              [REDACTED_TRACE_ID: generated_server_side]
+              {t("shell.error.traceId")}
             </code>
           </div>
         </section>
 
-        <div className="flex flex-wrap items-center gap-2" aria-label="Error recovery actions">
+        <div
+          className="flex flex-wrap items-center gap-2"
+          aria-label={t("shell.error.actionsLabel")}
+        >
           <Button type="button" size="sm" onClick={tryAgain}>
             <RiRefreshLine data-icon="inline-start" aria-hidden />
-            Try again
+            {t("common.actions.tryAgain")}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => hardReloadPage()}>
-            Reload page
+            {t("common.actions.reloadPage")}
           </Button>
           <Separator orientation="vertical" className="mx-2 hidden h-7 sm:block" />
           {recoveryLinks.map((link) => (
@@ -72,15 +81,13 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
               to={link.to}
               className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
-              {link.label}
+              {t(`common.routes.${link.labelKey}`)}
             </Link>
           ))}
         </div>
 
         <section className="flex flex-wrap items-center gap-3 text-xs">
-          <span className="text-muted-foreground">
-            Vane Console / error boundary / runtime failure
-          </span>
+          <span className="text-muted-foreground">{t("shell.error.context")}</span>
           <code className="border-border bg-muted max-w-full truncate border px-2 py-1 font-mono">
             {redactedCurrentPath}
           </code>
@@ -90,12 +97,15 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
   );
 }
 
-function safeErrorSummary(error: unknown): string {
+function safeErrorSummary(
+  error: unknown,
+  messages: { known: (message: string) => string; unknown: string },
+): string {
   if (error instanceof Error) {
     const message = error.message ? redactText(error.message) : error.name || "Error";
 
-    return `Internal rendering failure: ${message}`;
+    return messages.known(message);
   }
 
-  return "Internal rendering failure: Unknown error";
+  return messages.unknown;
 }

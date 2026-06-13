@@ -27,6 +27,7 @@ import {
   destinationConfigFromForm,
   type DestinationFormKind,
 } from "#/features/destinations/model/destination-form.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
@@ -39,14 +40,15 @@ export function CreateDestinationForm({
   onPreview: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
   onSubmit: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <DashboardFormPanel
-      title="New destination"
+      title={t("destinations.form.create.title")}
       icon={<RiArrowRightLine className="size-4" aria-hidden />}
     >
       <p className="text-muted-foreground mb-3 text-xs leading-5">
-        Configure one outbound adapter. Secret-bearing values stay server-side and are not shown
-        again after save.
+        {t("destinations.form.create.description")}
       </p>
       <DestinationForm
         mode="create"
@@ -77,15 +79,17 @@ export function EditDestinationForm({
     config: JsonObject;
   }) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <section className="border-border bg-muted/30 mt-3 border p-3">
       <div className="mb-3">
         <h3 className="flex items-center gap-2 text-xs font-semibold">
           <RiEditLine className="size-3.5" aria-hidden />
-          Edit destination
+          {t("destinations.form.edit.title")}
         </h3>
         <p className="text-muted-foreground mt-1 text-xs">
-          Leave secret fields blank to keep existing values.
+          {t("destinations.form.edit.description")}
         </p>
       </div>
       <DestinationForm
@@ -143,11 +147,23 @@ function DestinationForm({
   onSubmit: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations();
+
   const submitIntent = React.useRef<"preview" | "submit">("submit");
   const secretFieldDescription =
     mode === "create"
-      ? "Stored server-side and omitted from configuration query data."
-      : "Leave blank to keep the current stored value.";
+      ? t("destinations.form.secretDescriptionCreate")
+      : t("destinations.form.secretDescriptionEdit");
+  const destinationKindItems = [
+    { value: "generic_webhook", label: t("destinations.kinds.generic_webhook") },
+    { value: "feishu", label: t("destinations.kinds.feishu") },
+    { value: "slack", label: t("destinations.kinds.slack") },
+    { value: "email", label: t("destinations.kinds.email") },
+  ];
+  const webhookMethodEditItems = [
+    { value: null, label: t("destinations.form.keepExisting") },
+    ...webhookMethodCreateItems,
+  ];
   const form = useForm({
     defaultValues,
     onSubmit: ({ value }) => {
@@ -251,12 +267,12 @@ function DestinationForm({
 
   const renderHeaderLinesField = () =>
     renderTextareaField({
-      label: "Headers",
+      label: t("destinations.form.headers"),
       name: "headers",
       id: "headers",
       className: "min-h-16 resize-y font-mono text-[11px]",
       placeholder: "Authorization: Bearer ...",
-      description: "One Name: value header per line. Values stay server-side.",
+      description: t("destinations.form.headersDescription"),
     });
 
   const renderDestinationConfigFields = (kind: DestinationFormKind) => (
@@ -264,7 +280,7 @@ function DestinationForm({
       {kind === "email" ? (
         <>
           {renderTextField({
-            label: "Email gateway URL",
+            label: t("destinations.form.emailGatewayUrl"),
             name: "endpointUrl",
             type: "url",
             placeholder: "https://mail-gateway.example/send",
@@ -272,34 +288,34 @@ function DestinationForm({
             description: secretFieldDescription,
           })}
           {renderTextareaField({
-            label: "To",
+            label: t("destinations.form.to"),
             name: "to",
             id: "email-to",
             className: "min-h-16 resize-y font-mono text-[11px]",
             placeholder: "sre@example.com, audit@example.com",
             required: requiresSecrets,
-            description: "Comma-separated or newline-separated delivery recipients.",
+            description: t("destinations.form.toDescription"),
           })}
           {renderTextField({
-            label: "From",
+            label: t("destinations.form.from"),
             name: "from",
             type: "email",
             placeholder: "vane@example.com",
             required: requiresSecrets,
-            description: "Sender address used by the email gateway.",
+            description: t("destinations.form.fromDescription"),
           })}
           {renderTextField({
-            label: "Reply-To",
+            label: t("destinations.form.replyTo"),
             name: "replyTo",
             type: "email",
             placeholder: "ops@example.com",
-            description: "Optional reply address for operator responses.",
+            description: t("destinations.form.replyToDescription"),
           })}
           {renderTextField({
-            label: "Subject prefix",
+            label: t("destinations.form.subjectPrefix"),
             name: "subjectPrefix",
             placeholder: "[Vane]",
-            description: "Prepended to rendered email subjects.",
+            description: t("destinations.form.subjectPrefixDescription"),
           })}
           {renderHeaderLinesField()}
         </>
@@ -308,10 +324,10 @@ function DestinationForm({
           {renderTextField({
             label:
               kind === "slack"
-                ? "Slack webhook URL"
+                ? t("destinations.form.slackWebhookUrl")
                 : kind === "feishu"
-                  ? "Feishu webhook URL"
-                  : "Webhook URL",
+                  ? t("destinations.form.feishuWebhookUrl")
+                  : t("destinations.form.webhookUrl"),
             name: kind === "generic_webhook" ? "url" : "webhookUrl",
             type: "url",
             placeholder: "https://...",
@@ -323,7 +339,7 @@ function DestinationForm({
               <form.Field name="method">
                 {(field) => (
                   <UiField>
-                    <FieldLabel htmlFor={field.name}>Method</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t("destinations.form.method")}</FieldLabel>
                     <Select
                       id={field.name}
                       name={field.name}
@@ -332,12 +348,14 @@ function DestinationForm({
                       onValueChange={(value) => field.handleChange(value ?? "")}
                     >
                       <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                        <SelectValue placeholder="Keep existing" />
+                        <SelectValue placeholder={t("destinations.form.keepExisting")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           {mode === "edit" ? (
-                            <SelectItem value={null}>Keep existing</SelectItem>
+                            <SelectItem value={null}>
+                              {t("destinations.form.keepExisting")}
+                            </SelectItem>
                           ) : null}
                           <SelectItem value="POST">POST</SelectItem>
                           <SelectItem value="PUT">PUT</SelectItem>
@@ -345,9 +363,7 @@ function DestinationForm({
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    <FieldDescription>
-                      HTTP method for generic webhook delivery attempts.
-                    </FieldDescription>
+                    <FieldDescription>{t("destinations.form.methodDescription")}</FieldDescription>
                   </UiField>
                 )}
               </form.Field>
@@ -356,21 +372,21 @@ function DestinationForm({
           ) : null}
           {kind === "feishu"
             ? renderTextField({
-                label: "Sign secret",
+                label: t("destinations.form.signSecret"),
                 name: "signSecret",
-                placeholder: "optional",
+                placeholder: t("destinations.form.optionalPlaceholder"),
                 description: secretFieldDescription,
               })
             : null}
         </>
       )}
       {renderTextareaField({
-        label: "Message template",
+        label: t("destinations.form.messageTemplate"),
         name: "messageTemplate",
         id: `message-template-${kind}`,
         className: "min-h-20 resize-y font-mono text-[11px]",
         placeholder: "{{event.title}} on {{source.name}}",
-        description: "Deterministic interpolation only; templates do not execute code.",
+        description: t("destinations.form.messageTemplateDescription"),
       })}
     </>
   );
@@ -389,16 +405,18 @@ function DestinationForm({
           name="name"
           validators={{
             onSubmit: ({ value }) =>
-              value.trim().length === 0 ? "Destination name is required" : undefined,
+              value.trim().length === 0
+                ? t("destinations.form.validation.nameRequired")
+                : undefined,
           }}
         >
           {(field) => (
             <UiField data-invalid={field.state.meta.errors.length > 0}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("destinations.form.nameLabel")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
-                placeholder="Ops destination"
+                placeholder={t("destinations.form.namePlaceholder")}
                 value={field.state.value}
                 required
                 aria-invalid={field.state.meta.errors.length > 0}
@@ -410,7 +428,7 @@ function DestinationForm({
                   message: String(error),
                 }))}
               />
-              <FieldDescription>Short label shown in routes and delivery history.</FieldDescription>
+              <FieldDescription>{t("destinations.form.nameDescription")}</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -418,7 +436,7 @@ function DestinationForm({
           <form.Field name="kind">
             {(field) => (
               <UiField>
-                <FieldLabel htmlFor={field.name}>Kind</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("destinations.form.kindLabel")}</FieldLabel>
                 <Select
                   id={field.name}
                   name={field.name}
@@ -431,16 +449,16 @@ function DestinationForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="generic_webhook">Generic webhook</SelectItem>
-                      <SelectItem value="feishu">Feishu</SelectItem>
-                      <SelectItem value="slack">Slack</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="generic_webhook">
+                        {t("destinations.kinds.generic_webhook")}
+                      </SelectItem>
+                      <SelectItem value="feishu">{t("destinations.kinds.feishu")}</SelectItem>
+                      <SelectItem value="slack">{t("destinations.kinds.slack")}</SelectItem>
+                      <SelectItem value="email">{t("destinations.kinds.email")}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                <FieldDescription>
-                  Adapter type determines the required delivery fields.
-                </FieldDescription>
+                <FieldDescription>{t("destinations.form.kindDescription")}</FieldDescription>
               </UiField>
             )}
           </form.Field>
@@ -448,9 +466,11 @@ function DestinationForm({
           <form.Field name="kind">
             {(field) => (
               <UiField>
-                <FieldLabel htmlFor={field.name}>Kind</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("destinations.form.kindLabel")}</FieldLabel>
                 <Input id={field.name} value={field.state.value} readOnly aria-readonly />
-                <FieldDescription>Adapter kind cannot be changed after creation.</FieldDescription>
+                <FieldDescription>
+                  {t("destinations.form.kindReadonlyDescription")}
+                </FieldDescription>
               </UiField>
             )}
           </form.Field>
@@ -464,7 +484,7 @@ function DestinationForm({
       <div className={mode === "edit" ? "grid grid-cols-3 gap-2" : "grid grid-cols-2 gap-2"}>
         {mode === "edit" ? (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
-            Cancel
+            {t("destinations.form.cancel")}
           </Button>
         ) : null}
         <Button
@@ -477,7 +497,7 @@ function DestinationForm({
           }}
         >
           <RiEyeLine data-icon="inline-start" aria-hidden />
-          Preview
+          {t("destinations.form.preview")}
         </Button>
         <Button
           type="submit"
@@ -492,7 +512,9 @@ function DestinationForm({
           ) : (
             <RiEditLine data-icon="inline-start" aria-hidden />
           )}
-          {mode === "create" ? "Create destination" : "Save destination"}
+          {mode === "create"
+            ? t("destinations.form.create.submit")
+            : t("destinations.form.edit.submit")}
         </Button>
       </div>
     </form>
@@ -521,18 +543,6 @@ const webhookMethodCreateItems = [
   { value: "POST", label: "POST" },
   { value: "PUT", label: "PUT" },
   { value: "PATCH", label: "PATCH" },
-];
-
-const webhookMethodEditItems = [
-  { value: null, label: "Keep existing" },
-  ...webhookMethodCreateItems,
-];
-
-const destinationKindItems = [
-  { value: "generic_webhook", label: "Generic webhook" },
-  { value: "feishu", label: "Feishu" },
-  { value: "slack", label: "Slack" },
-  { value: "email", label: "Email" },
 ];
 
 function destinationValuesToFormData(values: DestinationFormValues): FormData {

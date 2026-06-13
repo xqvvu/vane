@@ -15,10 +15,12 @@ import {
   type SourceTokenNotice,
 } from "#/features/sources/ui/source-token-notice-panel.tsx";
 import { SourcesSection } from "#/features/sources/ui/sources-section.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function SourcesPage() {
+  const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { createSource, invalidateSources, rotateSourceToken, updateSource } = useSourceMutations();
   const [tokenNotice, setTokenNotice] = React.useState<SourceTokenNotice | null>(null);
@@ -63,7 +65,7 @@ export function SourcesPage() {
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">
               <RiErrorWarningLine aria-hidden />
-              <AlertTitle>Source operation failed</AlertTitle>
+              <AlertTitle>{t("sources.page.operationFailed")}</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -143,18 +145,20 @@ function SourcesPageToolbar({
   pending: boolean;
   onRefresh: () => void;
 }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Sources</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("sources.page.quickTip.title")}
+          </h1>
           <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {sourceCount} configured
+            {t("sources.page.configured", { count: sourceCount })}
           </Badge>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Manage inbound webhook senders and secure intake.
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{t("sources.page.description")}</p>
       </div>
       <Button
         type="button"
@@ -162,30 +166,31 @@ function SourcesPageToolbar({
         size="sm"
         disabled={pending}
         onClick={onRefresh}
-        title="Refresh source configuration"
+        title={t("sources.page.refreshTitle")}
         className="w-fit"
       >
         <RiRefreshLine data-icon="inline-start" aria-hidden />
-        Refresh
+        {t("common.actions.refresh")}
       </Button>
     </header>
   );
 }
 
 function SourcesQuickTip() {
+  const t = useTranslations();
+
   return (
     <section className="border-primary/30 bg-background/50 border p-4">
       <h2 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-        Quick tip
+        {t("sources.page.quickTip.title")}
       </h2>
       <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-        Generic sources support JSON mapping. Once created, define how Vane interprets custom
-        payload structures in{" "}
+        {t("sources.page.quickTip.beforeLink")}
         <Link to="/routes" className="text-primary inline-flex items-center gap-1 font-semibold">
-          Route Settings
+          {t("sources.page.quickTip.routeSettings")}
           <RiRouteLine aria-hidden className="size-3" />
         </Link>
-        .
+        {t("sources.page.quickTip.afterLink")}
       </p>
     </section>
   );

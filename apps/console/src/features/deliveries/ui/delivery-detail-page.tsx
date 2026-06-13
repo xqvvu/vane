@@ -7,10 +7,12 @@ import { Badge } from "#/components/ui/badge.tsx";
 import { buttonVariants } from "#/components/ui/button.tsx";
 import { DeliveryDetailView } from "#/features/deliveries/ui/delivery-detail-view.tsx";
 import { deliveryDetailQueryOptions } from "#/features/operations/api/operations.queries.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export function DeliveryDetailPage({ deliveryId }: { deliveryId: string }) {
+  const t = useTranslations();
   const { data: detail } = useSuspenseQuery(deliveryDetailQueryOptions(deliveryId));
 
   return (
@@ -26,10 +28,8 @@ export function DeliveryDetailPage({ deliveryId }: { deliveryId: string }) {
             ) : (
               <Alert variant="destructive">
                 <RiErrorWarningLine aria-hidden />
-                <AlertTitle>Delivery not found</AlertTitle>
-                <AlertDescription>
-                  The delivery may have been deleted or the URL points to a different Vane database.
-                </AlertDescription>
+                <AlertTitle>{t("deliveries.detail.notFoundTitle")}</AlertTitle>
+                <AlertDescription>{t("deliveries.detail.notFoundDescription")}</AlertDescription>
               </Alert>
             )}
           </div>
@@ -40,25 +40,27 @@ export function DeliveryDetailPage({ deliveryId }: { deliveryId: string }) {
 }
 
 function DeliveryDetailPageToolbar({ deliveryId }: { deliveryId: string }) {
+  const t = useTranslations();
+
   return (
     <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">Delivery detail</h1>
+          <h1 className="font-heading text-2xl leading-none font-semibold">
+            {t("deliveries.detail.title")}
+          </h1>
           <Badge variant="outline" className="max-w-48 truncate font-mono text-[10px]">
             {deliveryId}
           </Badge>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Inspect rendered payloads, attempts, destination metadata, and retry schedule.
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{t("deliveries.detail.description")}</p>
       </div>
       <Link
         to="/deliveries"
         className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit")}
       >
         <RiArrowLeftLine data-icon="inline-start" aria-hidden />
-        Deliveries
+        {t("deliveries.detail.back")}
       </Link>
     </header>
   );

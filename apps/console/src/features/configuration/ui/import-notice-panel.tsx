@@ -6,17 +6,20 @@ import {
   sourceWebhookPath,
   sourceWebhookUrlFromPath,
 } from "#/features/sources/model/source-webhook.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { CopyableCodeLine } from "#/shell/copyable-code-line.tsx";
 
 export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResult }) {
+  const t = useTranslations();
+
   return (
     <Alert className="mx-3 mt-4">
       <RiCheckboxCircleLine aria-hidden />
-      <AlertTitle>Imported configuration</AlertTitle>
+      <AlertTitle>{t("configuration.importNotice.title")}</AlertTitle>
       <AlertDescription>
         {notice.generatedSourceTokens.length === 0
-          ? "No new source tokens were generated."
-          : "Copy generated source tokens now. They are shown once and token hashes are never displayed."}
+          ? t("configuration.importNotice.empty")
+          : t("configuration.importNotice.generated")}
       </AlertDescription>
       {notice.generatedSourceTokens.length === 0 ? null : (
         <div className="col-start-2 mt-2 grid gap-2">
@@ -29,17 +32,21 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
                   <RiKey2Line className="size-3.5" aria-hidden />
                   {source.sourceName}
                 </div>
-                <div className="text-muted-foreground">Webhook URL</div>
+                <div className="text-muted-foreground">
+                  {t("configuration.importNotice.webhookUrl")}
+                </div>
                 <CopyableCodeLine
                   value={webhookPath}
                   copyValue={sourceWebhookUrlFromPath(webhookPath)}
-                  title="Copy webhook URL"
+                  title={t("configuration.importNotice.copyWebhookUrl")}
                 />
-                <div className="text-muted-foreground">Source token</div>
+                <div className="text-muted-foreground">
+                  {t("configuration.importNotice.sourceToken")}
+                </div>
                 <CopyableCodeLine
                   value={source.token}
                   copyValue={source.token}
-                  title="Copy source token"
+                  title={t("configuration.importNotice.copySourceToken")}
                   wrap
                 />
               </div>

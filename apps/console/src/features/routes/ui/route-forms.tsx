@@ -31,6 +31,7 @@ import {
   routeRulePatchFromValues,
   type RouteRuleFormValues,
 } from "#/features/routes/model/route-form.ts";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function CreateRouteForm({
@@ -48,11 +49,14 @@ export function CreateRouteForm({
     destinationIds: string[];
   }) => void;
 }) {
+  const t = useTranslations();
+
   return (
-    <DashboardFormPanel title="New route" icon={<RiGitBranchLine className="size-4" aria-hidden />}>
-      <p className="text-muted-foreground mb-3 text-xs">
-        Match normalized event fields and send matching events to selected destinations.
-      </p>
+    <DashboardFormPanel
+      title={t("routing.form.create.title")}
+      icon={<RiGitBranchLine className="size-4" aria-hidden />}
+    >
+      <p className="text-muted-foreground mb-3 text-xs">{t("routing.form.create.description")}</p>
       <RouteForm
         sources={sources}
         destinations={destinations}
@@ -71,7 +75,7 @@ export function CreateRouteForm({
           },
           destinationIds: [],
         }}
-        submitLabel="Create route"
+        submitLabel={t("routing.form.create.submit")}
         submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
         resetOnSubmit
         onSubmit={(values) => {
@@ -106,14 +110,16 @@ export function EditRouteForm({
     destinationIds: string[];
   }) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <section className="border-border bg-muted/30 mt-3 border p-3">
       <h3 className="flex items-center gap-2 text-xs font-semibold">
         <RiEditLine className="size-3.5" aria-hidden />
-        Edit route
+        {t("routing.form.edit.title")}
       </h3>
       <p className="text-muted-foreground mt-1 mb-3 text-xs">
-        Update the first editable condition while preserving any additional rule conditions.
+        {t("routing.form.edit.description")}
       </p>
       <RouteForm
         sources={sources}
@@ -124,7 +130,7 @@ export function EditRouteForm({
           rule: routeFormDefaultsFromRule(route.rule),
           destinationIds: route.destinationIds,
         }}
-        submitLabel="Save route"
+        submitLabel={t("routing.form.edit.submit")}
         submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
@@ -167,9 +173,28 @@ function RouteForm({
   onSubmit: (values: RouteFormValues) => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations();
+
   const sourceItems = [
-    { value: null, label: "Any source" },
+    { value: null, label: t("routing.form.anySource") },
     ...sources.map((source) => ({ value: source.id, label: source.name })),
+  ];
+  const routeSeverityItems = [
+    { value: "any", label: t("routing.form.severityAny") },
+    { value: "critical", label: t("common.severity.critical") },
+    { value: "warning", label: t("common.severity.warning") },
+    { value: "info", label: t("common.severity.info") },
+    { value: "unknown", label: t("common.severity.unknown") },
+  ];
+  const routeStatusItems = [
+    { value: "any", label: t("routing.form.statusAny") },
+    { value: "firing", label: t("common.alertStatus.firing") },
+    { value: "resolved", label: t("common.alertStatus.resolved") },
+    { value: "unknown", label: t("common.alertStatus.unknown") },
+  ];
+  const labelOperatorItems = [
+    { value: "equals", label: t("routing.form.operatorEquals") },
+    { value: "contains", label: t("routing.form.operatorContains") },
   ];
   const form = useForm({
     defaultValues,
@@ -196,23 +221,23 @@ function RouteForm({
           name="name"
           validators={{
             onSubmit: ({ value }) =>
-              value.trim().length === 0 ? "Route name is required" : undefined,
+              value.trim().length === 0 ? t("routing.form.validation.nameRequired") : undefined,
           }}
         >
           {(field) => (
             <UiField data-invalid={field.state.meta.errors.length > 0}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.nameLabel")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
-                placeholder="Critical to ops"
+                placeholder={t("routing.form.namePlaceholder")}
                 value={field.state.value}
                 required
                 aria-invalid={field.state.meta.errors.length > 0}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
-              <FieldDescription>A short operational name for this routing rule.</FieldDescription>
+              <FieldDescription>{t("routing.form.nameDescription")}</FieldDescription>
               <FieldError
                 errors={field.state.meta.errors.map((error) => ({
                   message: String(error),
@@ -224,7 +249,7 @@ function RouteForm({
         <form.Field name="rule.sourceId">
           {(field) => (
             <UiField data-disabled={sources.length === 0}>
-              <FieldLabel htmlFor={field.name}>Source</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.sourceLabel")}</FieldLabel>
               <Select
                 id={field.name}
                 name={field.name}
@@ -234,11 +259,11 @@ function RouteForm({
                 onValueChange={(value) => field.handleChange(value ?? "")}
               >
                 <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                  <SelectValue placeholder="Any source" />
+                  <SelectValue placeholder={t("routing.form.anySource")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value={null}>Any source</SelectItem>
+                    <SelectItem value={null}>{t("routing.form.anySource")}</SelectItem>
                     {sources.map((source) => (
                       <SelectItem key={source.id} value={source.id}>
                         {source.name}
@@ -247,14 +272,14 @@ function RouteForm({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <FieldDescription>Leave as any source for catch-all routing.</FieldDescription>
+              <FieldDescription>{t("routing.form.sourceDescription")}</FieldDescription>
             </UiField>
           )}
         </form.Field>
         <form.Field name="rule.severity">
           {(field) => (
             <UiField>
-              <FieldLabel htmlFor={field.name}>Severity</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.severityLabel")}</FieldLabel>
               <Select
                 id={field.name}
                 name={field.name}
@@ -269,22 +294,22 @@ function RouteForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="unknown">Unknown</SelectItem>
+                    <SelectItem value="any">{t("routing.form.severityAny")}</SelectItem>
+                    <SelectItem value="critical">{t("common.severity.critical")}</SelectItem>
+                    <SelectItem value="warning">{t("common.severity.warning")}</SelectItem>
+                    <SelectItem value="info">{t("common.severity.info")}</SelectItem>
+                    <SelectItem value="unknown">{t("common.severity.unknown")}</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <FieldDescription>Empty severity conditions match every severity.</FieldDescription>
+              <FieldDescription>{t("routing.form.severityDescription")}</FieldDescription>
             </UiField>
           )}
         </form.Field>
         <form.Field name="rule.status">
           {(field) => (
             <UiField>
-              <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.statusLabel")}</FieldLabel>
               <Select
                 id={field.name}
                 name={field.name}
@@ -299,14 +324,14 @@ function RouteForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="firing">Firing</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="unknown">Unknown</SelectItem>
+                    <SelectItem value="any">{t("routing.form.statusAny")}</SelectItem>
+                    <SelectItem value="firing">{t("common.alertStatus.firing")}</SelectItem>
+                    <SelectItem value="resolved">{t("common.alertStatus.resolved")}</SelectItem>
+                    <SelectItem value="unknown">{t("common.alertStatus.unknown")}</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <FieldDescription>Match firing, resolved, or unknown alert states.</FieldDescription>
+              <FieldDescription>{t("routing.form.statusDescription")}</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -314,7 +339,7 @@ function RouteForm({
           <form.Field name="rule.labelKey">
             {(field) => (
               <UiField>
-                <FieldLabel htmlFor={field.name}>Label key</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("routing.form.labelKeyLabel")}</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -323,14 +348,14 @@ function RouteForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.currentTarget.value)}
                 />
-                <FieldDescription>Normalized label key.</FieldDescription>
+                <FieldDescription>{t("routing.form.labelKeyDescription")}</FieldDescription>
               </UiField>
             )}
           </form.Field>
           <form.Field name="rule.labelOperator">
             {(field) => (
               <UiField>
-                <FieldLabel htmlFor={field.name}>Operator</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("routing.form.operatorLabel")}</FieldLabel>
                 <Select
                   id={field.name}
                   name={field.name}
@@ -345,19 +370,19 @@ function RouteForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="equals">Equals</SelectItem>
-                      <SelectItem value="contains">Contains</SelectItem>
+                      <SelectItem value="equals">{t("routing.form.operatorEquals")}</SelectItem>
+                      <SelectItem value="contains">{t("routing.form.operatorContains")}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                <FieldDescription>Comparison mode.</FieldDescription>
+                <FieldDescription>{t("routing.form.operatorDescription")}</FieldDescription>
               </UiField>
             )}
           </form.Field>
           <form.Field name="rule.labelValue">
             {(field) => (
               <UiField>
-                <FieldLabel htmlFor={field.name}>Label value</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("routing.form.labelValueLabel")}</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -366,7 +391,7 @@ function RouteForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.currentTarget.value)}
                 />
-                <FieldDescription>Required with a label key.</FieldDescription>
+                <FieldDescription>{t("routing.form.labelValueDescription")}</FieldDescription>
               </UiField>
             )}
           </form.Field>
@@ -374,7 +399,7 @@ function RouteForm({
         <form.Field name="rule.titleContains">
           {(field) => (
             <UiField>
-              <FieldLabel htmlFor={field.name}>Title contains</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.titleContainsLabel")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -383,14 +408,14 @@ function RouteForm({
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
-              <FieldDescription>Simple substring match against normalized title.</FieldDescription>
+              <FieldDescription>{t("routing.form.titleContainsDescription")}</FieldDescription>
             </UiField>
           )}
         </form.Field>
         <form.Field name="rule.messageContains">
           {(field) => (
             <UiField>
-              <FieldLabel htmlFor={field.name}>Message contains</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.messageContainsLabel")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -399,9 +424,7 @@ function RouteForm({
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
-              <FieldDescription>
-                Simple substring match against normalized message.
-              </FieldDescription>
+              <FieldDescription>{t("routing.form.messageContainsDescription")}</FieldDescription>
             </UiField>
           )}
         </form.Field>
@@ -411,9 +434,13 @@ function RouteForm({
               className="border-border gap-2 border p-2"
               data-disabled={destinations.length === 0}
             >
-              <FieldLegend className="text-muted-foreground">Destinations</FieldLegend>
+              <FieldLegend className="text-muted-foreground">
+                {t("routing.form.destinationsLegend")}
+              </FieldLegend>
               {destinations.length === 0 ? (
-                <div className="text-muted-foreground text-xs">Create a destination first</div>
+                <div className="text-muted-foreground text-xs">
+                  {t("routing.form.createDestinationFirst")}
+                </div>
               ) : (
                 <FieldGroup data-slot="checkbox-group" className="gap-2">
                   {destinations.map((destination) => {
@@ -446,7 +473,7 @@ function RouteForm({
                   })}
                 </FieldGroup>
               )}
-              <FieldDescription>Routes must select at least one destination.</FieldDescription>
+              <FieldDescription>{t("routing.form.destinationsDescription")}</FieldDescription>
             </FieldSet>
           )}
         </form.Field>
@@ -454,7 +481,7 @@ function RouteForm({
       <div className={onCancel ? "grid grid-cols-2 gap-2" : undefined}>
         {onCancel ? (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
-            Cancel
+            {t("routing.form.cancel")}
           </Button>
         ) : null}
         <Button
@@ -470,23 +497,3 @@ function RouteForm({
     </form>
   );
 }
-
-const routeSeverityItems = [
-  { value: "any", label: "Any" },
-  { value: "critical", label: "Critical" },
-  { value: "warning", label: "Warning" },
-  { value: "info", label: "Info" },
-  { value: "unknown", label: "Unknown" },
-];
-
-const routeStatusItems = [
-  { value: "any", label: "Any" },
-  { value: "firing", label: "Firing" },
-  { value: "resolved", label: "Resolved" },
-  { value: "unknown", label: "Unknown" },
-];
-
-const labelOperatorItems = [
-  { value: "equals", label: "Equals" },
-  { value: "contains", label: "Contains" },
-];
