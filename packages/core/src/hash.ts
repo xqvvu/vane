@@ -1,3 +1,5 @@
+import { mapValues, sortKeys } from "es-toolkit/object";
+
 import type { JsonObject, JsonValue } from "#/json.ts";
 import { toJsonValue } from "#/json.ts";
 
@@ -23,11 +25,7 @@ function sortJsonValue(value: JsonValue): JsonValue {
   }
 
   if (typeof value === "object" && value !== null) {
-    return Object.fromEntries(
-      Object.entries(value as JsonObject)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, entry]) => [key, sortJsonValue(entry)]),
-    );
+    return sortKeys(mapValues(value as JsonObject, (entry) => sortJsonValue(entry))) as JsonObject;
   }
 
   return value;

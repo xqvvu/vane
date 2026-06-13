@@ -339,6 +339,9 @@ importers:
 
   packages/core:
     dependencies:
+      es-toolkit:
+        specifier: 'catalog:'
+        version: 1.47.1
       zod:
         specifier: 'catalog:'
         version: 4.4.3

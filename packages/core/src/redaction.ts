@@ -1,3 +1,5 @@
+import { mapValues } from "es-toolkit/object";
+
 import type { JsonObject, JsonValue } from "#/json.ts";
 
 const SENSITIVE_KEY_SOURCE =
@@ -16,12 +18,7 @@ export function isSensitiveKey(key: string): boolean {
 }
 
 export function redactHeaders(headers: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(headers).map(([key, value]) => [
-      key,
-      isSensitiveKey(key) ? REDACTED_VALUE : value,
-    ]),
-  );
+  return mapValues(headers, (value, key) => (isSensitiveKey(String(key)) ? REDACTED_VALUE : value));
 }
 
 export function redactJsonValue(value: JsonValue): JsonValue {
@@ -30,12 +27,9 @@ export function redactJsonValue(value: JsonValue): JsonValue {
   }
 
   if (typeof value === "object" && value !== null) {
-    return Object.fromEntries(
-      Object.entries(value as JsonObject).map(([key, entry]) => [
-        key,
-        isSensitiveKey(key) ? REDACTED_VALUE : redactJsonValue(entry),
-      ]),
-    );
+    return mapValues(value as JsonObject, (entry, key) =>
+      isSensitiveKey(String(key)) ? REDACTED_VALUE : redactJsonValue(entry),
+    ) as JsonObject;
   }
 
   return value;

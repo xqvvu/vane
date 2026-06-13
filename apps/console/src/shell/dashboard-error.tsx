@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import { Separator } from "#/components/ui/separator.tsx";
+import { hardReloadPage } from "#/lib/browser.ts";
 
 const recoveryLinks = [
   { label: "Events", to: "/events" },
@@ -61,12 +62,7 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
             <RiRefreshLine data-icon="inline-start" aria-hidden />
             Try again
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.reload()}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={() => hardReloadPage()}>
             Reload page
           </Button>
           <Separator orientation="vertical" className="mx-2 hidden h-7 sm:block" />

@@ -1,6 +1,7 @@
 import { RiFileCopyLine } from "@remixicon/react";
 
 import { Button } from "#/components/ui/button.tsx";
+import { copyText } from "#/lib/browser.ts";
 import { cn } from "#/lib/utils.ts";
 
 export interface CopyableCodeLineProps {
@@ -40,12 +41,4 @@ export function CopyableCodeLine({
       </Button>
     </div>
   );
-}
-
-async function copyText(value: string): Promise<void> {
-  if (typeof navigator === "undefined" || !navigator.clipboard) {
-    return;
-  }
-
-  await navigator.clipboard.writeText(value);
 }

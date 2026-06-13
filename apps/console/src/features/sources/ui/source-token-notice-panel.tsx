@@ -2,6 +2,7 @@ import { RiCloseLine, RiShieldCheckLine } from "@remixicon/react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { sourceWebhookUrlFromPath } from "#/features/sources/model/source-webhook.ts";
+import { copyText } from "#/lib/browser.ts";
 
 export interface SourceTokenNotice {
   sourceName: string;
@@ -62,12 +63,4 @@ export function SourceTokenNoticePanel({
       </div>
     </section>
   );
-}
-
-async function copyText(value: string): Promise<void> {
-  if (typeof navigator === "undefined" || !navigator.clipboard) {
-    return;
-  }
-
-  await navigator.clipboard.writeText(value);
 }

@@ -1,4 +1,9 @@
-import type { JsonObject, SourceProvider } from "@vane/core";
+import {
+  formTrimmedString,
+  nonEmptyObject,
+  type JsonObject,
+  type SourceProvider,
+} from "@vane/core";
 
 export function formSourceProvider(data: FormData): SourceProvider {
   return formSourceProviderValue(data.get("provider"));
@@ -19,18 +24,11 @@ export function formSourceProviderValue(value: FormDataEntryValue | string | nul
 }
 
 export function sourceConfigFromForm(data: FormData): JsonObject {
-  const signingSecret = formString(data, "signingSecret").trim();
+  const signingSecret = formTrimmedString(data, "signingSecret");
 
   return signingSecret ? { signingSecret } : {};
 }
 
 export function sourceConfigPatchFromForm(data: FormData): JsonObject | undefined {
-  const config = sourceConfigFromForm(data);
-
-  return Object.keys(config).length > 0 ? config : undefined;
-}
-
-function formString(data: FormData, key: string): string {
-  const value = data.get(key);
-  return typeof value === "string" ? value : "";
+  return nonEmptyObject(sourceConfigFromForm(data));
 }

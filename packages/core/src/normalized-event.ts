@@ -1,3 +1,4 @@
+import { pickBy } from "es-toolkit/object";
 import { z } from "zod";
 
 export const AlertSeveritySchema = z.enum(["critical", "warning", "info", "unknown"]);
@@ -8,8 +9,9 @@ export type AlertStatus = z.infer<typeof AlertStatusSchema>;
 
 export const LabelsSchema = z
   .record(z.string().trim().min(1), z.string().trim())
-  .transform((labels) =>
-    Object.fromEntries(Object.entries(labels).filter(([, value]) => value.length > 0)),
+  .transform(
+    (labels): Record<string, string> =>
+      pickBy(labels, (value) => value.length > 0) as Record<string, string>,
   );
 export type Labels = z.infer<typeof LabelsSchema>;
 

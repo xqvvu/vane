@@ -37,6 +37,7 @@ import { ConfigurationStateBadge } from "#/features/configuration/ui/configurati
 import { sourceWebhookUrl } from "#/features/sources/model/source-webhook.ts";
 import { EditSourceForm } from "#/features/sources/ui/source-forms.tsx";
 import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell.tsx";
+import { copyText } from "#/lib/browser.ts";
 import { cn } from "#/lib/utils.ts";
 
 type SourceSummary = Configuration["sources"][number];
@@ -328,12 +329,4 @@ function sourceProviderIcon(provider: SourceSummary["provider"]) {
     case "generic":
       return RiDashboardLine;
   }
-}
-
-async function copyText(value: string): Promise<void> {
-  if (typeof navigator === "undefined" || !navigator.clipboard) {
-    return;
-  }
-
-  await navigator.clipboard.writeText(value);
 }

@@ -16,6 +16,7 @@
     "fmt:check": "oxfmt --check"
   },
   "dependencies": {
+    "es-toolkit": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -46,6 +46,32 @@ describe("frontend import boundaries", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("keeps browser globals behind explicit browser adapters", () => {
+    const violations: string[] = [];
+    const browserGlobalPatterns = [
+      /\bwindow\./,
+      /\bnavigator\./,
+      /typeof window/,
+      /typeof navigator/,
+    ];
+
+    for (const filePath of frontendSafeFiles()) {
+      if (relative(filePath) === "lib/browser.ts") {
+        continue;
+      }
+
+      const source = readFileSync(filePath, "utf8");
+
+      for (const pattern of browserGlobalPatterns) {
+        if (pattern.test(source)) {
+          violations.push(`${relative(filePath)} uses ${pattern}`);
+        }
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
 });
 
 function frontendSafeFiles(): string[] {
