@@ -1,3 +1,4 @@
+import { mapValues, pickBy } from "es-toolkit/object";
 import { z } from "zod";
 
 export const JsonValueSchema = z.json();
@@ -48,14 +49,12 @@ export function toJsonValue(value: unknown): JsonValue {
   }
 
   if (typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .filter(
-          ([, entry]) =>
-            entry !== undefined && typeof entry !== "function" && typeof entry !== "symbol",
-        )
-        .map(([key, entry]) => [key, toJsonValue(entry)]),
+    const entries = pickBy(
+      value as Record<string, unknown>,
+      (entry) => entry !== undefined && typeof entry !== "function" && typeof entry !== "symbol",
     );
+
+    return mapValues(entries, (entry) => toJsonValue(entry)) as JsonObject;
   }
 
   return JSON.stringify(value);

@@ -1,4 +1,4 @@
-import type { RouteRule } from "@vane/core";
+import { formString, formTrimmedString, type RouteRule } from "@vane/core";
 
 export function routeRuleFromForm(data: FormData): RouteRule {
   return routeRuleFromValues(routeFormValuesFromForm(data));
@@ -34,14 +34,14 @@ export function routeRuleFromValues(values: RouteRuleFormValues): RouteRule {
 }
 
 function routeFormValuesFromForm(data: FormData): RouteRuleFormValues {
-  const sourceId = formString(data, "sourceId").trim();
+  const sourceId = formTrimmedString(data, "sourceId");
   const severity = formString(data, "severity");
   const status = formString(data, "status");
-  const labelKey = formString(data, "labelKey").trim();
-  const labelValue = formString(data, "labelValue").trim();
+  const labelKey = formTrimmedString(data, "labelKey");
+  const labelValue = formTrimmedString(data, "labelValue");
   const labelOperator = formString(data, "labelOperator") === "contains" ? "contains" : "equals";
-  const titleContains = formString(data, "titleContains").trim();
-  const messageContains = formString(data, "messageContains").trim();
+  const titleContains = formTrimmedString(data, "titleContains");
+  const messageContains = formTrimmedString(data, "messageContains");
 
   return {
     sourceId,
@@ -102,11 +102,6 @@ export interface RouteFormDefaults {
 }
 
 export type RouteRuleFormValues = RouteFormDefaults;
-
-function formString(data: FormData, key: string): string {
-  const value = data.get(key);
-  return typeof value === "string" ? value : "";
-}
 
 function replaceFirstCondition<T>(existing: T[], edited: T[]): T[] {
   if (existing.length === 0) {

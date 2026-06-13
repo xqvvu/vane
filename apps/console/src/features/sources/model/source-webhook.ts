@@ -1,15 +1,13 @@
-export function sourceWebhookPath(sourceId: string): string {
-  return `/api/sources/${encodeURIComponent(sourceId)}/webhook`;
+export { sourceWebhookPath } from "@vane/core";
+
+import { sourceWebhookPath } from "@vane/core";
+
+import { urlFromCurrentOrigin } from "#/lib/browser.ts";
+
+export function sourceWebhookUrlFromPath(path: string): string {
+  return urlFromCurrentOrigin(path);
 }
 
 export function sourceWebhookUrl(sourceId: string): string {
   return sourceWebhookUrlFromPath(sourceWebhookPath(sourceId));
-}
-
-export function sourceWebhookUrlFromPath(path: string): string {
-  if (typeof window === "undefined") {
-    return path;
-  }
-
-  return new URL(path, window.location.origin).toString();
 }

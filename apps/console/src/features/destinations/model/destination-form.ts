@@ -1,4 +1,11 @@
-import type { JsonObject } from "@vane/core";
+import {
+  formHeaderLines,
+  formSeparatedList,
+  formString,
+  formTrimmedString,
+  nonEmptyObject,
+  type JsonObject,
+} from "@vane/core";
 
 export type DestinationFormKind = "generic_webhook" | "feishu" | "slack" | "email";
 
@@ -22,29 +29,29 @@ export function formDestinationKindValue(
 }
 
 export function destinationConfigFromForm(kind: DestinationFormKind, data: FormData): JsonObject {
-  const messageTemplate = formString(data, "messageTemplate").trim();
+  const messageTemplate = formTrimmedString(data, "messageTemplate");
 
   if (kind === "email") {
-    const subjectPrefix = formString(data, "subjectPrefix").trim();
-    const replyTo = formString(data, "replyTo").trim();
-    const headers = headersFromForm(data);
+    const subjectPrefix = formTrimmedString(data, "subjectPrefix");
+    const replyTo = formTrimmedString(data, "replyTo");
+    const headers = formHeaderLines(data);
 
     return {
-      endpointUrl: formString(data, "endpointUrl").trim(),
-      to: formEmailList(data, "to"),
-      from: formString(data, "from").trim(),
+      endpointUrl: formTrimmedString(data, "endpointUrl"),
+      to: formSeparatedList(data, "to"),
+      from: formTrimmedString(data, "from"),
       ...(replyTo ? { replyTo } : {}),
       ...(subjectPrefix ? { subjectPrefix } : {}),
-      ...(Object.keys(headers).length > 0 ? { headers } : {}),
+      ...nonEmptyObject({ headers }),
       ...(messageTemplate ? { messageTemplate } : {}),
     };
   }
 
   if (kind === "feishu") {
-    const signSecret = formString(data, "signSecret").trim();
+    const signSecret = formTrimmedString(data, "signSecret");
 
     return {
-      webhookUrl: formString(data, "webhookUrl").trim(),
+      webhookUrl: formTrimmedString(data, "webhookUrl"),
       ...(signSecret ? { signSecret } : {}),
       ...(messageTemplate ? { messageTemplate } : {}),
     };
@@ -52,17 +59,17 @@ export function destinationConfigFromForm(kind: DestinationFormKind, data: FormD
 
   if (kind === "slack") {
     return {
-      webhookUrl: formString(data, "webhookUrl").trim(),
+      webhookUrl: formTrimmedString(data, "webhookUrl"),
       ...(messageTemplate ? { messageTemplate } : {}),
     };
   }
 
-  const headers = headersFromForm(data);
+  const headers = formHeaderLines(data);
 
   return {
-    url: formString(data, "url").trim(),
+    url: formTrimmedString(data, "url"),
     method: formWebhookMethod(data),
-    ...(Object.keys(headers).length > 0 ? { headers } : {}),
+    ...nonEmptyObject({ headers }),
     ...(messageTemplate ? { messageTemplate } : {}),
   };
 }
@@ -71,16 +78,16 @@ export function destinationConfigPatchFromForm(
   kind: DestinationFormKind,
   data: FormData,
 ): JsonObject {
-  const messageTemplate = formString(data, "messageTemplate").trim();
+  const messageTemplate = formTrimmedString(data, "messageTemplate");
   const config: JsonObject = {};
 
   if (kind === "email") {
-    const endpointUrl = formString(data, "endpointUrl").trim();
-    const to = formEmailList(data, "to");
-    const from = formString(data, "from").trim();
-    const replyTo = formString(data, "replyTo").trim();
-    const subjectPrefix = formString(data, "subjectPrefix").trim();
-    const headers = headersFromForm(data);
+    const endpointUrl = formTrimmedString(data, "endpointUrl");
+    const to = formSeparatedList(data, "to");
+    const from = formTrimmedString(data, "from");
+    const replyTo = formTrimmedString(data, "replyTo");
+    const subjectPrefix = formTrimmedString(data, "subjectPrefix");
+    const headers = formHeaderLines(data);
 
     if (endpointUrl) {
       config.endpointUrl = endpointUrl;
@@ -102,12 +109,12 @@ export function destinationConfigPatchFromForm(
       config.subjectPrefix = subjectPrefix;
     }
 
-    if (Object.keys(headers).length > 0) {
+    if (nonEmptyObject(headers)) {
       config.headers = headers;
     }
   } else if (kind === "feishu") {
-    const webhookUrl = formString(data, "webhookUrl").trim();
-    const signSecret = formString(data, "signSecret").trim();
+    const webhookUrl = formTrimmedString(data, "webhookUrl");
+    const signSecret = formTrimmedString(data, "signSecret");
 
     if (webhookUrl) {
       config.webhookUrl = webhookUrl;
@@ -117,15 +124,15 @@ export function destinationConfigPatchFromForm(
       config.signSecret = signSecret;
     }
   } else if (kind === "slack") {
-    const webhookUrl = formString(data, "webhookUrl").trim();
+    const webhookUrl = formTrimmedString(data, "webhookUrl");
 
     if (webhookUrl) {
       config.webhookUrl = webhookUrl;
     }
   } else {
-    const url = formString(data, "url").trim();
+    const url = formTrimmedString(data, "url");
     const method = formString(data, "method").toUpperCase();
-    const headers = headersFromForm(data);
+    const headers = formHeaderLines(data);
 
     if (url) {
       config.url = url;
@@ -135,7 +142,7 @@ export function destinationConfigPatchFromForm(
       config.method = method;
     }
 
-    if (Object.keys(headers).length > 0) {
+    if (nonEmptyObject(headers)) {
       config.headers = headers;
     }
   }
@@ -147,48 +154,8 @@ export function destinationConfigPatchFromForm(
   return config;
 }
 
-function formString(data: FormData, key: string): string {
-  const value = data.get(key);
-  return typeof value === "string" ? value : "";
-}
-
-function formEmailList(data: FormData, key: string): string[] {
-  return formString(data, key)
-    .split(/[\n,]/)
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0);
-}
-
 function formWebhookMethod(data: FormData): "POST" | "PUT" | "PATCH" {
   const method = formString(data, "method").toUpperCase();
 
   return method === "PUT" || method === "PATCH" ? method : "POST";
-}
-
-function headersFromForm(data: FormData): Record<string, string> {
-  const headerLines = formString(data, "headers");
-  const headers: Record<string, string> = {};
-
-  for (const line of headerLines.split("\n")) {
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      continue;
-    }
-
-    const separatorIndex = trimmed.indexOf(":");
-
-    if (separatorIndex <= 0) {
-      continue;
-    }
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const value = trimmed.slice(separatorIndex + 1).trim();
-
-    if (key && value) {
-      headers[key] = value;
-    }
-  }
-
-  return headers;
 }

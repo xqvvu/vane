@@ -1,5 +1,6 @@
 import type { AlertSeverity, AlertStatus, DeliveryState } from "@vane/core";
 import { AlertSeveritySchema, AlertStatusSchema, DeliveryStateSchema } from "@vane/core";
+import { pickBy } from "es-toolkit/object";
 import { z } from "zod";
 
 export const DashboardOperationSearchSchema = z.object({
@@ -45,29 +46,17 @@ export type OperationFilterData = {
 };
 
 export function operationFiltersFromSearch(search: DashboardOperationSearch): OperationFilterData {
-  return {
-    ...(search.sourceId ? { sourceId: search.sourceId } : {}),
-    ...(search.severity ? { severity: search.severity } : {}),
-    ...(search.status ? { status: search.status } : {}),
-    ...(search.destinationId ? { destinationId: search.destinationId } : {}),
-    ...(search.deliveryState ? { deliveryState: search.deliveryState } : {}),
-    ...(search.q?.trim() ? { q: search.q.trim() } : {}),
-    ...(search.eventCursor ? { eventCursor: search.eventCursor } : {}),
-    ...(search.deliveryCursor ? { deliveryCursor: search.deliveryCursor } : {}),
-  };
+  return pruneSearch(search) as OperationFilterData;
 }
 
 export function pruneSearch(search: DashboardOperationSearch): DashboardOperationSearch {
-  return {
-    ...(search.sourceId ? { sourceId: search.sourceId } : {}),
-    ...(search.severity ? { severity: search.severity } : {}),
-    ...(search.status ? { status: search.status } : {}),
-    ...(search.destinationId ? { destinationId: search.destinationId } : {}),
-    ...(search.deliveryState ? { deliveryState: search.deliveryState } : {}),
-    ...(search.q?.trim() ? { q: search.q.trim() } : {}),
-    ...(search.eventCursor ? { eventCursor: search.eventCursor } : {}),
-    ...(search.deliveryCursor ? { deliveryCursor: search.deliveryCursor } : {}),
-  };
+  return pickBy(
+    {
+      ...search,
+      q: search.q?.trim(),
+    },
+    (value) => typeof value === "string" && value.length > 0,
+  ) as DashboardOperationSearch;
 }
 
 export function mergeOperationSearch(
