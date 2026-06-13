@@ -13,7 +13,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
   const t = useTranslations();
 
   return (
-    <Alert className="mx-3 mt-4">
+    <Alert>
       <RiCheckboxCircleLine aria-hidden />
       <AlertTitle>{t("configuration.importNotice.title")}</AlertTitle>
       <AlertDescription>

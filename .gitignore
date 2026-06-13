@@ -32,3 +32,6 @@ dist-ssr
 
 # MCP
 .playwright-mcp
+
+# Stitch generated design artifacts
+.stitch/designs/

@@ -59,18 +59,19 @@
       ]
     },
     {
-      "id": "51d204938b0b4e5ebba372d1b19bb42c",
-      "name": "projects/8189408707632940093/screens/51d204938b0b4e5ebba372d1b19bb42c",
-      "title": "Vane Console - Settings (Standardized)",
+      "id": "0c0772734e6040d19f75099c6c08fce1",
+      "name": "projects/8189408707632940093/screens/0c0772734e6040d19f75099c6c08fce1",
+      "title": "Vane Console - Settings (Tabbed Workspace)",
       "promptFile": ".stitch/prompts/settings-page.md",
       "localScreenshot": ".stitch/designs/settings-configuration-page.png",
       "localHtml": ".stitch/designs/settings-configuration-page.html",
-      "status": "standardized-to-current-ui",
+      "status": "stitch-tabbed-workspace-top-tabs-github-editor",
       "qaNotes": [
-        "Screenshot passes the main product boundary: no Create Alert action and no incident, on-call, silence, workflow, tenant, organization, or billing controls.",
-        "Screenshot keeps the current Settings structure: toolbar, import notice, operational summary, portability and safety panel, raw payload retention form, and TOML import/export rail.",
-        "Standardized design avoids runtime version, memory usage, archive switches, server config keys, and other system metrics not owned by the current implementation.",
-        "Implementation does not add a Secrets Omitted toggle because the current server function always requests includeSecrets=false and plaintext secret export is unsupported."
+        "Stitch redesign converts Settings from the old right rail layout into a two-mode UI/TOML tabbed workspace.",
+        "The page header omits the descriptive paragraph; UI/TOML tabs sit at the top of the workspace on the same row as the Refresh action.",
+        "UI tab contains the operational summary, raw payload retention form, and dashboard language preference without the old Portability and Safety facts panel.",
+        "TOML tab is a full-width GitHub-light CodeMirror-like portable TOML editor with explicit Export current config and Apply import actions.",
+        "Product boundaries are preserved: no profile, billing, organization, incident, on-call, workflow, worker tuning, plaintext secret export, or unredacted secret controls."
       ]
     },
     {
@@ -163,6 +164,7 @@
       "assets/c53b2ce16f154fe6a124ffea9d67f066"
     ],
     "stitchScreens": [
+      "0c0772734e6040d19f75099c6c08fce1",
       "51d204938b0b4e5ebba372d1b19bb42c",
       "33c7792dc8fc4833864c9080862e05e4",
       "766cd534f892454d961081339e9f1e76",
@@ -185,7 +187,7 @@
         "sources": "3d94047d74e54fca9defba28d43da3b5",
         "routes": "766cd534f892454d961081339e9f1e76",
         "destinations": "33c7792dc8fc4833864c9080862e05e4",
-        "settings": "51d204938b0b4e5ebba372d1b19bb42c",
+        "settings": "0c0772734e6040d19f75099c6c08fce1",
         "notFound": "1c4290d71822470f9e3a2801f635b537",
         "applicationError": "f8d94b652fd647f3b613374c53447622"
       },
@@ -332,14 +334,20 @@
       ]
     },
     "implementedSettingsFollowOn": {
-      "screenId": "f91ad904e5de4495b959f9aeef0d05b3",
-      "status": "implemented",
+      "screenId": "0c0772734e6040d19f75099c6c08fce1",
+      "status": "implemented-from-top-tabs-github-editor-stitch-design",
       "files": [
         "apps/console/src/features/configuration/ui/settings-page.tsx",
         "apps/console/src/features/configuration/ui/operational-summary.tsx",
         "apps/console/src/features/configuration/ui/app-settings-form.tsx",
         "apps/console/src/features/configuration/ui/portable-config-form.tsx",
-        "apps/console/src/features/configuration/ui/import-notice-panel.tsx"
+        "apps/console/src/features/configuration/ui/import-notice-panel.tsx",
+        "apps/console/src/integrations/codemirror/toml-editor.tsx",
+        "apps/console/src/integrations/codemirror/toml-editor-impl.tsx",
+        "apps/console/src/shell/dashboard-layout.tsx",
+        ".stitch/prompts/settings-page.md",
+        ".stitch/designs/settings-configuration-page.html",
+        ".stitch/designs/settings-configuration-page.png"
       ],
       "validation": [
         "npx shadcn@latest info --json",
@@ -348,10 +356,11 @@
         "pnpm --filter @vane/console build"
       ],
       "implementationNotes": [
-        "Kept Settings focused on current app settings and TOML portability: raw payload retention, export without plaintext secrets, import validation, and generated source tokens.",
-        "Used shadcn Alert, Field, Input, Textarea, Button, and existing compact bordered shell panels under the base-lyra preset.",
-        "Did not implement Stitch suggestions for a dark-mode variant, Secrets Omitted toggle, or failed-import detail view during this pass.",
-        "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
+        "Settings now uses UI/TOML tabs at the top of the workspace with the Refresh action on the same control row.",
+        "The Settings page header no longer renders descriptive text under the title.",
+        "The UI tab keeps settings editable through forms while the TOML tab lazy-loads a GitHub-light CodeMirror editor for raw portable config.",
+        "Exports still request includeSecrets=false; plaintext secret export remains unsupported.",
+        "Stitch suggestions for TOML syntax-error gutter and Apply import confirmation are tracked as follow-ups."
       ]
     },
     "nextActionAfterConfirmation": "Application error page implemented from Stitch design and verified locally.",
@@ -379,6 +388,25 @@
         "Used the Stitch two-column error boundary layout while mapping Material Symbols to Remix Icon and shadcn primitives.",
         "Configured root and dashboard TanStack Router error components so runtime and loader failures use the custom console fallback.",
         "Displayed only safe error class summaries; raw error messages and stack traces are not rendered in the UI."
+      ]
+    },
+    "settingsTabbedWorkspace": {
+      "status": "designed-in-stitch",
+      "designedAt": "2026-06-13",
+      "screenId": "0c0772734e6040d19f75099c6c08fce1",
+      "sourcePrompt": ".stitch/prompts/settings-page.md",
+      "localHtml": ".stitch/designs/settings-configuration-page.html",
+      "localScreenshot": ".stitch/designs/settings-configuration-page.png",
+      "outputSummary": [
+        "Tabbed architecture separates routine UI configuration from raw portable TOML editing.",
+        "UI/TOML tabs sit at the top of the workspace on the same row as Refresh, with Settings description text removed.",
+        "UI tab consolidates operational summary, app settings, and language preference in compact bordered panels.",
+        "TOML tab uses a GitHub-light code-oriented editor panel with footer import/export actions."
+      ],
+      "suggestions": [
+        "Add a specific Source token notice to the UI tab alert slot.",
+        "Show a syntax error state in the TOML editor gutter.",
+        "Add a confirmation dialog for the Apply import action."
       ]
     }
   }

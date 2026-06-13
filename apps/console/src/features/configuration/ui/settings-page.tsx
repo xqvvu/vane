@@ -11,6 +11,7 @@ import * as React from "react";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import type { ImportConfigurationResult } from "#/features/configuration/model/configuration-types.ts";
@@ -22,7 +23,6 @@ import { LanguageSelector } from "#/i18n/language-switcher.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardFormPanel, DashboardPanel } from "#/shell/dashboard-panel.tsx";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function SettingsPage() {
   const t = useTranslations();
@@ -37,6 +37,7 @@ export function SettingsPage() {
   const [importNotice, setImportNotice] = React.useState<ImportConfigurationResult | null>(null);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
+  const [activeTab, setActiveTab] = React.useState<"ui" | "toml">("ui");
   const pending = pendingAction !== null;
 
   async function refreshConfiguration() {
@@ -61,65 +62,79 @@ export function SettingsPage() {
 
   return (
     <DashboardContentLayout
-      variant="split"
       main={
-        <>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value === "toml" ? "toml" : "ui")}
+          className="gap-4"
+        >
           <SettingsPageToolbar pending={pending} onRefresh={() => void refreshConfiguration()} />
-          {formError ? (
-            <Alert variant="destructive" className="mx-3 mt-4">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>{t("configuration.settings.operationFailed")}</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
+          {formError || importNotice ? (
+            <div className="min-h-0">
+              {formError ? (
+                <Alert variant="destructive">
+                  <RiErrorWarningLine aria-hidden />
+                  <AlertTitle>{t("configuration.settings.operationFailed")}</AlertTitle>
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              ) : importNotice ? (
+                <ImportNoticePanel notice={importNotice} />
+              ) : null}
+            </div>
           ) : null}
-          {importNotice ? <ImportNoticePanel notice={importNotice} /> : null}
-          <div className="flex flex-col gap-4 p-3">
-            <OperationalSummary
-              configuration={configuration}
-              retentionDays={configuration.settings.rawPayloadRetentionDays}
-            />
-            <PortabilitySafetyPanel />
-          </div>
-        </>
-      }
-      sidebar={
-        <DashboardSidebar variant="split">
-          <AppSettingsForm
-            settings={configuration.settings}
-            pending={pending}
-            onSubmit={(input) =>
-              void submitAction("update-settings", () => updateAppSettings({ data: input }))
-            }
-          />
-          <LanguageSettingsPanel />
-          <PortableConfigForm
-            value={configToml}
-            pending={pending}
-            onChange={setConfigToml}
-            onExport={() =>
-              submitAction("export-config", async () => {
-                const result = await exportConfigurationToml({
-                  data: {
-                    includeSecrets: false,
-                  },
-                });
-                setConfigToml(result.toml);
-                return result;
-              })
-            }
-            onImport={(toml) =>
-              submitAction("import-config", async () => {
-                const result = await importConfigurationToml({
-                  data: {
-                    toml,
-                  },
-                });
-                setImportNotice(result);
-                return result;
-              })
-            }
-          />
-        </DashboardSidebar>
+          <TabsContent value="ui" className="flex flex-col gap-4">
+            <DashboardPanel
+              title={t("configuration.summary.title")}
+              icon={<RiDatabase2Line className="size-4" aria-hidden />}
+            >
+              <OperationalSummary
+                configuration={configuration}
+                retentionDays={configuration.settings.rawPayloadRetentionDays}
+              />
+            </DashboardPanel>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AppSettingsForm
+                settings={configuration.settings}
+                pending={pending}
+                onSubmit={(input) =>
+                  void submitAction("update-settings", () => updateAppSettings({ data: input }))
+                }
+              />
+              <LanguageSettingsPanel />
+            </div>
+          </TabsContent>
+          <TabsContent value="toml">
+            {activeTab === "toml" ? (
+              <PortableConfigForm
+                value={configToml}
+                pending={pending}
+                onChange={setConfigToml}
+                onExport={() =>
+                  submitAction("export-config", async () => {
+                    const result = await exportConfigurationToml({
+                      data: {
+                        includeSecrets: false,
+                      },
+                    });
+                    setConfigToml(result.toml);
+                    return result;
+                  })
+                }
+                onImport={(toml) =>
+                  submitAction("import-config", async () => {
+                    const result = await importConfigurationToml({
+                      data: {
+                        toml,
+                      },
+                    });
+                    setImportNotice(result);
+                    return result;
+                  })
+                }
+              />
+            ) : null}
+          </TabsContent>
+        </Tabs>
       }
     />
   );
@@ -129,32 +144,41 @@ function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefre
   const t = useTranslations();
 
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">
-            {t("configuration.safety.title")}
-          </h1>
-          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {t("configuration.settings.badge")}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          {t("configuration.settings.description")}
-        </p>
+    <header className="border-border bg-card flex min-w-0 flex-col gap-3 border p-4">
+      <div className="flex min-w-0 items-center gap-2">
+        <h1 className="font-heading text-xl leading-none font-semibold">
+          {t("configuration.settings.title")}
+        </h1>
+        <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
+          {t("configuration.settings.badge")}
+        </Badge>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={pending}
-        onClick={onRefresh}
-        title={t("configuration.settings.refreshTitle")}
-        className="w-fit"
-      >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
-        {t("common.actions.refresh")}
-      </Button>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <TabsList
+          variant="line"
+          aria-label={t("configuration.settings.tabsLabel")}
+          className="h-9 min-w-0 gap-6 p-0"
+        >
+          <TabsTrigger value="ui" className="px-0 text-sm">
+            {t("configuration.settings.uiTab")}
+          </TabsTrigger>
+          <TabsTrigger value="toml" className="px-0 text-sm">
+            {t("configuration.settings.tomlTab")}
+          </TabsTrigger>
+        </TabsList>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={onRefresh}
+          title={t("configuration.settings.refreshTitle")}
+          className="shrink-0"
+        >
+          <RiRefreshLine data-icon="inline-start" aria-hidden />
+          {t("common.actions.refresh")}
+        </Button>
+      </div>
     </header>
   );
 }
@@ -176,47 +200,5 @@ function LanguageSettingsPanel() {
         </React.Suspense>
       </ClientOnly>
     </DashboardFormPanel>
-  );
-}
-
-function PortabilitySafetyPanel() {
-  const t = useTranslations();
-
-  return (
-    <DashboardPanel
-      title={t("configuration.safety.title")}
-      icon={<RiShieldKeyholeLine className="size-4" aria-hidden />}
-    >
-      <div className="grid gap-3 md:grid-cols-2">
-        <SafetyFact
-          title={t("configuration.safety.facts.tomlIntegrity.title")}
-          description={t("configuration.safety.facts.tomlIntegrity.description")}
-        />
-        <SafetyFact
-          title={t("configuration.safety.facts.secretSafeExports.title")}
-          description={t("configuration.safety.facts.secretSafeExports.description")}
-        />
-        <SafetyFact
-          title={t("configuration.safety.facts.validatedImports.title")}
-          description={t("configuration.safety.facts.validatedImports.description")}
-        />
-        <SafetyFact
-          title={t("configuration.safety.facts.oneTimeSourceTokens.title")}
-          description={t("configuration.safety.facts.oneTimeSourceTokens.description")}
-        />
-      </div>
-    </DashboardPanel>
-  );
-}
-
-function SafetyFact({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-2 text-xs font-medium">
-        <RiDatabase2Line className="size-3.5" aria-hidden />
-        {title}
-      </div>
-      <p className="text-muted-foreground mt-1 text-xs leading-5">{description}</p>
-    </div>
   );
 }

@@ -141,24 +141,28 @@
     "settings": {
       "title": "Settings",
       "badge": "Configuration",
-      "description": "Manage raw payload retention, TOML portability, and secret-safe configuration transfer.",
       "refreshTitle": "Refresh configuration",
       "operationFailed": "Settings operation failed",
+      "tabsLabel": "Configuration editing mode",
+      "uiTab": "UI",
+      "tomlTab": "TOML",
       "languageTitle": "Language",
-      "languageDescription": "Language is stored in this browser, not as a deployment-wide setting."
+      "languageDescription": "Stored in this browser."
     },
     "appSettings": {
       "title": "App settings",
-      "description": "Bound raw webhook payload storage while keeping normalized Events and Delivery history reviewable.",
+      "description": "Control raw webhook payload storage.",
       "rawPayloadRetentionDays": "Raw payload retention days",
-      "rawPayloadRetentionDescription": "Allowed range is 0 to 3650 days. This applies to raw payload debug data.",
+      "rawPayloadRetentionDescription": "0 to 3650 days.",
       "rawPayloadRetentionValidation": "Retention must be between 0 and 3650 days"
     },
     "portableConfig": {
-      "title": "Portable config",
+      "title": "Portable TOML",
       "tomlLabel": "TOML",
       "tomlPlaceholder": "[settings]\nraw_payload_retention_days = 30",
-      "description": "Export omits plaintext secrets by default. Import validates structure before applying changes."
+      "description": "Export omits plaintext secrets. Import validates before applying changes.",
+      "exportCurrent": "Export current config",
+      "applyImport": "Apply import"
     },
     "importNotice": {
       "title": "Imported configuration",
@@ -170,32 +174,12 @@
       "copySourceToken": "Copy source token"
     },
     "summary": {
+      "title": "Operational summary",
       "enabledSources": "Enabled sources",
       "enabledDestinations": "Enabled destinations",
       "enabledRoutes": "Enabled routes",
       "rawPayloadRetention": "Raw payload retention",
       "days": "days"
-    },
-    "safety": {
-      "title": "Portability and safety",
-      "facts": {
-        "tomlIntegrity": {
-          "title": "TOML integrity",
-          "description": "Vane-owned configuration imports and exports use TOML for reviewable, self-hosted config-as-code workflows."
-        },
-        "secretSafeExports": {
-          "title": "Secret-safe exports",
-          "description": "Exports request secrets omitted by default. Secret references can be resolved from environment variables during import."
-        },
-        "validatedImports": {
-          "title": "Validated imports",
-          "description": "TOML is parsed and validated before stored Sources, Routes, Destinations, or settings are changed."
-        },
-        "oneTimeSourceTokens": {
-          "title": "One-time source tokens",
-          "description": "New Sources created during import may return source tokens once; token hashes are never displayed."
-        }
-      }
     }
   },
   "operations": {

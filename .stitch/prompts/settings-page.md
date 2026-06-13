@@ -1,91 +1,95 @@
-# Vane Settings and Portability Page
+# Vane Settings Tabbed Workspace
 
-Design the Settings page for Vane, a self-hosted Alert Hub console used by SREs
-to manage app-level retention and portable TOML configuration. Settings are for
-bounded storage, config-as-code backup/restore, and secret-safe import/export;
-they are not account management, billing, SaaS tenancy, or workflow automation.
+Targeted edit for the existing Vane Console Settings screen. Preserve the
+shared 48px top navigation shell, active Settings item, Vane Console design
+system, compact shadcn/base-lyra operational style, neutral light theme,
+restrained typography, flat 1px bordered panels, and Remix Icon-like icon
+language.
 
-**PLATFORM:** Web, desktop-first, responsive down to narrow dashboard widths.
+Settings should support two operator modes:
 
-**PAGE STRUCTURE:**
+1. Routine configuration through UI controls.
+2. Raw portable TOML editing/import/export.
 
-1. **App Shell:** Preserve the Vane console shell pattern from Events,
-   Deliveries, Sources, Routes, and Destinations: compact top navigation, active
-   Settings item, dense work area, calm operational styling, and no global
-   "Create Alert" action.
+The page must feel like dense self-hosted SRE software, not SaaS account
+settings, billing, tenant administration, profile management, or incident
+workflow software.
 
-2. **Page Toolbar:** A compact bordered toolbar above the settings surfaces with:
-   - Title "Settings"
-   - Short description about raw payload retention, TOML portability, and
-     secret-safe configuration transfer
-   - Secondary utility action "Refresh"
-   Avoid marketing copy and avoid profile settings, tenant switching,
-   organization billing, invites, marketplace browsing, incident lifecycle, or
-   on-call scheduling.
+## Page Structure
 
-3. **Main Operational Summary:** A dense primary panel that summarizes current
-   configuration health:
-   - Enabled Sources with total count
-   - Enabled Destinations with total count
-   - Enabled Routes with total count
-   - Raw payload retention value in days
-   Include short helper copy that raw payload retention bounds SQLite storage
-   while ordinary UI displays redacted payloads.
+1. **App Shell:** Keep the existing compact top header with Vane brand,
+   horizontal navigation, active Settings nav item, initials/user menu, and no
+   left sidebar.
 
-4. **Portability and Safety Panel:** A compact information panel below the
-   summary explaining the current portability rules:
-   - TOML is the Vane-owned portable config format
-   - Exports omit plaintext secrets by default
-   - Secret references can be resolved from environment variables during import
-   - Imported Sources may create one-time source tokens that must be copied
-   Keep this panel factual and implementation-bound; do not claim a specific
-   encryption algorithm.
+2. **Page Header and Top Controls:** Directly below the shell content area,
+   place a compact bordered workspace header with:
+   - Title `Settings`
+   - Small outline `Configuration` badge
+   - No descriptive paragraph
+   - A top control row containing the `UI` / `TOML` tab navigation aligned
+     left and a small outline `Refresh` action aligned right
 
-5. **Notice Area:** Compact alert panels above the summary when present:
-   - Error notice for failed update/import/export actions
-   - Import result notice with generated source tokens when an import creates
-     new Sources
-   The import notice should show webhook path, copyable webhook URL, and the
-   one-time source token. Make the one-time nature visually clear without
-   exposing token hashes or provider signing secrets.
+3. **Tabs:** The top control row uses a line-style tab bar with exactly two
+   tabs:
+   - `UI`
+   - `TOML`
 
-6. **Right Rail App Settings Form:** A persistent right rail form for:
-   - Raw payload retention days, numeric input, allowed range 0 to 3650
-   - Save settings button
-   Include concise field description explaining that retention controls raw
-   webhook payload storage, not normalized Events or Delivery history.
+   `UI` is selected by default with a clear underline/active state. Inactive
+   tabs should be quiet. Do not create a secondary sidebar or persistent right
+   rail.
 
-7. **Right Rail Portable Config Form:** A second right rail form for TOML:
-   - Monospace textarea for TOML
-   - Export button
-   - Import button disabled when TOML is empty
-   - Helper copy: export omits plaintext secrets by default; imports validate
-     structure before changing stored configuration
-   Keep the TOML area compact but reviewable.
+4. **Notice Slot:** Reserve a low-profile full-width alert slot below the
+   tab/action row for failed update/import/export actions or import results
+   with one-time source tokens. Keep it narrow and operational, not a large
+   card.
 
-**PRODUCT BOUNDARIES:**
+5. **UI Tab Content:**
+   - First panel: `OperationalSummary` with enabled Sources, enabled
+     Destinations, enabled Routes, and raw payload retention days.
+   - Below the summary, a responsive two-column grid:
+     - `App Settings` panel with raw payload retention days numeric input and
+       `Save settings` button.
+     - `Language` panel for dashboard language preference.
+   - Remove the old `Portability and Safety` facts panel entirely.
+   - Keep helper copy concise.
 
+6. **TOML Tab Content:**
+   - One wide code-oriented panel titled `Portable TOML`.
+   - Include a compact `TOML` badge and concise helper text.
+   - Editor area should look like GitHub light CodeMirror: white/light editor
+     surface, line number gutter, syntax-colored TOML sample text, wrapped
+     long lines, comfortable fixed height, and no plaintext secrets.
+   - Footer actions:
+     - Outline `Export current config`
+     - Primary `Apply import`, visually disabled when editor is empty.
+
+7. **Responsive Behavior:** On narrow widths, keep tabs at the top, stack UI
+   panels vertically, and keep the TOML editor full-width without horizontal
+   page overflow.
+
+## Product Boundaries
+
+- Do not add profile management, password changes, OAuth provider setup,
+  organizations, teams, billing, SaaS tenants, invitations, marketplaces,
+  workflow graphs, arbitrary JavaScript, SQL, shell execution, silences,
+  maintenance windows, on-call schedules, incident management, or worker tuning.
 - Do not expose source tokens except one-time generated tokens in the import
   result notice.
 - Do not expose token hashes, provider signing secrets, destination webhook
   URLs, signing secrets, access tokens, passwords, private keys, raw secret
   config, raw sensitive payloads, Better Auth secrets, session tokens, or
   password hashes.
-- Do not add profile management, password changes, OAuth provider setup,
-  organizations, teams, billing, SaaS tenants, invitations, marketplaces,
-  workflow graphs, arbitrary JavaScript, SQL, shell execution, silences,
-  maintenance windows, on-call schedules, or incident management.
-- Keep Settings focused on retention, TOML import/export, configuration
-  summary, and secret-safe portability.
+- Export omits plaintext secrets by default. Do not add a `Secrets omitted`
+  toggle unless the backend supports plaintext secret export.
 
-**IMPLEMENTATION MAPPING NOTES:**
+## Implementation Mapping Notes
 
 - Map the design to existing React feature modules:
   `SettingsPage`, `OperationalSummary`, `AppSettingsForm`,
-  `PortableConfigForm`, and `ImportNoticePanel`.
-- Use existing shadcn primitives such as Button, Alert, Badge, Field, Input,
-  Textarea, Separator, Empty, and compact bordered panels.
-- Keep TanStack Form as the raw retention form behavior owner and shadcn Field
-  primitives as presentation.
+  `LanguageSettingsPanel`, `PortableConfigForm`, and `ImportNoticePanel`.
+- The TOML editor maps to a CodeMirror integration, not a plain textarea.
+- Use existing shadcn primitives such as `Tabs`, `Button`, `Alert`, `Badge`,
+  `Field`, `Input`, `Separator`, and compact bordered panels.
+- Keep TanStack Form as the raw retention form behavior owner.
 - Keep server state TanStack Query-backed through existing configuration query
   options and configuration mutations.

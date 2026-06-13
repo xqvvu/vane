@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Skeleton } from "#/components/ui/skeleton.tsx";
+import { cn } from "#/lib/utils.ts";
 import { DashboardHeader } from "#/shell/dashboard-header.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
@@ -39,6 +40,7 @@ function DashboardLayoutSkeleton() {
               <Skeleton className="h-4 w-18" />
             </div>
           </div>
+
           <div className="flex shrink-0 items-center gap-1.5">
             <Skeleton className="size-7" />
             <Skeleton className="size-7" />
@@ -76,7 +78,12 @@ function DashboardContentLayoutRoot({
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-4 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div
+      className={cn(
+        "mx-auto grid w-full max-w-7xl gap-4 px-5 py-5",
+        sidebar ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1",
+      )}
+    >
       <section className="flex flex-col gap-4">{main}</section>
       {sidebar}
     </div>

@@ -141,24 +141,28 @@
     "settings": {
       "title": "设置",
       "badge": "配置",
-      "description": "管理 raw payload 保留期、TOML 可移植性和安全配置迁移。",
       "refreshTitle": "刷新配置",
       "operationFailed": "设置操作失败",
+      "tabsLabel": "配置编辑模式",
+      "uiTab": "UI",
+      "tomlTab": "TOML",
       "languageTitle": "语言",
-      "languageDescription": "语言保存在当前浏览器中，不是部署级全局设置。"
+      "languageDescription": "保存在当前浏览器。"
     },
     "appSettings": {
       "title": "应用设置",
-      "description": "限制 raw webhook payload 存储，同时保留 normalized Events 和 Delivery 历史用于审查。",
+      "description": "控制 raw webhook payload 存储。",
       "rawPayloadRetentionDays": "Raw payload 保留天数",
-      "rawPayloadRetentionDescription": "允许范围为 0 到 3650 天。此设置作用于 raw payload 调试数据。",
+      "rawPayloadRetentionDescription": "0 到 3650 天。",
       "rawPayloadRetentionValidation": "保留期必须在 0 到 3650 天之间"
     },
     "portableConfig": {
-      "title": "可移植配置",
+      "title": "可移植 TOML",
       "tomlLabel": "TOML",
       "tomlPlaceholder": "[settings]\nraw_payload_retention_days = 30",
-      "description": "导出默认省略明文密钥。导入会先校验结构，再应用变更。"
+      "description": "导出省略明文密钥。导入会先校验，再应用变更。",
+      "exportCurrent": "导出当前配置",
+      "applyImport": "应用导入"
     },
     "importNotice": {
       "title": "配置已导入",
@@ -170,32 +174,12 @@
       "copySourceToken": "复制 source token"
     },
     "summary": {
+      "title": "运行摘要",
       "enabledSources": "已启用来源",
       "enabledDestinations": "已启用目标",
       "enabledRoutes": "已启用路由",
       "rawPayloadRetention": "Raw payload 保留期",
       "days": "天"
-    },
-    "safety": {
-      "title": "可移植性与安全",
-      "facts": {
-        "tomlIntegrity": {
-          "title": "TOML 完整性",
-          "description": "Vane 自有配置的导入导出使用 TOML，适合可审查的自托管 config-as-code 流程。"
-        },
-        "secretSafeExports": {
-          "title": "安全导出密钥",
-          "description": "导出默认省略密钥。导入时可以从环境变量解析密钥引用。"
-        },
-        "validatedImports": {
-          "title": "导入前校验",
-          "description": "TOML 会先解析并校验，然后才会修改已存储的 Sources、Routes、Destinations 或 settings。"
-        },
-        "oneTimeSourceTokens": {
-          "title": "一次性 source token",
-          "description": "导入时新建的 Sources 可能会返回一次 source token；token hash 永不展示。"
-        }
-      }
     }
   },
   "operations": {
