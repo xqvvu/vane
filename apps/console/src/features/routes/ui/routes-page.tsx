@@ -47,7 +47,6 @@ export function RoutesPage() {
 
   return (
     <DashboardContentLayout
-      variant="split"
       main={
         <>
           <RoutesPageToolbar

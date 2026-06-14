@@ -17,7 +17,7 @@ export interface DashboardLayoutProps {
 
 function DashboardLayoutRoot({ user, children }: DashboardLayoutProps) {
   return (
-    <main className="bg-background text-foreground min-h-screen">
+    <main className="bg-background text-foreground flex h-dvh flex-col overflow-hidden">
       <DashboardHeader user={user} />
       {children}
     </main>
@@ -26,8 +26,8 @@ function DashboardLayoutRoot({ user, children }: DashboardLayoutProps) {
 
 function DashboardLayoutSkeleton() {
   return (
-    <main className="bg-background text-foreground min-h-screen">
-      <header className="border-border bg-card sticky top-0 z-50 h-12 border-b">
+    <main className="bg-background text-foreground flex h-dvh flex-col overflow-hidden">
+      <header className="border-border bg-card sticky top-0 z-50 h-12 shrink-0 border-b">
         <div className="flex h-12 w-full items-center justify-between gap-4 px-3">
           <div className="flex h-full min-w-0 items-center gap-6">
             <Skeleton className="h-5 w-12 shrink-0" />
@@ -60,31 +60,17 @@ export const DashboardLayout = Object.assign(DashboardLayoutRoot, {
 export interface DashboardContentLayoutProps {
   main: ReactNode;
   sidebar?: ReactNode;
-  variant?: "contained" | "split";
 }
 
-function DashboardContentLayoutRoot({
-  main,
-  sidebar,
-  variant = "contained",
-}: DashboardContentLayoutProps) {
-  if (variant === "split") {
-    return (
-      <div className="grid min-h-[calc(100vh-3rem)] w-full lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_30%]">
-        <section className="border-border min-w-0 border-r">{main}</section>
-        {sidebar}
-      </div>
-    );
-  }
-
+function DashboardContentLayoutRoot({ main, sidebar }: DashboardContentLayoutProps) {
   return (
     <div
       className={cn(
-        "mx-auto grid w-full max-w-7xl gap-4 px-5 py-5",
+        "mx-auto grid min-h-0 w-full max-w-7xl flex-1 gap-4 overflow-hidden px-5 py-5",
         sidebar ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1",
       )}
     >
-      <section className="flex flex-col gap-4">{main}</section>
+      <section className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">{main}</section>
       {sidebar}
     </div>
   );
@@ -93,7 +79,6 @@ function DashboardContentLayoutRoot({
 function DashboardContentLayoutSkeleton() {
   return (
     <DashboardContentLayoutRoot
-      variant="split"
       main={
         <>
           <DashboardToolbarSkeleton />

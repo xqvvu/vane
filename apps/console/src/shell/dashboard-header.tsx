@@ -19,7 +19,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const t = useTranslations();
 
   return (
-    <header className="border-border bg-card sticky top-0 z-50 h-12 border-b">
+    <header className="border-border bg-card sticky top-0 z-50 h-12 shrink-0 border-b">
       <div className="flex h-12 w-full items-center justify-between gap-4 px-3">
         <div className="flex h-full min-w-0 items-center gap-6">
           <Link

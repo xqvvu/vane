@@ -1,4 +1,4 @@
-import { RiEditLine, RiFileCopyLine, RiKey2Line, RiShutDownLine } from "@remixicon/react";
+import { RiEditLine, RiKey2Line, RiShutDownLine } from "@remixicon/react";
 import * as React from "react";
 
 import {
@@ -13,10 +13,10 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog.tsx";
 import { Button } from "#/components/ui/button.tsx";
-import { sourceWebhookUrl } from "#/features/sources/model/source-webhook.ts";
 import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { copyText } from "#/lib/browser.ts";
+import { cn } from "#/lib/utils.ts";
+import { IconTooltip } from "#/shell/icon-tooltip.tsx";
 
 export function SourceActions({
   source,
@@ -33,29 +33,26 @@ export function SourceActions({
 }) {
   const t = useTranslations();
   const [rotateDialogOpen, setRotateDialogOpen] = React.useState(false);
+  const editLabel = t("sources.table.actions.edit");
+  const rotateTokenLabel = t("sources.table.actions.rotateToken");
+  const toggleLabel = source.enabled
+    ? t("sources.table.actions.disable")
+    : t("sources.table.actions.enable");
 
   return (
-    <div className="flex justify-end gap-1">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={pending}
-        title={t("sources.table.actions.copyWebhookUrl")}
-        onClick={() => void copyText(sourceWebhookUrl(source.id))}
-      >
-        <RiFileCopyLine data-icon="inline-start" aria-hidden />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={pending}
-        title={t("sources.table.actions.edit")}
-        onClick={() => onEdit(source.id)}
-      >
-        <RiEditLine data-icon="inline-start" aria-hidden />
-      </Button>
+    <div className="flex justify-center gap-1">
+      <IconTooltip label={editLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={editLabel}
+          onClick={() => onEdit(source.id)}
+        >
+          <RiEditLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
       <AlertDialog
         open={rotateDialogOpen}
         onOpenChange={(open) => {
@@ -64,19 +61,21 @@ export function SourceActions({
           }
         }}
       >
-        <AlertDialogTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              disabled={pending}
-              title={t("sources.table.actions.rotateToken")}
-            />
-          }
-        >
-          <RiKey2Line data-icon="inline-start" aria-hidden />
-        </AlertDialogTrigger>
+        <IconTooltip label={rotateTokenLabel}>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                disabled={pending}
+                aria-label={rotateTokenLabel}
+              />
+            }
+          >
+            <RiKey2Line data-icon="inline-start" aria-hidden />
+          </AlertDialogTrigger>
+        </IconTooltip>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("sources.rotate.confirmTitle")}</AlertDialogTitle>
@@ -99,18 +98,28 @@ export function SourceActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={pending}
-        title={
-          source.enabled ? t("sources.table.actions.disable") : t("sources.table.actions.enable")
-        }
-        onClick={() => onToggle(source)}
-      >
-        <RiShutDownLine data-icon="inline-start" aria-hidden />
-      </Button>
+      <IconTooltip label={toggleLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={toggleLabel}
+          className={sourcePowerButtonClassName(source.enabled)}
+          onClick={() => onToggle(source)}
+        >
+          <RiShutDownLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
     </div>
+  );
+}
+
+function sourcePowerButtonClassName(enabled: boolean): string {
+  return cn(
+    "relative overflow-visible border-0 bg-transparent shadow-none hover:border-0 hover:bg-transparent focus-visible:border-0",
+    enabled
+      ? "text-destructive hover:text-destructive focus-visible:ring-destructive/35 [&_svg]:drop-shadow-[0_0_6px_rgb(248_113_113_/_0.95)] [&_svg]:transition-[filter,color] hover:[&_svg]:drop-shadow-[0_0_9px_rgb(248_113_113_/_1)]"
+      : "text-muted-foreground hover:text-foreground focus-visible:ring-ring/35 [&_svg]:drop-shadow-none [&_svg]:transition-[filter,color]",
   );
 }

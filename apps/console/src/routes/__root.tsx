@@ -3,6 +3,7 @@ import { useSuspenseQuery, type QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
 import { Toaster } from "#/components/ui/sonner.tsx";
+import { TooltipProvider } from "#/components/ui/tooltip.tsx";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import { requestLocaleQueryOptions } from "#/i18n/i18n.queries.ts";
 import { VaneIntlProvider } from "#/i18n/provider.tsx";
@@ -20,23 +21,11 @@ export const Route = createRootRouteWithContext<{
   loader: ({ context }) => context.queryClient.ensureQueryData(requestLocaleQueryOptions()),
   head: () => ({
     meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "Vane Console",
-      },
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Vane Console" },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: Root,
   errorComponent: DashboardErrorPage,
@@ -51,8 +40,10 @@ function Root({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
-        <VaneIntlProvider locale={data.locale}>{children}</VaneIntlProvider>
+      <body className="h-dvh">
+        <VaneIntlProvider locale={data.locale}>
+          <TooltipProvider>{children}</TooltipProvider>
+        </VaneIntlProvider>
 
         <Toaster position="top-right" />
         <TanStackDevtools

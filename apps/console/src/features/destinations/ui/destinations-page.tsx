@@ -68,7 +68,6 @@ export function DestinationsPage() {
 
   return (
     <DashboardContentLayout
-      variant="split"
       main={
         <>
           <DestinationsPageToolbar

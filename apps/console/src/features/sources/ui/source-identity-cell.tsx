@@ -14,7 +14,7 @@ export function SourceIdentityCell({ source }: { source: SourceSummary }) {
         <div className="truncate text-sm font-semibold" title={source.name}>
           {source.name}
         </div>
-        <div className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] font-medium uppercase">
+        <div className="text-muted-foreground mt-0.5 flex h-4 min-w-0 items-baseline gap-1.5 text-[11px] leading-4 font-medium uppercase">
           <span>{t(`sources.providers.${source.provider}`)}</span>
           <span aria-hidden>|</span>
           <span className="truncate font-mono lowercase" title={source.id}>

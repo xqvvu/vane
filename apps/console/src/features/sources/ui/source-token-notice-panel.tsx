@@ -5,6 +5,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { sourceWebhookUrlFromPath } from "#/features/sources/model/source-webhook.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { copyText } from "#/lib/browser.ts";
+import { IconTooltip } from "#/shell/icon-tooltip.tsx";
 
 export interface SourceTokenNotice {
   sourceName: string;
@@ -21,6 +22,9 @@ export function SourceTokenNoticePanel({
 }) {
   const t = useTranslations();
   const webhookUrl = sourceWebhookUrlFromPath(notice.webhookPath);
+  const copyTokenLabel = t("sources.notice.copyToken");
+  const copyUrlLabel = t("sources.notice.copyUrl");
+  const dismissLabel = t("sources.notice.dismiss");
 
   return (
     <section className="border-l-primary bg-muted/50 border-l-4 p-3">
@@ -35,46 +39,52 @@ export function SourceTokenNoticePanel({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            title={t("sources.notice.copyToken")}
-            onClick={async () => {
-              try {
-                await copyText(notice.token);
-                toast.success(t("common.actions.copied"));
-              } catch {
-                toast.success(t("common.actions.copyFailed"));
-              }
-            }}
-          >
-            {t("sources.notice.copyToken")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            title={t("sources.notice.copyUrl")}
-            onClick={async () => {
-              try {
-                await copyText(webhookUrl);
-                toast.success(t("common.actions.copied"));
-              } catch {
-                toast.success(t("common.actions.copyFailed"));
-              }
-            }}
-          >
-            {t("sources.notice.copyUrl")}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            title={t("sources.notice.dismiss")}
-            onClick={onDismiss}
-          >
-            <RiCloseLine aria-hidden />
-          </Button>
+          <IconTooltip label={copyTokenLabel}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label={copyTokenLabel}
+              onClick={async () => {
+                try {
+                  await copyText(notice.token);
+                  toast.success(t("common.actions.copied"));
+                } catch {
+                  toast.success(t("common.actions.copyFailed"));
+                }
+              }}
+            >
+              {copyTokenLabel}
+            </Button>
+          </IconTooltip>
+          <IconTooltip label={copyUrlLabel}>
+            <Button
+              type="button"
+              size="sm"
+              aria-label={copyUrlLabel}
+              onClick={async () => {
+                try {
+                  await copyText(webhookUrl);
+                  toast.success(t("common.actions.copied"));
+                } catch {
+                  toast.success(t("common.actions.copyFailed"));
+                }
+              }}
+            >
+              {copyUrlLabel}
+            </Button>
+          </IconTooltip>
+          <IconTooltip label={dismissLabel}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={dismissLabel}
+              onClick={onDismiss}
+            >
+              <RiCloseLine aria-hidden />
+            </Button>
+          </IconTooltip>
         </div>
       </div>
     </section>

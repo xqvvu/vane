@@ -1,11 +1,13 @@
-import { RiErrorWarningLine } from "@remixicon/react";
+import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
 import { sourceWebhookPath } from "#/features/sources/model/source-webhook.ts";
+import { SourcesAddDialog } from "#/features/sources/ui/source-add-dialog.tsx";
 import { SourcesEditDialog } from "#/features/sources/ui/source-edit-dialog.tsx";
 import {
   SourceTokenNoticePanel,
@@ -54,10 +56,24 @@ export function SourcesPage() {
       main={
         <>
           <SourcesPageToolbar
-            sourceCount={configuration.sources.length}
-            pending={pending}
-            onSourceCreated={setTokenNotice}
-            onRefresh={() => void refreshConfiguration()}
+            actions={
+              <>
+                <SourcesAddDialog disabled={pending} onCreated={setTokenNotice} />
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => void refreshConfiguration()}
+                  title={t("sources.page.refreshTitle")}
+                  className="w-fit"
+                >
+                  <RiRefreshLine data-icon="inline-start" aria-hidden />
+                  {t("common.actions.refresh")}
+                </Button>
+              </>
+            }
           />
 
           {formError ? (
@@ -74,6 +90,7 @@ export function SourcesPage() {
 
           <SourcesSection
             sources={configuration.sources}
+            routes={configuration.routes}
             pending={pending}
             onEdit={setEditingSourceId}
             onToggle={(source) =>

@@ -38,7 +38,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
                 <CopyableCodeLine
                   value={webhookPath}
                   copyValue={sourceWebhookUrlFromPath(webhookPath)}
-                  title={t("configuration.importNotice.copyWebhookUrl")}
+                  copyLabel={t("configuration.importNotice.copyWebhookUrl")}
                 />
                 <div className="text-muted-foreground">
                   {t("configuration.importNotice.sourceToken")}
@@ -46,7 +46,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
                 <CopyableCodeLine
                   value={source.token}
                   copyValue={source.token}
-                  title={t("configuration.importNotice.copySourceToken")}
+                  copyLabel={t("configuration.importNotice.copySourceToken")}
                   wrap
                 />
               </div>

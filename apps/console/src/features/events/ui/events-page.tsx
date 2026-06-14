@@ -62,7 +62,6 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
 
   return (
     <DashboardContentLayout
-      variant="split"
       main={
         <>
           <EventsPageToolbar

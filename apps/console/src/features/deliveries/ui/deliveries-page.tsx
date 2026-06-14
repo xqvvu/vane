@@ -71,7 +71,6 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
 
   return (
     <DashboardContentLayout
-      variant="split"
       main={
         <>
           <DeliveriesPageToolbar
