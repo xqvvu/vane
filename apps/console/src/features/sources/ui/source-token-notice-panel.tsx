@@ -1,4 +1,5 @@
 import { RiCloseLine, RiShieldCheckLine } from "@remixicon/react";
+import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
 import { sourceWebhookUrlFromPath } from "#/features/sources/model/source-webhook.ts";
@@ -22,7 +23,7 @@ export function SourceTokenNoticePanel({
   const webhookUrl = sourceWebhookUrlFromPath(notice.webhookPath);
 
   return (
-    <section className="border-l-primary bg-muted/50 mx-3 mt-4 border-l-4 p-3">
+    <section className="border-l-primary bg-muted/50 border-l-4 p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <RiShieldCheckLine className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
@@ -39,7 +40,14 @@ export function SourceTokenNoticePanel({
             variant="outline"
             size="sm"
             title={t("sources.notice.copyToken")}
-            onClick={() => void copyText(notice.token)}
+            onClick={async () => {
+              try {
+                await copyText(notice.token);
+                toast.success(t("common.actions.copied"));
+              } catch {
+                toast.success(t("common.actions.copyFailed"));
+              }
+            }}
           >
             {t("sources.notice.copyToken")}
           </Button>
@@ -47,7 +55,14 @@ export function SourceTokenNoticePanel({
             type="button"
             size="sm"
             title={t("sources.notice.copyUrl")}
-            onClick={() => void copyText(webhookUrl)}
+            onClick={async () => {
+              try {
+                await copyText(webhookUrl);
+                toast.success(t("common.actions.copied"));
+              } catch {
+                toast.success(t("common.actions.copyFailed"));
+              }
+            }}
           >
             {t("sources.notice.copyUrl")}
           </Button>

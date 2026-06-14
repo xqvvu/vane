@@ -126,6 +126,13 @@ configuration/settings as they grow. Route-colocated `routes/-*.ts(x)` files are
 acceptable only for truly route-local helpers. Promote reusable domain code to
 `features/*`.
 
+Within feature `ui/` folders, prefer one exported React component per file. If
+a component grows meaningful child components such as table cells, row actions,
+empty states, toolbars, dialogs, form shells, or notice panels, split those
+children into named sibling files instead of keeping a large component cluster
+in one file. Small private render helpers and style helpers may stay colocated
+when they are not reusable components.
+
 ### Frontend i18n
 
 - Use a single translation function per component or helper scope:

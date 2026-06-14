@@ -1,6 +1,4 @@
-import { RiAddCircleLine, RiAddLine, RiEditLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
-import type { JsonObject } from "@vane/core";
 import * as React from "react";
 
 import { Button } from "#/components/ui/button.tsx";
@@ -20,107 +18,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import {
   sourceConfigFromForm,
   sourceConfigPatchFromForm,
 } from "#/features/sources/model/source-form.ts";
+import type {
+  SourceFormLayout,
+  SourceFormSubmitInput,
+  SourceFormValues,
+  SourceSubmitResult,
+} from "#/features/sources/ui/source-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
-export function CreateSourceForm({
-  pending,
-  onSubmit,
-}: {
-  pending: boolean;
-  onSubmit: (input: {
-    name: string;
-    provider: Configuration["sources"][number]["provider"];
-    config?: JsonObject;
-  }) => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <section>
-      <div className="mb-6">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <RiAddCircleLine className="size-4" aria-hidden />
-          {t("sources.form.create.title")}
-        </h2>
-        <p className="text-muted-foreground mt-1 text-sm">{t("sources.form.create.description")}</p>
-      </div>
-      <SourceForm
-        defaultValues={{
-          name: "",
-          provider: "generic",
-        }}
-        pending={pending}
-        submitLabel={t("sources.form.create.submit")}
-        submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
-        layout="rail"
-        onSubmit={onSubmit}
-      />
-      <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
-        {t("sources.form.create.afterCreateHint")}
-      </p>
-    </section>
-  );
-}
-
-export function EditSourceForm({
-  source,
-  pending,
-  onCancel,
-  onSubmit,
-}: {
-  source: Configuration["sources"][number];
-  pending: boolean;
-  onCancel: () => void;
-  onSubmit: (input: {
-    id: string;
-    name: string;
-    provider: Configuration["sources"][number]["provider"];
-    config?: JsonObject;
-  }) => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <section className="border-border bg-muted/30 mt-3 border p-3">
-      <h3 className="flex items-center gap-2 text-xs font-semibold">
-        <RiEditLine className="size-3.5" aria-hidden />
-        {t("sources.form.edit.title")}
-      </h3>
-      <p className="text-muted-foreground mt-1 mb-3 text-xs">
-        {t("sources.form.edit.description")}
-      </p>
-      <SourceForm
-        defaultValues={{
-          name: source.name,
-          provider: source.provider,
-        }}
-        pending={pending}
-        submitLabel={t("sources.form.edit.submit")}
-        submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
-        onSubmit={(values) =>
-          onSubmit({
-            id: source.id,
-            ...values,
-          })
-        }
-        onCancel={onCancel}
-      />
-    </section>
-  );
-}
-
-type SourceFormValues = {
-  name: string;
-  provider: Configuration["sources"][number]["provider"];
-};
-
-function SourceForm({
+export function SourceForm({
   defaultValues,
   pending,
   submitLabel,
@@ -133,13 +44,13 @@ function SourceForm({
   pending: boolean;
   submitLabel: string;
   submitIcon: React.ReactNode;
-  onSubmit: (input: SourceFormValues & { config?: JsonObject }) => void;
+  onSubmit: (input: SourceFormSubmitInput) => SourceSubmitResult;
   onCancel?: () => void;
-  layout?: "compact" | "rail";
+  layout?: SourceFormLayout;
 }) {
   const t = useTranslations();
 
-  const pendingConfig = React.useRef<JsonObject | undefined>(undefined);
+  const pendingConfig = React.useRef<SourceFormSubmitInput["config"]>(undefined);
   const providerItems = React.useMemo(
     () => [
       { value: "generic", label: t("sources.providers.genericWebhook") },
@@ -152,17 +63,16 @@ function SourceForm({
   );
   const form = useForm({
     defaultValues,
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value }) => {
       const config = pendingConfig.current;
-
-      onSubmit({
+      const result = await onSubmit({
         name: value.name.trim(),
         provider: value.provider,
         ...(config ? { config } : {}),
       });
       pendingConfig.current = undefined;
 
-      if (!onCancel) {
+      if (!onCancel && result !== false) {
         form.reset();
       }
     },
@@ -233,9 +143,7 @@ function SourceForm({
                 name={field.name}
                 items={providerItems}
                 value={field.state.value}
-                onValueChange={(value) =>
-                  field.handleChange(value as Configuration["sources"][number]["provider"])
-                }
+                onValueChange={(value) => field.handleChange(value as SourceFormValues["provider"])}
               >
                 <SelectTrigger
                   className={cn("w-full", inputClassName(layout))}
@@ -306,12 +214,12 @@ function SourceForm({
   );
 }
 
-function labelClassName(layout: "compact" | "rail"): string | undefined {
+function labelClassName(layout: SourceFormLayout): string | undefined {
   return layout === "rail"
     ? "text-muted-foreground text-[11px] font-semibold tracking-wider uppercase"
     : undefined;
 }
 
-function inputClassName(layout: "compact" | "rail"): string | undefined {
+function inputClassName(layout: SourceFormLayout): string | undefined {
   return layout === "rail" ? "h-12 bg-background px-3 text-sm" : undefined;
 }
