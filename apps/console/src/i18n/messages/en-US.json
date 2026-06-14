@@ -252,6 +252,12 @@
         "content": "New source setup stays available in the right rail."
       }
     },
+    "rotate": {
+      "confirmTitle": "Rotate source token?",
+      "confirmDescription": "Existing webhook senders for {sourceName} will stop authenticating until they use the newly generated token. The new token is shown once.",
+      "cancel": "Keep token",
+      "confirm": "Rotate token"
+    },
     "form": {
       "create": {
         "title": "New Source",

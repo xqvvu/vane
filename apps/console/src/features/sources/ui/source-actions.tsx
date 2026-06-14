@@ -1,5 +1,17 @@
 import { RiEditLine, RiFileCopyLine, RiKey2Line, RiShutDownLine } from "@remixicon/react";
+import * as React from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "#/components/ui/alert-dialog.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { sourceWebhookUrl } from "#/features/sources/model/source-webhook.ts";
 import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
@@ -20,6 +32,7 @@ export function SourceActions({
   onRotateToken: (source: SourceSummary) => void;
 }) {
   const t = useTranslations();
+  const [rotateDialogOpen, setRotateDialogOpen] = React.useState(false);
 
   return (
     <div className="flex justify-end gap-1">
@@ -43,16 +56,49 @@ export function SourceActions({
       >
         <RiEditLine data-icon="inline-start" aria-hidden />
       </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={pending}
-        title={t("sources.table.actions.rotateToken")}
-        onClick={() => onRotateToken(source)}
+      <AlertDialog
+        open={rotateDialogOpen}
+        onOpenChange={(open) => {
+          if (!pending) {
+            setRotateDialogOpen(open);
+          }
+        }}
       >
-        <RiKey2Line data-icon="inline-start" aria-hidden />
-      </Button>
+        <AlertDialogTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              disabled={pending}
+              title={t("sources.table.actions.rotateToken")}
+            />
+          }
+        >
+          <RiKey2Line data-icon="inline-start" aria-hidden />
+        </AlertDialogTrigger>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("sources.rotate.confirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("sources.rotate.confirmDescription", { sourceName: source.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>{t("sources.rotate.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                setRotateDialogOpen(false);
+                onRotateToken(source);
+              }}
+            >
+              {t("sources.rotate.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Button
         type="button"
         variant="ghost"

@@ -252,6 +252,12 @@
         "content": "新建来源表单会保留在右侧栏。"
       }
     },
+    "rotate": {
+      "confirmTitle": "要轮换来源 token 吗？",
+      "confirmDescription": "{sourceName} 现有的 webhook 发送方会在改用新生成 token 前停止通过认证。新的 token 只会显示一次。",
+      "cancel": "保留当前 token",
+      "confirm": "轮换 token"
+    },
     "form": {
       "create": {
         "title": "新建来源",
