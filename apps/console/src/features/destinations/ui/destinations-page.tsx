@@ -1,31 +1,33 @@
-import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
+import { RiErrorWarningLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import type {
   DestinationPreviewNotice,
   DestinationTestNotice,
 } from "#/features/configuration/model/configuration-types.ts";
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
-import { CreateDestinationForm } from "#/features/destinations/ui/destination-forms.tsx";
+import { DestinationAddDialog } from "#/features/destinations/ui/destination-add-dialog.tsx";
+import { DestinationEditDialog } from "#/features/destinations/ui/destination-edit-dialog.tsx";
 import {
   DestinationPreviewNoticePanel,
   DestinationTestNoticePanel,
 } from "#/features/destinations/ui/destination-notices.tsx";
+import type {
+  CreateDestinationFormInput,
+  EditDestinationFormInput,
+} from "#/features/destinations/ui/destination-ui-types.ts";
+import { DestinationsPageToolbar } from "#/features/destinations/ui/destinations-page-toolbar.tsx";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function DestinationsPage() {
   const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const {
-    createDestination,
     invalidateDestinations,
     previewDestination,
     previewDestinationDraft,
@@ -66,6 +68,28 @@ export function DestinationsPage() {
     }
   }
 
+  function previewDraft(input: CreateDestinationFormInput) {
+    return submitAction("preview-destination-draft", async () => {
+      const result = await previewDestinationDraft({ data: input });
+      setDestinationPreviewNotice(result);
+      return result;
+    });
+  }
+
+  function previewEdit(input: EditDestinationFormInput) {
+    return submitAction(`preview-destination-update-${input.id}`, async () => {
+      const result = await previewDestinationUpdate({
+        data: {
+          id: input.id,
+          name: input.name,
+          config: input.config,
+        },
+      });
+      setDestinationPreviewNotice(result);
+      return result;
+    });
+  }
+
   return (
     <DashboardContentLayout
       main={
@@ -73,6 +97,7 @@ export function DestinationsPage() {
           <DestinationsPageToolbar
             destinationCount={configuration.destinations.length}
             pending={pending}
+            actions={<DestinationAddDialog disabled={pending} onPreview={previewDraft} />}
             onRefresh={() => void refreshConfiguration()}
           />
           {formError ? (
@@ -90,7 +115,6 @@ export function DestinationsPage() {
           ) : null}
           <DestinationsSection
             destinations={configuration.destinations}
-            editingDestination={editingDestination}
             pending={pending}
             onTest={(destination) =>
               void submitAction(`test-destination-${destination.id}`, async () => {
@@ -125,91 +149,21 @@ export function DestinationsPage() {
                 }),
               )
             }
-            onCancelEdit={() => setEditingDestinationId(null)}
-            onPreviewEdit={(input) => {
-              if (!editingDestination) {
-                return;
-              }
+          />
 
-              void submitAction(`preview-destination-update-${editingDestination.id}`, async () => {
-                const result = await previewDestinationUpdate({
-                  data: {
-                    id: editingDestination.id,
-                    name: input.name,
-                    config: input.config,
-                  },
-                });
-                setDestinationPreviewNotice(result);
-                return result;
-              });
-            }}
-            onSubmitEdit={(input) =>
-              void submitAction(`edit-destination-${input.id}`, async () => {
-                const result = await updateDestination({ data: input });
+          <DestinationEditDialog
+            destination={editingDestination}
+            open={editingDestination !== null}
+            disabled={pending}
+            onOpenChange={(open) => {
+              if (!open) {
                 setEditingDestinationId(null);
-                return result;
-              })
-            }
+              }
+            }}
+            onPreview={previewEdit}
           />
         </>
       }
-      sidebar={
-        <DashboardSidebar variant="split">
-          <CreateDestinationForm
-            pending={pending}
-            onPreview={(input) =>
-              void submitAction("preview-destination-draft", async () => {
-                const result = await previewDestinationDraft({ data: input });
-                setDestinationPreviewNotice(result);
-                return result;
-              })
-            }
-            onSubmit={(input) =>
-              void submitAction("create-destination", () => createDestination({ data: input }))
-            }
-          />
-        </DashboardSidebar>
-      }
     />
-  );
-}
-
-function DestinationsPageToolbar({
-  destinationCount,
-  pending,
-  onRefresh,
-}: {
-  destinationCount: number;
-  pending: boolean;
-  onRefresh: () => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">
-            {t("destinations.page.title")}
-          </h1>
-          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {t("destinations.page.configured", { count: destinationCount })}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground mt-2 text-sm">{t("destinations.page.description")}</p>
-      </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={pending}
-        onClick={onRefresh}
-        title={t("destinations.page.refreshTitle")}
-        className="w-fit"
-      >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
-        {t("common.actions.refresh")}
-      </Button>
-    </header>
   );
 }

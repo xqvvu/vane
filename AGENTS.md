@@ -145,6 +145,18 @@ when they are not reusable components.
   next to the call.
 - Keep machine values, API enum values, route ids, and persistence values
   untranslated; translate only their display labels at the UI boundary.
+- Chinese UI copy should use SRE/operator domain language instead of literal
+  word-for-word translation. Prefer terms an on-call engineer would expect in
+  an alert routing console, keep sentences short and action-oriented, and avoid
+  half-translated phrases unless the English token is an established technical
+  term.
+- For the Sources surface, translate the product concept `Source` as
+  `告警源`, not `来源`. Use `接入` for intake, `接入 Token` for source token,
+  `告警解析器` for provider parser, `上游监控系统` for upstream provider/sender
+  context, `Webhook 请求体` or `告警载荷` for payload depending on the UI
+  context, and `路由规则` for user-facing route rules. Keep provider names such
+  as Grafana, SigNoz, Uptime Kuma, Alertmanager, and protocol/config terms such
+  as Webhook, JSON, URL, Token, TOML, and API in English when that is clearer.
 
 ### Server Function Boundary
 

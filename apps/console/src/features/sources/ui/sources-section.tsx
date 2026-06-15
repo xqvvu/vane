@@ -119,6 +119,7 @@ export function SourcesSection({
     getPaginationRowModel: getPaginationRowModel(),
   });
   const visibleRows = table.getRowModel().rows;
+  const isEmpty = visibleRows.length === 0;
   const pageCount = table.getPageCount();
   const pageIndex = table.getState().pagination.pageIndex;
   const pageStart =
@@ -130,8 +131,13 @@ export function SourcesSection({
 
   return (
     <section className="bg-background flex min-h-0 flex-1 flex-col">
-      <div className="border-border min-h-0 flex-1 overflow-auto border">
-        <Table className="min-w-245 table-fixed">
+      <div
+        className={cn(
+          "border-border min-h-0 flex-1 overflow-auto border",
+          isEmpty ? "[&>[data-slot=table-container]]:h-full" : null,
+        )}
+      >
+        <Table className={cn("min-w-245 table-fixed", isEmpty ? "h-full" : null)}>
           <TableHeader className="bg-muted/60 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-muted/60 hover:bg-muted/60">
@@ -152,10 +158,13 @@ export function SourcesSection({
             ))}
           </TableHeader>
 
-          <TableBody>
-            {visibleRows.length === 0 ? (
-              <TableRow>
-                <TableCell className="py-8" colSpan={table.getAllColumns().length}>
+          <TableBody className={isEmpty ? "h-full" : undefined}>
+            {isEmpty ? (
+              <TableRow className="h-full hover:bg-transparent">
+                <TableCell
+                  className="h-full p-0 align-middle"
+                  colSpan={table.getAllColumns().length}
+                >
                   <SourcesEmptyState />
                 </TableCell>
               </TableRow>

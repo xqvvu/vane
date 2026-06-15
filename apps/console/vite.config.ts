@@ -33,6 +33,7 @@ const config = defineConfig({
   server: {
     port: 6180,
     strictPort: true,
+    host: true,
   },
 
   test: {},

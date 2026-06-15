@@ -27,6 +27,6 @@
   "i18n-ally.enabledFrameworks": ["next-intl"],
   "i18n-ally.displayLanguage": "zh-Hans",
   "i18n-ally.sourceLanguage": "en-US",
-  "i18n-ally.keystyle": "nested",
+  "i18n-ally.keystyle": "flat",
   "i18n-ally.localesPaths": ["apps/console/src/i18n/messages"]
 }

@@ -1,6 +1,5 @@
-import { RiAddLine, RiArrowRightLine, RiEditLine, RiEyeLine } from "@remixicon/react";
+import { RiAddLine, RiEditLine, RiEyeLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
-import type { JsonObject } from "@vane/core";
 import * as React from "react";
 
 import { Button } from "#/components/ui/button.tsx";
@@ -21,118 +20,21 @@ import {
   SelectValue,
 } from "#/components/ui/select.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import {
-  destinationConfigPatchFromForm,
   destinationConfigFromForm,
+  destinationConfigPatchFromForm,
   type DestinationFormKind,
 } from "#/features/destinations/model/destination-form.ts";
+import type {
+  DestinationFormMode,
+  DestinationFormSubmitInput,
+  DestinationFormValues,
+  DestinationSubmitResult,
+} from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
-import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
-export function CreateDestinationForm({
-  pending,
-  onPreview,
-  onSubmit,
-}: {
-  pending: boolean;
-  onPreview: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
-  onSubmit: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <DashboardFormPanel
-      title={t("destinations.form.create.title")}
-      icon={<RiArrowRightLine className="size-4" aria-hidden />}
-    >
-      <p className="text-muted-foreground mb-3 text-xs leading-5">
-        {t("destinations.form.create.description")}
-      </p>
-      <DestinationForm
-        mode="create"
-        pending={pending}
-        defaultValues={createDestinationDefaults()}
-        onPreview={onPreview}
-        onSubmit={onSubmit}
-      />
-    </DashboardFormPanel>
-  );
-}
-
-export function EditDestinationForm({
-  destination,
-  pending,
-  onCancel,
-  onPreview,
-  onSubmit,
-}: {
-  destination: Configuration["destinations"][number];
-  pending: boolean;
-  onCancel: () => void;
-  onPreview: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
-  onSubmit: (input: {
-    id: string;
-    name: string;
-    kind: DestinationFormKind;
-    config: JsonObject;
-  }) => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <section className="border-border bg-muted/30 mt-3 border p-3">
-      <div className="mb-3">
-        <h3 className="flex items-center gap-2 text-xs font-semibold">
-          <RiEditLine className="size-3.5" aria-hidden />
-          {t("destinations.form.edit.title")}
-        </h3>
-        <p className="text-muted-foreground mt-1 text-xs">
-          {t("destinations.form.edit.description")}
-        </p>
-      </div>
-      <DestinationForm
-        mode="edit"
-        pending={pending}
-        defaultValues={{
-          ...createDestinationDefaults(),
-          name: destination.name,
-          kind: destination.kind,
-          method: "",
-        }}
-        onCancel={onCancel}
-        onPreview={(input) => onPreview(input)}
-        onSubmit={(input) =>
-          onSubmit({
-            id: destination.id,
-            ...input,
-          })
-        }
-      />
-    </section>
-  );
-}
-
-type DestinationFormMode = "create" | "edit";
-
-type DestinationFormValues = {
-  name: string;
-  kind: DestinationFormKind;
-  endpointUrl: string;
-  to: string;
-  from: string;
-  replyTo: string;
-  subjectPrefix: string;
-  headers: string;
-  url: string;
-  webhookUrl: string;
-  method: string;
-  signSecret: string;
-  messageTemplate: string;
-};
-
-function DestinationForm({
+export function DestinationForm({
   mode,
   pending,
   defaultValues,
@@ -143,8 +45,8 @@ function DestinationForm({
   mode: DestinationFormMode;
   pending: boolean;
   defaultValues: DestinationFormValues;
-  onPreview: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
-  onSubmit: (input: { name: string; kind: DestinationFormKind; config: JsonObject }) => void;
+  onPreview: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
+  onSubmit: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
   onCancel?: () => void;
 }) {
   const t = useTranslations();
@@ -166,7 +68,7 @@ function DestinationForm({
   ];
   const form = useForm({
     defaultValues,
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value }) => {
       const selectedKind = value.kind;
       const data = destinationValuesToFormData(value);
       const input = {
@@ -177,15 +79,10 @@ function DestinationForm({
             ? destinationConfigFromForm(selectedKind, data)
             : destinationConfigPatchFromForm(selectedKind, data),
       };
+      const result =
+        submitIntent.current === "preview" ? await onPreview(input) : await onSubmit(input);
 
-      if (submitIntent.current === "preview") {
-        onPreview(input);
-        return;
-      }
-
-      onSubmit(input);
-
-      if (mode === "create") {
+      if (mode === "create" && submitIntent.current === "submit" && result !== false) {
         form.reset();
       }
     },
@@ -521,7 +418,7 @@ function DestinationForm({
   );
 }
 
-function createDestinationDefaults(): DestinationFormValues {
+export function createDestinationDefaults(): DestinationFormValues {
   return {
     name: "",
     kind: "generic_webhook",
