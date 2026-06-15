@@ -1,11 +1,11 @@
 import { RiCloseLine, RiShieldCheckLine } from "@remixicon/react";
 import { toast } from "sonner";
 
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { sourceWebhookUrlFromPath } from "#/features/sources/model/source-webhook.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { copyText } from "#/lib/browser.ts";
-import { IconTooltip } from "#/shell/icon-tooltip.tsx";
 
 export interface SourceTokenNotice {
   sourceName: string;

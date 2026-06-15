@@ -1,12 +1,12 @@
 import { RiArrowRightLine, RiEyeLine, RiRefreshLine } from "@remixicon/react";
 
+import { SimpleTable } from "#/components/common/simple-table.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { SeverityBadge } from "#/features/events/ui/severity-badge.tsx";
 import { formatDateTime } from "#/features/operations/model/operation-format.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 export function EventsTable({
   events,
@@ -31,7 +31,7 @@ export function EventsTable({
         <h3 className="text-xs font-semibold">{t("events.table.title")}</h3>
         <span className="text-muted-foreground text-xs">{t("events.table.order")}</span>
       </div>
-      <DashboardTable
+      <SimpleTable
         variant="flush"
         empty={t("events.table.empty")}
         headers={[

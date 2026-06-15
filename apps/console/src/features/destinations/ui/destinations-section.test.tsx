@@ -22,6 +22,7 @@ describe("destinations section table", () => {
       <VaneIntlProvider locale="en-US">
         <DestinationsSection
           destinations={destinations}
+          routes={[]}
           pending={false}
           onTest={vi.fn<DestinationActionHandler>()}
           onPreview={vi.fn<DestinationActionHandler>()}
@@ -33,6 +34,7 @@ describe("destinations section table", () => {
 
     expect(screen.getByText("Destination")).toBeTruthy();
     expect(screen.getByText("Safe configuration")).toBeTruthy();
+    expect(screen.getByText("Routing")).toBeTruthy();
     expect(screen.getByText("Actions")).toBeTruthy();
     expect(screen.getByText("1-10 of 11 destinations")).toBeTruthy();
     expect(screen.getByText("Destination 10")).toBeTruthy();
@@ -50,6 +52,7 @@ describe("destinations section table", () => {
       <VaneIntlProvider locale="en-US">
         <DestinationsSection
           destinations={[]}
+          routes={[]}
           pending={false}
           onTest={vi.fn<DestinationActionHandler>()}
           onPreview={vi.fn<DestinationActionHandler>()}
@@ -62,6 +65,30 @@ describe("destinations section table", () => {
     expect(screen.getByText("No destinations configured")).toBeTruthy();
     expect(screen.getByText("No destinations")).toBeTruthy();
   });
+
+  it("summarizes enabled route usage for each destination", () => {
+    render(
+      <VaneIntlProvider locale="en-US">
+        <DestinationsSection
+          destinations={[destinationFixture(1), destinationFixture(2)]}
+          routes={[
+            routeFixture("route-1", "Primary paging", ["destination-1"], true),
+            routeFixture("route-2", "Disabled paging", ["destination-1"], false),
+            routeFixture("route-3", "Secondary paging", ["destination-2"], true),
+          ]}
+          pending={false}
+          onTest={vi.fn<DestinationActionHandler>()}
+          onPreview={vi.fn<DestinationActionHandler>()}
+          onEdit={vi.fn<DestinationEditHandler>()}
+          onToggle={vi.fn<DestinationActionHandler>()}
+        />
+      </VaneIntlProvider>,
+    );
+
+    expect(screen.getAllByText("1 active")).toHaveLength(2);
+    expect(screen.queryByText("Kind")).toBeTruthy();
+    expect(screen.queryByText("State")).toBeNull();
+  });
 });
 
 function destinationFixture(index: number): DestinationSummary {
@@ -70,5 +97,22 @@ function destinationFixture(index: number): DestinationSummary {
     name: `Destination ${index}`,
     kind: index % 2 === 0 ? "feishu" : "generic_webhook",
     enabled: index % 2 === 0,
+  };
+}
+
+function routeFixture(id: string, name: string, destinationIds: string[], enabled: boolean) {
+  return {
+    id,
+    name,
+    enabled,
+    rule: {
+      sourceIds: [],
+      severities: [],
+      statuses: [],
+      labels: [],
+      titleContains: [],
+      messageContains: [],
+    },
+    destinationIds,
   };
 }

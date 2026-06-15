@@ -1,5 +1,6 @@
 import { RiPlayLine, RiTimeLine } from "@remixicon/react";
 
+import { ContentPanel } from "#/components/common/content-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
@@ -13,7 +14,6 @@ import type {
 import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardPanel } from "#/shell/dashboard-panel.tsx";
 
 export interface OperationsPanelProps {
   configuration: Configuration;
@@ -53,7 +53,7 @@ export function OperationsPanel({
   const t = useTranslations();
 
   return (
-    <DashboardPanel
+    <ContentPanel
       title={t("operations.title")}
       icon={<RiTimeLine className="size-4" aria-hidden />}
       action={
@@ -89,6 +89,6 @@ export function OperationsPanel({
         />
       </div>
       <DetailPanel eventDetail={eventDetail} deliveryDetail={deliveryDetail} />
-    </DashboardPanel>
+    </ContentPanel>
   );
 }

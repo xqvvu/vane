@@ -1,6 +1,7 @@
 import { RiDatabase2Line, RiSave3Line } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 
+import { FormPanel } from "#/components/common/content-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
   Field as UiField,
@@ -12,7 +13,6 @@ import {
 import { Input } from "#/components/ui/input.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function AppSettingsForm({
   settings,
@@ -37,7 +37,7 @@ export function AppSettingsForm({
   });
 
   return (
-    <DashboardFormPanel
+    <FormPanel
       title={t("configuration.appSettings.title")}
       icon={<RiDatabase2Line className="size-4" aria-hidden />}
     >
@@ -97,6 +97,6 @@ export function AppSettingsForm({
           {t("common.actions.saveSettings")}
         </Button>
       </form>
-    </DashboardFormPanel>
+    </FormPanel>
   );
 }

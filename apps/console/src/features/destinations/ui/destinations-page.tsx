@@ -115,6 +115,7 @@ export function DestinationsPage() {
           ) : null}
           <DestinationsSection
             destinations={configuration.destinations}
+            routes={configuration.routes}
             pending={pending}
             onTest={(destination) =>
               void submitAction(`test-destination-${destination.id}`, async () => {

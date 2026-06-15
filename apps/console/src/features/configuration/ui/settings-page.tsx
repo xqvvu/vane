@@ -8,6 +8,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
 
+import { FormPanel, ContentPanel } from "#/components/common/content-panel.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -22,7 +23,6 @@ import { PortableConfigForm } from "#/features/configuration/ui/portable-config-
 import { LanguageSelector } from "#/i18n/language-switcher.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardFormPanel, DashboardPanel } from "#/shell/dashboard-panel.tsx";
 
 export function SettingsPage() {
   const t = useTranslations();
@@ -83,7 +83,7 @@ export function SettingsPage() {
             </div>
           ) : null}
           <TabsContent value="ui" className="flex flex-col gap-4">
-            <DashboardPanel
+            <ContentPanel
               title={t("configuration.summary.title")}
               icon={<RiDatabase2Line className="size-4" aria-hidden />}
             >
@@ -91,7 +91,7 @@ export function SettingsPage() {
                 configuration={configuration}
                 retentionDays={configuration.settings.rawPayloadRetentionDays}
               />
-            </DashboardPanel>
+            </ContentPanel>
             <div className="grid gap-4 lg:grid-cols-2">
               <AppSettingsForm
                 settings={configuration.settings}
@@ -187,7 +187,7 @@ function LanguageSettingsPanel() {
   const t = useTranslations();
 
   return (
-    <DashboardFormPanel
+    <FormPanel
       title={t("configuration.settings.languageTitle")}
       icon={<RiShieldKeyholeLine className="size-4" aria-hidden />}
     >
@@ -199,6 +199,6 @@ function LanguageSettingsPanel() {
           <LanguageSelector />
         </React.Suspense>
       </ClientOnly>
-    </DashboardFormPanel>
+    </FormPanel>
   );
 }

@@ -1,5 +1,6 @@
 import { RiArrowRightLine } from "@remixicon/react";
 
+import { FormPanel } from "#/components/common/content-panel.tsx";
 import {
   createDestinationDefaults,
   DestinationForm,
@@ -9,7 +10,6 @@ import type {
   DestinationSubmitResult,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function CreateDestinationForm({
   showHeader = true,
@@ -39,14 +39,11 @@ export function CreateDestinationForm({
   }
 
   return (
-    <DashboardFormPanel
-      title={t("destinations.form.create.title")}
-      icon={<RiArrowRightLine aria-hidden />}
-    >
+    <FormPanel title={t("destinations.form.create.title")} icon={<RiArrowRightLine aria-hidden />}>
       <p className="text-muted-foreground mb-3 text-xs leading-5">
         {t("destinations.form.create.description")}
       </p>
       {form}
-    </DashboardFormPanel>
+    </FormPanel>
   );
 }

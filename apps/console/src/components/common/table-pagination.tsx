@@ -9,7 +9,7 @@ import {
 } from "#/components/ui/pagination.tsx";
 import { cn } from "#/lib/utils.ts";
 
-export interface DashboardTablePaginationProps {
+export interface TablePaginationProps {
   rangeLabel: string;
   pageLabel: string;
   previousLabel: string;
@@ -20,7 +20,7 @@ export interface DashboardTablePaginationProps {
   className?: string;
 }
 
-export function DashboardTablePagination({
+export function TablePagination({
   rangeLabel,
   pageLabel,
   previousLabel,
@@ -29,12 +29,12 @@ export function DashboardTablePagination({
   pageCount,
   onPageIndexChange,
   className,
-}: DashboardTablePaginationProps) {
+}: TablePaginationProps) {
   const normalizedPageCount = Math.max(pageCount, 1);
   const normalizedPageIndex = Math.min(Math.max(pageIndex, 0), normalizedPageCount - 1);
   const canPreviousPage = normalizedPageIndex > 0;
   const canNextPage = normalizedPageIndex < normalizedPageCount - 1;
-  const pageItems = dashboardPaginationItems(normalizedPageIndex, normalizedPageCount);
+  const pageItems = tablePaginationItems(normalizedPageIndex, normalizedPageCount);
 
   function changePage(nextPageIndex: number) {
     const clampedPageIndex = Math.min(Math.max(nextPageIndex, 0), normalizedPageCount - 1);
@@ -117,7 +117,7 @@ export function DashboardTablePagination({
   );
 }
 
-type DashboardPaginationItem =
+type TablePaginationItem =
   | {
       kind: "page";
       page: number;
@@ -128,7 +128,7 @@ type DashboardPaginationItem =
       key: "start-ellipsis" | "end-ellipsis";
     };
 
-function dashboardPaginationItems(pageIndex: number, pageCount: number): DashboardPaginationItem[] {
+function tablePaginationItems(pageIndex: number, pageCount: number): TablePaginationItem[] {
   const currentPage = pageIndex + 1;
   const pages =
     pageCount <= 7

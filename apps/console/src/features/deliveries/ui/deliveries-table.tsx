@@ -1,11 +1,11 @@
 import { RiArrowRightLine, RiEyeLine, RiRefreshLine, RiRestartLine } from "@remixicon/react";
 
+import { SimpleTable } from "#/components/common/simple-table.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
 import { formatDateTime, formatTime } from "#/features/operations/model/operation-format.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 export function DeliveriesTable({
   deliveries,
@@ -32,7 +32,7 @@ export function DeliveriesTable({
         <h3 className="text-xs font-semibold">{t("deliveries.table.title")}</h3>
         <span className="text-muted-foreground text-xs">{t("deliveries.table.order")}</span>
       </div>
-      <DashboardTable
+      <SimpleTable
         variant="flush"
         empty={t("deliveries.table.empty")}
         headers={[

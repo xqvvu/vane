@@ -25,7 +25,8 @@ Events / Deliveries 表格、详情面板、TOML 导入导出、worker 操作、
 3. `application` 是 server function 与服务端 use case 边界。
 4. `integrations` 封装 TanStack Query、TanStack Router、Better Auth 的项目适配。
 5. `components/ui` 只保留 shadcn primitives，不知道 Vane 的领域。
-6. `infra` 是 SQLite 与 server-only 基础设施，前端代码不可导入。
+6. `components/common` 承载跨 feature 复用的 console UI 组合，但不拥有业务规则。
+7. `infra` 是 SQLite 与 server-only 基础设施，前端代码不可导入。
 
 ---
 
@@ -72,6 +73,7 @@ apps/console/src/
     deliveries/
   components/
     ui/
+    common/
   integrations/
     tanstack-query/
     tanstack-router/
@@ -132,6 +134,8 @@ runtime。需要服务端数据时，feature 通过自己的 query/mutation 文�
 shell 可以知道“这是 Vane console 的 dashboard”，可以展示 Sources、Routes、Destinations、
 Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、loader 和 mutations。
 `routes/_dashboard.tsx` 应主要挂载 shell、执行 dashboard UX guard，并渲染子路由 outlet。
+通用表格、分页、复制控件、面板、tooltip、状态 badge 等不属于 shell；它们应放在
+`components/common`，避免 feature 为了复用 dashboard 外壳而反向依赖 shell。
 
 ### `components/ui`
 
@@ -148,6 +152,27 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 
 领域 UI 属于 `features/*` 或 `shell`。例如 `DeliveryStateBadge` 应在
 `features/deliveries`，不是 `components/ui`。
+
+### `components/common`
+
+`components/common` 存放跨 feature 复用、但高于 shadcn primitive 的 console 组合组件，例如：
+
+- 运营型表格外壳、分页和简单表格。
+- 复制代码行、图标 tooltip、通用内容面板和表单面板。
+- 通用启用/停用状态 badge、非领域化的状态呈现 helper。
+
+这一层可以沉淀 Vane console 的密度、边框、分页和 row height 等视觉约定，但仍必须保持业务
+无知：
+
+- 不出现 Source、Destination、Event、Delivery、Route 等特定业务规则。
+- 不调用 server functions、TanStack Query hooks、mutation hooks 或 TanStack Router hooks。
+- 不导入 `infra`、application container、server-only runtime 或 secret helper。
+- 不承载 feature 专属 actions、empty state、route coverage、provider/destination kind、delivery
+  state 等领域组件。
+
+判断标准：如果组件表达的是“所有 console feature 都应该长得一致的 UI 结构”，放
+`components/common`；如果组件表达的是“某个 Vane 业务对象应该展示哪些字段或动作”，放 owning
+feature。
 
 ### `integrations`
 
@@ -283,6 +308,14 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 
 - 列表页优先表格、过滤器、分页、行操作、详情页或 drawer。
 - Sources、Routes、Destinations 的启停、删除、测试、轮换 token 等动作必须显式且可复核。
+- Sources 与 Destinations 这类配置列表应共享表格外壳、分页、状态 badge、row height 和动作密度；
+  具体列内容、route coverage、secret-safe 配置说明和 actions 仍由各自 feature 拥有。
+- Destinations 表格默认展示安全且能指导操作的事实：目标 identity、adapter kind、启停状态、启用路由
+  覆盖、secret-safe 配置说明，以及 test / preview / edit / toggle actions。不要在表格或普通 query
+  data 中展示 plaintext endpoint、signing secret、token、password 或 raw config。
+- Destinations 的“最近 delivery 健康度”应作为后续服务端安全汇总 DTO 接入，例如最近成功/失败时间、
+  失败计数、最后错误摘要和 pending/running job 数；不要在前端从 raw payload、secret config 或完整
+  delivery detail 临时拼装。
 - Events、Deliveries 优先展示 normalized fields、状态、时间、失败原因、attempts 和 route
   match 信息。
 - 表单行为由 TanStack Form 管理；shadcn `FieldGroup`、`Field`、`FieldLabel`、
@@ -299,8 +332,8 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 建议按风险从低到高迁移：
 
 1. 抽出 `shell`：把 dashboard layout、导航、header、user menu 从 root index route 移走。
-2. 抽出纯展示组件：将 `StateBadge`、`DeliveryStateBadge`、`JsonBlock` 等移动到对应
-   feature，不改变数据流。
+2. 抽出纯展示组件：将通用 table/pagination/panel/copy/status 组件移动到
+   `components/common`，将 `DeliveryStateBadge`、`JsonBlock` 等业务展示移动到对应 feature，不改变数据流。
 3. 抽出 form model 与 UI：把当前 `routes/-source-form.ts`、`-destination-form.ts`、
    `-route-form.ts` 迁移到 `features/*`，让 route 文件只引用 feature screen。
 4. 建立 feature `queries.ts` 与 `mutations.ts`：把 `listConfigurationFn`、`listOperationsFn`、
@@ -327,6 +360,8 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 - feature query data 不包含 Source token、`tokenHash`、Destination secret、raw sensitive
   config。
 - shadcn primitives 保持领域无知；业务 badge/table/form 不放进 `components/ui`。
+- `components/common` 不导入 feature、query/mutation hook、route hook 或 server-only 模块；业务
+  badge、业务 table cell 和业务 actions 留在 owning feature。
 - Events/Deliveries 的过滤、分页、详情 query key 包含影响结果的变量。
 - mutation 成功后定向 invalidation，而不是依赖整页 reload。
 
