@@ -1,6 +1,7 @@
 import { RiEditLine, RiKey2Line, RiShutDownLine } from "@remixicon/react";
 import * as React from "react";
 
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,6 @@ import { Button } from "#/components/ui/button.tsx";
 import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
-import { IconTooltip } from "#/shell/icon-tooltip.tsx";
 
 export function SourceActions({
   source,

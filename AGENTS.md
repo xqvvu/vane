@@ -91,6 +91,7 @@ Recommended shape inside `apps/console/src`:
 ```txt
 shell               dashboard layout, sidebar, header, user menu
 components/ui       shadcn primitives only; no Vane domain knowledge
+components/common   reusable console UI, no feature ownership or server state
 features            Sources, Routes, Destinations, Events, Deliveries, Settings
 integrations        TanStack Query/Router, Better Auth, and library adapters
 routes              file routes, layouts, validateSearch, loaders, thin screens
@@ -124,6 +125,16 @@ features/sources/
 Use this pattern for Sources, Routes, Destinations, Events, Deliveries, and
 configuration/settings as they grow. Route-colocated `routes/-*.ts(x)` files are
 acceptable only for truly route-local helpers. Promote reusable domain code to
+`features/*`.
+
+Use `components/common` for reusable console-level UI that is shared across
+features but is not a shadcn primitive: operational table shells, pagination,
+copyable code lines, generic form/content panels, tooltips, and generic
+enabled/disabled badges. These components may encode Vane console density and
+layout conventions, but they must not own Source/Destination/Event/Delivery
+business rules, call server functions, read query state, or import server-only
+modules. Feature-specific cells, actions, empty states, provider/destination
+badges, route coverage summaries, and delivery state badges stay in
 `features/*`.
 
 Within feature `ui/` folders, prefer one exported React component per file. If
@@ -264,6 +275,16 @@ Keep the visual system compact and utilitarian:
   mostly square corners.
 - Prefer tables, filters, tabs, sheets/drawers, forms, empty states, inline
   actions, and reviewable destructive flows over large overview cards.
+- For configuration list pages such as Sources and Destinations, align table
+  shells, pagination, status presentation, row height, and action density
+  through `components/common`; keep the column content itself in the owning
+  feature.
+- Destinations tables should surface safe operational facts first: target
+  identity, adapter kind, enabled/disabled status, enabled route coverage,
+  secret-safe configuration metadata, and explicit test/preview/edit/toggle
+  actions. Do not show plaintext endpoints, signing secrets, tokens, passwords,
+  or raw config. Recent delivery health belongs in the Destinations table only
+  after a server-side, secret-safe summary DTO exists.
 - Make destructive, delivery, test, retry, secret, and token-related actions
   explicit.
 - Do not introduce one-off styling systems, icon sets, chart libraries, or

@@ -1,11 +1,11 @@
 import { RiFileCopyLine } from "@remixicon/react";
 import { toast } from "sonner";
 
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { Button } from "#/components/ui/button.tsx";
-import { useTranslations } from "#/i18n/use-i18n";
+import { useTranslations } from "#/i18n/use-i18n.ts";
 import { copyText } from "#/lib/browser.ts";
 import { cn } from "#/lib/utils.ts";
-import { IconTooltip } from "#/shell/icon-tooltip.tsx";
 
 export interface CopyableCodeLineProps {
   value: string;
@@ -27,7 +27,7 @@ export function CopyableCodeLine({
   toastDescription,
 }: CopyableCodeLineProps) {
   const t = useTranslations();
-  toastDescription = toastDescription ? toastDescription : t("common.actions.copied");
+  const resolvedToastDescription = toastDescription ? toastDescription : t("common.actions.copied");
 
   return (
     <div className="flex min-w-0 items-center gap-1">
@@ -50,7 +50,7 @@ export function CopyableCodeLine({
             try {
               await copyText(copyValue);
               if (showToast) {
-                toast.success(toastDescription);
+                toast.success(resolvedToastDescription);
               }
             } catch {
               toast.error(t("common.actions.copyFailed"));

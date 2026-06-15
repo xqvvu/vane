@@ -2,14 +2,14 @@ import type { ReactNode } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
 
-export interface DashboardPanelProps {
+export interface ContentPanelProps {
   title: string;
   icon: ReactNode;
   action?: ReactNode;
   children: ReactNode;
 }
 
-export function DashboardPanel({ title, icon, action, children }: DashboardPanelProps) {
+export function ContentPanel({ title, icon, action, children }: ContentPanelProps) {
   return (
     <section className="border-border bg-card border">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
@@ -24,13 +24,13 @@ export function DashboardPanel({ title, icon, action, children }: DashboardPanel
   );
 }
 
-export interface DashboardFormPanelProps {
+export interface FormPanelProps {
   title: string;
   icon: ReactNode;
   children: ReactNode;
 }
 
-export function DashboardFormPanel({ title, icon, children }: DashboardFormPanelProps) {
+export function FormPanel({ title, icon, children }: FormPanelProps) {
   return (
     <Card size="sm">
       <CardHeader>

@@ -11,7 +11,7 @@ import {
 } from "#/components/ui/table.tsx";
 import { cn } from "#/lib/utils.ts";
 
-export interface DashboardTableProps {
+export interface SimpleTableProps {
   headers: string[];
   rows: Array<{ key: string; cells: React.ReactNode[] }>;
   empty: React.ReactNode;
@@ -19,13 +19,13 @@ export interface DashboardTableProps {
   variant?: "default" | "flush";
 }
 
-export function DashboardTable({
+export function SimpleTable({
   headers,
   rows,
   empty,
   columnClassNames = [],
   variant = "default",
-}: DashboardTableProps) {
+}: SimpleTableProps) {
   const columns = React.useMemo<Array<ColumnDef<(typeof rows)[number]>>>(
     () =>
       headers.map((header, index) => ({

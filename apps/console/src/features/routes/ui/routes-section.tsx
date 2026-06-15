@@ -1,5 +1,7 @@
 import { RiEditLine, RiRouteLine, RiShutDownLine } from "@remixicon/react";
 
+import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
+import { SimpleTable } from "#/components/common/simple-table.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -11,10 +13,8 @@ import {
   EmptyTitle,
 } from "#/components/ui/empty.tsx";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
-import { ConfigurationStateBadge } from "#/features/configuration/ui/configuration-state-badge.tsx";
 import { EditRouteForm } from "#/features/routes/ui/route-forms.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardTable } from "#/shell/dashboard-table.tsx";
 
 type RouteSummary = Configuration["routes"][number];
 type DestinationSummary = Configuration["destinations"][number];
@@ -51,7 +51,7 @@ export function RoutesSection({
 
   return (
     <section className="bg-background">
-      <DashboardTable
+      <SimpleTable
         variant="flush"
         empty={<RoutesEmptyState hasDestinations={destinations.length > 0} />}
         headers={[
@@ -72,7 +72,7 @@ export function RoutesSection({
               destinationIds={route.destinationIds}
               destinations={destinations}
             />,
-            <ConfigurationStateBadge key="state" enabled={route.enabled} />,
+            <EnabledStateBadge key="state" enabled={route.enabled} />,
             <div key="actions" className="flex justify-end gap-1">
               <Button
                 variant="outline"

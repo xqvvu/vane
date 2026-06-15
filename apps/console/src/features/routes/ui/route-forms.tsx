@@ -2,6 +2,7 @@ import { RiAddLine, RiEditLine, RiGitBranchLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
 
+import { FormPanel } from "#/components/common/content-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Checkbox } from "#/components/ui/checkbox.tsx";
 import {
@@ -32,7 +33,6 @@ import {
   type RouteRuleFormValues,
 } from "#/features/routes/model/route-form.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardFormPanel } from "#/shell/dashboard-panel.tsx";
 
 export function CreateRouteForm({
   sources,
@@ -52,7 +52,7 @@ export function CreateRouteForm({
   const t = useTranslations();
 
   return (
-    <DashboardFormPanel
+    <FormPanel
       title={t("routing.form.create.title")}
       icon={<RiGitBranchLine className="size-4" aria-hidden />}
     >
@@ -86,7 +86,7 @@ export function CreateRouteForm({
           });
         }}
       />
-    </DashboardFormPanel>
+    </FormPanel>
   );
 }
 

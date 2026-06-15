@@ -1,5 +1,6 @@
 import { RiCheckboxCircleLine, RiKey2Line } from "@remixicon/react";
 
+import { CopyableCodeLine } from "#/components/common/copyable-code-line.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import type { ImportConfigurationResult } from "#/features/configuration/model/configuration-types.ts";
 import {
@@ -7,7 +8,6 @@ import {
   sourceWebhookUrlFromPath,
 } from "#/features/sources/model/source-webhook.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { CopyableCodeLine } from "#/shell/copyable-code-line.tsx";
 
 export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResult }) {
   const t = useTranslations();
