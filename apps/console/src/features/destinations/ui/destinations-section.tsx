@@ -7,9 +7,7 @@ import type { Configuration } from "#/features/configuration/model/configuration
 import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage.ts";
 import { DestinationActions } from "#/features/destinations/ui/destination-actions.tsx";
 import { DestinationIdentityCell } from "#/features/destinations/ui/destination-identity-cell.tsx";
-import { DestinationKindBadge } from "#/features/destinations/ui/destination-kind-badge.tsx";
 import { DestinationRouteCoverageCell } from "#/features/destinations/ui/destination-route-coverage-cell.tsx";
-import { DestinationSafeConfigCell } from "#/features/destinations/ui/destination-safe-config-cell.tsx";
 import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
 import { DestinationsEmptyState } from "#/features/destinations/ui/destinations-empty-state.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
@@ -43,11 +41,6 @@ export function DestinationsSection({
         cell: ({ row }) => <DestinationIdentityCell destination={row.original} />,
       },
       {
-        id: "kind",
-        header: t("destinations.table.headers.kind"),
-        cell: ({ row }) => <DestinationKindBadge kind={row.original.kind} />,
-      },
-      {
         id: "routing",
         header: t("destinations.table.headers.routing"),
         cell: ({ row }) => (
@@ -55,11 +48,6 @@ export function DestinationsSection({
             coverage={destinationRouteCoverage(row.original.id, routes)}
           />
         ),
-      },
-      {
-        id: "safeConfiguration",
-        header: t("destinations.table.headers.safeConfiguration"),
-        cell: ({ row }) => <DestinationSafeConfigCell destination={row.original} />,
       },
       {
         id: "status",
@@ -107,17 +95,13 @@ export function DestinationsSection({
 function destinationsColumnClassName(columnId: string): string | null {
   switch (columnId) {
     case "destination":
-      return "w-[25%]";
-    case "kind":
-      return "w-[12%]";
+      return "w-[35%]";
     case "routing":
-      return "w-[13%]";
-    case "safeConfiguration":
-      return "w-[24%]";
+      return "w-[18%]";
     case "status":
-      return "w-[11%]";
+      return "w-[14%]";
     case "actions":
-      return "w-[15%]";
+      return "w-[33%]";
     default:
       return null;
   }

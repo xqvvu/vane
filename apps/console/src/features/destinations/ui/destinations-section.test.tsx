@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?url";
+import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";
+import webhookIconUrl from "@vane/destinations/assets/destination-icons/webhook.svg?url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
@@ -33,16 +36,18 @@ describe("destinations section table", () => {
     );
 
     expect(screen.getByText("Destination")).toBeTruthy();
-    expect(screen.getByText("Safe configuration")).toBeTruthy();
     expect(screen.getByText("Routing")).toBeTruthy();
+    expect(screen.getByText("Status")).toBeTruthy();
     expect(screen.getByText("Actions")).toBeTruthy();
-    expect(screen.getByText("1-10 of 11 destinations")).toBeTruthy();
+    expect(screen.queryByText("Kind")).toBeNull();
+    expect(screen.queryByText("Safe configuration")).toBeNull();
+    expect(screen.getByText("11 destinations")).toBeTruthy();
     expect(screen.getByText("Destination 10")).toBeTruthy();
     expect(screen.queryByText("Destination 11")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "2" }));
 
-    expect(screen.getByText("11-11 of 11 destinations")).toBeTruthy();
+    expect(screen.getByText("11 destinations")).toBeTruthy();
     expect(screen.getByText("Destination 11")).toBeTruthy();
     expect(screen.queryByText("Destination 10")).toBeNull();
   });
@@ -86,16 +91,51 @@ describe("destinations section table", () => {
     );
 
     expect(screen.getAllByText("1 active")).toHaveLength(2);
-    expect(screen.queryByText("Kind")).toBeTruthy();
+    expect(screen.queryByText("Kind")).toBeNull();
     expect(screen.queryByText("State")).toBeNull();
   });
+
+  it("uses destination kind assets in the identity column", () => {
+    render(
+      <VaneIntlProvider locale="en-US">
+        <DestinationsSection
+          destinations={[
+            destinationFixture(1, "generic_webhook"),
+            destinationFixture(2, "feishu"),
+            destinationFixture(3, "slack"),
+            destinationFixture(4, "email"),
+          ]}
+          routes={[]}
+          pending={false}
+          onTest={vi.fn<DestinationActionHandler>()}
+          onPreview={vi.fn<DestinationActionHandler>()}
+          onEdit={vi.fn<DestinationEditHandler>()}
+          onToggle={vi.fn<DestinationActionHandler>()}
+        />
+      </VaneIntlProvider>,
+    );
+
+    const images = Array.from(document.querySelectorAll("tbody td:first-child img"));
+    const imageSources = images.map((image) => image.getAttribute("src") ?? "");
+
+    expect(imageSources).toContain(webhookIconUrl);
+    expect(imageSources).toContain(larkIconUrl);
+    expect(imageSources).toContain(slackIconUrl);
+    expect(
+      screen.getByText("Destination 4").closest("tr")?.querySelector("td:first-child svg"),
+    ).toBeTruthy();
+  });
+
 });
 
-function destinationFixture(index: number): DestinationSummary {
+function destinationFixture(
+  index: number,
+  kind: DestinationSummary["kind"] = index % 2 === 0 ? "feishu" : "generic_webhook",
+): DestinationSummary {
   return {
     id: `destination-${index}`,
     name: `Destination ${index}`,
-    kind: index % 2 === 0 ? "feishu" : "generic_webhook",
+    kind,
     enabled: index % 2 === 0,
   };
 }
