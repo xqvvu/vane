@@ -126,6 +126,47 @@ describe("destinations section table", () => {
     ).toBeTruthy();
   });
 
+  it("renders row actions as icon-only controls with the shared power affordance", () => {
+    const onTest = vi.fn<DestinationActionHandler>();
+    const onPreview = vi.fn<DestinationActionHandler>();
+    const onEdit = vi.fn<DestinationEditHandler>();
+    const onToggle = vi.fn<DestinationActionHandler>();
+    const destination = destinationFixture(2);
+
+    render(
+      <VaneIntlProvider locale="en-US">
+        <DestinationsSection
+          destinations={[destination]}
+          routes={[]}
+          pending={false}
+          onTest={onTest}
+          onPreview={onPreview}
+          onEdit={onEdit}
+          onToggle={onToggle}
+        />
+      </VaneIntlProvider>,
+    );
+
+    expect(screen.queryByText("Test")).toBeNull();
+    expect(screen.queryByText("Preview")).toBeNull();
+    expect(screen.queryByText("Disable")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Test Destination 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Preview Destination 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit destination" }));
+
+    const powerButton = screen.getByRole("button", { name: "Disable destination" });
+    fireEvent.click(powerButton);
+
+    expect(onTest).toHaveBeenCalledWith(destination);
+    expect(onPreview).toHaveBeenCalledWith(destination);
+    expect(onEdit).toHaveBeenCalledWith(destination.id);
+    expect(onToggle).toHaveBeenCalledWith(destination);
+    expect(powerButton.textContent).toBe("");
+    expect(powerButton.getAttribute("class")).toContain("text-destructive");
+    expect(powerButton.getAttribute("class")).toContain("drop-shadow");
+  });
+
 });
 
 function destinationFixture(

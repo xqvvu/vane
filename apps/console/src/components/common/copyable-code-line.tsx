@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { Button } from "#/components/ui/button.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { copyText } from "#/lib/browser.ts";
 import { cn } from "#/lib/utils.ts";
@@ -15,6 +16,7 @@ export interface CopyableCodeLineProps {
   muted?: boolean;
   showToast?: boolean;
   toastDescription?: string;
+  tooltipValue?: string;
 }
 
 export function CopyableCodeLine({
@@ -25,21 +27,40 @@ export function CopyableCodeLine({
   muted = false,
   showToast = false,
   toastDescription,
+  tooltipValue,
 }: CopyableCodeLineProps) {
   const t = useTranslations();
   const resolvedToastDescription = toastDescription ? toastDescription : t("common.actions.copied");
+  const codeElement = (
+    <code
+      className={cn(
+        "block min-w-0 font-mono text-[11px] leading-4",
+        wrap ? "break-all" : "truncate",
+        muted ? "text-muted-foreground" : null,
+      )}
+    >
+      {value}
+    </code>
+  );
 
   return (
     <div className="flex min-w-0 items-center gap-1">
-      <code
-        className={cn(
-          "min-w-0 flex-1 font-mono text-[11px] leading-4",
-          wrap ? "break-all" : "truncate",
-          muted ? "text-muted-foreground" : null,
-        )}
-      >
-        {value}
-      </code>
+      {tooltipValue ? (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span className="block min-w-0 flex-1" tabIndex={0} aria-label={tooltipValue} />
+            }
+          >
+            {codeElement}
+          </TooltipTrigger>
+          <TooltipContent className="max-w-96">
+            <span className="font-mono break-all">{tooltipValue}</span>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <span className="block min-w-0 flex-1">{codeElement}</span>
+      )}
       <IconTooltip label={copyLabel}>
         <Button
           type="button"

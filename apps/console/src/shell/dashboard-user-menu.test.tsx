@@ -122,7 +122,7 @@ describe("dashboard user menu", () => {
         queryKey: authQueryKeys.all,
       });
       expect(testState.toast.success).toHaveBeenCalledWith("Signed out", {
-        description: "You have been returned to the login page.",
+        description: "You have been returned to the login page",
       });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/login",

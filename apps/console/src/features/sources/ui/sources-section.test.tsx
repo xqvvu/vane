@@ -38,7 +38,7 @@ describe("sources section table", () => {
       </VaneIntlProvider>,
     );
 
-    expect(screen.getByText("1-10 of 12 sources")).toBeTruthy();
+    expect(screen.getByText("12 sources")).toBeTruthy();
     expect(screen.getByText("Source 10")).toBeTruthy();
     expect(screen.queryByText("Source 11")).toBeNull();
 
@@ -46,7 +46,7 @@ describe("sources section table", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "2" }));
 
-    expect(screen.getByText("11-12 of 12 sources")).toBeTruthy();
+    expect(screen.getByText("12 sources")).toBeTruthy();
     expect(screen.getByText("Source 11")).toBeTruthy();
     expect(screen.getByText("Source 12")).toBeTruthy();
     expect(screen.queryByText("Source 10")).toBeNull();

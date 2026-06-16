@@ -33,12 +33,12 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             aria-label={t("shell.nav.ariaLabel")}
           >
             <DashboardNavLink to="/events">{t("common.routes.events")}</DashboardNavLink>
-            <DashboardNavLink to="/deliveries">{t("common.routes.deliveries")}</DashboardNavLink>
             <DashboardNavLink to="/sources">{t("common.routes.sources")}</DashboardNavLink>
             <DashboardNavLink to="/routes">{t("common.routes.routes")}</DashboardNavLink>
             <DashboardNavLink to="/destinations">
               {t("common.routes.destinations")}
             </DashboardNavLink>
+            <DashboardNavLink to="/deliveries">{t("common.routes.deliveries")}</DashboardNavLink>
             <DashboardNavLink to="/settings">{t("common.routes.settings")}</DashboardNavLink>
           </nav>
         </div>
