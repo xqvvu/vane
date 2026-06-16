@@ -57,6 +57,7 @@ apps/console/src/application/
     request-context.ts   # 每次请求创建 dashboard/webhook context
     dashboard-auth.ts    # dashboard session 与角色检查
   functions/
+    dashboard-context.middleware.ts # client-safe server function middleware，动态导入 server-only context
     *.functions.ts            # TanStack Start server functions，入口薄
   services/
     configuration.ts          # 业务服务：Sources/Routes/Destinations/settings
@@ -75,11 +76,15 @@ apps/console/src/routes/api/
 示例：
 
 ```ts
-// server function handler 内部
-const context = await requireDashboardRequestContext();
-const service = context.container.createConfigurationService();
+// dashboard server function
+export const createSourceFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(CreateSourceCommandSchema)
+  .handler(async ({ data, context }) => {
+    const service = context.dashboardRequest.container.createConfigurationService();
 
-return service.createSource(data);
+    return service.createSource(data);
+  });
 ```
 
 ```ts
@@ -114,8 +119,9 @@ return service.acceptWebhook({
 
 Dashboard context 与 webhook context 是两条不同认证边界：
 
-- Dashboard server functions 调用 `requireDashboardRequestContext()`，它内部使用
-  Better Auth session，并拒绝非 owner/admin 用户。
+- Dashboard server functions 使用 `requireDashboardContextMiddleware` 注入
+  `context.dashboardRequest`。该 middleware 内部调用
+  `requireDashboardRequestContext()`，使用 Better Auth session，并拒绝非 owner/admin 用户。
 - Webhook API route 调用 `createWebhookRequestContext()`，只读取 Source token /
   provider secret，不读取 dashboard session。上游监控系统不需要也不应该拥有浏览器
   session。
@@ -130,16 +136,21 @@ Dashboard server functions 的固定形状：
 
 ```ts
 export const createSourceFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
   .validator(CreateSourceCommandSchema)
-  .handler(async ({ data }) => {
-    const context = await requireDashboardRequestContext();
+  .handler(async ({ data, context }) => {
+    const service = context.dashboardRequest.container.createConfigurationService();
 
-    return context.container.createConfigurationService().createSource(data);
+    return service.createSource(data);
   });
 ```
 
-这个入口只负责 schema validation、dashboard auth、取 service、调用业务方法。Sources、
-Routes、Destinations 的配置逻辑留在 `ConfigurationService`。
+这个入口只负责 schema validation、通过 middleware 建立 dashboard context、取 service、
+调用业务方法。Sources、Routes、Destinations 的配置逻辑留在 `ConfigurationService`。
+
+用于探测当前登录态的公共 server function（例如返回 `null` 以驱动登录页的函数）可以继续在
+handler 内显式调用 `requireDashboardRequestContext()` 并捕获认证错误；这类函数不能使用会在
+handler 之前抛错的 require middleware。
 
 ### API routes
 
@@ -175,9 +186,9 @@ const runner = getApplicationContainer().ensureDeliveryWorkerRunner();
 DeliveryWorker`，而是：
 
 ```ts
-const context = await requireDashboardRequestContext();
+const worker = context.dashboardRequest.container.createDeliveryWorker();
 
-return context.container.createDeliveryWorker().runOnce({ limit });
+return worker.runOnce({ limit });
 ```
 
 ---
@@ -229,7 +240,8 @@ dispose 钩子里，避免不可见的全局挂载状态。
   singleton。
 - 默认 container 通过 ESM module cache 复用；调用 `disposeApplicationContainer()` 后必须停
   worker、关闭已打开的数据库连接，并允许后续请求重建新 container。
-- dashboard server functions 必须通过 dashboard request context 认证。
+- dashboard server functions 必须通过 `requireDashboardContextMiddleware` 或等价的
+  dashboard request context 认证。
 - webhook route 不导入也不调用 dashboard request context，Source token / provider secret
   认证路径保持独立。
 - client components、route loaders、serialized data 不导入 server-only container，也不返回

@@ -166,7 +166,6 @@ describe("destinations section table", () => {
     expect(powerButton.getAttribute("class")).toContain("text-destructive");
     expect(powerButton.getAttribute("class")).toContain("drop-shadow");
   });
-
 });
 
 function destinationFixture(

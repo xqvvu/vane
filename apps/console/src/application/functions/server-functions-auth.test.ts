@@ -13,17 +13,21 @@ const serverFunctionFiles = readdirSync(functionsDir).filter((fileName) =>
 
 describe("dashboard server function auth gates", () => {
   it.each(serverFunctionFiles)(
-    "creates dashboard request context in every server function exported by %s",
+    "requires dashboard middleware in every private server function exported by %s",
     (fileName) => {
       const source = readFileSync(path.join(functionsDir, fileName), "utf8");
       const chunks = serverFunctionChunks(source);
-      const publicFunctionNames = new Set(["getAuthBootstrapFn", "getRequestLocaleFn"]);
+      const publicFunctionNames = new Set([
+        "getAuthBootstrapFn",
+        "getDashboardSessionFn",
+        "getRequestLocaleFn",
+      ]);
 
       expect(chunks.map((chunk) => chunk.name)).not.toHaveLength(0);
 
       for (const chunk of chunks) {
         expect(
-          chunk.source.includes("requireDashboardRequestContext("),
+          chunk.source.includes(".middleware([requireDashboardContextMiddleware])"),
           `${fileName}:${chunk.name}`,
         ).toBe(!publicFunctionNames.has(chunk.name));
       }
