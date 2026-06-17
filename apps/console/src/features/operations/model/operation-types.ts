@@ -85,7 +85,20 @@ export interface DeliveryDetail {
 
 export interface WorkerRunNotice {
   claimed: number;
+  reclaimed: number;
   succeeded: number;
   failed: number;
   retrying: number;
+  startedAt: IsoDateTimeString;
+  finishedAt: IsoDateTimeString;
+  health?: WorkerHealthSnapshot;
+  runnerHealth?: WorkerHealthSnapshot;
+}
+
+export interface WorkerHealthSnapshot {
+  state: "idle" | "running" | "failed";
+  lastStartedAt: IsoDateTimeString | null;
+  lastFinishedAt: IsoDateTimeString | null;
+  lastError: string | null;
+  lastRun: Omit<WorkerRunNotice, "health" | "runnerHealth"> | null;
 }

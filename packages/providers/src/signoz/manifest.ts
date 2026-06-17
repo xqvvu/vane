@@ -15,6 +15,6 @@ export const signozProviderManifest = {
     parse: true,
     testPayload: true,
     sourceToken: true,
-    providerSecret: true,
+    additionalSharedSecret: true,
   },
 } satisfies ProviderManifest<"signoz">;

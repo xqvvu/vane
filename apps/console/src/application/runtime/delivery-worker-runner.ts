@@ -1,8 +1,18 @@
 import "@tanstack/react-start/server-only";
+import { redactText } from "@vane/core";
+
 import type {
   DeliveryWorkerRunOptions,
   DeliveryWorkerRunResult,
 } from "#/application/services/delivery-worker.ts";
+
+export interface DeliveryWorkerRunnerHealthSnapshot {
+  state: "idle" | "running" | "failed";
+  lastStartedAt: string | null;
+  lastFinishedAt: string | null;
+  lastError: string | null;
+  lastRun: DeliveryWorkerRunResult | null;
+}
 
 export interface DeliveryWorkerTimer {
   unref?: () => void;
@@ -25,11 +35,13 @@ export interface DeliveryWorkerRunnerOptions {
   limit?: number;
   setIntervalFn?: DeliveryWorkerSetInterval;
   clearIntervalFn?: DeliveryWorkerClearInterval;
+  onRunComplete?: (result: DeliveryWorkerRunResult) => void;
   onError?: (error: unknown) => void;
 }
 
 export interface DeliveryWorkerRunner {
   runNow(): Promise<DeliveryWorkerRunResult | null>;
+  getHealth(): DeliveryWorkerRunnerHealthSnapshot;
   stop(): void;
 }
 
@@ -43,19 +55,49 @@ export function createDeliveryWorkerRunner(
   const clearIntervalFn =
     options.clearIntervalFn ?? ((timer) => clearInterval(timer as ReturnType<typeof setInterval>));
   let running: Promise<DeliveryWorkerRunResult> | null = null;
+  let health: DeliveryWorkerRunnerHealthSnapshot = {
+    state: "idle",
+    lastStartedAt: null,
+    lastFinishedAt: null,
+    lastError: null,
+    lastRun: null,
+  };
 
   async function runNow(): Promise<DeliveryWorkerRunResult | null> {
     if (running) {
       return null;
     }
 
+    health = {
+      ...health,
+      state: "running",
+      lastStartedAt: new Date().toISOString(),
+      lastError: null,
+    };
     running = options.worker.runOnce({
       limit: options.limit,
     });
 
     try {
-      return await running;
+      const result = await running;
+
+      health = {
+        state: "idle",
+        lastStartedAt: result.startedAt,
+        lastFinishedAt: result.finishedAt,
+        lastError: null,
+        lastRun: result,
+      };
+      options.onRunComplete?.(result);
+
+      return result;
     } catch (error) {
+      health = {
+        ...health,
+        state: "failed",
+        lastFinishedAt: new Date().toISOString(),
+        lastError: redactText(error instanceof Error ? error.message : String(error)),
+      };
       options.onError?.(error);
       return null;
     } finally {
@@ -71,6 +113,9 @@ export function createDeliveryWorkerRunner(
 
   return {
     runNow,
+    getHealth() {
+      return { ...health };
+    },
     stop() {
       clearIntervalFn(timer);
     },

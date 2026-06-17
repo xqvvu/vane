@@ -17,6 +17,7 @@ import {
 import {
   DeliveryWorker,
   type DeliveryWorkerOptions,
+  type DeliveryWorkerRunResult,
 } from "#/application/services/delivery-worker.ts";
 import {
   WebhookIntakeService,
@@ -65,6 +66,8 @@ export interface ApplicationContainerOptions {
   createWorkerRunner?: (options: DeliveryWorkerRunnerOptions) => DeliveryWorkerRunner;
   workerIntervalMs?: number;
   workerBatchSize?: number;
+  workerStaleRunningMs?: number;
+  onWorkerRunComplete?: (result: DeliveryWorkerRunResult) => void;
   onWorkerError?: (error: unknown) => void;
 }
 
@@ -107,6 +110,8 @@ export function createApplicationContainer(
   const createWorkerRunner = options.createWorkerRunner ?? createDeliveryWorkerRunner;
   const workerIntervalMs = options.workerIntervalMs ?? env.VANE_WORKER_INTERVAL_MS;
   const workerBatchSize = options.workerBatchSize ?? env.VANE_WORKER_BATCH_SIZE;
+  const workerStaleRunningMs = options.workerStaleRunningMs ?? env.VANE_WORKER_STALE_RUNNING_MS;
+  const onWorkerRunComplete = options.onWorkerRunComplete ?? logWorkerRunComplete;
   const onWorkerError =
     options.onWorkerError ??
     ((error) => {
@@ -154,6 +159,7 @@ export function createApplicationContainer(
       return new DeliveryWorker({
         store: getOrOpenSqliteStore(),
         destinations: container.getDestinationRegistry(),
+        staleRunningTimeoutMs: workerStaleRunningMs,
         ...workerOptions,
       });
     },
@@ -163,6 +169,7 @@ export function createApplicationContainer(
         worker: container.createDeliveryWorker(),
         intervalMs: workerIntervalMs,
         limit: workerBatchSize,
+        onRunComplete: onWorkerRunComplete,
         onError: onWorkerError,
       });
 
@@ -240,6 +247,22 @@ const hot = (
 ).hot;
 
 hot?.dispose(disposeApplicationContainer);
+
+function logWorkerRunComplete(result: DeliveryWorkerRunResult): void {
+  if (result.claimed === 0 && result.reclaimed === 0) {
+    return;
+  }
+
+  console.info("Vane delivery worker completed", {
+    claimed: result.claimed,
+    reclaimed: result.reclaimed,
+    succeeded: result.succeeded,
+    failed: result.failed,
+    retrying: result.retrying,
+    startedAt: result.startedAt,
+    finishedAt: result.finishedAt,
+  });
+}
 
 function createDefaultBetterAuthDatabase(): SqliteDatabase {
   const database = createSqliteDatabase({

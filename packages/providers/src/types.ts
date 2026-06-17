@@ -86,14 +86,14 @@ export interface ProviderCapabilities {
   parse: boolean;
   testPayload: boolean;
   sourceToken: boolean;
-  providerSecret: boolean;
+  additionalSharedSecret: boolean;
 }
 
 export const ProviderCapabilitiesSchema = z.strictObject({
   parse: z.boolean(),
   testPayload: z.boolean(),
   sourceToken: z.boolean(),
-  providerSecret: z.boolean(),
+  additionalSharedSecret: z.boolean(),
 });
 
 export interface ProviderManifest<Provider extends SourceProvider = SourceProvider> {

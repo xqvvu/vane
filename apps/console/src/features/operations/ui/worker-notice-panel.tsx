@@ -14,10 +14,26 @@ export function WorkerNoticePanel({ notice }: { notice: WorkerRunNotice }) {
       <AlertDescription>
         {t("operations.workerNotice.description", {
           claimed: notice.claimed,
+          reclaimed: notice.reclaimed,
           succeeded: notice.succeeded,
           failed: notice.failed,
           retrying: notice.retrying,
         })}
+        {notice.health ? (
+          <span className="text-muted-foreground mt-1 block text-xs">
+            {t("operations.workerNotice.health", {
+              state: notice.health.state,
+              lastFinishedAt: notice.health.lastFinishedAt ?? t("common.placeholder.empty"),
+            })}
+          </span>
+        ) : null}
+        {notice.runnerHealth?.lastError ? (
+          <span className="text-destructive mt-1 block text-xs">
+            {t("operations.workerNotice.lastError", {
+              error: notice.runnerHealth.lastError,
+            })}
+          </span>
+        ) : null}
       </AlertDescription>
     </Alert>
   );

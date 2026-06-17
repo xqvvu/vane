@@ -136,7 +136,7 @@ BETTER_AUTH_SECRET="$(openssl rand -hex 32)" docker compose up --build
 
 ### 1. MVP 功能收尾
 
-- 完善 Source 生命周期：创建、禁用、更新、token 轮换、provider secret 校验与审计提示。
+- 完善 Source 生命周期：创建、禁用、更新、token 轮换、额外共享密钥校验与审计提示。
 - 完善 webhook intake：payload size limit、redaction、provider parse error、duplicate request dedupe、快速 accepted response。
 - 完善 Event detail：normalized fields、raw debug view、route match 解释、关联 deliveries。
 - 完善 Delivery detail：rendered payload、attempt history、last error、next attempt、手动 retry。

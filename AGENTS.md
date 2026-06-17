@@ -87,7 +87,7 @@ Dashboard auth and webhook auth are separate paths:
 - Dashboard routes, loaders, server functions, and API routes that touch
   user-owned data or runtime configuration must verify dashboard auth on the
   server.
-- Webhook intake endpoints authenticate with Source tokens or provider secrets,
+- Webhook intake endpoints authenticate with Source tokens or Vane-side additional shared secrets,
   not browser dashboard sessions.
 
 ### Frontend Architecture
@@ -373,7 +373,7 @@ Use shadcn for shared UI primitives and app composition.
 
 ## Security And Data Exposure
 
-- Keep source tokens, token hashes, provider secrets, destination secrets,
+- Keep source tokens, token hashes, additional shared secrets, destination secrets,
   signing secrets, SMTP passwords, webhook URLs with embedded secrets, and raw
   sensitive config server-side.
 - Redact raw payloads and headers before ordinary UI display or logging.

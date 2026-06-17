@@ -15,6 +15,6 @@ export const alertmanagerProviderManifest = {
     parse: true,
     testPayload: true,
     sourceToken: true,
-    providerSecret: true,
+    additionalSharedSecret: true,
   },
 } satisfies ProviderManifest<"alertmanager">;

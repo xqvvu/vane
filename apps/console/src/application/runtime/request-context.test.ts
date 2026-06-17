@@ -134,6 +134,13 @@ function createFakeContainer(): ApplicationContainer {
     },
     ensureDeliveryWorkerRunner: () => ({
       runNow: async () => null,
+      getHealth: () => ({
+        state: "idle",
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastError: null,
+        lastRun: null,
+      }),
       stop: () => {},
     }),
     getBetterAuthDatabase: () => {

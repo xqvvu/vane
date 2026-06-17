@@ -30,7 +30,7 @@ describe("provider registry", () => {
         parse: true,
         testPayload: true,
         sourceToken: true,
-        providerSecret: true,
+        additionalSharedSecret: true,
       },
     });
     for (const item of catalog) {

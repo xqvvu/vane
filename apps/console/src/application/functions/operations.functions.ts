@@ -84,9 +84,15 @@ export const runDeliveryWorkerFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(RunWorkerInputSchema)
   .handler(async ({ data, context }) => {
-    const worker = context.dashboardRequest.container.createDeliveryWorker();
-
-    return worker.runOnce({
+    const container = context.dashboardRequest.container;
+    const worker = container.createDeliveryWorker();
+    const result = await worker.runOnce({
       limit: data?.limit ?? 10,
     });
+
+    return {
+      ...result,
+      health: worker.getHealth(),
+      runnerHealth: container.ensureDeliveryWorkerRunner().getHealth(),
+    };
   });

@@ -330,7 +330,7 @@ describe("webhook intake service", () => {
     store.close();
   });
 
-  it("accepts configured provider secrets without a Vane source token", () => {
+  it("accepts configured additional shared secrets without a Vane source token", () => {
     const store = createStore();
     const service = new WebhookIntakeService({
       store,

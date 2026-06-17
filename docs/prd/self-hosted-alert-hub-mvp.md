@@ -91,7 +91,7 @@ separate worker service, or SaaS-style tenancy.
 47. As an SRE, I want an Event detail view, so that I can see normalized fields, raw payload, route matches, and deliveries from one place.
 48. As an SRE, I want a Delivery detail view, so that I can see destination config metadata, rendered payload, attempts, and errors.
 49. As an SRE, I want Vane to have a simple owner/admin dashboard login, so that the admin UI is not public.
-50. As an SRE, I want webhook intake to authenticate with Source tokens or provider secrets instead of user sessions, so that upstream systems can send alerts without browser auth.
+50. As an SRE, I want webhook intake to authenticate with Source tokens or Vane-side additional shared secrets instead of user sessions, so that upstream systems can send alerts without browser auth.
 51. As the first operator of a new deployment, I want the first registered user to become owner/admin, so that setup works without a SaaS tenant flow.
 52. As a self-hosting operator, I want one deployment to represent one team or environment, so that I do not need to configure organizations, tenants, or billing.
 53. As a self-hosting operator, I want Vane to run with SQLite by default, so that I do not need to operate Redis or Postgres for a small private alert hub.
@@ -118,7 +118,7 @@ separate worker service, or SaaS-style tenancy.
 - Vane will be built as a self-hosted Alert Hub for SRE and operations teams, not as a SaaS product and not as a general-purpose automation platform.
 - The user-facing product language should emphasize Alerts, Sources, Routes, Destinations, Deliveries, Retry, and History.
 - The internal persistence model should use immutable inbound Events. An Event records that a Source sent a webhook at a specific time, even if the payload represents a firing alert, a resolved alert, a test notification, a heartbeat, or a generic webhook.
-- Each Source represents one upstream sender and should have its own webhook URL and token or provider secret. All providers should not share one unauthenticated generic endpoint.
+- Each Source represents one upstream sender and should have its own webhook URL, Source token, and optionally a Vane-side additional shared secret. All providers should not share one unauthenticated generic endpoint.
 - Source provider support should be implemented through a provider adapter registry. Provider adapters parse inbound payloads, validate or recognize payload shape, extract normalized fields, compute fingerprints or idempotency hints, and preserve provider metadata.
 - Provider adapters must not perform routing, outbound delivery, retry handling, or destination secret access.
 - Normalized event fields should include at least title, message, severity, status, fingerprint, labels, and occurred time.
@@ -156,7 +156,7 @@ separate worker service, or SaaS-style tenancy.
 - JSON payloads and config blobs should be validated with schemas at the boundary.
 - The MVP stable external surface should be inbound webhook endpoints and, once implemented, TOML import/export format.
 - Dashboard APIs may evolve with the UI and do not need to become a stable public REST API in the MVP.
-- The authentication model should be single-workspace self-hosted. Dashboard access uses Better Auth; webhook intake uses Source tokens or provider secrets.
+- The authentication model should be single-workspace self-hosted. Dashboard access uses Better Auth; webhook intake uses Source tokens or Vane-side additional shared secrets.
 - The first registered user may become owner/admin. SaaS-style tenants, billing, organizations, and complex invitation systems are out of scope.
 - Message templates should use safe deterministic interpolation over normalized alert/event fields. Vane must not execute user-provided JavaScript, shell, SQL, or dynamic code from routes or templates.
 - Starter/demo MCP code should not be treated as part of the Vane product architecture and should be removed or isolated when product work begins.

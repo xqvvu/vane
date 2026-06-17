@@ -1,6 +1,10 @@
 import "@tanstack/react-start/server-only";
 import { redactText } from "@vane/core";
-import type { DestinationSendContext, DestinationRegistry } from "@vane/destinations";
+import type {
+  DestinationRetryHint,
+  DestinationSendContext,
+  DestinationRegistry,
+} from "@vane/destinations";
 
 import type { ClaimedDelivery, DeliveryRepository } from "#/infra/sqlite/deliveries.ts";
 
@@ -68,6 +72,7 @@ export class DeliveryExecution {
         error: sendResult.errorMessage,
         responseStatus: sendResult.statusCode ?? undefined,
         responseBody: redactOptionalText(sendResult.responseBody),
+        retryHint: sendResult.retryHint,
         finishedAt: now,
       });
     } catch (error) {
@@ -82,12 +87,13 @@ export class DeliveryExecution {
     delivery: ClaimedDelivery,
     input: {
       error: string;
+      retryHint?: DestinationRetryHint;
       responseStatus?: number;
       responseBody?: string;
       finishedAt: string;
     },
   ): "retrying" | "failed" {
-    const retryAt = this.nextRetryAt(delivery, input.finishedAt);
+    const retryAt = this.nextRetryAt(delivery, input.finishedAt, input.retryHint);
     const updated = this.store.deliveries.markFailed({
       deliveryId: delivery.job.id,
       attemptId: delivery.attempt.id,
@@ -101,7 +107,15 @@ export class DeliveryExecution {
     return updated.state === "pending" ? "retrying" : "failed";
   }
 
-  private nextRetryAt(delivery: ClaimedDelivery, now: string): string | null {
+  private nextRetryAt(
+    delivery: ClaimedDelivery,
+    now: string,
+    retryHint: DestinationRetryHint = "retryable",
+  ): string | null {
+    if (retryHint === "not_retryable") {
+      return null;
+    }
+
     if (delivery.job.attemptCount >= delivery.job.maxAttempts) {
       return null;
     }

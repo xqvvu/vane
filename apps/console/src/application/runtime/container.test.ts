@@ -51,6 +51,13 @@ describe("application container", () => {
     const createWorkerRunner: NonNullable<ApplicationContainerOptions["createWorkerRunner"]> =
       vi.fn<NonNullable<ApplicationContainerOptions["createWorkerRunner"]>>(() => ({
         runNow: async () => null,
+        getHealth: () => ({
+          state: "idle",
+          lastStartedAt: null,
+          lastFinishedAt: null,
+          lastError: null,
+          lastRun: null,
+        }),
         stop: () => {},
       }));
     const container = createApplicationContainer({
@@ -101,6 +108,13 @@ describe("application container", () => {
     const authDatabase = { close: authDatabaseClose };
     const runner = {
       runNow: async () => null,
+      getHealth: () => ({
+        state: "idle" as const,
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastError: null,
+        lastRun: null,
+      }),
       stop: vi.fn<() => void>(),
     };
     const container = createApplicationContainer({
@@ -142,6 +156,13 @@ describe("application container", () => {
     const authDatabase = { close: authDatabaseClose };
     const runner = {
       runNow: async () => null,
+      getHealth: () => ({
+        state: "idle" as const,
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastError: null,
+        lastRun: null,
+      }),
       stop: vi.fn<() => void>(),
     };
     const container = createApplicationContainer({

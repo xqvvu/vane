@@ -70,6 +70,9 @@ export interface DeliveryDedupeKeyRow {
 
 export interface DeliveryRepository {
   enqueueForEvent(input: EnqueueDeliveriesInput): EnqueueDeliveriesResult;
+  reclaimStaleRunning(
+    input: ReclaimStaleRunningDeliveriesInput,
+  ): ReclaimStaleRunningDeliveriesResult;
   claimNext(input: ClaimDeliveriesInput): ClaimedDelivery[];
   markSucceeded(input: MarkDeliverySucceededInput): DeliveryJob;
   markFailed(input: MarkDeliveryFailedInput): DeliveryJob;
@@ -116,6 +119,16 @@ export interface DedupedDelivery {
 export interface ClaimDeliveriesInput {
   now?: IsoDateTimeString;
   limit: number;
+}
+
+export interface ReclaimStaleRunningDeliveriesInput {
+  staleBefore: IsoDateTimeString;
+  now?: IsoDateTimeString;
+  error?: string;
+}
+
+export interface ReclaimStaleRunningDeliveriesResult {
+  reclaimed: number;
 }
 
 export interface ClaimedDelivery {
@@ -290,6 +303,50 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
       }
 
       return { created, deduped };
+    });
+  }
+
+  reclaimStaleRunning(
+    input: ReclaimStaleRunningDeliveriesInput,
+  ): ReclaimStaleRunningDeliveriesResult {
+    return this.context.runInTransaction(() => {
+      const now = input.now ?? this.context.now();
+      const error = input.error ?? "Delivery attempt timed out before completion";
+      const rows = rowsAs<DeliveryRow & { attempt_id: string }>(
+        this.context.db
+          .prepare(
+            `
+              SELECT deliveries.*, delivery_attempts.id AS attempt_id
+              FROM deliveries
+              JOIN delivery_attempts ON delivery_attempts.delivery_id = deliveries.id
+              WHERE deliveries.state = 'running'
+                AND delivery_attempts.state = 'running'
+                AND delivery_attempts.started_at <= ?
+              ORDER BY delivery_attempts.started_at
+            `,
+          )
+          .all(input.staleBefore),
+      );
+      let reclaimed = 0;
+
+      for (const row of rows) {
+        const current = requireDelivery(this.getJob(row.id));
+
+        if (current.state !== "running") {
+          continue;
+        }
+
+        this.markFailed({
+          deliveryId: row.id,
+          attemptId: row.attempt_id,
+          error,
+          retryAt: current.attemptCount < current.maxAttempts ? now : null,
+          finishedAt: now,
+        });
+        reclaimed += 1;
+      }
+
+      return { reclaimed };
     });
   }
 

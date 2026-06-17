@@ -100,6 +100,43 @@ describe("delivery execution", () => {
     ]);
   });
 
+  it("records non-retryable destination failures without scheduling another attempt", async () => {
+    const succeeded: Parameters<DeliveryRepository["markSucceeded"]>[0][] = [];
+    const failed: Parameters<DeliveryRepository["markFailed"]>[0][] = [];
+    const store = createExecutionStore({ succeeded, failed, failedState: "failed" });
+    const destinations = {
+      async send() {
+        return {
+          ok: false,
+          errorKind: "configuration_error",
+          retryHint: "not_retryable",
+          errorMessage: "Destination rejected request",
+          statusCode: 400,
+          responseBody: "bad config",
+          renderedPayload: {},
+        };
+      },
+    } satisfies Pick<DestinationRegistry, "send">;
+    const execution = new DeliveryExecution({ store, destinations });
+
+    await expect(
+      execution.execute(createClaimedDelivery({ attemptCount: 1, maxAttempts: 3 }), now),
+    ).resolves.toBe("failed");
+
+    expect(succeeded).toEqual([]);
+    expect(failed).toEqual([
+      {
+        deliveryId: "delivery-1",
+        attemptId: "attempt-1",
+        error: "Destination rejected request",
+        retryAt: null,
+        responseStatus: 400,
+        responseBody: "bad config",
+        finishedAt: now,
+      },
+    ]);
+  });
+
   it("records thrown sender errors as final failures once attempts are exhausted", async () => {
     const succeeded: Parameters<DeliveryRepository["markSucceeded"]>[0][] = [];
     const failed: Parameters<DeliveryRepository["markFailed"]>[0][] = [];

@@ -4,6 +4,13 @@ const store = { id: "store" };
 const destinations = { id: "destinations" };
 const runner = {
   runNow: vi.fn<() => void>(),
+  getHealth: vi.fn<() => unknown>(() => ({
+    state: "idle",
+    lastStartedAt: null,
+    lastFinishedAt: null,
+    lastError: null,
+    lastRun: null,
+  })),
   stop: vi.fn<() => void>(),
 };
 const container = {

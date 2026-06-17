@@ -1,7 +1,6 @@
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { describe, expect, it } from "vitest";
 
-import { ConfigurationService } from "#/application/services/configuration.ts";
 import { DeliveryWorker } from "#/application/services/delivery-worker.ts";
 import { openSqliteStore } from "#/infra/sqlite/store.ts";
 
@@ -87,9 +86,12 @@ describe("delivery worker", () => {
 
     expect(result).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 1,
       failed: 0,
       retrying: 0,
+      startedAt: now,
+      finishedAt: now,
     });
     expect(detail?.job.state).toBe("succeeded");
     expect(detail?.job.attemptCount).toBe(1);
@@ -174,9 +176,12 @@ describe("delivery worker", () => {
 
     expect(result).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 1,
       failed: 0,
       retrying: 0,
+      startedAt: now,
+      finishedAt: now,
     });
     expect(calls[0]?.url).toBe("https://open.feishu.cn/open-apis/bot/v2/hook/example");
     expect(detail?.renderedPayload).toMatchObject({
@@ -252,9 +257,12 @@ describe("delivery worker", () => {
 
     expect(result).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 1,
       failed: 0,
       retrying: 0,
+      startedAt: now,
+      finishedAt: now,
     });
     expect(calls[0]?.url).toBe("https://hooks.slack.com/services/example");
     expect(detail?.renderedPayload).toMatchObject({
@@ -331,9 +339,12 @@ describe("delivery worker", () => {
 
     expect(result).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 1,
       failed: 0,
       retrying: 0,
+      startedAt: now,
+      finishedAt: now,
     });
     expect(calls[0]?.url).toBe("https://mail-gateway.example.test/send");
     expect(JSON.parse(calls[0]?.init.body as string)).toMatchObject({
@@ -379,9 +390,12 @@ describe("delivery worker", () => {
 
     expect(first).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 0,
       failed: 0,
       retrying: 1,
+      startedAt: now,
+      finishedAt: now,
     });
     expect(afterFirst?.job.state).toBe("pending");
     expect(afterFirst?.job.nextAttemptAt).toBe("2026-06-09T08:01:00.000Z");
@@ -394,9 +408,12 @@ describe("delivery worker", () => {
 
     expect(second).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 0,
       failed: 1,
       retrying: 0,
+      startedAt: "2026-06-09T08:01:00.000Z",
+      finishedAt: "2026-06-09T08:01:00.000Z",
     });
     expect(afterSecond?.job.state).toBe("failed");
     expect(afterSecond?.job.nextAttemptAt).toBeNull();
@@ -440,9 +457,12 @@ describe("delivery worker", () => {
 
     expect(result).toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 0,
       failed: 0,
       retrying: 1,
+      startedAt: now,
+      finishedAt: now,
     });
     expect(detail?.job.state).toBe("pending");
     expect(detail?.job.lastError).toBe(
@@ -460,93 +480,180 @@ describe("delivery worker", () => {
     store.close();
   });
 
-  it("retries a failed delivery successfully after destination config is fixed", async () => {
+  it("reclaims stale running deliveries before claiming new work", async () => {
     const store = createStore();
-    const delivery = seedDelivery(store, { maxAttempts: 1 });
-    const calls: string[] = [];
-    const worker = new DeliveryWorker({
+    const delivery = seedDelivery(store, { maxAttempts: 2 });
+    const firstWorker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
       now: () => now,
       sendContext: {
+        fetch: async () =>
+          new Promise(() => {
+            // Simulate a process that claimed the job and never completed the attempt.
+          }),
+      },
+    });
+
+    void firstWorker.runOnce();
+    await Promise.resolve();
+
+    const running = store.deliveries.get(delivery.id);
+
+    expect(running?.job.state).toBe("running");
+    expect(running?.attempts).toMatchObject([
+      {
+        attemptNumber: 1,
+        state: "running",
+        finishedAt: null,
+      },
+    ]);
+
+    const calls: string[] = [];
+    const recoveryWorker = new DeliveryWorker({
+      store,
+      destinations: createDefaultDestinationRegistry(),
+      now: () => "2026-06-09T08:06:00.000Z",
+      staleRunningTimeoutMs: 5 * 60_000,
+      sendContext: {
         fetch: async (url) => {
           calls.push(String(url));
-
-          if (String(url) === "https://example.test/fixed-webhook") {
-            return {
-              ok: true,
-              status: 202,
-              text: async () => "accepted",
-            };
-          }
-
           return {
-            ok: false,
-            status: 500,
-            text: async () => "bad endpoint",
+            ok: true,
+            status: 202,
+            text: async () => "accepted",
           };
         },
       },
     });
 
-    const first = await worker.runOnce();
-    const failed = store.deliveries.get(delivery.id);
+    const result = await recoveryWorker.runOnce();
+    const recovered = store.deliveries.get(delivery.id);
 
-    expect(first).toEqual({
+    expect(result).toEqual({
       claimed: 1,
-      succeeded: 0,
-      failed: 1,
-      retrying: 0,
-    });
-    expect(failed?.job.state).toBe("failed");
-    expect(calls).toEqual(["https://example.test/webhook"]);
-
-    const configuration = new ConfigurationService({
-      store,
-      destinations: createDefaultDestinationRegistry(),
-    });
-
-    configuration.updateDestination({
-      id: "destination-1",
-      config: {
-        url: "https://example.test/fixed-webhook",
-      },
-    });
-    const retried = store.deliveries.retryNow({
-      deliveryId: delivery.id,
-      requestedAt: "2026-06-09T08:05:00.000Z",
-    });
-
-    expect(retried.state).toBe("pending");
-    expect(retried.maxAttempts).toBe(2);
-
-    const second = await worker.runOnce({
-      now: "2026-06-09T08:05:00.000Z",
-    });
-    const succeeded = store.deliveries.get(delivery.id);
-
-    expect(second).toEqual({
-      claimed: 1,
+      reclaimed: 1,
       succeeded: 1,
       failed: 0,
       retrying: 0,
+      startedAt: "2026-06-09T08:06:00.000Z",
+      finishedAt: "2026-06-09T08:06:00.000Z",
     });
-    expect(calls).toEqual(["https://example.test/webhook", "https://example.test/fixed-webhook"]);
-    expect(succeeded?.job.state).toBe("succeeded");
-    expect(succeeded?.job.attemptCount).toBe(2);
-    expect(succeeded?.attempts).toMatchObject([
+    expect(calls).toEqual(["https://example.test/webhook"]);
+    expect(recovered?.job.state).toBe("succeeded");
+    expect(recovered?.job.attemptCount).toBe(2);
+    expect(recovered?.attempts).toMatchObject([
       {
         attemptNumber: 1,
         state: "failed",
-        responseStatus: 500,
+        error: "Delivery attempt timed out before completion",
+        finishedAt: "2026-06-09T08:06:00.000Z",
       },
       {
         attemptNumber: 2,
         state: "succeeded",
-        responseStatus: 202,
+        finishedAt: "2026-06-09T08:06:00.000Z",
       },
     ]);
 
     store.close();
+  });
+
+  it("reclaims exhausted stale running deliveries as final failures", async () => {
+    const store = createStore();
+    const delivery = seedDelivery(store, { maxAttempts: 1 });
+    const firstWorker = new DeliveryWorker({
+      store,
+      destinations: createDefaultDestinationRegistry(),
+      now: () => now,
+      sendContext: {
+        fetch: async () =>
+          new Promise(() => {
+            // Simulate a process that claimed the job and never completed the attempt.
+          }),
+      },
+    });
+
+    void firstWorker.runOnce();
+    await Promise.resolve();
+
+    const recoveryWorker = new DeliveryWorker({
+      store,
+      destinations: createDefaultDestinationRegistry(),
+      now: () => "2026-06-09T08:06:00.000Z",
+      staleRunningTimeoutMs: 5 * 60_000,
+      sendContext: {
+        fetch: async () => {
+          throw new Error("should not send exhausted reclaimed delivery");
+        },
+      },
+    });
+
+    const result = await recoveryWorker.runOnce();
+    const recovered = store.deliveries.get(delivery.id);
+
+    expect(result).toEqual({
+      claimed: 0,
+      reclaimed: 1,
+      succeeded: 0,
+      failed: 0,
+      retrying: 0,
+      startedAt: "2026-06-09T08:06:00.000Z",
+      finishedAt: "2026-06-09T08:06:00.000Z",
+    });
+    expect(recovered?.job.state).toBe("failed");
+    expect(recovered?.job.finishedAt).toBe("2026-06-09T08:06:00.000Z");
+    expect(recovered?.attempts).toMatchObject([
+      {
+        attemptNumber: 1,
+        state: "failed",
+        error: "Delivery attempt timed out before completion",
+      },
+    ]);
+
+    store.close();
+  });
+
+  it("exposes last-run health state with redacted worker failures", async () => {
+    const store = createStore();
+    seedDelivery(store);
+    const worker = new DeliveryWorker({
+      store,
+      destinations: createDefaultDestinationRegistry(),
+      now: () => now,
+      sendContext: {
+        fetch: async () => ({
+          ok: true,
+          status: 202,
+          text: async () => "accepted",
+        }),
+      },
+    });
+
+    const result = await worker.runOnce();
+
+    expect(worker.getHealth()).toEqual({
+      state: "idle",
+      lastStartedAt: now,
+      lastFinishedAt: now,
+      lastError: null,
+      lastRun: result,
+    });
+
+    const failingWorker = new DeliveryWorker({
+      store,
+      destinations: createDefaultDestinationRegistry(),
+      now: () => now,
+      sendContext: {},
+    });
+    store.close();
+
+    await expect(failingWorker.runOnce()).rejects.toThrow(/database/i);
+    expect(failingWorker.getHealth()).toMatchObject({
+      state: "failed",
+      lastStartedAt: now,
+      lastFinishedAt: now,
+    });
+    expect(failingWorker.getHealth().lastError).not.toContain("token=");
   });
 });

@@ -1,4 +1,5 @@
 import "@tanstack/react-start/server-only";
+import { redactText } from "@vane/core";
 import type { DestinationSendContext, DestinationRegistry } from "@vane/destinations";
 
 import {
@@ -14,6 +15,7 @@ export interface DeliveryWorkerOptions {
   sendContext?: DestinationSendContext;
   now?: () => string;
   batchSize?: number;
+  staleRunningTimeoutMs?: number;
   backoff?: DeliveryBackoffOptions;
 }
 
@@ -24,9 +26,20 @@ export interface DeliveryWorkerRunOptions {
 
 export interface DeliveryWorkerRunResult {
   claimed: number;
+  reclaimed: number;
   succeeded: number;
   failed: number;
   retrying: number;
+  startedAt: string;
+  finishedAt: string;
+}
+
+export interface DeliveryWorkerHealthSnapshot {
+  state: "idle" | "running" | "failed";
+  lastStartedAt: string | null;
+  lastFinishedAt: string | null;
+  lastError: string | null;
+  lastRun: DeliveryWorkerRunResult | null;
 }
 
 export class DeliveryWorker {
@@ -34,6 +47,14 @@ export class DeliveryWorker {
   private readonly execution: DeliveryExecution;
   private readonly now: () => string;
   private readonly batchSize: number;
+  private readonly staleRunningTimeoutMs: number;
+  private readonly health: DeliveryWorkerHealthSnapshot = {
+    state: "idle",
+    lastStartedAt: null,
+    lastFinishedAt: null,
+    lastError: null,
+    lastRun: null,
+  };
 
   constructor(options: DeliveryWorkerOptions) {
     this.store = options.store;
@@ -45,27 +66,67 @@ export class DeliveryWorker {
     });
     this.now = options.now ?? (() => new Date().toISOString());
     this.batchSize = options.batchSize ?? 10;
+    this.staleRunningTimeoutMs = options.staleRunningTimeoutMs ?? 5 * 60_000;
+  }
+
+  getHealth(): DeliveryWorkerHealthSnapshot {
+    return { ...this.health };
   }
 
   async runOnce(options: DeliveryWorkerRunOptions = {}): Promise<DeliveryWorkerRunResult> {
     const now = options.now ?? this.now();
-    const claimed = this.store.deliveries.claimNext({
-      now,
-      limit: options.limit ?? this.batchSize,
-    });
-    const result: DeliveryWorkerRunResult = {
-      claimed: claimed.length,
-      succeeded: 0,
-      failed: 0,
-      retrying: 0,
-    };
 
-    for (const delivery of claimed) {
-      addOutcome(result, await this.execution.execute(delivery, now));
+    this.health.state = "running";
+    this.health.lastStartedAt = now;
+    this.health.lastError = null;
+
+    try {
+      const reclaimed = this.store.deliveries.reclaimStaleRunning({
+        staleBefore: staleRunningCutoff(now, this.staleRunningTimeoutMs),
+        now,
+      });
+      const claimed = this.store.deliveries.claimNext({
+        now,
+        limit: options.limit ?? this.batchSize,
+      });
+      const result: DeliveryWorkerRunResult = {
+        claimed: claimed.length,
+        reclaimed: reclaimed.reclaimed,
+        succeeded: 0,
+        failed: 0,
+        retrying: 0,
+        startedAt: now,
+        finishedAt: now,
+      };
+
+      for (const delivery of claimed) {
+        addOutcome(result, await this.execution.execute(delivery, now));
+      }
+
+      result.finishedAt = options.now ?? this.now();
+      this.health.state = "idle";
+      this.health.lastFinishedAt = result.finishedAt;
+      this.health.lastRun = result;
+
+      return result;
+    } catch (error) {
+      const finishedAt = options.now ?? this.now();
+
+      this.health.state = "failed";
+      this.health.lastFinishedAt = finishedAt;
+      this.health.lastError = redactWorkerError(error);
+
+      throw error;
     }
-
-    return result;
   }
+}
+
+function staleRunningCutoff(now: string, timeoutMs: number): string {
+  return new Date(new Date(now).valueOf() - timeoutMs).toISOString();
+}
+
+function redactWorkerError(error: unknown): string {
+  return redactText(error instanceof Error ? error.message : String(error));
 }
 
 function addOutcome(result: DeliveryWorkerRunResult, outcome: DeliveryExecutionOutcome): void {

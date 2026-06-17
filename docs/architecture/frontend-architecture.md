@@ -248,7 +248,7 @@ server function 规则：
 
 - 所有输入用 schema 校验。
 - 每个 dashboard server function 都重新建立 dashboard request context 并验证 session/角色。
-- 每个 webhook API route 都用 Source token 或 provider secret 认证，不依赖 dashboard session。
+- 每个 webhook API route 都用 Source token 或 Vane 侧额外共享密钥认证，不依赖 dashboard session。
 - 返回值是 client-safe DTO，不返回 repository row、raw secret config、database object 或
   service 实例。
 
@@ -265,7 +265,7 @@ dashboard route 的 `beforeLoad` 可以存在，但它只是 UX guard：提前�
   owner/admin 权限。
 - 触碰 user-owned data、runtime config、Source/Destination/Route/Event/Delivery 的 API route
   必须在 handler 内鉴权。
-- webhook intake API route 用 Source token 或 provider secret 鉴权，不能因为 dashboard
+- webhook intake API route 用 Source token 或 Vane 侧额外共享密钥鉴权，不能因为 dashboard
   `beforeLoad` 已经保护了 UI 就跳过服务端认证。
 
 原因很简单：`beforeLoad` 保护的是浏览器导航体验，不保护 server function URL、API route、

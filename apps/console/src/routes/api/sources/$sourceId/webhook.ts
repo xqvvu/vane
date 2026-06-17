@@ -68,11 +68,6 @@ export async function handleSourceWebhookPost(input: {
         eventId: result.eventId,
         deliveriesCreated: result.createdDeliveryIds.length,
         deliveriesDeduped: result.dedupedDeliveryCount,
-        matchedRoutes: result.matchedRoutes.map((match) => ({
-          routeId: match.routeId,
-          routeName: match.routeName,
-          destinationIds: match.destinationIds,
-        })),
       },
       { status: 202 },
     );

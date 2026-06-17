@@ -131,7 +131,7 @@ Adapter runtime 只接收已经解析、已经校验的 typed config。`secretRe
 Provider adapter 可以接收 typed Source config，用于 severity 映射、默认 labels、metadata
 选择等解析行为。Webhook 认证由 console 服务层统一执行。
 
-Provider manifest 可以声明认证需求或可选认证方式，例如 Source token、共享 header secret、
+Provider manifest 可以声明认证需求或可选认证方式，例如 Source token、额外共享密钥、
 未来 HMAC 签名等。Adapter 声明认证形态，console 负责表单、secret refs、认证执行和审计。
 
 MVP 中 provider parse 每次返回单个规范化告警，对应一个入站 Webhook 形成的告警事件。包含

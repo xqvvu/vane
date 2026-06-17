@@ -115,7 +115,7 @@ return service.acceptWebhook({
 | `requestId` | 从 `x-request-id` / `x-correlation-id` 读取；没有时保持 `null`。 |
 | `now` | 当前请求时间的 ISO 字符串，可在测试中注入 clock。 |
 | `dashboardSession` / `currentUser` | 仅 dashboard context 拥有，来自 Better Auth session，并要求 `owner` 或 `admin`。 |
-| `sourceToken` / `hasProviderSecret` | 仅 webhook context 拥有，来自 Source token 或 provider secret header。 |
+| `sourceToken` / `hasProviderSecret` | 仅 webhook context 拥有，来自 Source token 或额外共享密钥 header。 |
 
 Dashboard context 与 webhook context 是两条不同认证边界：
 
@@ -123,7 +123,7 @@ Dashboard context 与 webhook context 是两条不同认证边界：
   `context.dashboardRequest`。该 middleware 内部调用
   `requireDashboardRequestContext()`，使用 Better Auth session，并拒绝非 owner/admin 用户。
 - Webhook API route 调用 `createWebhookRequestContext()`，只读取 Source token /
-  provider secret，不读取 dashboard session。上游监控系统不需要也不应该拥有浏览器
+  额外共享密钥，不读取 dashboard session。上游监控系统不需要也不应该拥有浏览器
   session。
 
 ---
@@ -167,7 +167,7 @@ export async function handleSourceWebhookPost(input: {
 }
 ```
 
-Webhook intake 认证是 Source token / provider secret；它不会调用
+Webhook intake 认证是 Source token / 额外共享密钥；它不会调用
 `requireDashboardRequestContext()`，也不会读取 Better Auth session。
 
 ### Worker
@@ -242,7 +242,7 @@ dispose 钩子里，避免不可见的全局挂载状态。
   worker、关闭已打开的数据库连接，并允许后续请求重建新 container。
 - dashboard server functions 必须通过 `requireDashboardContextMiddleware` 或等价的
   dashboard request context 认证。
-- webhook route 不导入也不调用 dashboard request context，Source token / provider secret
+- webhook route 不导入也不调用 dashboard request context，Source token / 额外共享密钥
   认证路径保持独立。
 - client components、route loaders、serialized data 不导入 server-only container，也不返回
   token hash、Destination secret、raw sensitive config。

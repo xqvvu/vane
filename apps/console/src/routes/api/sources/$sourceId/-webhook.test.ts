@@ -132,13 +132,6 @@ describe("source webhook API route", () => {
       eventId: "event-1",
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
-      matchedRoutes: [
-        {
-          routeId: "route-1",
-          routeName: "Critical checkout",
-          destinationIds: ["destination-1"],
-        },
-      ],
     });
 
     expect(testState.store?.history.getEventDetail("event-1")?.deliveries).toHaveLength(1);
@@ -169,13 +162,6 @@ describe("source webhook API route", () => {
       eventId: "event-1",
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
-      matchedRoutes: [
-        {
-          routeId: "route-1",
-          routeName: "Critical checkout",
-          destinationIds: ["destination-1"],
-        },
-      ],
     });
 
     const store = requireTestStore();
@@ -196,9 +182,12 @@ describe("source webhook API route", () => {
 
     await expect(worker.runOnce({ now })).resolves.toEqual({
       claimed: 1,
+      reclaimed: 0,
       succeeded: 1,
       failed: 0,
       retrying: 0,
+      startedAt: now,
+      finishedAt: now,
     });
 
     const eventDetail = store.history.getEventDetail("event-1");
@@ -279,20 +268,13 @@ describe("source webhook API route", () => {
       eventId: "event-1",
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
-      matchedRoutes: [
-        {
-          routeId: "route-1",
-          routeName: "Critical checkout",
-          destinationIds: ["destination-1"],
-        },
-      ],
     });
     expect(testState.store?.history.getEventDetail("event-1")?.event.rawHeaders).toMatchObject({
       "x-vane-source-token": "[REDACTED]",
     });
   });
 
-  it("accepts configured provider secrets without a Vane source token", async () => {
+  it("accepts configured additional shared secrets without a Vane source token", async () => {
     configureSourceRouteAndDestination({
       sourceConfig: {
         signingSecret: "provider-secret",
@@ -315,13 +297,6 @@ describe("source webhook API route", () => {
       eventId: "event-1",
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
-      matchedRoutes: [
-        {
-          routeId: "route-1",
-          routeName: "Critical checkout",
-          destinationIds: ["destination-1"],
-        },
-      ],
     });
     expect(testState.store?.history.getEventDetail("event-1")?.event.rawHeaders).toMatchObject({
       "x-vane-provider-secret": "[REDACTED]",
@@ -349,13 +324,6 @@ describe("source webhook API route", () => {
       eventId: "event-1",
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
-      matchedRoutes: [
-        {
-          routeId: "route-1",
-          routeName: "Critical checkout",
-          destinationIds: ["destination-1"],
-        },
-      ],
     });
     expect(secondResponse.status).toBe(202);
     await expectJson(secondResponse, {
@@ -363,13 +331,6 @@ describe("source webhook API route", () => {
       eventId: "event-3",
       deliveriesCreated: 0,
       deliveriesDeduped: 1,
-      matchedRoutes: [
-        {
-          routeId: "route-1",
-          routeName: "Critical checkout",
-          destinationIds: ["destination-1"],
-        },
-      ],
     });
 
     expect(
@@ -553,6 +514,13 @@ function createTestContainer(): ApplicationContainer {
     },
     ensureDeliveryWorkerRunner: () => ({
       runNow: async () => null,
+      getHealth: () => ({
+        state: "idle",
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastError: null,
+        lastRun: null,
+      }),
       stop: () => {},
     }),
     getBetterAuthDatabase: () => {
