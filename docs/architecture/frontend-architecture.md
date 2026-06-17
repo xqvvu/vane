@@ -22,7 +22,7 @@ Events / Deliveries 表格、详情面板、TOML 导入导出、worker 操作、
 
 1. `routes` 决定 URL、layout、search params、loader、beforeLoad 和薄渲染入口。
 2. `features` 按业务对象纵切 Sources、Routes、Destinations、Events、Deliveries。
-3. `application` 是 server function 与服务端 use case 边界。
+3. `server` 是 server-only 的分层后端：`*.functions.ts` 充当 controller 入口，按能力组织的 `*.service.ts` 承载业务逻辑；跨 client/server 的共享契约（命令 schema、DTO）放在 `@vane/core` 包。
 4. `integrations` 封装 TanStack Query、TanStack Router、Better Auth 的项目适配。
 5. `components/ui` 只保留 shadcn primitives，不知道 Vane 的领域。
 6. `components/common` 承载跨 feature 复用的 console UI 组合，但不拥有业务规则。
@@ -78,9 +78,30 @@ apps/console/src/
     tanstack-query/
     tanstack-router/
     better-auth/
-  application/
+  server/
+    functions/                # *.functions.ts controller 入口
+    runtime/                  # container、request context、dashboard session 类型
+    configuration/            # *.service.ts + TOML portability
+    sources/                  # source.service.ts
+    destinations/             # destination.service.ts
+    routes/                   # route.service.ts
+    deliveries/               # delivery-worker.service.ts
+    intake/                   # intake.service.ts
   infra/
+    sqlite/                   # connection, migrations, codecs, store assembly
+  repositories/
+    source/                   # source.interface.ts, source.helpers.ts, source.repository.ts
+    destination/
+    route/
+    intake/
+    delivery/
+    history/
+    settings/
 ```
+
+> 共享命令 schema、操作 DTO 等 client/server 契约放在 `@vane/core` 包；
+> 仅后端使用的类型（如 dashboard session 类型）就近放在 `server/runtime/`。
+> 不再保留 console 级的 `contracts/` 目录。
 
 ### `routes`
 
@@ -96,7 +117,7 @@ apps/console/src/
 - 渲染薄入口：把 loader/search/params 交给 feature screen 或 app shell，不在 route 文件里写
   大型表单、表格、详情面板和业务状态机。
 
-`routes` 不直接导入 `#/infra/*`、`#/application/runtime/container.ts`、SQLite store、仓储、
+`routes` 不直接导入 `#/infra/*`、`#/server/runtime/container.ts`、SQLite store、仓储、
 worker、secret helper 或任何 server-only 基础设施。route 文件可以导入 server functions 和
 feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
 
@@ -188,18 +209,42 @@ feature。
 直接读写 SQLite。库升级或 API 变化优先在 `integrations` 消化，feature 层只使用稳定的项目级
 helper。
 
-### `application`
+### 共享契约（`@vane/core`）
 
-`application` 是服务端应用边界，继续承接已有文档里的职责：
+client 与 server 之间的共享契约放在 `@vane/core` 包，必须保持 env-neutral：只包含类型、Zod
+schema、DTO 与命令/结果投影，不导入 `#/server/*`、`#/infra/*`、`node:*` 或带 TanStack Start
+import protection 的模块。相关文件：
 
-- TanStack Start server functions。
-- server use cases / services，例如 configuration、intake、operations、delivery worker。
-- application container 与 request context。
-- dashboard auth、webhook request context、TOML portability 等服务端编排。
+- `@vane/core` 的 `configuration-commands.ts`：Source/Destination/Route/Settings/导入导出的
+  server function command schema。
+- `@vane/core` 的 `operations.ts`：Events/Deliveries 列表与详情 DTO、worker 健康投影等跨边界形状。
+- `server/runtime/dashboard-session.ts`：`DashboardSession` 与 dashboard auth 错误类型；仅后端
+  消费，因此不放进共享包，而是就近放在 runtime。
+
+实现私有的 option/input/row-mapping 类型仍贴近实现文件，不强制外置。详见
+`docs/adr/0004-console-plain-layered-structure.md`。
+
+### `server`
+
+`server` 是 server-only 的分层后端：`*.functions.ts` 是 controller 入口，`*.service.ts` 是
+按能力组织的服务层。它**按能力分目录**，不是按技术种类堆放：
+
+- `server/functions`：TanStack Start server functions 与 function middleware（controller 层 /
+  client/server 边界适配）。
+- `server/runtime`：application container、request context、dashboard auth 实现、dashboard
+  session 类型、delivery worker runner 等跨能力运行时基础设施。
+- `server/configuration`：Source/Destination/Route/Settings 配置管理与 TOML portability。各能力
+  各有 `*.service.ts`（`source.service.ts` 等），没有聚合门面——container 直接按能力暴露
+  `createSourceService`/`createDestinationService`/… 工厂。
+- `server/sources`、`server/destinations`、`server/routes`：各能力的服务端 `*.service.ts`，与
+  `features/<同名>` 左右对称。
+- `server/intake`：webhook 接入解析与 `intake.service.ts`（`WebhookIntakeService`）。
+- `server/deliveries`：`delivery-worker.service.ts`、delivery execution、operations server functions。
 
 server functions 是浏览器进入服务端业务能力的默认边界。它们负责 schema validation、认证、
-建立 request context、调用 use case、返回 secret-safe DTO。新增 dashboard 数据读写不要绕过
-server functions 直接从 client/route loader 访问 store。
+建立 request context、调用 service、返回 secret-safe DTO。新增 dashboard 数据读写不要绕过
+server functions 直接从 client/route loader 访问 store。service 依赖 `server/runtime`，runtime
+不反向依赖具体 service；`server/*` 不依赖 `features/*`。
 
 ### `infra`
 
@@ -210,7 +255,7 @@ server functions 直接从 client/route loader 访问 store。
 - 未来若有 server-only transport、secret storage，也属于这里。
 
 `infra` 不为前端提供导入面。任何出现在 client bundle、route loader serialized data、query
-data 或 feature UI 中的数据，都必须先经过 `application` 投影成安全 DTO。
+data 或 feature UI 中的数据，都必须先经过 `server` 投影成安全 DTO。
 
 ---
 
@@ -222,7 +267,7 @@ Vane console 的数据流固定为：
 route validateSearch/params
   -> feature queryOptions
   -> TanStack Query cache
-  -> application server function
+  -> server function
   -> service/use case
   -> infra SQLite / provider registry / destination registry
 ```

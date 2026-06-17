@@ -1,11 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import {
-  retryDeliveryFn,
-  runDeliveryWorkerFn,
-} from "#/application/functions/operations.functions.ts";
 import { operationsQueryKeys } from "#/features/operations/api/operations.queries.ts";
+import { retryDeliveryFn, runDeliveryWorkerFn } from "#/server/functions/operations.functions.ts";
 
 export function useOperationMutations() {
   const queryClient = useQueryClient();

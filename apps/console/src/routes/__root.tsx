@@ -1,14 +1,14 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { useSuspenseQuery, type QueryClient } from "@tanstack/react-query";
+import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import { Toaster } from "#/components/ui/sonner.tsx";
 import { TooltipProvider } from "#/components/ui/tooltip.tsx";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
 import { requestLocaleQueryOptions } from "#/i18n/i18n.queries.ts";
 import { VaneIntlProvider } from "#/i18n/provider.tsx";
-import TanStackQueryDevtools from "#/integrations/tanstack/query/devtools";
-import TanStackRouterDevtools from "#/integrations/tanstack/router/devtools";
 import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
 import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
@@ -40,18 +40,24 @@ function Root({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
+
       <body className="h-dvh">
         <VaneIntlProvider locale={data.locale}>
           <TooltipProvider>{children}</TooltipProvider>
         </VaneIntlProvider>
 
         <Toaster position="top-right" />
+
         <TanStackDevtools
           config={{
             position: "bottom-right",
           }}
-          plugins={[TanStackRouterDevtools, TanStackQueryDevtools]}
+          plugins={[
+            { name: "Tanstack Query", render: <ReactQueryDevtoolsPanel /> },
+            { name: "Tanstack Router", render: <TanStackRouterDevtoolsPanel /> },
+          ]}
         />
+
         <Scripts />
       </body>
     </html>

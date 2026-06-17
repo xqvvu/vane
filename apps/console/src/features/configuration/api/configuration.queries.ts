@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { listConfigurationFn } from "#/application/functions/configuration.functions.ts";
+import { listConfigurationFn } from "#/server/functions/configuration.functions.ts";
 
 export const configurationQueryKeys = {
   all: ["configuration"] as const,

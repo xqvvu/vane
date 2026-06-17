@@ -2,11 +2,11 @@ import { RiDownloadLine, RiFileCodeLine, RiUploadLine } from "@remixicon/react";
 import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
 
+import { TomlEditor } from "#/components/codemirror/toml-editor";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { TomlEditor } from "#/integrations/codemirror/toml-editor.tsx";
 
 export function PortableConfigForm({
   value,

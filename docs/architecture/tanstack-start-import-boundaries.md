@@ -1,5 +1,13 @@
 # TanStack Start 导入边界重构设计
 
+> 政策已定稿（以 `AGENTS.md` 与 `docs/adr/0004-console-plain-layered-structure.md` 为准）：
+> **默认不加任何 import-protection marker**；有且仅有模块**自身代码直接 import 或使用**了
+> 环境专属 API 时才加——server 侧指 `node:*`、SQLite 驱动、filesystem、`process.env`/secret、
+> `better-auth` server runtime；client 侧指 `window`/`document`/`navigator`/`localStorage`/DOM。
+> 不再因为"概念上属于服务端"或"转手 import 了另一个 server 模块"就加 marker——这类传递性由
+> build 在真正的边界（marked 模块或 `node:*`）兜底。本文下方仍保留首轮重构的历史设计；其中使用
+> `application/` 旧路径，现已重命名为 `server/`，且 `server-only` 已按上述规则收敛。
+
 本文档设计一次小步重构：把 Vane console 中过度耦合的 server-only 文件拆成更清晰的
 共享契约、RPC 门面和服务端执行层。目标不是削弱安全边界，而是让文件组织更贴近
 TanStack Start 的运行模型，减少因为导入链被 import protection 拦截而导致的重构阻力。
@@ -58,8 +66,8 @@ server-only 实现。例如：
 ## 2. 目标
 
 1. **共享优先。** 输入 schema、DTO 类型、表单值、查询过滤器、展示模型、纯业务规则等默认保持
-   environment-neutral。只有导入了环境特定 API 或转手导入环境特定模块，才声明 server-only /
-   client-only。
+   environment-neutral。只有模块**自身直接 import 或使用**了环境专属 API 时才声明 server-only /
+   client-only；转手 import 另一个环境专属模块**不**触发 marker，由 build 在真正的边界兜底。
 2. **server function 保持薄入口。** `*.functions.ts` 只静态导入 TanStack Start、
    middleware 和共享契约；服务端执行依赖在 handler 或 server middleware 内获得。
 3. **import protection 按依赖触发。** SQLite、container、request context、auth server、
@@ -128,16 +136,18 @@ model、helper 或服务模块；不能在静态导入链中引入 import-protec
 | query key factory、queryOptions、mutation hook | feature `api/*` | 不加 |
 | `createServerFn` RPC 定义 | `application/functions/*.functions.ts` | 不加 |
 | server function middleware，且只在 `.server(...)` 内动态导入 runtime | `application/functions/*middleware.ts` | 不加 |
-| service/use case implementation | `application/services/*` | 只有导入 env-specific API/module 时才加 |
-| application container、request context、dashboard auth | `application/runtime/*` | 加 `server-only` |
-| SQLite connection、migration、repository、store | `infra/sqlite/*` | 加 `server-only`，纯错误类/纯类型除外 |
-| Better Auth server config / owner bootstrap | `lib/*` 或 `integrations/better-auth/*` | 加 `server-only` |
-| browser-only adapter，例如 auth client、CodeMirror impl | `.client.ts(x)` 或 `client-only` | 加 client protection |
+| `*.service.ts` 业务实现 | `server/<能力>/*` | 仅当自身直接 import/使用 env-specific API 时才加（如 `node:crypto`、`process.env`） |
+| application container、dashboard auth、request context | `server/runtime/*` | 仅当自身直接触碰 env-specific API 时才加（如 container 用 `better-auth`/`env`/驱动）；纯类型/中转模块不加 |
+| SQLite connection、migration | `infra/sqlite/connection.ts`、`migrate.ts` | 加 `server-only`（直接 `node:*`/驱动） |
+| SQLite repository、store、codecs、context | `infra/sqlite/*` | 默认不加；仅当自身直接 import `node:*`/驱动时才加（如 `context.ts` 用 `node:crypto`） |
+| Better Auth server config / owner bootstrap | `lib/*` 或 `integrations/better-auth/*` | 加 `server-only`（直接 `better-auth`/`process.env`） |
+| browser-only adapter，例如 auth client、CodeMirror impl | `.client.ts(x)` 或 `client-only` | 仅当自身直接用浏览器 API 时加 client protection |
 
-判断标准：shared by default，server/client only by dependency。不要因为文件在
-`application/services` 这类目录里就自动加 `server-only`；如果删除 import protection 后该文件
-仍然会导入 SQLite、Node API、runtime container、request context、secrets 或浏览器 API，它才应该
-留在环境专属层。如果只是因为同文件里混了 schema/type 才变得 server-only，就拆文件。
+判断标准：shared by default，server/client only by **direct** dependency。不要因为文件在
+某个服务端目录里、或转手 import 了另一个服务端模块就自动加 `server-only`；只有当该文件**自身**
+直接 import/使用 SQLite 驱动、Node API、secrets、`better-auth` server 或浏览器 API 时，才加 marker。
+传递性泄漏由 build 在真正的边界（marked 模块或 `node:*`）报错兜底。如果只是因为同文件里混了
+schema/type 才变得 server-only，就拆文件。
 
 ---
 

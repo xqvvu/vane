@@ -7,11 +7,11 @@ import {
 } from "@vane/providers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ApplicationContainer } from "#/application/runtime/container.ts";
-import { DeliveryWorker } from "#/application/services/delivery-worker.ts";
-import { hashSourceToken, WebhookIntakeService } from "#/application/services/intake.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { handleSourceWebhookPost } from "#/routes/api/sources/$sourceId/webhook.ts";
+import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";
+import { hashSourceToken, WebhookIntakeService } from "#/server/intake/intake.service.ts";
+import type { ApplicationContainer } from "#/server/runtime/container.ts";
 
 const now = "2026-06-10T08:00:00.000Z";
 
@@ -500,8 +500,20 @@ function createTestContainer(): ApplicationContainer {
     getSqliteStore: () => requireTestStore(),
     getProviderRegistry: () => createDefaultProviderRegistry(),
     getDestinationRegistry: () => createDefaultDestinationRegistry(),
-    createConfigurationService: () => {
-      throw new Error("Configuration service is not used by webhook tests");
+    createSourceService: () => {
+      throw new Error("Configuration services are not used by webhook tests");
+    },
+    createDestinationService: () => {
+      throw new Error("Configuration services are not used by webhook tests");
+    },
+    createRouteService: () => {
+      throw new Error("Configuration services are not used by webhook tests");
+    },
+    createAppSettingsService: () => {
+      throw new Error("Configuration services are not used by webhook tests");
+    },
+    createConfigPortabilityService: () => {
+      throw new Error("Configuration services are not used by webhook tests");
     },
     createWebhookIntakeService() {
       return new WebhookIntakeService({

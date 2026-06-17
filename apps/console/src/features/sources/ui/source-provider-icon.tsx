@@ -29,5 +29,9 @@ function sourceProviderIconUrl(provider: SourceSummary["provider"]): string {
       return uptimeKumaIconUrl;
     case "generic":
       return webhookIconUrl;
+    default: {
+      const exhaustive: never = provider;
+      return exhaustive;
+    }
   }
 }
