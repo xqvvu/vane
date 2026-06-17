@@ -1,112 +1,76 @@
-# 应用容器与请求上下文（`apps/console/src/application`）
+# 应用容器与请求上下文（`apps/console/src/server/runtime`）
 
-本文档定义 Vane 在 TanStack Start 单体应用中的后端依赖组装方式。目标是让
-server functions、API routes、Better Auth、SQLite store 和 in-process delivery
-worker 都从同一个 server-only composition root 获取默认依赖，同时保持业务服务可以在
-测试中用 fake store / fake registry 直接构造。
+本文档定义 Vane 在 TanStack Start 单体应用中的后端依赖组装方式。当前代码采用朴素分层：server function / API route 作为入口，service 承载业务逻辑，SQLite repository 承载持久化。`server/runtime` 只放跨能力的运行时组装与请求上下文。
 
-Vane 的 MVP 约束不变：单进程、SQLite-first、server-only 后端运行时；不引入 NestJS
-风格 decorator IoC，也不引入第三方 DI 容器。
+Vane 的 MVP 约束不变：单进程、SQLite-first、server-only 后端运行时；不引入 NestJS 风格 decorator IoC，也不引入第三方 DI 容器。
 
 ---
 
 ## 1. 设计原则
 
-1. **composition root 只存在于 `apps/console`。** `@vane/core`、`@vane/providers`、
-   `@vane/destinations` 继续只暴露领域类型、provider parser、destination sender 和
-   registry，不依赖 console 的运行时。
-2. **长期依赖放在 app container。** SQLite store、provider registry、destination
-   registry、Better Auth 使用的 SQLite database、delivery worker runner 这类进程级
-   对象由 application container 统一创建和缓存。
-3. **请求级信息放在 request context。** dashboard session/current user、request id、
-   当前请求时间、headers 等每次请求不同的数据只在 request context 中存在，不能塞进全局
-   container。
-4. **入口层保持薄。** server functions 和 API routes 只做输入校验、建立 context、从
-   container 获取 service/use case、调用业务方法、映射响应。
-5. **服务仍然显式可注入。** `ConfigurationService`、`WebhookIntakeService`、
-   `DeliveryWorker` 等业务服务继续通过构造函数接收 `store`、registry、clock、send
-   context；测试可以不经过默认 container。
+1. **默认运行时只存在于 `apps/console`。** `@vane/core`、`@vane/providers`、`@vane/destinations` 只暴露共享 schema、provider parser、destination sender 和 registry，不依赖 console 的运行时。
+2. **长期依赖放在 application container。** SQLite store、provider registry、destination registry、Better Auth database、Better Auth instance、delivery worker runner 这类进程级对象由 `server/runtime/container.ts` 懒加载并缓存。
+3. **请求级信息放在 request context。** dashboard session/current user、request id、headers、当前请求时间等每次请求不同的数据只在 `server/runtime/request-context.ts` 创建的 context 中存在，不能塞进全局 container。
+4. **入口层保持薄。** server functions 和 API routes 只做输入校验、建立 context、从 container 获取 service、调用业务方法、映射 safe DTO。
+5. **service 显式可注入。** `SourceService`、`DestinationService`、`RouteService`、`AppSettingsService`、`ConfigPortabilityService`、`WebhookIntakeService`、`DeliveryWorker` 都通过构造函数接收依赖；测试可以不经过默认 container。
 
 ---
 
-## 2. App Container 负责什么
+## 2. Application Container
 
-`apps/console/src/application/runtime/container.ts` 是默认运行时的 composition root。它只
-在服务端导入，负责组装这些长期依赖：
+`apps/console/src/server/runtime/container.ts` 是默认 server-only wiring object。它直接 import Better Auth、env、SQLite connection/store 和默认 registry，因此保留 `import "@tanstack/react-start/server-only";`。
 
-默认 container 使用 ESM module cache 做懒加载：第一次调用 `getApplicationContainer()`
-时创建，后续在同一个 server module 实例内复用。不要把 container 挂到 `globalThis`；如果
-开发模式 HMR 或测试需要释放默认实例，调用 `disposeApplicationContainer()`，它会停止
-delivery worker runner，并关闭已打开的 SQLite store / Better Auth database。
+默认 container 使用 ESM module cache 做懒加载：第一次调用 `getApplicationContainer()` 时创建，后续在同一个 server module 实例内复用。不要把 container 挂到 `globalThis`。如果开发模式 HMR 或测试需要释放默认实例，调用 `disposeApplicationContainer()`；它会停止 delivery worker runner，并关闭已打开的 SQLite store / Better Auth database。
 
 | 依赖 | 生命周期 | 说明 |
 | --- | --- | --- |
-| `SqliteStore` | 默认 container 内懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、settings 等仓储。 |
+| `SqliteStore` | 默认 container 内懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、Settings 等仓储。 |
 | `ProviderRegistry` | 默认 container 内懒加载 | 默认来自 `createDefaultProviderRegistry()`，用于把 Source payload 解析为 normalized Event。 |
 | `DestinationRegistry` | 默认 container 内懒加载 | 默认来自 `createDefaultDestinationRegistry()`，用于校验 Destination config、preview 和 send。 |
-| Better Auth database | 默认 container 内懒加载 | 使用与 SQLite store 同一套连接工厂和 migrations。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务仓储。 |
+| Better Auth database | 默认 container 内懒加载 | 使用与 SQLite store 同一套 connection/migration 入口。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务 repository。 |
+| `VaneAuth` | 默认 container 内懒加载 | Better Auth server runtime，包含 HTTP handler 与 `api.getSession(...)`。 |
 | `DeliveryWorkerRunner` | 默认 container 内单例 | 由 `DeliveryWorker` + store + destination registry + env worker 配置组装，维持 MVP 的 in-process SQLite-backed delivery worker。 |
-| service factory | 每次调用新建 | `createConfigurationService()`、`createWebhookIntakeService()`、`createDeliveryWorker()` 返回显式注入依赖的服务实例。 |
+| service factory | 每次调用新建 | `createSourceService()`、`createDestinationService()`、`createRouteService()`、`createAppSettingsService()`、`createConfigPortabilityService()`、`createWebhookIntakeService()`、`createDeliveryWorker()` 返回显式注入依赖的 service 实例。 |
 
-推荐目录结构：
+当前目录形状：
 
 ```txt
-apps/console/src/application/
+apps/console/src/server/
   runtime/
-    container.ts         # 默认 composition root，缓存长期依赖
-    request-context.ts   # 每次请求创建 dashboard/webhook context
-    dashboard-auth.ts    # dashboard session 与角色检查
+    container.ts                 # 默认 server-only wiring object，缓存长期依赖
+    request-context.ts           # 每次请求创建 dashboard/webhook context
+    dashboard-session.ts         # DashboardSession 与 dashboard auth 错误类型
+    delivery-worker-runner.ts    # 进程内 worker interval runner
+    store.ts                     # 兼容窄 accessor，委托 application container
   functions/
-    dashboard-context.middleware.ts # client-safe server function middleware，动态导入 server-only context
-    *.functions.ts            # TanStack Start server functions，入口薄
-  services/
-    configuration.ts          # 业务服务：Sources/Routes/Destinations/settings
-    intake.ts                 # 业务服务：Webhook -> Event -> Deliveries
-    delivery-worker.ts        # 业务服务：认领并执行 Deliveries
-  portability/
-    config-portability.ts     # TOML import/export 与 secret refs
-  http/
-    webhook-request.ts        # 外部 webhook request 解析
-
-apps/console/src/routes/api/
-  auth/$.ts                   # Better Auth HTTP handler
-  sources/$sourceId/webhook.ts # 外部 webhook API route
+    auth.functions.ts
+    configuration.functions.ts
+    i18n.functions.ts
+    operations.functions.ts
+  configuration/
+    app-settings.service.ts
+    app-settings.service.types.ts
+    config-portability.service.ts
+    config-portability.service.types.ts
+    config-portability.ts
+  sources/source.service.ts
+  destinations/destination.service.ts
+  routes/route.service.ts
+  intake/
+    intake.service.ts
+    webhook-request.ts
+  deliveries/
+    delivery-worker.service.ts
+    delivery-execution.ts
 ```
 
-示例：
-
-```ts
-// dashboard server function
-export const createSourceFn = createServerFn({ method: "POST" })
-  .middleware([requireDashboardContextMiddleware])
-  .validator(CreateSourceCommandSchema)
-  .handler(async ({ data, context }) => {
-    const service = context.dashboardRequest.container.createConfigurationService();
-
-    return service.createSource(data);
-  });
-```
-
-```ts
-// webhook API route 内部
-const context = createWebhookRequestContext({ request });
-const service = context.container.createWebhookIntakeService();
-
-return service.acceptWebhook({
-  sourceId,
-  token: context.sourceToken,
-  headers: context.headersRecord,
-  payload,
-  receivedAt: context.now,
-});
-```
+Server function middleware 当前在 `apps/console/src/middlewares/dashboard-context.middleware.ts`，它是 client-importable 的 function middleware，内部 server callback 调用 `requireDashboardRequestContext()`。
 
 ---
 
-## 3. Request Context 负责什么
+## 3. Request Context
 
-`apps/console/src/application/runtime/request-context.ts` 每次请求创建，不缓存到全局对象。它
-负责请求级信息：
+`apps/console/src/server/runtime/request-context.ts` 每次请求创建，不缓存到全局对象。它负责请求级信息：
 
 | 字段 | 说明 |
 | --- | --- |
@@ -119,18 +83,17 @@ return service.acceptWebhook({
 
 Dashboard context 与 webhook context 是两条不同认证边界：
 
-- Dashboard server functions 使用 `requireDashboardContextMiddleware` 注入
-  `context.dashboardRequest`。该 middleware 内部调用
-  `requireDashboardRequestContext()`，使用 Better Auth session，并拒绝非 owner/admin 用户。
-- Webhook API route 调用 `createWebhookRequestContext()`，只读取 Source token /
-  额外共享密钥，不读取 dashboard session。上游监控系统不需要也不应该拥有浏览器
-  session。
+- Dashboard server functions 使用 `requireDashboardContextMiddleware` 注入 `context.dashboardRequest`。该 middleware 内部调用 `requireDashboardRequestContext()`，使用 Better Auth session，并拒绝非 owner/admin 用户。
+- Public auth probes（如 `getDashboardSessionFn`）不能使用会提前抛错的 dashboard middleware；它们可以在 handler 内直接调用 `requireDashboardRequestContext()`，捕获 auth error 后返回 `null`。
+- Webhook API route 调用 `createWebhookRequestContext()`，只读取 Source token / 额外共享密钥，不读取 dashboard session。上游监控系统不需要也不应该拥有浏览器 session。
+
+`server/runtime/dashboard-auth.ts` 已删除。session 类型和 auth error 在 `dashboard-session.ts`，实际鉴权逻辑在 `request-context.ts`。
 
 ---
 
 ## 4. 入口如何获取依赖
 
-### Server functions
+### Server Functions
 
 Dashboard server functions 的固定形状：
 
@@ -139,20 +102,15 @@ export const createSourceFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(CreateSourceCommandSchema)
   .handler(async ({ data, context }) => {
-    const service = context.dashboardRequest.container.createConfigurationService();
-
-    return service.createSource(data);
+    return context.dashboardRequest.container.createSourceService().createSource(data);
   });
 ```
 
-这个入口只负责 schema validation、通过 middleware 建立 dashboard context、取 service、
-调用业务方法。Sources、Routes、Destinations 的配置逻辑留在 `ConfigurationService`。
+这个入口只负责 schema validation、通过 middleware 建立 dashboard context、取 service、调用业务方法。Sources、Routes、Destinations、Settings、TOML portability 分别调用 container 暴露的对应 service factory，不再经过单一 `ConfigurationService` 门面。
 
-用于探测当前登录态的公共 server function（例如返回 `null` 以驱动登录页的函数）可以继续在
-handler 内显式调用 `requireDashboardRequestContext()` 并捕获认证错误；这类函数不能使用会在
-handler 之前抛错的 require middleware。
+`*.functions.ts` 是 RPC boundary 文件。它们可以被 route、feature query/mutation 和 client-safe code 导入。静态 imports 可以包含 TanStack Start、`@vane/core` 契约、server function middleware，以及只在 handler 内调用的窄 runtime accessor；不要在 module 初始化阶段调用 runtime/container。
 
-### API routes
+### API Routes
 
 Webhook API route 的固定形状：
 
@@ -162,13 +120,13 @@ export async function handleSourceWebhookPost(input: {
   request: Request;
 }): Promise<Response> {
   const context = createWebhookRequestContext({ request: input.request });
+  const service = context.container.createWebhookIntakeService();
 
   // 读取和限制 raw JSON payload 后，调用 WebhookIntakeService。
 }
 ```
 
-Webhook intake 认证是 Source token / 额外共享密钥；它不会调用
-`requireDashboardRequestContext()`，也不会读取 Better Auth session。
+Webhook intake 认证是 Source token / 额外共享密钥；它不会调用 `requireDashboardRequestContext()`，也不会读取 Better Auth session。
 
 ### Worker
 
@@ -178,12 +136,9 @@ Delivery worker 是进程级后台循环，默认通过 container 组装：
 const runner = getApplicationContainer().ensureDeliveryWorkerRunner();
 ```
 
-默认 container dispose 时必须停止该 runner。`container.ts` 在支持 HMR 的运行时中会注册
-`import.meta.hot.dispose(disposeApplicationContainer)`，避免开发模式热替换后遗留旧 interval
-和旧 SQLite 连接。
+默认 container dispose 时必须停止该 runner。`container.ts` 在支持 HMR 的运行时中注册 `import.meta.hot.dispose(disposeApplicationContainer)`，避免开发模式热替换后遗留旧 interval 和旧 SQLite 连接。
 
-手动触发 worker（例如 dashboard 的 run-once server function）不直接 `new
-DeliveryWorker`，而是：
+手动触发 worker（例如 dashboard 的 run-once server function）通过 request container 创建临时 worker：
 
 ```ts
 const worker = context.dashboardRequest.container.createDeliveryWorker();
@@ -195,9 +150,7 @@ return worker.runOnce({ limit });
 
 ## 5. 禁止暴露到客户端的内容
 
-以下内容只能留在 server-only 模块、SQLite、Better Auth adapter 或服务端响应前的局部变量
-里，不能出现在 client components、route loader serialized data、query data 或 server
-function 返回值中：
+以下内容只能留在 server-only 模块、SQLite、Better Auth adapter 或服务端响应前的局部变量里，不能出现在 client components、route loader serialized data、query data 或 server function 返回值中：
 
 - Source token 原文、`tokenHash`、provider signing secret。
 - Destination secret、webhook URL secret、签名密钥、raw sensitive config。
@@ -205,30 +158,20 @@ function 返回值中：
 - SQLite database handle、filesystem path、migration/runtime internals。
 - 未脱敏 raw headers/raw payload 中的敏感字段。
 
-可以返回给客户端的是受控投影，例如 Source/Destination summary、Route definition、Event
-normalized fields、Delivery state、脱敏后的 response body 或 raw debug data。
+可以返回给客户端的是受控投影，例如 Source/Destination summary、Route definition、Event normalized fields、Delivery state、脱敏后的 response body 或 raw debug data。
 
 ---
 
 ## 6. 为什么不使用 decorator IoC
 
-Vane 的后端是 TanStack Start 单体应用，MVP 需要的是清晰的 server-only 组装边界，而不是
-框架级对象生命周期管理。Decorator IoC 或第三方 DI 容器会带来几个问题：
+Vane 的后端是 TanStack Start 单体应用，MVP 需要的是清晰的 server-only 组装边界，而不是框架级对象生命周期管理。Decorator IoC 或第三方 DI 容器会带来几个问题：
 
 - 需要运行时 metadata、decorator 编译约定或额外包，增加自托管部署和调试成本。
-- 隐藏构造依赖，反而让 Sources、Routes、Destinations、Events、Deliveries 的服务边界不
-  如构造函数参数直观。
+- 隐藏构造依赖，反而让 Sources、Routes、Destinations、Events、Deliveries 的 service 边界不如构造函数参数直观。
 - 容易把 request session、request id、locale 等请求级状态错误注册成 singleton。
-- 对当前规模过度设计：Vane 只有一个进程、一个 SQLite store、少量 registry 和几个业务
-  service factory。
+- 对当前规模过度设计：Vane 只有一个进程、一个 SQLite store、少量 registry 和几个 service factory。
 
-推荐模式是普通 TypeScript object/factory DI：container 负责默认依赖，request context
-负责请求级依赖，业务服务保持显式构造函数。这足够支持测试替身、未来扩展 provider /
-destination，也不会牺牲 TanStack Start 的 client/server 分离。
-
-默认 container 的缓存位置应是 server-only ESM module scope，而不是 `globalThis`。这让默认
-运行时仍然是懒加载 singleton，同时把生命周期留在 `disposeApplicationContainer()` 和 HMR
-dispose 钩子里，避免不可见的全局挂载状态。
+推荐模式是普通 TypeScript object/factory：container 负责默认长期依赖，request context 负责请求级依赖，业务 service 保持显式构造函数。这足够支持测试替身、未来扩展 provider / destination，也不会牺牲 TanStack Start 的 client/server 分离。
 
 ---
 
@@ -236,13 +179,8 @@ dispose 钩子里，避免不可见的全局挂载状态。
 
 应保持这些测试方向：
 
-- container factory 可以用 fake store / fake registry 构造服务，证明业务服务没有写死全局
-  singleton。
-- 默认 container 通过 ESM module cache 复用；调用 `disposeApplicationContainer()` 后必须停
-  worker、关闭已打开的数据库连接，并允许后续请求重建新 container。
-- dashboard server functions 必须通过 `requireDashboardContextMiddleware` 或等价的
-  dashboard request context 认证。
-- webhook route 不导入也不调用 dashboard request context，Source token / 额外共享密钥
-  认证路径保持独立。
-- client components、route loaders、serialized data 不导入 server-only container，也不返回
-  token hash、Destination secret、raw sensitive config。
+- container factory 可以用 fake store / fake registry 构造 service，证明业务 service 没有写死全局 singleton。
+- 默认 container 通过 ESM module cache 复用；调用 `disposeApplicationContainer()` 后必须停 worker、关闭已打开的数据库连接，并允许后续请求重建新 container。
+- dashboard server functions 必须通过 `requireDashboardContextMiddleware` 或等价的 dashboard request context 认证。
+- webhook route 不导入也不调用 dashboard request context，Source token / 额外共享密钥认证路径保持独立。
+- client components、route loaders、serialized data 不导入 server-only container，也不返回 token hash、Destination secret、raw sensitive config。

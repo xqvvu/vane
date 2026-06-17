@@ -8,7 +8,6 @@ import {
   type CreateDestinationCommand,
   type DestinationSummary,
   type JsonObject,
-  type JsonValue,
   type PreviewDestinationDraftCommand,
   type PreviewDestinationCommand,
   type PreviewDestinationUpdateCommand,
@@ -16,43 +15,24 @@ import {
   type TestDestinationCommand,
   type UpdateDestinationCommand,
 } from "@vane/core";
-import type {
-  DestinationCatalogItem,
-  DestinationRegistry,
-  DestinationSendContext,
-} from "@vane/destinations";
+import type { DestinationCatalogItem } from "@vane/destinations";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
 import {
   createTestNormalizedEvent,
   mergeJsonObjects,
   parseDestinationConfig,
   redactNullableText,
 } from "#/server/configuration/configuration-support.ts";
-
-export interface DestinationServiceOptions {
-  store: SqliteStore;
-  destinations: DestinationRegistry;
-  destinationSendContext?: DestinationSendContext;
-}
-
-export interface DestinationTestResult {
-  destination: DestinationSummary;
-  success: boolean;
-  statusCode: number | null;
-  responseBody: string | null;
-  error: string | null;
-}
-
-export interface DestinationPreviewResult {
-  destination: DestinationSummary;
-  renderedPayload: JsonValue;
-}
+import type {
+  DestinationPreviewResult,
+  DestinationServiceOptions,
+  DestinationTestResult,
+} from "#/server/destinations/destination.service.types.ts";
 
 export class DestinationService {
-  private readonly store: SqliteStore;
-  private readonly destinations: DestinationRegistry;
-  private readonly destinationSendContext?: DestinationSendContext;
+  private readonly store: DestinationServiceOptions["store"];
+  private readonly destinations: DestinationServiceOptions["destinations"];
+  private readonly destinationSendContext: DestinationServiceOptions["destinationSendContext"];
 
   constructor(options: DestinationServiceOptions) {
     this.store = options.store;

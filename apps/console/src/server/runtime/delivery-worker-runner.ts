@@ -3,7 +3,7 @@ import { redactText } from "@vane/core";
 import type {
   DeliveryWorkerRunOptions,
   DeliveryWorkerRunResult,
-} from "#/server/deliveries/delivery-worker.service.ts";
+} from "#/server/deliveries/delivery-worker.service.types.ts";
 
 export interface DeliveryWorkerRunnerHealthSnapshot {
   state: "idle" | "running" | "failed";

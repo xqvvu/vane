@@ -143,8 +143,8 @@ RC 最低发布硬化要求：
 - [ ] 增加 release checklist。
 - [ ] 补充 Docker 生产部署文档。
 - [ ] 补充备份/恢复/升级/回滚文档。
-- [ ] 清理 `apps/console/README.md` starter 内容。
-- [ ] 对齐 README、package metadata、workspace 中的 Node/pnpm 版本说明。
+- [x] 清理 `apps/console/README.md` starter 内容。
+- [x] 对齐 README、package metadata、workspace 中的 Node/pnpm 版本说明。
 
 ### E. Fixtures 与贡献体验
 

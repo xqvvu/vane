@@ -5,6 +5,7 @@ import {
   VaneConfigurationSchema,
   vaneConfigurationToTomlDocument,
   vaneTomlDocumentToConfiguration,
+  type RouteDefinition,
   type JsonObject,
   type JsonValue,
   type VaneConfigDestination,
@@ -12,11 +13,10 @@ import {
   type VaneConfiguration,
   type VaneSecretReferences,
 } from "@vane/core";
-import type { RouteDefinition } from "@vane/core";
 import { parse, stringify } from "smol-toml";
 
-import type { DestinationRuntimeConfig } from "#/repositories/destination/destination.interface.ts";
-import type { SourceRuntimeConfig } from "#/repositories/source/source.interface.ts";
+import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
+import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface.ts";
 
 export type PortableConfiguration = VaneConfiguration;
 export type PortableDestination = VaneConfigDestination;

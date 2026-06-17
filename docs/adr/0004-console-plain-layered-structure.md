@@ -12,7 +12,7 @@
 
 把结构讲成、也整理成维护者熟悉的朴素分层，去掉听起来高级但不增信息的包装。
 
-1. **命名对齐传统分层**：服务端业务逻辑文件统一为 `*.service.ts`（如 `server/sources/source.service.ts`），SQLite 持久化文件统一为 `infra/sqlite/*.repository.ts`（如 `source.repository.ts`）。`*.functions.ts` 保留不变，作为 controller 入口——TanStack Start 的文件路由名是框架固定的，不强行改成 `*.route.ts`。
+1. **命名对齐传统分层**：服务端业务逻辑文件统一为 `*.service.ts`（如 `server/sources/source.service.ts`），导出的 service option/result 类型放在相邻的 `*.service.types.ts`；SQLite 持久化文件统一放在 `infra/sqlite/repositories/<module>/*.repository.ts`（如 `source.repository.ts`）。`*.functions.ts` 保留不变，作为 controller 入口——TanStack Start 的文件路由名是框架固定的，不强行改成 `*.route.ts`。
 
 2. **共享契约折进 `@vane/core`，删除 console 级 `contracts/` 目录**：client 与 server 都要用的 schema 必须 env-neutral。`@vane/core` 本就是共享 schema 的家（`SourceSummary`、`RouteDefinition` 等），因此把 console 的 command schema（`configuration-commands.ts`）和操作 DTO（`operations.ts`）一并放入，与既有 schema 作伴，边界天然安全。只有后端消费的 dashboard session 类型不进共享包，就近放在 `server/runtime/dashboard-session.ts`。0003 设立的顶层 `contracts/` 目录随之删除。
 
@@ -22,7 +22,7 @@
 
 ## 不变的部分
 
-- 顶层运行环境边界仍是第一边界，由 `frontend-boundaries.test.ts` 守护；`forbiddenImports` 的目录前缀（`#/server/*`、`#/infra/*` 等）不受文件改名影响。
+- 顶层运行环境边界仍是第一边界，由 TanStack Start import protection、console build 和 server function auth/boundary 测试共同守护；`#/server/*`、`#/infra/*` 等目录前缀仍不能被 client-safe route/feature 越界导入。
 - `server/` 仍按能力分目录，与 `features/<同名>` 左右对称。
 - dynamic import 仍只作边界适配；跨边界 DTO 仍单一定义、共享引用（现在共享点是 `@vane/core`）。
 
@@ -32,7 +32,7 @@
 
 1. 折叠契约：command schema 与 operations DTO 迁入 `@vane/core`，dashboard session 类型迁入 `server/runtime`，删除 `contracts/`。
 2. 移除 `ConfigurationService` 门面，container 改为按能力暴露工厂，重接 server function 与测试。
-3. 重命名为 `*.service.ts` / `*.repository.ts`，更新全部 import 与边界测试。
+3. 重命名为 `*.service.ts` / `*.service.types.ts` / `*.repository.ts`，更新全部 import 与边界测试。
 4. 重写 `AGENTS.md` / `frontend-architecture.md` 为朴素分层语言，并记录本 ADR。
 
 ## 不采用的替代方案

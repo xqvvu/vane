@@ -10,43 +10,17 @@ import {
   redactText,
   toJsonValue,
 } from "@vane/core";
-import type { JsonValue, RouteMatchResult } from "@vane/core";
-import type { ProviderParseFailure, ProviderRegistry } from "@vane/providers";
+import type { JsonValue } from "@vane/core";
+import type { ProviderParseFailure } from "@vane/providers";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
-
-export interface WebhookIntakeServiceOptions {
-  store: SqliteStore;
-  providers: ProviderRegistry;
-  now?: () => string;
-  dedupeWindowMs?: number;
-}
-
-export interface AcceptWebhookInput {
-  sourceId: string;
-  token?: string | null;
-  headers: Record<string, string>;
-  payload: unknown;
-  receivedAt?: string;
-}
-
-export interface AcceptedWebhook {
-  accepted: true;
-  eventId: string;
-  createdDeliveryIds: string[];
-  dedupedDeliveryCount: number;
-  matchedRoutes: RouteMatchResult[];
-}
-
-export type WebhookIntakeFailureReason =
-  | "source_not_found"
-  | "source_disabled"
-  | "invalid_token"
-  | "provider_parse_failed";
-
-export interface WebhookIntakeErrorOptions extends ErrorOptions {
-  eventId?: string;
-}
+import type {
+  AcceptedWebhook,
+  AcceptWebhookInput,
+  ParserFailureRecordInput,
+  WebhookIntakeErrorOptions,
+  WebhookIntakeFailureReason,
+  WebhookIntakeServiceOptions,
+} from "#/server/intake/intake.service.types.ts";
 
 export class WebhookIntakeError extends Error {
   readonly eventId: string | null;
@@ -63,8 +37,8 @@ export class WebhookIntakeError extends Error {
 }
 
 export class WebhookIntakeService {
-  private readonly store: SqliteStore;
-  private readonly providers: ProviderRegistry;
+  private readonly store: WebhookIntakeServiceOptions["store"];
+  private readonly providers: WebhookIntakeServiceOptions["providers"];
   private readonly now: () => string;
   private readonly dedupeWindowMs: number;
 
@@ -190,15 +164,7 @@ export class WebhookIntakeService {
     });
   }
 
-  private recordParserFailureEvent(input: {
-    sourceId: string;
-    sourceProvider: string;
-    payload: JsonValue;
-    rawPayload: JsonValue;
-    rawHeaders: Record<string, string>;
-    receivedAt: string;
-    error: unknown;
-  }): string {
+  private recordParserFailureEvent(input: ParserFailureRecordInput): string {
     const payloadHash = createStableHash(input.payload);
     const parseFailure = isProviderParseFailure(input.error) ? input.error : null;
     const errorMessage = redactText(
@@ -249,15 +215,7 @@ export class WebhookIntakeService {
     });
   }
 
-  private raiseProviderParseFailure(input: {
-    sourceId: string;
-    sourceProvider: string;
-    payload: JsonValue;
-    rawPayload: JsonValue;
-    rawHeaders: Record<string, string>;
-    receivedAt: string;
-    error: unknown;
-  }): never {
+  private raiseProviderParseFailure(input: ParserFailureRecordInput): never {
     const eventId = this.recordParserFailureEvent(input);
 
     throw new WebhookIntakeError(

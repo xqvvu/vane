@@ -1,48 +1,18 @@
 import { redactText } from "@vane/core";
-import type { DestinationSendContext, DestinationRegistry } from "@vane/destinations";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
 import {
   DeliveryExecution,
-  type DeliveryBackoffOptions,
   type DeliveryExecutionOutcome,
 } from "#/server/deliveries/delivery-execution.ts";
-
-export interface DeliveryWorkerOptions {
-  store: SqliteStore;
-  destinations: DestinationRegistry;
-  sendContext?: DestinationSendContext;
-  now?: () => string;
-  batchSize?: number;
-  staleRunningTimeoutMs?: number;
-  backoff?: DeliveryBackoffOptions;
-}
-
-export interface DeliveryWorkerRunOptions {
-  now?: string;
-  limit?: number;
-}
-
-export interface DeliveryWorkerRunResult {
-  claimed: number;
-  reclaimed: number;
-  succeeded: number;
-  failed: number;
-  retrying: number;
-  startedAt: string;
-  finishedAt: string;
-}
-
-export interface DeliveryWorkerHealthSnapshot {
-  state: "idle" | "running" | "failed";
-  lastStartedAt: string | null;
-  lastFinishedAt: string | null;
-  lastError: string | null;
-  lastRun: DeliveryWorkerRunResult | null;
-}
+import type {
+  DeliveryWorkerHealthSnapshot,
+  DeliveryWorkerOptions,
+  DeliveryWorkerRunOptions,
+  DeliveryWorkerRunResult,
+} from "#/server/deliveries/delivery-worker.service.types.ts";
 
 export class DeliveryWorker {
-  private readonly store: SqliteStore;
+  private readonly store: DeliveryWorkerOptions["store"];
   private readonly execution: DeliveryExecution;
   private readonly now: () => string;
   private readonly batchSize: number;

@@ -1,329 +1,143 @@
-# TanStack Start 导入边界重构设计
+# TanStack Start 导入边界规范
 
-> 政策已定稿（以 `AGENTS.md` 与 `docs/adr/0004-console-plain-layered-structure.md` 为准）：
-> **默认不加任何 import-protection marker**；有且仅有模块**自身代码直接 import 或使用**了
-> 环境专属 API 时才加——server 侧指 `node:*`、SQLite 驱动、filesystem、`process.env`/secret、
-> `better-auth` server runtime；client 侧指 `window`/`document`/`navigator`/`localStorage`/DOM。
-> 不再因为"概念上属于服务端"或"转手 import 了另一个 server 模块"就加 marker——这类传递性由
-> build 在真正的边界（marked 模块或 `node:*`）兜底。本文下方仍保留首轮重构的历史设计；其中使用
-> `application/` 旧路径，现已重命名为 `server/`，且 `server-only` 已按上述规则收敛。
+本文档记录 Vane console 当前的 client/server 导入边界。历史上这里曾是一份 `application/` 目录拆分设计稿；当前代码已经收敛为 `server/` + `infra/sqlite/repositories/` + `@vane/core` 共享契约，旧设计稿不再作为执行依据。
 
-本文档设计一次小步重构：把 Vane console 中过度耦合的 server-only 文件拆成更清晰的
-共享契约、RPC 门面和服务端执行层。目标不是削弱安全边界，而是让文件组织更贴近
-TanStack Start 的运行模型，减少因为导入链被 import protection 拦截而导致的重构阻力。
-
-适用范围：`apps/console/src`。不改变产品行为、不改变认证模型、不改变 SQLite-first 单进程
-架构。
+适用范围：`apps/console/src`。产品范围以 `docs/prd/self-hosted-alert-hub-mvp.md` 为准；后端依赖组装以 `docs/architecture/application-container.md` 为准；朴素分层决策见 `docs/adr/0004-console-plain-layered-structure.md`。
 
 ---
 
-## 当前落地状态
+## 1. 核心规则
 
-截至 2026-06-16，第一批低风险重构已经落地：
-
-- 新增 `apps/console/src/application/contracts/configuration-commands.ts`，承载
-  configuration server functions 与 `ConfigurationService` 共同使用的 command schemas 和
-  command types。
-- `application/functions/configuration.functions.ts` 改为静态导入 shared contract，不再为了
-  validator schema 静态导入 server-only service implementation。
-- `application/services/configuration.ts` 继续保持 server-only，只负责业务实现，并从 shared
-  contract 导入 validators/types。
-- `application/functions/auth.functions.ts` 不再静态导入 application runtime；公共 auth 探测
-  server functions 在 handler 内动态导入 `container.ts` 或 `request-context.ts`。
-- 具体导入错误交给 TanStack Start import protection 在编译期暴露；仓库只保留现有
-  `frontend-boundaries.test.ts` 的大边界守护，不额外维护一套静态 import 解析器。
-- `AGENTS.md` 已记录这条规范，后续新增 server function contract 时按相同模式组织。
+1. **默认不加 import-protection marker。** 普通 `.ts` / `.tsx` 文件默认保持 environment-neutral。
+2. **只在模块自身直接触碰环境专属 API 时加 marker。** Server 侧包括 `node:*`、SQLite driver、filesystem、`process.env` / secret config、Better Auth server runtime；client 侧包括 `window`、`document`、`navigator`、`localStorage`、DOM。
+3. **不因为目录名或转手 import 加 marker。** 一个模块只是概念上属于服务端，或只是 import 了另一个 server module，不自动加 `server-only`。TanStack Start build 会在 marked module 或 `node:*` 进入 client-safe import chain 时失败。
+4. **共享契约放在 `@vane/core` 或 feature `model/*`。** Command schema、DTO、查询过滤器、表单值、展示模型和纯函数应保持 env-neutral。
+5. **server function 是 RPC boundary。** `*.functions.ts` 可以被 route、feature query/mutation 和 client-safe code 导入；其中的 handler 只在服务端执行。
 
 ---
 
-## 1. 背景
+## 2. 当前目录分类
 
-TanStack Start 里有三类不同的代码：
-
-1. **共享代码。** 普通 `.ts` / `.tsx` 文件默认可以被服务端和客户端导入。这里适合放 schema、
-   DTO、纯函数、格式化 helper、表单 model、query key 输入类型等。
-2. **RPC 门面。** `*.functions.ts` 通过 `createServerFn` 定义 server function。它可以被
-   route loader、feature api、client component 间接导入；handler 内部逻辑只在服务端执行，
-   客户端构建会得到 RPC stub。
-3. **执行环境专属代码。** 触碰 SQLite、filesystem、Node API、server env、secrets、Better Auth
-   server adapter、request headers 或浏览器 API 的模块，需要 import protection。
-
-现在仓库里 `server-only` 使用偏宽。一些文件既导出可共享的 schema/type，又包含
-server-only 实现。例如：
-
-- `application/services/configuration.ts` 同时导出 command schemas、command types 和
-  `ConfigurationService`，并且文件顶部标记 `server-only`。
-- `application/functions/configuration.functions.ts` 为了使用 validator schema，静态导入
-  `application/services/configuration.ts`。
-- `application/functions/auth.functions.ts` 静态导入 application container 和 request context。
-
-这些代码当前能工作，但会让后续组织 feature、query、form model 或 server function 时变得紧：
-一个本来纯共享的 schema 只要和 service implementation 放在同一个 server-only 文件里，就会拖累
-导入链。
-
----
-
-## 2. 目标
-
-1. **共享优先。** 输入 schema、DTO 类型、表单值、查询过滤器、展示模型、纯业务规则等默认保持
-   environment-neutral。只有模块**自身直接 import 或使用**了环境专属 API 时才声明 server-only /
-   client-only；转手 import 另一个环境专属模块**不**触发 marker，由 build 在真正的边界兜底。
-2. **server function 保持薄入口。** `*.functions.ts` 只静态导入 TanStack Start、
-   middleware 和共享契约；服务端执行依赖在 handler 或 server middleware 内获得。
-3. **import protection 按依赖触发。** SQLite、container、request context、auth server、
-   worker、secret resolution、Node API、filesystem 和浏览器 API 继续使用 import protection。
-4. **依赖编译期 import protection。** 不额外维护一套复杂静态 import 解析器；如果
-   client-safe 入口误导入 server-only/client-only 模块，TanStack Start 构建应直接报错。
-5. **分阶段可回滚。** 每一步保持行为不变，优先移动契约，再调整导入，再收敛 marker。
-
----
-
-## 3. 非目标
-
-- 不把 SQLite store、application container 或 request context 暴露给 route/feature/UI。
-- 不把 dashboard auth 和 webhook auth 合并。
-- 不引入新的 DI 容器、全局 client state、REST management API 或独立 worker 服务。
-- 不为了减少 `server-only` 数量而移除真正需要保护的模块。
-- 不在这次重构里改变 Sources、Routes、Destinations、Events、Deliveries 的 UI 行为。
-
----
-
-## 4. 目标分层
-
-推荐把 `application` 内部拆成四类文件：
-
-```txt
-application/
-  contracts/
-    configuration-commands.ts     # zod command schemas + command types
-    operations-queries.ts         # operations input schemas/types, 如需要
-    auth-dtos.ts                  # dashboard session/bootstrap DTO, 如需要
-  functions/
-    configuration.functions.ts    # client-safe RPC 门面
-    operations.functions.ts
-    auth.functions.ts
-    dashboard-context.middleware.ts
-  services/
-    configuration.ts              # 当前因 crypto/SQLite/secret refs 保持 server-only
-    intake.ts
-    delivery-worker.ts
-  runtime/
-    container.ts                  # server-only composition root
-    request-context.ts            # server-only request context
-```
-
-数据流保持不变：
-
-```txt
-route validateSearch/params
-  -> feature queryOptions / mutations
-  -> application *.functions.ts
-  -> environment-neutral helpers or server services/use cases
-  -> infra SQLite / provider registry / destination registry
-```
-
-关键变化是：`feature` 和 `*.functions.ts` 能导入 environment-neutral 的 shared contract、
-model、helper 或服务模块；不能在静态导入链中引入 import-protected module、`.server` /
-`.client` module、`node:*`、`infra/*`、`application/runtime/*` 或 auth server。
-
----
-
-## 5. 文件分类规则
-
-| 文件内容 | 推荐位置 | import protection |
+| 文件内容 | 位置 | import protection |
 | --- | --- | --- |
-| Zod input schema、command type、filter type、DTO type | `application/contracts/*` 或 feature `model/*` | 不加 |
-| query key factory、queryOptions、mutation hook | feature `api/*` | 不加 |
-| `createServerFn` RPC 定义 | `application/functions/*.functions.ts` | 不加 |
-| server function middleware，且只在 `.server(...)` 内动态导入 runtime | `application/functions/*middleware.ts` | 不加 |
-| `*.service.ts` 业务实现 | `server/<能力>/*` | 仅当自身直接 import/使用 env-specific API 时才加（如 `node:crypto`、`process.env`） |
-| application container、dashboard auth、request context | `server/runtime/*` | 仅当自身直接触碰 env-specific API 时才加（如 container 用 `better-auth`/`env`/驱动）；纯类型/中转模块不加 |
-| SQLite connection、migration | `infra/sqlite/connection.ts`、`migrate.ts` | 加 `server-only`（直接 `node:*`/驱动） |
-| SQLite repository、store、codecs、context | `infra/sqlite/*` | 默认不加；仅当自身直接 import `node:*`/驱动时才加（如 `context.ts` 用 `node:crypto`） |
-| Better Auth server config / owner bootstrap | `lib/*` 或 `integrations/better-auth/*` | 加 `server-only`（直接 `better-auth`/`process.env`） |
-| browser-only adapter，例如 auth client、CodeMirror impl | `.client.ts(x)` 或 `client-only` | 仅当自身直接用浏览器 API 时加 client protection |
+| 共享 schema、command type、DTO、route rule、operation projection | `packages/core/src/<module>/` | 不加；必须 env-neutral |
+| feature query/mutation/form/search/view model | `apps/console/src/features/*/{api,model}` | 不加；不得导入 `#/server/*` implementation 或 `#/infra/*` |
+| route file、loader、layout、薄页面入口 | `apps/console/src/routes/*` | 不加；loader 通过 feature queryOptions 取数 |
+| server function RPC 定义 | `apps/console/src/server/functions/*.functions.ts` | 通常不加 |
+| server function middleware | `apps/console/src/middlewares/*.middleware.ts` | 通常不加；server callback 内可调用 runtime |
+| per-capability service | `apps/console/src/server/<capability>/*.service.ts` | 仅当自身直接触碰 env-specific API 时才加 |
+| service option/result 类型 | `apps/console/src/server/<capability>/*.service.types.ts` | 不加；必须保持 env-neutral 或只 import type |
+| application container | `apps/console/src/server/runtime/container.ts` | 加；直接 import Better Auth、env、SQLite |
+| request context | `apps/console/src/server/runtime/request-context.ts` | 当前不加；直接使用 TanStack server headers 和 container accessor，只能从 server path 调用 |
+| dashboard session/auth 错误类型 | `apps/console/src/server/runtime/dashboard-session.ts` | 不加；纯后端类型/错误 |
+| SQLite connection/migration/context | `apps/console/src/infra/sqlite/{connection,migrate,context}.ts` | 直接触碰 driver/Node API 的模块加 |
+| SQLite repository/store/codecs/errors/types | `apps/console/src/infra/sqlite/**` | 默认不加；但前端仍不得导入 `#/infra/*` |
+| Better Auth server config / owner bootstrap | `apps/console/src/lib/*auth*.ts` | 直接触碰 Better Auth/env/secret 时加 |
+| browser-only implementation | `*.client.ts(x)` 或 `client-only` | 直接使用浏览器 API 时加 |
 
-判断标准：shared by default，server/client only by **direct** dependency。不要因为文件在
-某个服务端目录里、或转手 import 了另一个服务端模块就自动加 `server-only`；只有当该文件**自身**
-直接 import/使用 SQLite 驱动、Node API、secrets、`better-auth` server 或浏览器 API 时，才加 marker。
-传递性泄漏由 build 在真正的边界（marked 模块或 `node:*`）报错兜底。如果只是因为同文件里混了
-schema/type 才变得 server-only，就拆文件。
+判断标准：shared by default，server/client only by direct dependency。如果只是因为同文件混了共享 schema/type 和 server implementation 才需要 marker，应拆文件，把共享部分移到 `@vane/core` 或 feature `model/*`。
 
 ---
 
-## 6. 第一批重构候选
+## 3. Server Function 导入规则
 
-### 6.1 Configuration command contracts
+`*.functions.ts` 是浏览器进入服务端能力的默认 RPC 门面。静态 imports 可以包括：
 
-现状：
+- `@tanstack/react-start`。
+- `@vane/core` command schema / DTO / enum schema。
+- `#/middlewares/*` function middleware。
+- 只在 `.handler(...)` 内调用的窄 `#/server/runtime/*` accessor，例如 `getApplicationContainer()` 或 `requireDashboardRequestContext()`。
 
-```txt
-configuration.functions.ts
-  -> application/services/configuration.ts
-       -> server-only
-       -> node:crypto
-       -> config portability
-       -> SqliteStore type
-```
+禁止或需要极谨慎的静态 imports：
 
-目标：
+- 不导入 `#/infra/*`。
+- 不导入 server capability service implementation，例如 `#/server/sources/source.service.ts`。
+- 不导入 `#/lib/auth.server.ts`、Better Auth server config、SQLite driver、filesystem 或 `node:*`。
+- 不在 module 初始化阶段调用 runtime/container、打开数据库、读取 secret 或创建 service。
 
-```txt
-configuration.functions.ts
-  -> application/contracts/configuration-commands.ts
-  -> dashboard-context.middleware.ts
+当前允许 `auth.functions.ts` 静态 import `getApplicationContainer()` 和 `requireDashboardRequestContext()`，因为它只在 handler 内调用它们，并依赖 TanStack Start 的 server function boundary 与 import protection 验证不会把 runtime implementation 打入浏览器 bundle。public session probe 必须捕获 auth error 并返回 nullable state。
 
-application/services/configuration.ts
-  -> application/contracts/configuration-commands.ts
-  -> server-only implementation dependencies
-```
-
-迁移内容：
-
-- 新建 `application/contracts/configuration-commands.ts`。
-- 移动这些 schema 和 type：
-  - `CreateSourceCommandSchema`
-  - `UpdateSourceCommandSchema`
-  - `RotateSourceTokenCommandSchema`
-  - `CreateDestinationCommandSchema`
-  - `UpdateDestinationCommandSchema`
-  - `TestDestinationCommandSchema`
-  - `PreviewDestinationCommandSchema`
-  - `PreviewDestinationDraftCommandSchema`
-  - `PreviewDestinationUpdateCommandSchema`
-  - `ExportConfigurationCommandSchema`
-  - `ImportConfigurationCommandSchema`
-  - `UpdateAppSettingsCommandSchema`
-  - `CreateRouteCommandSchema`
-  - `UpdateRouteCommandSchema`
-- `ConfigurationService` 从 contract 文件导入 schema/type。
-- `configuration.functions.ts` 从 contract 文件导入 validator。
-
-收益：
-
-- `configuration.functions.ts` 不再静态导入 server-only service implementation。
-- command schema 可被 feature form/model 测试复用，而不会拖入 crypto、SQLite、secret 逻辑。
-- 后续 Sources/Destinations/Routes 的表单 model 可以和 server function validator 对齐。
-
-### 6.2 Auth server functions 延迟 runtime import
-
-现状：
+Private dashboard server functions 应优先使用 `requireDashboardContextMiddleware`：
 
 ```ts
-import { getApplicationContainer } from "#/application/runtime/container.ts";
-import { requireDashboardRequestContext } from "#/application/runtime/request-context.ts";
+export const createSourceFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(CreateSourceCommandSchema)
+  .handler(async ({ data, context }) => {
+    return context.dashboardRequest.container.createSourceService().createSource(data);
+  });
 ```
 
-目标：
+---
 
-- `auth.functions.ts` 静态只导入 `createServerFn` 和共享 DTO/schema。
-- `getDashboardSessionFn` handler 内动态导入 `request-context.ts`。
-- `getAuthBootstrapFn` handler 内动态导入 `container.ts`。
+## 4. Route / Feature 导入规则
 
-收益：
+Route files 只拥有 URL concern：
 
-- `auth.functions.ts` 更像纯 RPC 门面。
-- 与 `dashboard-context.middleware.ts` 的模式一致。
-- 降低 auth feature query 导入 server-only runtime 的风险。
+- route path/layout。
+- `validateSearch` / `loaderDeps`。
+- `loader` 预取 feature `queryOptions`。
+- `beforeLoad` 的 UX guard。
+- 渲染 feature page 或 shell。
 
-### 6.3 Operations input contracts
+Route、feature UI、feature model、feature api 不得直接导入：
 
-现状：
+- `#/infra/*`。
+- `#/server/runtime/container.ts`。
+- `#/server/*/*.service.ts`。
+- SQLite repository/store/driver。
+- env secret、Better Auth server runtime、filesystem。
 
-- `operations.functions.ts` 里的 list/detail/run worker input schema 都在 functions 文件内部。
-
-这个没有明显泄漏风险，可以暂缓。若后续 Events/Deliveries feature 需要共享过滤器 schema，可再拆到
-`application/contracts/operations-queries.ts` 或 feature `operations/model`。
-
-### 6.4 SQLite 纯叶子文件
-
-`infra/sqlite/errors.ts` 和 `infra/sqlite/types.ts` 当前没有 `server-only`，这是合理的。
-`infra/sqlite/codecs.ts` 虽然多为纯函数，但属于 SQLite 物理表示 helper，且导入 SQLite 错误类；
-可以先不动。不要为了减少 marker 数量而让 `infra/sqlite/*` 成为前端可用接口。
+Feature 的 `api/*.queries.ts` / `api/*.mutations.ts` 可以导入 `#/server/functions/*.functions.ts`，并封装 query key、queryOptions、mutation 和 invalidation。UI 组件优先导入 feature api，不散落 server function 调用。
 
 ---
 
-## 7. 建议迁移顺序
+## 5. 共享契约
 
-第一轮只做低风险拆分：
+跨 client/server 的 command schema、input validator、DTO 和投影类型放在 `@vane/core`：
 
-1. 新建 `application/contracts/configuration-commands.ts`，移动 configuration command schemas/types。
-2. 更新 `ConfigurationService` 和 `configuration.functions.ts` 的导入。
-3. 将 `auth.functions.ts` 的 runtime 静态导入改为 handler 内动态导入。
-4. 跑 `pnpm --filter @vane/console test`。
-5. 跑 `pnpm --filter @vane/console lint`。
+- `packages/core/src/configuration/configuration-commands.ts`：Source/Destination/Route/Settings/TOML import/export command schema。
+- `packages/core/src/operations/operations.ts`：Events/Deliveries list/detail DTO、worker health/run result projection。
+- 既有 Source、Destination、Route、Delivery、Event schema 分别放在 `packages/core/src/<module>/`。
 
-第二轮再收敛边界：
+`@vane/core` 必须保持 env-neutral，不得导入：
 
-1. 明确禁止 `features/*` 非 `api` 文件导入 `application/functions/*`，并禁止它们导入任何
-   environment-specific module。普通 environment-neutral model/helper 可按所有权规则复用。
-2. 明确允许 `application/contracts/*` 被 feature/model/api 导入。
-3. 依赖 TanStack Start import protection 暴露 `*.functions.ts` 静态导入链里的 env-specific
-   误导入，不额外维护自定义静态 import 解析测试。
+- `node:*`。
+- `#/server/*` 或 `#/infra/*`。
+- TanStack Start import-protected modules。
+- `.server` / `.client` modules。
 
-第三轮再评估 marker 数量：
-
-1. 只检查是否存在“纯 contract 被迫 server-only”的文件。
-2. 不把 `infra/sqlite` 的实现模块变成公共共享模块。
-3. 如果某个 `server-only` 文件需要给前端复用 type，优先把 type 上移到 contract/core，而不是
-   移除 marker。
+仅后端消费的类型不需要放进 core。例如 dashboard session 类型和 dashboard auth 错误在 `apps/console/src/server/runtime/dashboard-session.ts`。
 
 ---
 
-## 8. 风险与应对
+## 6. Dashboard Auth 与 Webhook Auth
 
-| 风险 | 应对 |
-| --- | --- |
-| 移动 schema 导致 import 路径变更较多 | 第一轮只移动 configuration command schema，测试覆盖后再扩展 |
-| contract 文件不小心导入 server-only module | 由 TanStack Start import protection 在 client-safe 调用链进入构建时暴露 |
-| server function handler 内动态 import 影响可读性 | 仅对 runtime/service 依赖使用；validator/schema 仍静态导入 |
-| 误以为 `beforeLoad` 或 client route guard 能替代服务端鉴权 | 保持 server function middleware/request context 鉴权不变 |
-| 为减少 marker 暴露 SQLite 类型给 feature | 通过 `frontend-boundaries.test.ts` 继续禁止 `#/infra/` |
+Dashboard auth 和 webhook auth 是两条边界：
 
----
+- Dashboard server functions 使用 Better Auth session，通过 `requireDashboardRequestContext()` 检查 owner/admin。
+- Public auth probes 可以直接调用 request context 并捕获认证错误。
+- Webhook API routes 使用 Source token 或 Vane 侧额外共享密钥；它们不读取 browser dashboard session。
 
-## 9. 验收标准
-
-完成第一轮后，应满足：
-
-- `configuration.functions.ts` 不再从 `application/services/configuration.ts` 导入 schema。
-- `application/services/configuration.ts` 仍然是 server-only，并继续拥有业务实现。
-- `auth.functions.ts` 不再静态导入 `application/runtime/container.ts` 或
-  `application/runtime/request-context.ts`。
-- 所有 dashboard server functions 仍然在服务端重新建立 dashboard request context 或执行等价鉴权。
-- feature UI/model/query 文件仍然不能导入 `infra`、runtime container、request context 或 auth server。
-- 测试和 lint 通过。
-
-完成后续轮次后，应满足：
-
-- 新增 command/query/filter schema 默认先放在 contract/model 文件，而不是 service implementation。
-- `*.functions.ts` 文件的静态导入链保持 client-safe；误导入由 TanStack Start 编译期保护暴露。
-- 真正处理 secret、SQLite、filesystem、Node API 的文件仍然有 import protection。
+`server/runtime/dashboard-auth.ts` 已删除。session 类型和错误类在 `dashboard-session.ts`，鉴权逻辑在 `request-context.ts`。
 
 ---
 
-## 10. 推荐决策
+## 7. 验收标准
 
-建议采用“**共享契约 + 薄 RPC 门面 + server-only 执行层**”作为 Vane TanStack Start 的默认组织
-方式。
+变更 server function、route loader、feature query、service 或 repository 后，至少确认：
 
-这不是把 Vane 做成“client/server 不分”的项目，而是把边界放在更准确的位置：
-
-- shared contract 解决组织和复用；
-- server function 解决浏览器到服务端的调用；
-- server-only execution layer 解决安全和运行时隔离；
-- TanStack Start import protection 负责发现环境导入错误，仓库规范负责让组织方式更顺手。
-
-如果这个方向通过评审，第一批代码重构应从 configuration command contracts 和 auth functions
-runtime import 收敛开始。
+- `@vane/core` 和 feature `model/*` 没有导入 `#/server/*`、`#/infra/*`、`node:*`、`.server` / `.client` 模块。
+- route loader 没有直接打开 SQLite、访问 container 或读取 secret。
+- dashboard server function 有服务端 auth check。
+- webhook API route 不依赖 dashboard session。
+- server function 返回 safe DTO，不返回 row、token hash、destination secret、raw sensitive config 或 database handle。
+- 相关 package-scoped `fmt:check`、`lint`、`test` 通过；触碰 import boundary 时跑 `pnpm --filter @vane/console build`。
 
 ---
 
 ## 参考
 
-- TanStack Start Import Protection:
-  <https://tanstack.com/start/latest/docs/framework/react/guide/import-protection>
-- TanStack Start Code Execution Patterns:
-  <https://tanstack.com/start/latest/docs/framework/react/guide/code-execution-patterns>
-- TanStack Start Server Functions:
-  <https://tanstack.com/start/latest/docs/framework/react/guide/server-functions>
+- TanStack Start Import Protection: <https://tanstack.com/start/latest/docs/framework/react/guide/import-protection>
+- TanStack Start Code Execution Patterns: <https://tanstack.com/start/latest/docs/framework/react/guide/code-execution-patterns>
+- TanStack Start Server Functions: <https://tanstack.com/start/latest/docs/framework/react/guide/server-functions>

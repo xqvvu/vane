@@ -69,11 +69,12 @@ architecture. The layers are:
 - entrypoints: API routes and `*.functions.ts` server functions (the controller
   layer) validate input, check auth, and return safe DTOs.
 - services: per-capability `*.service.ts` files (for example
-  `server/sources/source.service.ts`) hold business logic.
-- repositories: `repositories/<module>/` files own persistence contracts and
-  SQLite implementations, split per module into `*.interface.ts` (types +
-  repository interface), `*.helpers.ts` (row mapping and shared helpers), and
-  `*.repository.ts` (SQLite implementation class).
+  `server/sources/source.service.ts`) hold business logic. Exported service
+  option/result types live next to the implementation in `*.service.types.ts`.
+- repositories: `infra/sqlite/repositories/<module>/` files own persistence
+  contracts and SQLite implementations, split per module into `*.interface.ts`
+  (types + repository interface), `*.helpers.ts` (row mapping and shared
+  helpers), and `*.repository.ts` (SQLite implementation class).
 
 Wire dependencies explicitly. Do not reach for a DI framework.
 
@@ -118,11 +119,9 @@ shell               dashboard layout, sidebar, header, user menu
 components/ui       shadcn primitives only; no Vane domain knowledge
 components/common   reusable console UI, no feature ownership or server state
 features            Sources, Routes, Destinations, Events, Deliveries, Settings
-integrations        TanStack Query/Router, Better Auth, and library adapters
 routes              file routes, layouts, validateSearch, loaders, thin screens
-server              server-only: *.functions.ts controllers, per-capability *.service.ts, runtime wiring, intake, deliveries
-repositories        persistence contracts + SQLite implementations per module
-infra               SQLite connection, migrations, codecs, store assembly, and server-only runtime infrastructure
+server              server-only: *.functions.ts controllers, per-capability *.service.ts/*.service.types.ts, runtime wiring, intake, deliveries
+infra               SQLite connection, migrations, codecs, store assembly, repositories, and server-only runtime infrastructure
 lib                 small shared helpers; split same-name .server/.client pairs only when needed
 ```
 
@@ -237,18 +236,19 @@ Server functions are the client/server boundary for console data.
   They must not import `node:*`, `#/infra/*`, `#/server/*`,
   `#/lib/auth.server.ts`, modules marked with TanStack Start import protection,
   or modules with `.server` / `.client` suffixes.
-- `*.functions.ts` files should keep static imports client-safe: TanStack Start,
-  shared contracts, server function middleware, and other isomorphic helpers.
-  Do not statically import `#/infra/*`, `#/server/runtime/*`, server capability
-  services under `#/server/*`, `#/lib/auth.server.ts`, modules marked with
-  TanStack Start import protection, modules with `.server` / `.client` suffixes,
-  or modules that import `node:*`. A normal server service module may be
-  statically imported only while its own static import graph remains
-  environment-neutral.
+- `*.functions.ts` files are RPC boundary files. Static imports may include
+  TanStack Start, shared contracts, server function middleware, and
+  `#/server/runtime/*`. Runtime functions must be called only from
+  `.handler(...)` or server middleware, not at module initialization. Do not
+  import `#/infra/*`, server capability services under `#/server/*`,
+  `#/lib/auth.server.ts`, modules with `.server` / `.client` suffixes, or
+  modules that import `node:*` unless TanStack Start build confirms the server
+  function boundary keeps that code out of the browser bundle.
 - Private dashboard server functions should normally reach services through
   `requireDashboardContextMiddleware` and `context.dashboardRequest.container`.
   Public server functions that cannot use the throwing dashboard middleware may
-  dynamically import runtime modules inside the handler.
+  call narrow runtime accessors directly from the handler and must catch auth
+  errors when returning nullable public state.
 - Server functions must validate inputs and perform their own server-side auth
   checks when returning private dashboard data.
 - Server functions should return DTOs shaped for UI needs. Do not return
@@ -456,7 +456,7 @@ Use shadcn for shared UI primitives and app composition.
 Use pnpm and the existing workspace scripts.
 
 - Runtime: Node `24.x`.
-- Package manager: `pnpm@11.5.2`.
+- Package manager: `pnpm@11.7.0`.
 - Formatting: `pnpm --filter <package> fmt` or `fmt:check`.
 - Linting: `pnpm --filter <package> lint`.
 - Tests: `pnpm --filter <package> test`.

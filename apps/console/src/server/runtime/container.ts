@@ -11,23 +11,17 @@ import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";
 import { assignOwnerRoleBeforeUserCreate, hasRegisteredUsers } from "#/lib/auth-owner-bootstrap.ts";
 import { AppSettingsService } from "#/server/configuration/app-settings.service.ts";
-import {
-  ConfigPortabilityService,
-  type ConfigPortabilityServiceOptions,
-} from "#/server/configuration/config-portability.service.ts";
-import {
-  DeliveryWorker,
-  type DeliveryWorkerOptions,
-  type DeliveryWorkerRunResult,
-} from "#/server/deliveries/delivery-worker.service.ts";
-import {
-  DestinationService,
-  type DestinationServiceOptions,
-} from "#/server/destinations/destination.service.ts";
-import {
-  WebhookIntakeService,
-  type WebhookIntakeServiceOptions,
-} from "#/server/intake/intake.service.ts";
+import { ConfigPortabilityService } from "#/server/configuration/config-portability.service.ts";
+import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types.ts";
+import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";
+import type {
+  DeliveryWorkerOptions,
+  DeliveryWorkerRunResult,
+} from "#/server/deliveries/delivery-worker.service.types.ts";
+import { DestinationService } from "#/server/destinations/destination.service.ts";
+import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types.ts";
+import { WebhookIntakeService } from "#/server/intake/intake.service.ts";
+import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types.ts";
 import { RouteService } from "#/server/routes/route.service.ts";
 import type { DashboardSession } from "#/server/runtime/dashboard-session.ts";
 import {
@@ -35,7 +29,8 @@ import {
   type DeliveryWorkerRunner,
   type DeliveryWorkerRunnerOptions,
 } from "#/server/runtime/delivery-worker-runner.ts";
-import { SourceService, type SourceServiceOptions } from "#/server/sources/source.service.ts";
+import { SourceService } from "#/server/sources/source.service.ts";
+import type { SourceServiceOptions } from "#/server/sources/source.service.types.ts";
 
 export interface VaneAuth {
   handler(request: Request): Promise<Response>;

@@ -8,7 +8,7 @@ import type {
 import type {
   ClaimedDelivery,
   DeliveryRepository,
-} from "#/repositories/delivery/delivery.interface.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
 
 export interface DeliveryExecutionStore {
   readonly deliveries: Pick<DeliveryRepository, "markSucceeded" | "markFailed">;

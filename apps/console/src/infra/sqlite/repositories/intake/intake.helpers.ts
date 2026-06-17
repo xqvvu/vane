@@ -1,0 +1,50 @@
+import {
+  decodeJson,
+  decodeJsonObject,
+  decodeSchemaJson,
+  EventRecordSchema,
+  NormalizedEventSchema,
+  RouteMatchResultsSchema,
+} from "@vane/core";
+import type { EventRecord } from "@vane/core";
+
+import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
+import type { EventRow } from "#/infra/sqlite/repositories/intake/intake.interface.ts";
+
+export const PRUNED_RAW_PAYLOAD = {
+  retentionPruned: true,
+};
+
+export function eventFromRow(row: EventRow): EventRecord {
+  return EventRecordSchema.parse({
+    id: row.id,
+    sourceId: row.source_id,
+    idempotencyKey: row.idempotency_key,
+    normalized: decodeSchemaJson(NormalizedEventSchema, row.normalized_json),
+    providerMetadata: decodeJsonObject(row.provider_metadata_json),
+    rawPayload: decodeJson(row.raw_payload_json),
+    rawHeaders: decodeRawHeaders(row.raw_headers_json),
+    routeMatches:
+      row.route_matches_json === null
+        ? null
+        : decodeSchemaJson(RouteMatchResultsSchema, row.route_matches_json),
+    receivedAt: row.received_at,
+  });
+}
+
+export function requireEvent(event: EventRecord | null): EventRecord {
+  if (!event) {
+    throw new RecordNotFoundError("Event");
+  }
+
+  return event;
+}
+
+function decodeRawHeaders(value: string): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(decodeJsonObject(value)).map(([key, entry]) => [
+      key,
+      typeof entry === "string" ? entry : JSON.stringify(entry),
+    ]),
+  );
+}

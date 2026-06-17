@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { InvalidDeliveryStateError } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
 import { openSqliteStore } from "#/infra/sqlite/store.ts";
-import { InvalidDeliveryStateError } from "#/repositories/delivery/delivery.interface.ts";
 
 const now = "2026-06-07T00:00:00.000Z";
 

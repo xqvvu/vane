@@ -11,7 +11,7 @@ interface、type、class、函数的职责与签名。
 
 ## 1. 概述
 
-这一层是应用的**持久化适配器**：对外暴露一个 `SqliteStore`，内部由 6 个仓储
+这一层是应用的**持久化适配器**：对外暴露一个 `SqliteStore`，内部由 7 个仓储
 （repository）组成，每个仓储对应一个聚合（aggregate）。所有 SQL、行（row）映射、
 事务、编解码都封死在这一层，外部只看到领域类型和仓储接口。
 
@@ -22,9 +22,11 @@ interface、type、class、函数的职责与签名。
 ## 2. 设计原则
 
 1. **按聚合纵切，而非按技术种类横切。**
-   每个聚合（sources / destinations / routes / intake / deliveries / history）是
-   一个独立文件，内部自带：Row 类型、Repository 接口、输入/输出 DTO、行↔领域映射
-   函数、仓储类。理解一个聚合只需打开一个文件。
+   每个聚合（source / destination / route / intake / delivery / history / settings）是
+   `apps/console/src/infra/sqlite/repositories/<module>/` 下的一组小文件：`*.interface.ts`
+   放 Row 类型、Repository 接口和输入/输出 DTO，`*.helpers.ts` 放行↔领域映射函数，
+   `*.repository.ts` 放 SQLite 仓储类。
+   理解一个聚合只需打开同一个目录。
 
 2. **校验只发生在真正的边界。**
    只有"跨越序列化/不可信边界"的数据才用 Zod `.parse()`（JSON 列、enum、写入前的
@@ -52,12 +54,13 @@ interface、type、class、函数的职责与签名。
 | `errors.ts` | 共享叶子 | `SqliteError`、`SqliteDataIntegrityError`、`RecordNotFoundError` |
 | `codecs.ts` | 共享 | SQLite 物理表示助手（布尔、行 cast） |
 | `context.ts` | 共享 | `SqliteRepositoryContext`（依赖注入 + 事务入口） |
-| `sources.ts` | 聚合 | Source 的 Row/接口/DTO/映射/类 |
-| `destinations.ts` | 聚合 | Destination 同上 |
-| `routes.ts` | 聚合 | Route 同上 |
-| `intake.ts` | 聚合 | Event 录入 |
-| `deliveries.ts` | 聚合 | 投递队列：入队/认领/标记/重试/详情 + 去重 + attempt |
-| `history.ts` | 聚合 | 跨聚合只读投影（列表/详情） |
+| `repositories/source/*` | 聚合 | Source 的 Row/接口/DTO/映射/类 |
+| `repositories/destination/*` | 聚合 | Destination 同上 |
+| `repositories/route/*` | 聚合 | Route 同上 |
+| `repositories/intake/*` | 聚合 | Event 录入 |
+| `repositories/delivery/*` | 聚合 | 投递队列：入队/认领/标记/重试/详情 + 去重 + attempt |
+| `repositories/history/*` | 聚合 | 跨聚合只读投影（列表/详情） |
+| `repositories/settings/*` | 聚合 | 应用设置 |
 | `store.ts` | 组装根 | `SqliteStore`、`SqliteStoreUnitOfWork`、`openSqliteStore()` |
 
 通用的 schema-JSON 编解码（`encodeJson` / `decodeJson` / `encodeSchemaJson` 等）**不在
@@ -77,18 +80,18 @@ types.ts            （叶子，零依赖）
   ▲
 errors.ts / codecs.ts / context.ts   （共享基础）
   ▲
-sources / destinations / routes / intake   （独立聚合）
+repositories/source / destination / route / intake   （独立聚合）
   ▲
-deliveries          （依赖 sources/destinations/routes/intake）
+repositories/delivery          （依赖 source/destination/route/intake）
   ▲
-history             （依赖 sources/intake/deliveries）
+repositories/history           （依赖 source/intake/delivery）
   ▲
 store.ts            （组装根，依赖全部聚合）
 ```
 
 - `types.ts` 是最底层叶子，谁都能依赖它、它不依赖任何人。
 - `store.ts` 是顶层组装根，依赖所有聚合，没人依赖它（除了测试和外部调用方）。
-- 聚合之间只有 `deliveries`、`history` 向下依赖其它聚合，方向单一，无循环。
+- 聚合之间只有 `delivery`、`history` 向下依赖其它聚合，方向单一，无循环。
 
 ---
 
@@ -484,8 +487,10 @@ export interface SettingsRepository {
 
 **新增一个聚合：**
 
-1. 新建 `apps/console/src/infra/sqlite/<aggregate>.ts`，放入 Row 类型、Repository 接口、
-   输入/输出 DTO、映射函数、require 守卫、仓储类。
+1. 新建 `apps/console/src/infra/sqlite/repositories/<aggregate>/`，拆成
+   `<aggregate>.interface.ts`、`<aggregate>.helpers.ts`、`<aggregate>.repository.ts`。
+   其中 interface 文件放 Row 类型、Repository 接口和输入/输出 DTO；helpers 放映射函数和
+   require 守卫；repository 放 SQLite 仓储类。
 2. 在 `store.ts` 的 `SqliteStoreUnitOfWork` 加上该仓储，并在
    `createSqliteRepositories` 里实例化、按依赖顺序注入。
 3. JSON 列用 `@vane/core` 的 `encode*/decode*`；布尔/行 cast 用本层 `codecs.ts`；

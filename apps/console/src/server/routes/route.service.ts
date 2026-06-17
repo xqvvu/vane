@@ -6,18 +6,14 @@ import {
   type UpdateRouteCommand,
 } from "@vane/core";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
 import {
   requireExistingDestinationIds,
   requireExistingSourceIds,
 } from "#/server/configuration/configuration-support.ts";
-
-export interface RouteServiceOptions {
-  store: SqliteStore;
-}
+import type { RouteServiceOptions } from "#/server/routes/route.service.types.ts";
 
 export class RouteService {
-  private readonly store: SqliteStore;
+  private readonly store: RouteServiceOptions["store"];
 
   constructor(options: RouteServiceOptions) {
     this.store = options.store;

@@ -11,19 +11,16 @@ function boundary + query cache + shadcn primitives**。
 
 ---
 
-## 1. 当前状态与迁移目标
+## 1. 当前结构
 
-`apps/console/src/routes/index.tsx` 当前是待拆分的 dashboard mega-route。它同时承担了根
-URL、dashboard session 检查、配置与历史数据加载、Sources / Routes / Destinations 表单、
-Events / Deliveries 表格、详情面板、TOML 导入导出、worker 操作、复制 webhook URL、状态
-提示等职责。这个文件可以作为迁移前的功能清单，但不能继续作为新增前端代码的组织范例。
-
-迁移后的 console 应保持 TanStack Start 的 route-first 形状：
+`apps/console/src/routes/index.tsx` 当前只是根 URL redirect 到 `/events`。Dashboard 已拆成
+`_dashboard` layout route，以及 Sources / Routes / Destinations / Events / Deliveries /
+Settings 的页面路由；新增前端代码应继续沿用 route-first 形状：
 
 1. `routes` 决定 URL、layout、search params、loader、beforeLoad 和薄渲染入口。
 2. `features` 按业务对象纵切 Sources、Routes、Destinations、Events、Deliveries。
-3. `server` 是 server-only 的分层后端：`*.functions.ts` 充当 controller 入口，按能力组织的 `*.service.ts` 承载业务逻辑；跨 client/server 的共享契约（命令 schema、DTO）放在 `@vane/core` 包。
-4. `integrations` 封装 TanStack Query、TanStack Router、Better Auth 的项目适配。
+3. `features/operations` 仍暂时承载 Events/Deliveries 共享 query、filter、DTO re-export 和 worker mutation；Events/Deliveries 的页面 UI 正在向各自 feature 收敛。
+4. `server` 是 server-only 的分层后端：`*.functions.ts` 充当 controller 入口，按能力组织的 `*.service.ts` 承载业务逻辑；跨 client/server 的共享契约（命令 schema、DTO）放在 `@vane/core` 包。
 5. `components/ui` 只保留 shadcn primitives，不知道 Vane 的领域。
 6. `components/common` 承载跨 feature 复用的 console UI 组合，但不拥有业务规则。
 7. `infra` 是 SQLite 与 server-only 基础设施，前端代码不可导入。
@@ -32,7 +29,7 @@ Events / Deliveries 表格、详情面板、TOML 导入导出、worker 操作、
 
 ## 2. 目录职责
 
-推荐目标结构：
+当前推荐结构：
 
 ```txt
 apps/console/src/
@@ -40,63 +37,68 @@ apps/console/src/
     __root.tsx
     login.tsx
     _dashboard.tsx
-    _dashboard.index.tsx
     _dashboard.sources.tsx
     _dashboard.routes.tsx
     _dashboard.destinations.tsx
     _dashboard.events.tsx
-    _dashboard.events.$eventId.tsx
+    _dashboard.events_.$eventId.tsx
     _dashboard.deliveries.tsx
-    _dashboard.deliveries.$deliveryId.tsx
+    _dashboard.deliveries_.$deliveryId.tsx
     api/
-  app/
-    shell/
-      dashboard-shell.tsx
-      dashboard-sidebar.tsx
-      dashboard-header.tsx
-      dashboard-user-menu.tsx
+  shell/
+    dashboard-layout.tsx
+    dashboard-user-menu.tsx
+    dashboard-error.tsx
+    dashboard-not-found.tsx
   features/
     sources/
-      model.ts
-      queries.ts
-      mutations.ts
-      source-form.tsx
-      sources-table.tsx
+      api/
+      model/
+      ui/
     routes/
-      model.ts
-      queries.ts
-      mutations.ts
-      route-form.tsx
-      routes-table.tsx
+      api/
+      model/
+      ui/
     destinations/
+      api/
+      model/
+      ui/
     events/
+      ui/
     deliveries/
+      ui/
+    operations/
+      api/
+      model/
+      ui/
+    configuration/
+      api/
+      model/
+      ui/
   components/
     ui/
     common/
-  integrations/
-    tanstack-query/
-    tanstack-router/
-    better-auth/
+  middlewares/
+    dashboard-context.middleware.ts
   server/
     functions/                # *.functions.ts controller 入口
     runtime/                  # container、request context、dashboard session 类型
-    configuration/            # *.service.ts + TOML portability
-    sources/                  # source.service.ts
-    destinations/             # destination.service.ts
-    routes/                   # route.service.ts
-    deliveries/               # delivery-worker.service.ts
-    intake/                   # intake.service.ts
+    configuration/            # *.service.ts/*.service.types.ts + TOML portability
+    sources/                  # source.service.ts, source.service.types.ts
+    destinations/             # destination.service.ts, destination.service.types.ts
+    routes/                   # route.service.ts, route.service.types.ts
+    deliveries/               # delivery-worker.service.ts, delivery-worker.service.types.ts
+    intake/                   # intake.service.ts, intake.service.types.ts
   infra/
     sqlite/                   # connection, migrations, codecs, store assembly
-  repositories/
-    source/                   # source.interface.ts, source.helpers.ts, source.repository.ts
-    destination/
-    route/
-    intake/
-    delivery/
-    history/
-    settings/
+      repositories/
+        source/               # source.interface.ts, source.helpers.ts, source.repository.ts
+        destination/
+        route/
+        intake/
+        delivery/
+        history/
+        settings/
 ```
 
 > 共享命令 schema、操作 DTO 等 client/server 契约放在 `@vane/core` 包；
@@ -132,15 +134,17 @@ feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
   表单。这里的 Routes 指 Vane 的告警路由规则，不是 TanStack Router 文件路由。
 - `features/destinations`：Destination form model、preview/test mutations、secret-safe
   config DTO、Destinations 表格、测试结果与预览 UI。
-- `features/events`：Events filters、query keys、列表/详情 query、normalized fields 展示、
-  raw debug data 的脱敏展示、route match 表格。
-- `features/deliveries`：Deliveries filters、列表/详情 query、retry/run worker mutations、
-  attempts 表格、状态 badge、失败信息展示。
+- `features/events`：Events 页面/详情 UI、normalized fields 展示、raw debug data 的脱敏展示、
+  route match 表格。
+- `features/deliveries`：Deliveries 页面/详情 UI、attempts 表格、状态 badge、失败信息展示。
+- `features/operations`：Events/Deliveries 暂共享的 query keys、list/detail query、filter/search
+  model、retry/run worker mutations、格式化 helper。RC 收尾阶段可再拆成 events/deliveries 各自
+  api/model。
 
-每个 feature 可以拥有自己的 `model.ts`、`queries.ts`、`mutations.ts`、UI 组件和测试。feature
-层可以组合 shadcn primitives、TanStack Form、TanStack Table、TanStack Query hooks，也可以调
-server functions；但它不能导入 `infra`、SQLite store、application container 或 server-only
-runtime。需要服务端数据时，feature 通过自己的 query/mutation 文件集中调用 server functions。
+每个 feature 可以拥有自己的 `api/`、`model/`、`ui/` 和测试。feature 层可以组合 shadcn
+primitives、TanStack Form、TanStack Table、TanStack Query hooks，也可以调 server functions；
+但它不能导入 `infra`、SQLite store、application container 或 server-only runtime。需要服务端
+数据时，feature 通过自己的 query/mutation 文件集中调用 server functions。
 
 ### `shell`
 
@@ -195,20 +199,6 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 `components/common`；如果组件表达的是“某个 Vane 业务对象应该展示哪些字段或动作”，放 owning
 feature。
 
-### `integrations`
-
-`integrations` 是第三方库的项目适配层：
-
-- `integrations/tanstack-query`：创建 QueryClient、默认 `staleTime` / retry / error 策略、
-  query key helper、SSR hydration 约定。
-- `integrations/tanstack-router`：router context 类型、route context helper、搜索参数序列化或
-  route guard helper。
-- `integrations/better-auth`：auth client、session 查询适配、登录/退出客户端边界。
-
-这里放“Vane 如何使用某个库”的 glue code，不放 Sources/Routes/Destinations 的领域逻辑，也不
-直接读写 SQLite。库升级或 API 变化优先在 `integrations` 消化，feature 层只使用稳定的项目级
-helper。
-
 ### 共享契约（`@vane/core`）
 
 client 与 server 之间的共享契约放在 `@vane/core` 包，必须保持 env-neutral：只包含类型、Zod
@@ -227,17 +217,18 @@ import protection 的模块。相关文件：
 ### `server`
 
 `server` 是 server-only 的分层后端：`*.functions.ts` 是 controller 入口，`*.service.ts` 是
-按能力组织的服务层。它**按能力分目录**，不是按技术种类堆放：
+按能力组织的服务层实现，导出的 service option/result 类型放在相邻的
+`*.service.types.ts`。它**按能力分目录**，不是按技术种类堆放：
 
 - `server/functions`：TanStack Start server functions 与 function middleware（controller 层 /
   client/server 边界适配）。
-- `server/runtime`：application container、request context、dashboard auth 实现、dashboard
-  session 类型、delivery worker runner 等跨能力运行时基础设施。
+- `server/runtime`：application container、request context、dashboard session/auth 类型、
+  delivery worker runner 等跨能力运行时基础设施。
 - `server/configuration`：Source/Destination/Route/Settings 配置管理与 TOML portability。各能力
-  各有 `*.service.ts`（`source.service.ts` 等），没有聚合门面——container 直接按能力暴露
-  `createSourceService`/`createDestinationService`/… 工厂。
-- `server/sources`、`server/destinations`、`server/routes`：各能力的服务端 `*.service.ts`，与
-  `features/<同名>` 左右对称。
+  各有 `*.service.ts` / `*.service.types.ts`（`source.service.ts` 等），没有聚合门面——container
+  直接按能力暴露 `createSourceService`/`createDestinationService`/… 工厂。
+- `server/sources`、`server/destinations`、`server/routes`：各能力的服务端 `*.service.ts` /
+  `*.service.types.ts`，与 `features/<同名>` 左右对称。
 - `server/intake`：webhook 接入解析与 `intake.service.ts`（`WebhookIntakeService`）。
 - `server/deliveries`：`delivery-worker.service.ts`、delivery execution、operations server functions。
 
@@ -250,7 +241,7 @@ server functions 直接从 client/route loader 访问 store。service 依赖 `se
 
 `infra` 是 server-only 基础设施。当前主要是 SQLite：
 
-- SQLite connection、migrations、repositories、store。
+- SQLite connection、migrations、`sqlite/repositories/<module>/`、store。
 - filesystem、database handle、migration internals。
 - 未来若有 server-only transport、secret storage，也属于这里。
 
@@ -268,13 +259,13 @@ route validateSearch/params
   -> feature queryOptions
   -> TanStack Query cache
   -> server function
-  -> service/use case
+  -> service
   -> infra SQLite / provider registry / destination registry
 ```
 
 route loader 的职责是把 URL 状态转成 query 输入，并通过 QueryClient
 `ensureQueryData(queryOptions(...))` 预取需要的数据。loader 不直接读
-`openSqliteStore()`、`getApplicationContainer()`、repositories、worker runner 或任何
+`openSqliteStore()`、`getApplicationContainer()`、`infra/sqlite/repositories`、worker runner 或任何
 server-only infra 模块。
 
 查询规则：
@@ -373,26 +364,28 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 
 ---
 
-## 7. 从 `index.tsx` 拆分的顺序
+## 7. 当前收敛方向
 
-建议按风险从低到高迁移：
+Dashboard mega-route 拆分已经完成：`routes/index.tsx` 现在只负责把根 URL redirect 到
+`/events`，具体页面由 `_dashboard.*.tsx` file routes 承担。后续前端整理不再以“大拆
+`index.tsx`”为主，而是按以下小步收敛：
 
-1. 抽出 `shell`：把 dashboard layout、导航、header、user menu 从 root index route 移走。
-2. 抽出纯展示组件：将通用 table/pagination/panel/copy/status 组件移动到
-   `components/common`，将 `DeliveryStateBadge`、`JsonBlock` 等业务展示移动到对应 feature，不改变数据流。
-3. 抽出 form model 与 UI：把当前 `routes/-source-form.ts`、`-destination-form.ts`、
-   `-route-form.ts` 迁移到 `features/*`，让 route 文件只引用 feature screen。
-4. 建立 feature `queries.ts` 与 `mutations.ts`：把 `listConfigurationFn`、`listOperationsFn`、
-   detail、preview、test、retry 等调用集中到 feature query/mutation 层。
-5. 把根 dashboard 拆成 file routes：Sources、Routes、Destinations、Events、Deliveries
-   拥有各自 URL、search validation、loaderDeps、loader 和 screen。
-6. 将 loader 改为 Query cache 预取：route loader 只调用 feature `queryOptions`，组件用同一组
-   query options 读取缓存。
-7. 为敏感数据边界补测试：尤其是 Source token rotation、Destination config、Event raw debug
-   data、Delivery detail。
+1. Events / Deliveries 仍通过 `features/operations` 共享 query、filter、DTO re-export 和 worker
+   mutation。若某个页面开始拥有明显不同的查询输入、缓存失效或详情 DTO，再拆到各自的
+   `features/events/api|model` 与 `features/deliveries/api|model`。
+2. Sources / Routes / Destinations / Settings 的路由文件继续保持薄入口：URL search validation、
+   loader prefetch、渲染 feature page。新增表单、表格、dialog、空状态和 row action 放在 owning
+   feature。
+3. 可复用的表格外壳、分页、复制控件、通用 enabled/disabled badge 和通用面板放进
+   `components/common`；业务列、业务 badge、route coverage、provider/destination kind、delivery
+   state 仍留在 feature。
+4. Server state 统一通过 feature query/mutation 文件访问 server functions；route loader 只用同一组
+   `queryOptions` 预取，不直接 import store、container 或 service。
+5. 每次新增 client-visible DTO 或 detail/debug 展示，都同步检查 secret-safe projection：Source token、
+   token hash、Destination secret、raw sensitive config 和未脱敏 raw payload/header 不进入 query data。
 
-每一步都应保持现有业务行为不变。迁移完成后，`routes/index.tsx` 应只剩 dashboard index 的薄
-入口，或者被 `_dashboard.index.tsx` 取代。
+如果后续新增 dashboard landing page，应创建明确的 `_dashboard.index.tsx`，并让它像其他 route
+一样只组合 feature query 与 feature UI，不把业务逻辑重新堆回 `routes/index.tsx`。
 
 ---
 

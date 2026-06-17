@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ClaimedDelivery,
   DeliveryRepository,
-} from "#/repositories/delivery/delivery.interface.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
 import {
   DeliveryExecution,
   type DeliveryExecutionStore,

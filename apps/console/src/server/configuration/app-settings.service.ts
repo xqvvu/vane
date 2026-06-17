@@ -1,20 +1,18 @@
 import { UpdateAppSettingsCommandSchema, type UpdateAppSettingsCommand } from "@vane/core";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
-import type { AppSettings } from "#/repositories/settings/settings.interface.ts";
-
-export interface AppSettingsServiceOptions {
-  store: SqliteStore;
-}
+import type {
+  AppSettingsServiceOptions,
+  UpdateAppSettingsResult,
+} from "#/server/configuration/app-settings.service.types.ts";
 
 export class AppSettingsService {
-  private readonly store: SqliteStore;
+  private readonly store: AppSettingsServiceOptions["store"];
 
   constructor(options: AppSettingsServiceOptions) {
     this.store = options.store;
   }
 
-  updateAppSettings(command: UpdateAppSettingsCommand): AppSettings {
+  updateAppSettings(command: UpdateAppSettingsCommand): UpdateAppSettingsResult {
     const input = UpdateAppSettingsCommandSchema.parse(command);
 
     return this.store.settings.update({

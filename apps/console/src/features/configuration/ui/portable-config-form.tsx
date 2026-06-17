@@ -44,7 +44,7 @@ export function PortableConfigForm({
           fallback={
             <Textarea
               id="portable-config-toml"
-              className="bg-background text-foreground min-h-[28rem] resize-y font-mono text-[11px]"
+              className="bg-background text-foreground min-h-112 resize-y font-mono text-[11px]"
               placeholder={t("configuration.portableConfig.tomlPlaceholder")}
               value={value}
               readOnly

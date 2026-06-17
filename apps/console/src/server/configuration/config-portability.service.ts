@@ -2,16 +2,15 @@ import "@tanstack/react-start/server-only";
 import {
   ExportConfigurationCommandSchema,
   ImportConfigurationCommandSchema,
-  type DestinationSummary,
   type ExportConfigurationCommand,
   type ImportConfigurationCommand,
-  type RouteDefinition,
-  type SourceSummary,
 } from "@vane/core";
-import type { DestinationRegistry } from "@vane/destinations";
-import type { ProviderCatalogItem, ProviderRegistry } from "@vane/providers";
+import type { ProviderCatalogItem } from "@vane/providers";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type {
+  ConfigPortabilityServiceOptions,
+  ConfigurationSnapshot,
+} from "#/server/configuration/config-portability.service.types.ts";
 import {
   createPortableConfiguration,
   parsePortableConfigurationToml,
@@ -30,26 +29,10 @@ import {
 } from "#/server/configuration/configuration-support.ts";
 import { hashSourceToken } from "#/server/intake/intake.service.ts";
 
-export interface ConfigPortabilityServiceOptions {
-  store: SqliteStore;
-  providers?: ProviderRegistry;
-  destinations: DestinationRegistry;
-  generateSourceToken?: () => string;
-}
-
-export interface ConfigurationSnapshot {
-  settings: {
-    rawPayloadRetentionDays: number;
-  };
-  sources: SourceSummary[];
-  destinations: DestinationSummary[];
-  routes: RouteDefinition[];
-}
-
 export class ConfigPortabilityService {
-  private readonly store: SqliteStore;
-  private readonly providers?: ProviderRegistry;
-  private readonly destinations: DestinationRegistry;
+  private readonly store: ConfigPortabilityServiceOptions["store"];
+  private readonly providers: ConfigPortabilityServiceOptions["providers"];
+  private readonly destinations: ConfigPortabilityServiceOptions["destinations"];
   private readonly generateSourceToken: () => string;
 
   constructor(options: ConfigPortabilityServiceOptions) {

@@ -29,7 +29,7 @@ Vane 把这些能力集中到一个私有部署里：
 
 - TanStack Start 控制台，包含登录、首次 setup、dashboard shell、Sources、Routes、Destinations、Events、Deliveries 和 Settings 页面。
 - Better Auth dashboard 登录；首次注册用户可成为 owner。
-- SQLite-first 持久化层，显式 migrations，仓储按 Sources、Destinations、Routes、Intake、Deliveries、History、Settings 切分。
+- SQLite-first 持久化层，显式 migrations，仓储位于 `apps/console/src/infra/sqlite/repositories/`，按 Sources、Destinations、Routes、Intake、Deliveries、History、Settings 切分。
 - Provider parser registry：`generic`、`signoz`、`grafana`、`uptime_kuma`、`alertmanager`。
 - Destination sender registry：`generic_webhook`、`feishu`、`slack`、`email`。
 - Route rule、normalized event、delivery job、portable config 等核心 schema 位于 `@vane/core`。
@@ -43,7 +43,7 @@ Vane 把这些能力集中到一个私有部署里：
 ```txt
 apps/console
   TanStack Start console。拥有 UI、API routes、Better Auth、SQLite、migrations、
-  server functions、application services、in-process worker 和 Docker runtime。
+  server functions、按能力组织的 services、SQLite repositories、in-process worker 和 Docker runtime。
 
 packages/core
   共享领域 schema、类型、路由规则、delivery 类型、config schema、JSON helper、
@@ -71,7 +71,7 @@ docs
 要求：
 
 - Node.js `24.x`
-- pnpm `11.5.3`
+- pnpm `11.7.0`
 
 安装依赖：
 
@@ -111,6 +111,7 @@ pnpm --filter @vane/console build
 | `VANE_MAX_WEBHOOK_BYTES` | 入站 webhook 最大 payload 大小。 |
 | `VANE_WORKER_BATCH_SIZE` | delivery worker 每批处理数量。 |
 | `VANE_WORKER_INTERVAL_MS` | delivery worker 轮询间隔。 |
+| `VANE_WORKER_STALE_RUNNING_MS` | running delivery 超时回收窗口。 |
 
 ## Docker 试运行
 
@@ -129,10 +130,10 @@ BETTER_AUTH_SECRET="$(openssl rand -hex 32)" docker compose up --build
 - 建立 Vane 的领域语言：Sources、Events、Routes、Destinations、Deliveries、History。
 - 建立 monorepo 包边界：`core`、`providers`、`destinations`、`console`。
 - 建立 SQLite-first store、显式 migrations 和 repository 分层。
-- 建立 application container、request context、dashboard auth 与 webhook auth 分离。
+- 建立 application container、request context、dashboard session 类型与 webhook auth 分离。
 - 建立 provider parser registry 和 destination sender registry。
 - 建立 TanStack Start 控制台的 route-first + feature module 方向。
-- 建立 dashboard auth、first setup、error/not-found、toast、skeleton、profile menu 等基础体验。
+- 建立 dashboard 登录、first setup、error/not-found、toast、skeleton、profile menu 等基础体验。
 
 ### 1. MVP 功能收尾
 

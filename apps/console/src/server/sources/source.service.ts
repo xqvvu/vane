@@ -14,21 +14,11 @@ import {
   mergeJsonObjects,
 } from "#/server/configuration/configuration-support.ts";
 import { hashSourceToken } from "#/server/intake/intake.service.ts";
-
-export interface SourceServiceOptions {
-  store: SqliteStore;
-  generateSourceToken?: () => string;
-}
-
-export interface CreatedSource {
-  source: SourceSummary;
-  token: string;
-}
-
-export interface RotatedSourceToken {
-  source: SourceSummary;
-  token: string;
-}
+import type {
+  CreatedSource,
+  RotatedSourceToken,
+  SourceServiceOptions,
+} from "#/server/sources/source.service.types.ts";
 
 export class SourceService {
   private readonly store: SqliteStore;
