@@ -15,6 +15,6 @@ export const uptimeKumaProviderManifest = {
     parse: true,
     testPayload: true,
     sourceToken: true,
-    providerSecret: true,
+    additionalSharedSecret: true,
   },
 } satisfies ProviderManifest<"uptime_kuma">;

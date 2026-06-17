@@ -15,6 +15,6 @@ export const grafanaProviderManifest = {
     parse: true,
     testPayload: true,
     sourceToken: true,
-    providerSecret: true,
+    additionalSharedSecret: true,
   },
 } satisfies ProviderManifest<"grafana">;

@@ -36,6 +36,9 @@ changes, update the appropriate document under `docs` instead.
   orchestration, server functions, and the in-process worker.
 - `packages/core` owns shared schemas, domain types, route rules, delivery
   types, config types, JSON helpers, redaction helpers, and shared errors.
+  Module-specific contracts live under `packages/core/src/<module>/`; cross-cutting
+  helpers such as `json.ts`, `hash.ts`, and `redaction.ts` stay at the package
+  root.
 - `packages/providers` owns inbound provider parsers and the provider registry.
 - `packages/destinations` owns outbound destination senders, templates, and the
   destination registry.
@@ -60,34 +63,48 @@ general workflow automation.
 
 ### Server-Side Composition
 
-Use explicit, lightweight dependency wiring for the TanStack Start backend.
-Prefer composition root + factory DI + request context.
+The backend is plain layered code, not a domain-model / hexagonal / clean
+architecture. The layers are:
 
-- Put long-lived server dependencies behind a server-only composition root,
-  such as an application container. This is where SQLite store access, provider
-  registry, destination registry, application services, worker dependencies,
-  auth wiring, and runtime configuration are assembled.
-- Keep request-level data out of the global container. Current dashboard user,
-  session, request id, locale, and per-request audit data belong in a request
-  context created by the entrypoint.
-- Use service constructors or factory functions that accept explicit
-  dependencies. Business code should be testable with fake stores, fake
-  registries, fake clocks, and fake senders.
-- Avoid adding new module-level service singletons like
-  `export const sourceService = ...`. Existing global runtime state should be
-  hidden behind narrow server-only accessors or the application container.
+- entrypoints: API routes and `*.functions.ts` server functions (the controller
+  layer) validate input, check auth, and return safe DTOs.
+- services: per-capability `*.service.ts` files (for example
+  `server/sources/source.service.ts`) hold business logic. Exported service
+  option/result types live next to the implementation in `*.service.types.ts`.
+- repositories: `infra/sqlite/repositories/<module>/` files own persistence
+  contracts and SQLite implementations, split per module into `*.interface.ts`
+  (types + repository interface), `*.helpers.ts` (row mapping and shared
+  helpers), and `*.repository.ts` (SQLite implementation class).
+
+Wire dependencies explicitly. Do not reach for a DI framework.
+
+- Assemble long-lived server dependencies in one server-only wiring object, the
+  application container (`server/runtime/container.ts`). This is where SQLite
+  store access, provider registry, destination registry, services, worker
+  dependencies, auth wiring, and runtime configuration come together. The
+  container exposes one factory per service, such as `createSourceService` and
+  `createDestinationService`; there is no single aggregate configuration
+  service.
+- Keep request-level data out of the container. Current dashboard user, session,
+  request id, locale, and per-request audit data belong in the per-request
+  context the entrypoint builds.
+- Give services plain constructors that take explicit dependencies, so they stay
+  testable with fake stores, registries, clocks, and senders.
+- Do not add module-level service singletons like
+  `export const sourceService = ...`. Hide any remaining global runtime state
+  behind narrow server-only accessors or the container.
 - Do not add NestJS-style decorator IoC, reflection, or a third-party DI
   container. TanStack Start runtime lifecycles, HMR, serverless execution, and
   request isolation make magic DI a poor fit here.
-- Entrypoints should stay thin: validate input, establish request or webhook
-  context, get the needed service/usecase, call it, and return a safe DTO.
+- Keep entrypoints thin: validate input, establish request or webhook context,
+  get the service it needs, call it, and return a safe DTO.
 
 Dashboard auth and webhook auth are separate paths:
 
 - Dashboard routes, loaders, server functions, and API routes that touch
   user-owned data or runtime configuration must verify dashboard auth on the
   server.
-- Webhook intake endpoints authenticate with Source tokens or provider secrets,
+- Webhook intake endpoints authenticate with Source tokens or Vane-side additional shared secrets,
   not browser dashboard sessions.
 
 ### Frontend Architecture
@@ -102,12 +119,16 @@ shell               dashboard layout, sidebar, header, user menu
 components/ui       shadcn primitives only; no Vane domain knowledge
 components/common   reusable console UI, no feature ownership or server state
 features            Sources, Routes, Destinations, Events, Deliveries, Settings
-integrations        TanStack Query/Router, Better Auth, and library adapters
 routes              file routes, layouts, validateSearch, loaders, thin screens
-application         server functions, server usecases, container, request context
-infra               SQLite and server-only runtime infrastructure
+server              server-only: *.functions.ts controllers, per-capability *.service.ts/*.service.types.ts, runtime wiring, intake, deliveries
+infra               SQLite connection, migrations, codecs, store assembly, repositories, and server-only runtime infrastructure
 lib                 small shared helpers; split same-name .server/.client pairs only when needed
 ```
+
+Shared client/server contracts (command schemas, DTOs, result/projection types)
+live in the `@vane/core` package, not a console-level folder. Server-only types
+that only the backend consumes stay next to the code that uses them, such as the
+dashboard session types in `server/runtime/`.
 
 Route files should own URL concerns:
 
@@ -184,44 +205,50 @@ Server functions are the client/server boundary for console data.
 
 - `*.functions.ts` files may be imported by client-safe route, feature, query,
   and component code.
-- Server-only modules must use exactly one TanStack Start import-protection
-  mechanism: either a `.server.ts(x)` suffix or
-  `import "@tanstack/react-start/server-only";`.
+- Default to no import-protection marker. Most modules are environment-neutral
+  and need neither a `server-only` / `client-only` side-effect import nor a
+  `.server` / `.client` suffix.
+- Add `import "@tanstack/react-start/server-only";` only when the module's own
+  code directly imports or uses a server-exclusive API: a `node:*` builtin, the
+  SQLite driver, the filesystem, `process.env` / secret config, or `better-auth`
+  server runtime. Do not mark a module just because it is conceptually
+  server-side or because it imports another server module.
+- Add `import "@tanstack/react-start/client-only";` only when the module's own
+  code directly uses a browser-exclusive global or API, such as `window`,
+  `document`, `navigator`, `localStorage`, or the DOM.
+- The build enforces transitivity: if client-safe code is ever pulled into a
+  chain that reaches a marked module (or a `node:*` builtin), TanStack Start
+  import protection fails the build. That tripwire at the real boundary is the
+  protection; intermediate neutral modules do not need their own marker.
 - Use `.server.ts(x)` / `.client.ts(x)` suffixes only when matching files need
-  the same basename to distinguish environment-specific implementations, such
-  as `auth.server.ts` and `auth.client.ts`.
-- If there is no same-basename server/client pair, keep the normal filename and
-  use the `server-only` or `client-only` side-effect import instead.
-- Do not also add `import "@tanstack/react-start/server-only";` inside
-  `.server.ts(x)` files, or `import "@tanstack/react-start/client-only";` inside
-  `.client.ts(x)` files.
-- `*.server.ts(x)` files and modules marked with `server-only` are server-only
-  and must not be imported by client-safe code.
-- `*.schema.ts`, `*.types.ts`, and `*.model.ts` may be shared only when they do
-  not import server-only modules.
-- Default to shared files. Declare a module server-only or client-only because
-  of its concrete imports and runtime APIs, not because of its folder name or
-  conceptual layer.
+  the same basename to distinguish environment-specific implementations, such as
+  `auth.server.ts` and `auth.client.ts`. The suffix is itself the marker, so do
+  not also add a `server-only` / `client-only` side-effect import inside it.
+- A module that carries a marker, or a `.server` / `.client` suffix, must not be
+  imported by code from the other environment.
+- `*.schema.ts`, `*.types.ts`, and `*.model.ts` stay shared as long as their own
+  imports remain environment-neutral.
 - Keep server function command schemas, input validators, DTO types, and other
-  client-safe contracts in shared contract/model files, such as
-  `apps/console/src/application/contracts/*` or feature `model/*`, when they
-  are reused outside a server-only implementation.
-- `application/contracts/*` files are shared contracts. They must not import
-  environment-specific APIs or modules, including `node:*`, `#/infra/*`,
-  `#/application/runtime/*`, `#/lib/auth.server.ts`, modules marked with
-  TanStack Start import protection, or modules with `.server` / `.client`
-  suffixes.
-- `*.functions.ts` files should keep static imports client-safe: TanStack Start,
-  shared contracts, server function middleware, and other isomorphic helpers.
-  Do not statically import `#/infra/*`, `#/application/runtime/*`,
+  client-safe contracts in the `@vane/core` package or feature `model/*` files
+  when they are reused outside a server-only implementation. Console-level
+  command schemas and operation DTOs live in `@vane/core`.
+- `@vane/core` and feature `model/*` contracts must stay environment-neutral.
+  They must not import `node:*`, `#/infra/*`, `#/server/*`,
   `#/lib/auth.server.ts`, modules marked with TanStack Start import protection,
-  modules with `.server` / `.client` suffixes, or modules that import `node:*`.
-  A normal application/service module may be statically imported only while its
-  own static import graph remains environment-neutral.
+  or modules with `.server` / `.client` suffixes.
+- `*.functions.ts` files are RPC boundary files. Static imports may include
+  TanStack Start, shared contracts, server function middleware, and
+  `#/server/runtime/*`. Runtime functions must be called only from
+  `.handler(...)` or server middleware, not at module initialization. Do not
+  import `#/infra/*`, server capability services under `#/server/*`,
+  `#/lib/auth.server.ts`, modules with `.server` / `.client` suffixes, or
+  modules that import `node:*` unless TanStack Start build confirms the server
+  function boundary keeps that code out of the browser bundle.
 - Private dashboard server functions should normally reach services through
   `requireDashboardContextMiddleware` and `context.dashboardRequest.container`.
   Public server functions that cannot use the throwing dashboard middleware may
-  dynamically import runtime modules inside the handler.
+  call narrow runtime accessors directly from the handler and must catch auth
+  errors when returning nullable public state.
 - Server functions must validate inputs and perform their own server-side auth
   checks when returning private dashboard data.
 - Server functions should return DTOs shaped for UI needs. Do not return
@@ -373,19 +400,21 @@ Use shadcn for shared UI primitives and app composition.
 
 ## Security And Data Exposure
 
-- Keep source tokens, token hashes, provider secrets, destination secrets,
+- Keep source tokens, token hashes, additional shared secrets, destination secrets,
   signing secrets, SMTP passwords, webhook URLs with embedded secrets, and raw
   sensitive config server-side.
 - Redact raw payloads and headers before ordinary UI display or logging.
 - Do not expose secrets through route loader data, client components, query
   data, route context, serialized route data, TOML exports, or console logs.
-- Protect secret-touching and runtime infrastructure files with TanStack Start
-  import protection. Prefer `import "@tanstack/react-start/server-only";` unless
-  the file is one side of a same-basename server/client pair that needs a
-  `.server.ts(x)` suffix.
-- Protect browser-only modules with TanStack Start import protection. Prefer
-  `import "@tanstack/react-start/client-only";` unless the file is one side of a
-  same-basename server/client pair that needs a `.client.ts(x)` suffix.
+- Mark the modules that directly touch secrets or server-exclusive APIs
+  (`node:*`, the SQLite driver, filesystem, `process.env` / secret config,
+  `better-auth` server runtime) with `import "@tanstack/react-start/server-only";`
+  (or a `.server.ts(x)` suffix for same-basename pairs). These markers at the
+  real boundary make the build fail if client-safe code ever reaches them; do
+  not pre-emptively mark neutral wrapper modules.
+- Mark the modules that directly use browser-exclusive globals or APIs with
+  `import "@tanstack/react-start/client-only";` (or a `.client.ts(x)` suffix for
+  same-basename pairs).
 - Treat `beforeLoad` route guards as user-experience guards only. They do not
   replace server-side authorization in server functions or API routes.
 - Validate all external input, config blobs, route rules, TOML input, webhook
@@ -399,7 +428,7 @@ Use shadcn for shared UI primitives and app composition.
 - Migrations move forward only. Do not edit old committed migrations.
 - Use one consistent timestamp representation across tables.
 - Business code should not scatter schema creation. Route handlers and server
-  functions should delegate persistence to repositories or application services.
+  functions should delegate persistence to repositories or services.
 
 ## Imports
 
@@ -427,7 +456,7 @@ Use shadcn for shared UI primitives and app composition.
 Use pnpm and the existing workspace scripts.
 
 - Runtime: Node `24.x`.
-- Package manager: `pnpm@11.5.2`.
+- Package manager: `pnpm@11.7.0`.
 - Formatting: `pnpm --filter <package> fmt` or `fmt:check`.
 - Linting: `pnpm --filter <package> lint`.
 - Tests: `pnpm --filter <package> test`.

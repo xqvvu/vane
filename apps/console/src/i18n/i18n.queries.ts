@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getRequestLocaleFn } from "#/application/functions/i18n.functions.ts";
+import { getRequestLocaleFn } from "#/server/functions/i18n.functions.ts";
 
 export const i18nQueryKeys = {
   all: ["i18n"] as const,

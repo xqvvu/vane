@@ -12,6 +12,14 @@ _Avoid_: SaaS 平台、通用工作流引擎
 一个上游监控系统或自定义发送方在 Vane 中的独立接入口，拥有自己的 Webhook URL 和认证凭据。
 _Avoid_: 来源、入口、上游账号
 
+**接入 Token**:
+告警源默认使用的 Vane 侧认证凭据；上游监控系统调用该告警源的 Webhook URL 时必须提供它。
+_Avoid_: provider secret、session token、dashboard token
+
+**额外共享密钥**:
+告警源可选的第二层共享密钥，用于在接入 Token 之外增加一层 Vane 侧校验；它不是上游监控系统原生签名协议的承诺。
+_Avoid_: 原生 provider secret、Grafana signing secret、SigNoz signature
+
 **上游监控系统**:
 向 Vane 发送告警载荷的外部系统，例如 Grafana、SigNoz、Uptime Kuma 或 Alertmanager。
 _Avoid_: 客户端、生产者

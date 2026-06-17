@@ -10,7 +10,7 @@ Provider 和 destination 只共享展示元数据、配置字段描述、secret 
 
 Secret 处理不能只从表单字段描述推导。Adapter manifest 同时暴露 UI 字段描述和独立的 secret 字段声明，并通过测试或 registry audit 保持可见 secret 字段的一致性。这样 console 可以渲染友好的表单，同时把导出、日志、摘要和 DTO 脱敏锚定在明确的服务端安全边界上。
 
-Provider parser 可以接收 typed Source config，用于 severity 映射、默认标签、metadata 选择等解析行为。Webhook 认证仍由 console 服务层拥有，以便 Source token、provider secret、审计行为和拒绝响应在所有 provider 之间保持一致。
+Provider parser 可以接收 typed Source config，用于 severity 映射、默认标签、metadata 选择等解析行为。Webhook 认证仍由 console 服务层拥有，以便 Source token、额外共享密钥、审计行为和拒绝响应在所有 provider 之间保持一致。
 
 Adapter 的预期失败用结构化结果表达，而不是依赖任意 thrown error。Provider parse 失败返回稳定原因，console 可据此记录 parser-failure Event；destination send 失败返回标准错误分类，如 HTTP 错误、目标系统拒绝、网络失败、超时、配置错误和未知错误。异常只表示非预期 bug 或最后防线。
 
@@ -42,7 +42,7 @@ MVP 中 provider adapter 每次 parse 仍返回单个规范化告警，对应一
 
 Adapter runtime 只接收已经解析、已经校验的 typed config。SQLite/TOML 中的 `secretRefs`、环境变量引用、未来 secret store 解析、缺失 secret 报错和导入导出策略都由 console 的配置边界处理；adapter 不关心 secret 来自哪里，也不直接读取 env、TOML 或持久化结构。
 
-Provider manifest 可以声明认证需求或可选认证方式，但认证执行属于 console 服务层。所有 Source 默认使用 Vane Source token；provider-specific secret、共享 header、未来 HMAC 等能力由 manifest 描述，console 用它渲染配置、保存 secret refs、执行认证和审计，provider parse 不做认证裁决。
+Provider manifest 可以声明认证需求或可选认证方式，但认证执行属于 console 服务层。所有 Source 默认使用 Vane Source token；额外共享密钥、共享 header、未来 HMAC 等能力由 manifest 描述，console 用它渲染配置、保存 secret refs、执行认证和审计，provider parse 不做认证裁决。
 
 Destination transport context 保持小而显式，先稳定 `fetch`、`now`、timeout、user agent 等通用能力。Adapter 不能接收 app container、数据库、logger 或任意服务对象；如果未来需要 SMTP 等新 transport，需要明确扩展 context，而不是让 destination adapter 直接读取全局 runtime。
 

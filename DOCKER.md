@@ -1,10 +1,8 @@
 # Vane Docker 部署
 
-Vane MVP 的默认部署形态是单进程、单镜像、SQLite 数据卷，不需要 Redis、Postgres、
-Kafka 或独立 worker。
+Vane MVP 的默认部署形态是单进程、单镜像、SQLite 数据卷，不需要 Redis、Postgres、Kafka 或独立 worker。
 
-应用进程内会自动启动 SQLite-backed delivery worker，周期性处理 pending deliveries；
-控制台里的 `Run worker` 按钮只是手动即时触发一次处理。
+应用进程内会自动启动 SQLite-backed delivery worker，周期性处理 pending deliveries；控制台里的 `Run worker` 按钮只是手动即时触发一次处理。
 
 ## 构建镜像
 
@@ -61,6 +59,7 @@ docker run --rm -p 3000:3000 \
 | `VANE_MAX_WEBHOOK_BYTES` | `1048576` | 单个 inbound webhook JSON payload 最大字节数。 |
 | `VANE_WORKER_BATCH_SIZE` | `10` | 进程内 delivery worker 每轮最多认领的 pending deliveries 数。 |
 | `VANE_WORKER_INTERVAL_MS` | `5000` | 进程内 delivery worker 自动运行间隔，单位毫秒。 |
+| `VANE_WORKER_STALE_RUNNING_MS` | `300000` | running delivery 超过该时间后可被 worker 回收重试，单位毫秒。 |
 
 ## Webhook URL
 

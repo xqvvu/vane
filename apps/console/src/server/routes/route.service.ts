@@ -1,0 +1,54 @@
+import {
+  CreateRouteCommandSchema,
+  UpdateRouteCommandSchema,
+  type CreateRouteCommand,
+  type RouteDefinition,
+  type UpdateRouteCommand,
+} from "@vane/core";
+
+import {
+  requireExistingDestinationIds,
+  requireExistingSourceIds,
+} from "#/server/configuration/configuration-support.ts";
+import type { RouteServiceOptions } from "#/server/routes/route.service.types.ts";
+
+export class RouteService {
+  private readonly store: RouteServiceOptions["store"];
+
+  constructor(options: RouteServiceOptions) {
+    this.store = options.store;
+  }
+
+  createRoute(command: CreateRouteCommand): RouteDefinition {
+    const input = CreateRouteCommandSchema.parse(command);
+
+    requireExistingSourceIds(input.rule?.sourceIds ?? [], this.store.sources);
+    requireExistingDestinationIds(input.destinationIds, this.store.destinations);
+
+    return this.store.routes.create({
+      name: input.name,
+      enabled: input.enabled,
+      rule: input.rule,
+      destinationIds: input.destinationIds,
+    });
+  }
+
+  updateRoute(command: UpdateRouteCommand): RouteDefinition {
+    const input = UpdateRouteCommandSchema.parse(command);
+
+    if (input.rule) {
+      requireExistingSourceIds(input.rule.sourceIds, this.store.sources);
+    }
+
+    if (input.destinationIds) {
+      requireExistingDestinationIds(input.destinationIds, this.store.destinations);
+    }
+
+    return this.store.routes.update(input.id, {
+      name: input.name,
+      enabled: input.enabled,
+      rule: input.rule,
+      destinationIds: input.destinationIds,
+    });
+  }
+}

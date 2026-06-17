@@ -28,7 +28,7 @@ describe("source form helpers", () => {
     expect(formSourceProviderValue(null)).toBe("generic");
   });
 
-  it("maps optional provider secrets into source config", () => {
+  it("maps optional additional shared secrets into source config", () => {
     const data = new FormData();
 
     data.set("signingSecret", " shared-secret ");
@@ -37,7 +37,7 @@ describe("source form helpers", () => {
     expect(sourceConfigPatchFromForm(data)).toEqual({ signingSecret: "shared-secret" });
   });
 
-  it("omits empty provider secret patches", () => {
+  it("omits empty additional shared secret patches", () => {
     const data = new FormData();
 
     data.set("signingSecret", "");

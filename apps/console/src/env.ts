@@ -20,6 +20,12 @@ export const env = createEnv({
       .default(1024 * 1024),
     VANE_WORKER_BATCH_SIZE: z.coerce.number().int().positive().max(100).default(10),
     VANE_WORKER_INTERVAL_MS: z.coerce.number().int().positive().max(60_000).default(5_000),
+    VANE_WORKER_STALE_RUNNING_MS: z.coerce
+      .number<number>()
+      .int()
+      .positive()
+      .max(60 * 60_000)
+      .default(5 * 60_000),
   },
 
   /**

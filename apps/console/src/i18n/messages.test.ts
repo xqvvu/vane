@@ -9,11 +9,13 @@ describe("i18n messages", () => {
     expect(Object.keys(zhHansMessages).sort()).toEqual(Object.keys(enUsMessages).sort());
   });
 
+  // oxlint-disable-next-line vitest/expect-expect
   it("keeps locale source files flat", () => {
     expectFlatMessages(enUsMessages);
     expectFlatMessages(zhHansMessages);
   });
 
+  // oxlint-disable-next-line vitest/expect-expect
   it("keeps translatable prose free of sentence periods", () => {
     expectNoSentencePeriods(enUsMessages);
     expectNoSentencePeriods(zhHansMessages);

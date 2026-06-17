@@ -2,11 +2,11 @@ import { RiDownloadLine, RiFileCodeLine, RiUploadLine } from "@remixicon/react";
 import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
 
+import { TomlEditor } from "#/components/codemirror/toml-editor";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
-import { TomlEditor } from "#/integrations/codemirror/toml-editor.tsx";
 
 export function PortableConfigForm({
   value,
@@ -44,7 +44,7 @@ export function PortableConfigForm({
           fallback={
             <Textarea
               id="portable-config-toml"
-              className="bg-background text-foreground min-h-[28rem] resize-y font-mono text-[11px]"
+              className="bg-background text-foreground min-h-112 resize-y font-mono text-[11px]"
               placeholder={t("configuration.portableConfig.tomlPlaceholder")}
               value={value}
               readOnly
