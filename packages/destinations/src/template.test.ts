@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { feishuSender } from "#/feishu.ts";
-import { genericWebhookSender } from "#/generic-webhook.ts";
+import { feishuSender } from "#/feishu/index.ts";
+import { genericWebhookSender } from "#/generic-webhook/index.ts";
 import { MessageTemplateSchema, renderMessageTemplate } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 

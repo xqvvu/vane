@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { requireDashboardContextMiddleware } from "#/application/functions/dashboard-context.middleware.ts";
 import {
   CreateDestinationCommandSchema,
   CreateRouteCommandSchema,
@@ -16,12 +15,25 @@ import {
   UpdateDestinationCommandSchema,
   UpdateRouteCommandSchema,
   UpdateSourceCommandSchema,
-} from "#/application/services/configuration.ts";
+} from "#/application/contracts/configuration-commands.ts";
+import { requireDashboardContextMiddleware } from "#/application/functions/dashboard-context.middleware.ts";
 
 export const listConfigurationFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
   .handler(async ({ context }) =>
     context.dashboardRequest.container.createConfigurationService().listConfiguration(),
+  );
+
+export const listDestinationCatalogFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .handler(async ({ context }) =>
+    context.dashboardRequest.container.createConfigurationService().listDestinationCatalog(),
+  );
+
+export const listProviderCatalogFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .handler(async ({ context }) =>
+    context.dashboardRequest.container.createConfigurationService().listProviderCatalog(),
   );
 
 export const exportConfigurationTomlFn = createServerFn({ method: "GET" })

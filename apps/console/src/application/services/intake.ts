@@ -11,7 +11,7 @@ import {
   toJsonValue,
 } from "@vane/core";
 import type { JsonValue, RouteMatchResult } from "@vane/core";
-import type { ProviderRegistry } from "@vane/providers";
+import type { ProviderParseFailure, ProviderRegistry } from "@vane/providers";
 
 import type { SqliteStore } from "#/infra/sqlite/store.ts";
 
@@ -95,36 +95,48 @@ export class WebhookIntakeService {
     const rawHeaders = redactHeaders(input.headers);
     const rawPayload = redactJsonValue(payload) as JsonValue;
 
-    let parsed;
+    const parseResult = (() => {
+      try {
+        return this.providers.parse(source.provider, {
+          source: {
+            id: source.id,
+            name: source.name,
+            provider: source.provider,
+            enabled: source.enabled,
+          },
+          sourceId: source.id,
+          sourceName: source.name,
+          receivedAt,
+          headers: rawHeaders,
+          payload,
+          config: source.config,
+        });
+      } catch (error) {
+        return this.raiseProviderParseFailure({
+          sourceId: source.id,
+          sourceProvider: source.provider,
+          payload,
+          rawPayload,
+          rawHeaders,
+          receivedAt,
+          error,
+        });
+      }
+    })();
 
-    try {
-      parsed = this.providers.parse(source.provider, {
-        sourceId: source.id,
-        sourceName: source.name,
-        receivedAt,
-        headers: rawHeaders,
-        payload,
-      });
-    } catch (error) {
-      const eventId = this.recordParserFailureEvent({
+    if (!parseResult.ok) {
+      this.raiseProviderParseFailure({
         sourceId: source.id,
         sourceProvider: source.provider,
         payload,
         rawPayload,
         rawHeaders,
         receivedAt,
-        error,
+        error: parseResult,
       });
-
-      throw new WebhookIntakeError(
-        "provider_parse_failed",
-        "Provider parser rejected webhook payload",
-        {
-          cause: error,
-          eventId,
-        },
-      );
     }
+
+    const parsed = parseResult;
 
     const routes = this.store.routes.list();
     const routeMatches = routes.map((route) =>
@@ -188,8 +200,10 @@ export class WebhookIntakeService {
     error: unknown;
   }): string {
     const payloadHash = createStableHash(input.payload);
+    const parseFailure = isProviderParseFailure(input.error) ? input.error : null;
     const errorMessage = redactText(
-      input.error instanceof Error ? input.error.message : String(input.error),
+      parseFailure?.message ??
+        (input.error instanceof Error ? input.error.message : String(input.error)),
     );
 
     return this.store.transaction((tx) => {
@@ -214,7 +228,12 @@ export class WebhookIntakeService {
           parserVersion: 1,
           parseFailed: true,
           payloadHash,
-          errorName: input.error instanceof Error ? input.error.name : "Error",
+          errorName: parseFailure
+            ? "ProviderParseFailure"
+            : input.error instanceof Error
+              ? input.error.name
+              : "Error",
+          ...(parseFailure ? { reason: parseFailure.reason } : {}),
           errorMessage,
         },
         rawPayload: input.rawPayload,
@@ -228,6 +247,27 @@ export class WebhookIntakeService {
 
       return event.id;
     });
+  }
+
+  private raiseProviderParseFailure(input: {
+    sourceId: string;
+    sourceProvider: string;
+    payload: JsonValue;
+    rawPayload: JsonValue;
+    rawHeaders: Record<string, string>;
+    receivedAt: string;
+    error: unknown;
+  }): never {
+    const eventId = this.recordParserFailureEvent(input);
+
+    throw new WebhookIntakeError(
+      "provider_parse_failed",
+      "Provider parser rejected webhook payload",
+      {
+        cause: input.error,
+        eventId,
+      },
+    );
   }
 }
 
@@ -256,6 +296,17 @@ function verifyWebhookAuthentication(input: {
   }
 
   return verifyProviderSecret(input.headers, input.source.config);
+}
+
+function isProviderParseFailure(error: unknown): error is ProviderParseFailure {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "ok" in error &&
+    (error as { ok?: unknown }).ok === false &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  );
 }
 
 function verifyProviderSecret(

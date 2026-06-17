@@ -51,7 +51,7 @@ export class DeliveryExecution {
         this.sendContext,
       );
 
-      if (sendResult.success) {
+      if (sendResult.ok) {
         this.store.deliveries.markSucceeded({
           deliveryId: delivery.job.id,
           attemptId: delivery.attempt.id,
@@ -65,7 +65,7 @@ export class DeliveryExecution {
       }
 
       return this.markFailed(delivery, {
-        error: sendResult.error ?? "Destination send failed",
+        error: sendResult.errorMessage,
         responseStatus: sendResult.statusCode ?? undefined,
         responseBody: redactOptionalText(sendResult.responseBody),
         finishedAt: now,

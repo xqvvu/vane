@@ -2,16 +2,16 @@ import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
+import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
+import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
-import { CreateRouteForm } from "#/features/routes/ui/route-forms.tsx";
+import { RouteAddDialog } from "#/features/routes/ui/route-add-dialog.tsx";
 import { RoutesSection } from "#/features/routes/ui/routes-section.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
 
 export function RoutesPage() {
   const t = useTranslations();
@@ -50,8 +50,12 @@ export function RoutesPage() {
       main={
         <>
           <RoutesPageToolbar
-            routeCount={configuration.routes.length}
             pending={pending}
+            sources={configuration.sources}
+            destinations={configuration.destinations}
+            onCreate={(input) =>
+              void submitAction("create-route", () => createRoute({ data: input }))
+            }
             onRefresh={() => void refreshConfiguration()}
           />
           {formError ? (
@@ -89,58 +93,54 @@ export function RoutesPage() {
           />
         </>
       }
-      sidebar={
-        <DashboardSidebar variant="split">
-          <CreateRouteForm
-            sources={configuration.sources}
-            destinations={configuration.destinations}
-            pending={pending}
-            onSubmit={(input) =>
-              void submitAction("create-route", () => createRoute({ data: input }))
-            }
-          />
-        </DashboardSidebar>
-      }
     />
   );
 }
 
 function RoutesPageToolbar({
-  routeCount,
   pending,
+  sources,
+  destinations,
+  onCreate,
   onRefresh,
 }: {
-  routeCount: number;
   pending: boolean;
+  sources: Configuration["sources"];
+  destinations: Configuration["destinations"];
+  onCreate: (input: {
+    name: string;
+    rule: Configuration["routes"][number]["rule"];
+    destinationIds: string[];
+  }) => void;
   onRefresh: () => void;
 }) {
   const t = useTranslations();
 
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">
-            {t("routing.page.title")}
-          </h1>
-          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {t("routing.page.configured", { count: routeCount })}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground mt-2 text-sm">{t("routing.page.description")}</p>
-      </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={pending}
-        onClick={onRefresh}
-        title={t("routing.page.refreshTitle")}
-        className="w-fit"
-      >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
-        {t("common.actions.refresh")}
-      </Button>
-    </header>
+    <PageToolbar
+      description={t("routing.page.description")}
+      actions={
+        <>
+          <RouteAddDialog
+            sources={sources}
+            destinations={destinations}
+            pending={pending}
+            onSubmit={onCreate}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={onRefresh}
+            title={t("routing.page.refreshTitle")}
+            className="w-fit"
+          >
+            <RiRefreshLine data-icon="inline-start" aria-hidden />
+            {t("common.actions.refresh")}
+          </Button>
+        </>
+      }
+    />
   );
 }

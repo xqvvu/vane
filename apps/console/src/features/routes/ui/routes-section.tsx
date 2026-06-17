@@ -1,7 +1,11 @@
 import { RiEditLine, RiRouteLine, RiShutDownLine } from "@remixicon/react";
+import type { ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
 
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
-import { SimpleTable } from "#/components/common/simple-table.tsx";
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
+import { OperationsTable } from "#/components/common/operations-table.tsx";
+import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -48,70 +52,68 @@ export function RoutesSection({
   onSubmitEdit,
 }: RoutesSectionProps) {
   const t = useTranslations();
+  const data = React.useMemo(() => routes, [routes]);
+  const columns = React.useMemo<Array<ColumnDef<RouteSummary>>>(
+    () => [
+      {
+        id: "name",
+        header: t("routing.table.headers.name"),
+        cell: ({ row }) => <RouteIdentityCell route={row.original} />,
+      },
+      {
+        id: "rule",
+        header: t("routing.table.headers.rule"),
+        cell: ({ row }) => <RouteRuleCell route={row.original} sources={sources} />,
+      },
+      {
+        id: "destinations",
+        header: t("routing.table.headers.destinations"),
+        cell: ({ row }) => (
+          <RouteDestinationsCell
+            destinationIds={row.original.destinationIds}
+            destinations={destinations}
+          />
+        ),
+      },
+      {
+        id: "state",
+        header: t("routing.table.headers.state"),
+        cell: ({ row }) => <EnabledStateBadge enabled={row.original.enabled} />,
+      },
+      {
+        id: "actions",
+        header: t("routing.table.headers.actions"),
+        cell: ({ row }) => (
+          <RouteActions
+            route={row.original}
+            pending={pending}
+            onEdit={onEdit}
+            onToggle={onToggle}
+          />
+        ),
+      },
+    ],
+    [destinations, onEdit, onToggle, pending, sources, t],
+  );
 
   return (
     <section className="bg-background">
-      <SimpleTable
-        variant="flush"
-        empty={<RoutesEmptyState hasDestinations={destinations.length > 0} />}
-        headers={[
-          t("routing.table.headers.name"),
-          t("routing.table.headers.rule"),
-          t("routing.table.headers.destinations"),
-          t("routing.table.headers.state"),
-          t("routing.table.headers.actions"),
-        ]}
-        columnClassNames={["w-[22%]", "w-[34%]", "w-[20%]", "w-[10%]", "w-[14%]"]}
-        rows={routes.map((route) => ({
-          key: route.id,
-          cells: [
-            <RouteIdentityCell key="identity" route={route} />,
-            <RouteRuleCell key="rule" route={route} sources={sources} />,
-            <RouteDestinationsCell
-              key="destinations"
-              destinationIds={route.destinationIds}
-              destinations={destinations}
-            />,
-            <EnabledStateBadge key="state" enabled={route.enabled} />,
-            <div key="actions" className="flex justify-end gap-1">
-              <Button
-                variant="outline"
-                size="icon-xs"
-                disabled={pending}
-                title={t("routing.table.actions.edit")}
-                onClick={() => onEdit(route.id)}
-              >
-                <RiEditLine data-icon="inline-start" aria-hidden />
-              </Button>
-              <Button
-                variant="outline"
-                size="xs"
-                disabled={pending}
-                title={
-                  route.enabled
-                    ? t("routing.table.actions.disableTitle")
-                    : t("routing.table.actions.enableTitle")
-                }
-                onClick={() => onToggle(route)}
-              >
-                <RiShutDownLine data-icon="inline-start" aria-hidden />
-                {route.enabled
-                  ? t("routing.table.actions.disable")
-                  : t("routing.table.actions.enable")}
-              </Button>
-            </div>,
-          ],
-        }))}
+      <OperationsTable
+        data={data}
+        columns={columns}
+        pageSize={routesPageSize}
+        emptyState={<RoutesEmptyState hasDestinations={destinations.length > 0} />}
+        getRowId={(route) => route.id}
+        columnClassName={routesColumnClassName}
+        isPrimaryColumn={(columnId) => columnId === "name"}
+        rangeLabel={({ total }) => t("routing.table.pagination.range", { total })}
+        emptyRangeLabel={t("routing.table.pagination.empty")}
+        pageLabel={({ page, pageCount }) => t("routing.table.pagination.page", { page, pageCount })}
+        previousLabel={t("routing.table.pagination.previous")}
+        nextLabel={t("routing.table.pagination.next")}
       />
-      {routes.length > 0 ? (
-        <div className="border-border bg-background border-t py-4 text-center">
-          <span className="text-muted-foreground text-[11px] font-bold tracking-[0.18em] uppercase">
-            {t("routing.table.end")}
-          </span>
-        </div>
-      ) : null}
       {editingRoute ? (
-        <div className="border-border border-t p-3">
+        <div className="border-border border-x border-b p-3">
           <EditRouteForm
             key={editingRoute.id}
             route={editingRoute}
@@ -124,6 +126,54 @@ export function RoutesSection({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function RouteActions({
+  route,
+  pending,
+  onEdit,
+  onToggle,
+}: {
+  route: RouteSummary;
+  pending: boolean;
+  onEdit: (routeId: string) => void;
+  onToggle: (route: RouteSummary) => void;
+}) {
+  const t = useTranslations();
+  const editLabel = t("routing.table.actions.edit");
+  const toggleLabel = route.enabled
+    ? t("routing.table.actions.disableTitle")
+    : t("routing.table.actions.enableTitle");
+
+  return (
+    <div className="flex justify-center gap-1">
+      <IconTooltip label={editLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={editLabel}
+          onClick={() => onEdit(route.id)}
+        >
+          <RiEditLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+      <IconTooltip label={toggleLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={toggleLabel}
+          className={powerActionButtonClassName(route.enabled)}
+          onClick={() => onToggle(route)}
+        >
+          <RiShutDownLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+    </div>
   );
 }
 
@@ -261,3 +311,22 @@ function describeRuleForUi(
 function sourceNameForId(sourceId: string, sources: Configuration["sources"]): string {
   return sources.find((source) => source.id === sourceId)?.name ?? sourceId.slice(0, 10);
 }
+
+function routesColumnClassName(columnId: string): string | null {
+  switch (columnId) {
+    case "name":
+      return "w-[24%]";
+    case "rule":
+      return "w-[34%]";
+    case "destinations":
+      return "w-[20%]";
+    case "state":
+      return "w-[10%]";
+    case "actions":
+      return "w-[12%]";
+    default:
+      return null;
+  }
+}
+
+const routesPageSize = 10;

@@ -1,20 +1,23 @@
-import { RiAddLine, RiEditLine, RiGitBranchLine } from "@remixicon/react";
+import {
+  RiAddLine,
+  RiArrowDownSLine,
+  RiCloseLine,
+  RiEditLine,
+  RiGitBranchLine,
+} from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
 
 import { FormPanel } from "#/components/common/content-panel.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Checkbox } from "#/components/ui/checkbox.tsx";
 import {
   Field as UiField,
-  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSet,
-  FieldTitle,
 } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import {
@@ -33,13 +36,16 @@ import {
   type RouteRuleFormValues,
 } from "#/features/routes/model/route-form.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
+import { cn } from "#/lib/utils.ts";
 
 export function CreateRouteForm({
+  showHeader = true,
   sources,
   destinations,
   pending,
   onSubmit,
 }: {
+  showHeader?: boolean;
   sources: Configuration["sources"];
   destinations: Configuration["destinations"];
   pending: boolean;
@@ -50,6 +56,41 @@ export function CreateRouteForm({
   }) => void;
 }) {
   const t = useTranslations();
+  const form = (
+    <RouteForm
+      sources={sources}
+      destinations={destinations}
+      pending={pending}
+      defaultValues={{
+        name: "",
+        rule: {
+          sourceId: "",
+          severity: "critical",
+          status: "any",
+          labelKey: "",
+          labelOperator: "equals",
+          labelValue: "",
+          titleContains: "",
+          messageContains: "",
+        },
+        destinationIds: [],
+      }}
+      submitLabel={t("routing.form.create.submit")}
+      submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
+      resetOnSubmit
+      onSubmit={(values) => {
+        onSubmit({
+          name: values.name.trim(),
+          rule: routeRuleFromValues(values.rule),
+          destinationIds: values.destinationIds,
+        });
+      }}
+    />
+  );
+
+  if (!showHeader) {
+    return form;
+  }
 
   return (
     <FormPanel
@@ -57,35 +98,7 @@ export function CreateRouteForm({
       icon={<RiGitBranchLine className="size-4" aria-hidden />}
     >
       <p className="text-muted-foreground mb-3 text-xs">{t("routing.form.create.description")}</p>
-      <RouteForm
-        sources={sources}
-        destinations={destinations}
-        pending={pending}
-        defaultValues={{
-          name: "",
-          rule: {
-            sourceId: "",
-            severity: "critical",
-            status: "any",
-            labelKey: "",
-            labelOperator: "equals",
-            labelValue: "",
-            titleContains: "",
-            messageContains: "",
-          },
-          destinationIds: [],
-        }}
-        submitLabel={t("routing.form.create.submit")}
-        submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
-        resetOnSubmit
-        onSubmit={(values) => {
-          onSubmit({
-            name: values.name.trim(),
-            rule: routeRuleFromValues(values.rule),
-            destinationIds: values.destinationIds,
-          });
-        }}
-      />
+      {form}
     </FormPanel>
   );
 }
@@ -430,51 +443,22 @@ function RouteForm({
         </form.Field>
         <form.Field name="destinationIds">
           {(field) => (
-            <FieldSet
-              className="border-border gap-2 border p-2"
-              data-disabled={destinations.length === 0}
-            >
-              <FieldLegend className="text-muted-foreground">
-                {t("routing.form.destinationsLegend")}
-              </FieldLegend>
-              {destinations.length === 0 ? (
-                <div className="text-muted-foreground text-xs">
-                  {t("routing.form.createDestinationFirst")}
-                </div>
-              ) : (
-                <FieldGroup data-slot="checkbox-group" className="gap-2">
-                  {destinations.map((destination) => {
-                    const checked = field.state.value.includes(destination.id);
-
-                    return (
-                      <UiField key={destination.id} orientation="horizontal">
-                        <Checkbox
-                          id={`${field.name}-${destination.id}`}
-                          name={field.name}
-                          value={destination.id}
-                          checked={checked}
-                          onCheckedChange={(nextChecked) => {
-                            field.handleChange(
-                              nextChecked
-                                ? [...field.state.value, destination.id]
-                                : field.state.value.filter((id) => id !== destination.id),
-                            );
-                          }}
-                        />
-                        <FieldLabel htmlFor={`${field.name}-${destination.id}`}>
-                          <FieldContent>
-                            <FieldTitle className="truncate">
-                              {destination.name} · {destination.kind}
-                            </FieldTitle>
-                          </FieldContent>
-                        </FieldLabel>
-                      </UiField>
-                    );
-                  })}
-                </FieldGroup>
-              )}
+            <UiField data-disabled={destinations.length === 0}>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.destinationsLegend")}</FieldLabel>
+              <DestinationMultiSelect
+                id={field.name}
+                destinations={destinations}
+                selectedIds={field.state.value}
+                disabled={pending || destinations.length === 0}
+                placeholder={t("routing.form.selectDestinationsPlaceholder")}
+                emptyLabel={t("routing.form.createDestinationFirst")}
+                removeLabel={t("routing.form.removeDestination")}
+                selectedCountLabel={(count) => t("routing.form.selectedDestinations", { count })}
+                onBlur={field.handleBlur}
+                onChange={field.handleChange}
+              />
               <FieldDescription>{t("routing.form.destinationsDescription")}</FieldDescription>
-            </FieldSet>
+            </UiField>
           )}
         </form.Field>
       </FieldGroup>
@@ -495,5 +479,206 @@ function RouteForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function DestinationMultiSelect({
+  id,
+  destinations,
+  selectedIds,
+  disabled,
+  placeholder,
+  emptyLabel,
+  removeLabel,
+  selectedCountLabel,
+  onBlur,
+  onChange,
+}: {
+  id: string;
+  destinations: Configuration["destinations"];
+  selectedIds: string[];
+  disabled: boolean;
+  placeholder: string;
+  emptyLabel: string;
+  removeLabel: string;
+  selectedCountLabel: (count: number) => string;
+  onBlur: () => void;
+  onChange: (selectedIds: string[]) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const selectedDestinations = selectedIds
+    .map((destinationId) => destinations.find((destination) => destination.id === destinationId))
+    .filter((destination): destination is Configuration["destinations"][number] =>
+      Boolean(destination),
+    );
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function closeOnPointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        onBlur();
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnPointerDown);
+
+    return () => document.removeEventListener("pointerdown", closeOnPointerDown);
+  }, [onBlur, open]);
+
+  function toggleDestination(destinationId: string) {
+    onChange(
+      selectedIds.includes(destinationId)
+        ? selectedIds.filter((selectedId) => selectedId !== destinationId)
+        : [...selectedIds, destinationId],
+    );
+  }
+
+  function closeSelect() {
+    setOpen(false);
+    onBlur();
+  }
+
+  return (
+    <div
+      ref={rootRef}
+      className="relative"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onBlur();
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.preventDefault();
+          event.stopPropagation();
+          closeSelect();
+        }
+      }}
+    >
+      <div
+        data-disabled={disabled}
+        className={cn(
+          "border-input bg-background text-foreground flex min-h-8 w-full items-center gap-1 border px-1.5 py-1 text-left text-xs transition-colors",
+          "focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50",
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-text hover:bg-muted/50",
+        )}
+        onClick={(event) => {
+          if (!disabled && event.target === event.currentTarget) {
+            setOpen(true);
+          }
+        }}
+      >
+        <div
+          className="flex max-h-16 min-w-0 flex-1 flex-wrap gap-1 overflow-y-auto py-0.5"
+          onClick={() => {
+            if (!disabled) {
+              setOpen(true);
+            }
+          }}
+        >
+          {selectedDestinations.length === 0 ? (
+            <span className="text-muted-foreground px-0.5 py-0.5">{placeholder}</span>
+          ) : (
+            selectedDestinations.map((destination) => (
+              <Badge
+                key={destination.id}
+                variant="outline"
+                className="max-w-full gap-1 py-0 pr-0.5 pl-1.5"
+              >
+                <span className="truncate">{destination.name}</span>
+                <span className="text-muted-foreground">{destination.kind}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  disabled={disabled}
+                  aria-label={`${removeLabel}: ${destination.name}`}
+                  className="size-4 border-0 p-0"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onChange(selectedIds.filter((selectedId) => selectedId !== destination.id));
+                  }}
+                >
+                  <RiCloseLine aria-hidden />
+                </Button>
+              </Badge>
+            ))
+          )}
+        </div>
+        <Button
+          id={id}
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={`${id}-options`}
+          className="text-muted-foreground h-6 shrink-0 px-1.5"
+          onClick={() => {
+            setOpen((current) => !current);
+          }}
+        >
+          {selectedDestinations.length > 0 ? (
+            <span>{selectedCountLabel(selectedDestinations.length)}</span>
+          ) : null}
+          <RiArrowDownSLine aria-hidden />
+        </Button>
+      </div>
+
+      {open ? (
+        <div
+          id={`${id}-options`}
+          role="listbox"
+          aria-multiselectable="true"
+          className="border-border bg-popover text-popover-foreground absolute top-[calc(100%+4px)] left-0 z-40 max-h-56 w-full overflow-y-auto border shadow-md"
+        >
+          {destinations.length === 0 ? (
+            <div className="text-muted-foreground px-2 py-2 text-xs">{emptyLabel}</div>
+          ) : (
+            destinations.map((destination) => {
+              const checked = selectedIds.includes(destination.id);
+
+              return (
+                <div
+                  key={destination.id}
+                  role="option"
+                  aria-selected={checked}
+                  tabIndex={0}
+                  className="hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground flex cursor-pointer items-start gap-2 px-2 py-2 text-xs outline-none"
+                  onClick={() => toggleDestination(destination.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      toggleDestination(destination.id);
+                    }
+                  }}
+                >
+                  <Checkbox
+                    name={id}
+                    value={destination.id}
+                    checked={checked}
+                    tabIndex={-1}
+                    aria-hidden
+                    className="pointer-events-none mt-0.5"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{destination.name}</span>
+                    <span className="text-muted-foreground block truncate text-[11px]">
+                      {destination.kind}
+                    </span>
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }

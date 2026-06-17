@@ -1,7 +1,18 @@
-import { RiArrowRightLine, RiEyeLine, RiRefreshLine, RiRestartLine } from "@remixicon/react";
+import { RiEyeLine, RiInboxArchiveLine, RiRestartLine } from "@remixicon/react";
+import type { ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
 
-import { SimpleTable } from "#/components/common/simple-table.tsx";
+import { HistoryPagination } from "#/components/common/history-pagination.tsx";
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
+import { OperationsTable } from "#/components/common/operations-table.tsx";
 import { Button } from "#/components/ui/button.tsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "#/components/ui/empty.tsx";
 import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
 import { formatDateTime, formatTime } from "#/features/operations/model/operation-format.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
@@ -25,92 +36,152 @@ export function DeliveriesTable({
   onLatest: () => void;
 }) {
   const t = useTranslations();
+  const data = React.useMemo(() => deliveries, [deliveries]);
+  const columns = React.useMemo<Array<ColumnDef<Operations["deliveries"]["items"][number]>>>(
+    () => [
+      {
+        id: "target",
+        header: t("deliveries.table.headers.target"),
+        cell: ({ row }) => (
+          <DeliveryTargetCell
+            destinationName={row.original.destinationName}
+            routeName={row.original.routeName}
+          />
+        ),
+      },
+      {
+        id: "event",
+        header: t("deliveries.table.headers.event"),
+        cell: ({ row }) => (
+          <DeliveryEventCell eventId={row.original.eventId} sourceName={row.original.sourceName} />
+        ),
+      },
+      {
+        id: "state",
+        header: t("deliveries.table.headers.state"),
+        cell: ({ row }) => <DeliveryStateBadge state={row.original.state} />,
+      },
+      {
+        id: "attempts",
+        header: t("deliveries.table.headers.attempts"),
+        cell: ({ row }) => <span className="font-medium">{row.original.attemptCount}</span>,
+      },
+      {
+        id: "next",
+        header: t("deliveries.table.headers.next"),
+        cell: ({ row }) =>
+          row.original.nextAttemptAt ? formatTime(row.original.nextAttemptAt) : "—",
+      },
+      {
+        id: "lastError",
+        header: t("deliveries.table.headers.lastError"),
+        cell: ({ row }) => (
+          <span className="block truncate" title={row.original.lastError ?? undefined}>
+            {row.original.lastError ?? "—"}
+          </span>
+        ),
+      },
+      {
+        id: "updated",
+        header: t("deliveries.table.headers.updated"),
+        cell: ({ row }) => (
+          <span title={formatDateTime(row.original.updatedAt)}>
+            {formatTime(row.original.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: t("deliveries.table.headers.actions"),
+        cell: ({ row }) => (
+          <DeliveryActions
+            delivery={row.original}
+            pending={pending}
+            onInspect={onInspect}
+            onRetry={onRetry}
+          />
+        ),
+      },
+    ],
+    [onInspect, onRetry, pending, t],
+  );
 
   return (
-    <section className="bg-background">
-      <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
-        <h3 className="text-xs font-semibold">{t("deliveries.table.title")}</h3>
-        <span className="text-muted-foreground text-xs">{t("deliveries.table.order")}</span>
-      </div>
-      <SimpleTable
-        variant="flush"
-        empty={t("deliveries.table.empty")}
-        headers={[
-          t("deliveries.table.headers.target"),
-          t("deliveries.table.headers.event"),
-          t("deliveries.table.headers.state"),
-          t("deliveries.table.headers.attempts"),
-          t("deliveries.table.headers.next"),
-          t("deliveries.table.headers.lastError"),
-          t("deliveries.table.headers.updated"),
-          t("deliveries.table.headers.actions"),
-        ]}
-        columnClassNames={[
-          "w-[18%]",
-          "w-[20%]",
-          "w-[10%]",
-          "w-[9%]",
-          "w-[10%]",
-          "w-[19%]",
-          "w-[10%]",
-          "w-[4%]",
-        ]}
-        rows={deliveries.map((delivery) => ({
-          key: delivery.id,
-          cells: [
-            <DeliveryTargetCell
-              key="target"
-              destinationName={delivery.destinationName}
-              routeName={delivery.routeName}
-            />,
-            <DeliveryEventCell
-              key="event"
-              eventId={delivery.eventId}
-              sourceName={delivery.sourceName}
-            />,
-            <DeliveryStateBadge key="state" state={delivery.state} />,
-            <span key="attempts" className="font-medium">
-              {delivery.attemptCount}
-            </span>,
-            delivery.nextAttemptAt ? formatTime(delivery.nextAttemptAt) : "—",
-            <span key="error" className="truncate" title={delivery.lastError ?? undefined}>
-              {delivery.lastError ?? "—"}
-            </span>,
-            <span key="updated" title={formatDateTime(delivery.updatedAt)}>
-              {formatTime(delivery.updatedAt)}
-            </span>,
-            <div key="actions" className="flex justify-end gap-1">
-              {delivery.state === "failed" ? (
-                <Button
-                  variant="outline"
-                  size="icon-xs"
-                  disabled={pending}
-                  title={t("deliveries.table.retry")}
-                  onClick={() => onRetry(delivery.id)}
-                >
-                  <RiRestartLine aria-hidden />
-                </Button>
-              ) : null}
-              <Button
-                variant="outline"
-                size="icon-xs"
-                disabled={pending}
-                title={t("deliveries.table.inspect")}
-                onClick={() => onInspect(delivery.id)}
-              >
-                <RiEyeLine aria-hidden />
-              </Button>
-            </div>,
-          ],
-        }))}
+    <section className="bg-background flex min-h-0 flex-1 flex-col">
+      <OperationsTable
+        data={data}
+        columns={columns}
+        pageSize={deliveriesPageSize}
+        showPagination={false}
+        emptyState={<DeliveriesEmptyState />}
+        getRowId={(delivery) => delivery.id}
+        columnClassName={deliveriesColumnClassName}
+        isPrimaryColumn={(columnId) => columnId === "target"}
+        rangeLabel={({ total }) => t("deliveries.table.range", { total })}
+        emptyRangeLabel={t("deliveries.table.emptyRange")}
+        pageLabel={({ page, pageCount }) => t("deliveries.table.page", { page, pageCount })}
+        previousLabel={t("deliveries.table.previous")}
+        nextLabel={t("deliveries.table.next")}
       />
-      <HistoryPaginationControls
-        hasPrevious={nextCursor !== null}
+
+      <HistoryPagination
+        latestLabel={t("operations.history.latest")}
+        olderLabel={t("operations.history.older")}
+        showLatestLabel={t("operations.history.showLatest")}
+        showOlderLabel={t("operations.history.showOlder")}
+        hasOlder={nextCursor !== null}
         pending={pending}
         onOlder={nextCursor ? () => onOlder(nextCursor) : undefined}
         onLatest={onLatest}
       />
     </section>
+  );
+}
+
+function DeliveryActions({
+  delivery,
+  pending,
+  onInspect,
+  onRetry,
+}: {
+  delivery: Operations["deliveries"]["items"][number];
+  pending: boolean;
+  onInspect: (deliveryId: string) => void;
+  onRetry: (deliveryId: string) => void;
+}) {
+  const t = useTranslations();
+  const retryLabel = t("deliveries.table.retry");
+  const inspectLabel = t("deliveries.table.inspect");
+
+  return (
+    <div className="flex justify-center gap-1">
+      {delivery.state === "failed" ? (
+        <IconTooltip label={retryLabel}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={pending}
+            aria-label={retryLabel}
+            onClick={() => onRetry(delivery.id)}
+          >
+            <RiRestartLine data-icon="inline-start" aria-hidden />
+          </Button>
+        </IconTooltip>
+      ) : null}
+      <IconTooltip label={inspectLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={inspectLabel}
+          onClick={() => onInspect(delivery.id)}
+        >
+          <RiEyeLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+    </div>
   );
 }
 
@@ -151,43 +222,43 @@ function DeliveryEventCell({ eventId, sourceName }: { eventId: string; sourceNam
   );
 }
 
-function HistoryPaginationControls({
-  hasPrevious,
-  pending,
-  onOlder,
-  onLatest,
-}: {
-  hasPrevious: boolean;
-  pending: boolean;
-  onOlder?: () => void;
-  onLatest: () => void;
-}) {
+function DeliveriesEmptyState() {
   const t = useTranslations();
 
   return (
-    <div className="border-border flex items-center justify-end gap-1 border-t px-3 py-3">
-      <Button
-        type="button"
-        variant="outline"
-        size="xs"
-        disabled={pending}
-        onClick={onLatest}
-        title={t("operations.history.showLatest")}
-      >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
-        {t("operations.history.latest")}
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="xs"
-        disabled={pending || !hasPrevious || !onOlder}
-        onClick={onOlder}
-        title={t("operations.history.showOlder")}
-      >
-        {t("operations.history.older")}
-        <RiArrowRightLine data-icon="inline-end" aria-hidden />
-      </Button>
-    </div>
+    <Empty className="border-none p-4">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <RiInboxArchiveLine aria-hidden />
+        </EmptyMedia>
+        <EmptyTitle>{t("deliveries.table.empty")}</EmptyTitle>
+        <EmptyDescription>{t("deliveries.table.order")}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
+
+function deliveriesColumnClassName(columnId: string): string | null {
+  switch (columnId) {
+    case "target":
+      return "w-[18%]";
+    case "event":
+      return "w-[20%]";
+    case "state":
+      return "w-[10%]";
+    case "attempts":
+      return "w-[9%]";
+    case "next":
+      return "w-[10%]";
+    case "lastError":
+      return "w-[19%]";
+    case "updated":
+      return "w-[10%]";
+    case "actions":
+      return "w-[4%]";
+    default:
+      return null;
+  }
+}
+
+const deliveriesPageSize = 20;

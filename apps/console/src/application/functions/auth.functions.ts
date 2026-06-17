@@ -1,10 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { getApplicationContainer } from "#/application/runtime/container.ts";
-import { requireDashboardRequestContext } from "#/application/runtime/request-context.ts";
-
 export const getDashboardSessionFn = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    const { requireDashboardRequestContext } =
+      await import("#/application/runtime/request-context.ts");
     const context = await requireDashboardRequestContext();
 
     return {
@@ -21,6 +20,10 @@ export const getDashboardSessionFn = createServerFn({ method: "GET" }).handler(a
   }
 });
 
-export const getAuthBootstrapFn = createServerFn({ method: "GET" }).handler(async () => ({
-  setupRequired: !getApplicationContainer().hasRegisteredUsers(),
-}));
+export const getAuthBootstrapFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getApplicationContainer } = await import("#/application/runtime/container.ts");
+
+  return {
+    setupRequired: !getApplicationContainer().hasRegisteredUsers(),
+  };
+});

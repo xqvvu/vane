@@ -48,6 +48,7 @@ describe("source webhook API route", () => {
       },
     });
     testState.parseProvider = () => ({
+      ok: true,
       normalized: {
         title: "Checkout unavailable",
         message: "checkout returned 503",
@@ -445,9 +446,11 @@ describe("source webhook API route", () => {
 
   it("returns parser failures with an audit event id and no deliveries", async () => {
     configureSourceRouteAndDestination();
-    testState.parseProvider = () => {
-      throw new Error("Unsupported provider payload");
-    };
+    testState.parseProvider = () => ({
+      ok: false,
+      reason: "invalid_payload",
+      message: "Unsupported provider payload",
+    });
 
     const response = await postWebhook({
       headers: {

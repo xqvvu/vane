@@ -3,8 +3,8 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 
+import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
@@ -65,7 +65,6 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
       main={
         <>
           <EventsPageToolbar
-            eventCount={operations.events.items.length}
             pending={pending}
             onRefresh={() => void refreshOperations()}
             onResetFilters={resetFilters}
@@ -111,12 +110,10 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
 }
 
 function EventsPageToolbar({
-  eventCount,
   pending,
   onRefresh,
   onResetFilters,
 }: {
-  eventCount: number;
   pending: boolean;
   onRefresh: () => void;
   onResetFilters: () => void;
@@ -124,42 +121,34 @@ function EventsPageToolbar({
   const t = useTranslations();
 
   return (
-    <header className="border-border bg-background flex flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl leading-none font-semibold">
-            {t("events.page.title")}
-          </h1>
-          <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-            {t("events.page.loaded", { count: eventCount })}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground mt-2 text-sm">{t("events.page.description")}</p>
-      </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={pending}
-          onClick={onRefresh}
-          title={t("events.page.refreshTitle")}
-        >
-          <RiRefreshLine data-icon="inline-start" aria-hidden />
-          {t("common.actions.refresh")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={pending}
-          onClick={onResetFilters}
-          title={t("events.page.resetTitle")}
-        >
-          <RiFilterOffLine data-icon="inline-start" aria-hidden />
-          {t("common.actions.resetFilters")}
-        </Button>
-      </div>
-    </header>
+    <PageToolbar
+      description={t("events.page.description")}
+      actions={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={onRefresh}
+            title={t("events.page.refreshTitle")}
+          >
+            <RiRefreshLine data-icon="inline-start" aria-hidden />
+            {t("common.actions.refresh")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={onResetFilters}
+            title={t("events.page.resetTitle")}
+          >
+            <RiFilterOffLine data-icon="inline-start" aria-hidden />
+            {t("common.actions.resetFilters")}
+          </Button>
+        </>
+      }
+    />
   );
 }

@@ -8,6 +8,11 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./alertmanager": "./src/alertmanager/index.ts",
+    "./generic": "./src/generic/index.ts",
+    "./grafana": "./src/grafana/index.ts",
+    "./signoz": "./src/signoz/index.ts",
+    "./uptime-kuma": "./src/uptime-kuma/index.ts",
     "./assets/provider-icons/*": "./assets/provider-icons/*"
   },
   "scripts": {

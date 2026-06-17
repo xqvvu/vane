@@ -9,8 +9,8 @@ import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
 
 import { FormPanel, ContentPanel } from "#/components/common/content-panel.tsx";
+import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
@@ -144,16 +144,9 @@ function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefre
   const t = useTranslations();
 
   return (
-    <header className="border-border bg-card flex min-w-0 flex-col gap-3 border p-4">
-      <div className="flex min-w-0 items-center gap-2">
-        <h1 className="font-heading text-xl leading-none font-semibold">
-          {t("configuration.settings.title")}
-        </h1>
-        <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase">
-          {t("configuration.settings.badge")}
-        </Badge>
-      </div>
-      <div className="flex min-w-0 items-center justify-between gap-3">
+    <PageToolbar
+      description={t("configuration.settings.description")}
+      tabs={
         <TabsList
           variant="line"
           aria-label={t("configuration.settings.tabsLabel")}
@@ -166,6 +159,8 @@ function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefre
             {t("configuration.settings.tomlTab")}
           </TabsTrigger>
         </TabsList>
+      }
+      actions={
         <Button
           type="button"
           variant="outline"
@@ -178,8 +173,8 @@ function SettingsPageToolbar({ pending, onRefresh }: { pending: boolean; onRefre
           <RiRefreshLine data-icon="inline-start" aria-hidden />
           {t("common.actions.refresh")}
         </Button>
-      </div>
-    </header>
+      }
+    />
   );
 }
 

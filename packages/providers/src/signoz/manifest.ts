@@ -1,0 +1,20 @@
+import type { ProviderManifest } from "#/types.ts";
+
+export const signozProviderManifest = {
+  provider: "signoz",
+  configVersion: 1,
+  lifecycle: {
+    status: "stable",
+  },
+  displayNameKey: "sources.providers.signoz",
+  descriptionKey: "sources.form.providerDescription",
+  iconName: "signoz",
+  configFields: [],
+  secretFields: [],
+  capabilities: {
+    parse: true,
+    testPayload: true,
+    sourceToken: true,
+    providerSecret: true,
+  },
+} satisfies ProviderManifest<"signoz">;

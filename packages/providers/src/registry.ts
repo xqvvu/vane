@@ -1,48 +1,207 @@
-import type { SourceProvider } from "@vane/core";
+import { SourceProviderSchema, type SourceProvider } from "@vane/core";
 
-import { alertmanagerProviderParser } from "#/alertmanager.ts";
-import { grafanaProviderParser } from "#/grafana.ts";
-import { genericProviderParser } from "#/generic.ts";
-import { signozProviderParser } from "#/signoz.ts";
-import type { ProviderParseInput, ProviderParseResult, ProviderParser } from "#/types.ts";
-import { uptimeKumaProviderParser } from "#/uptime-kuma.ts";
+import { alertmanagerProviderAdapter } from "#/alertmanager/index.ts";
+import { genericProviderAdapter } from "#/generic/index.ts";
+import { grafanaProviderAdapter } from "#/grafana/index.ts";
+import { signozProviderAdapter } from "#/signoz/index.ts";
+import type {
+  ProviderAdapter,
+  ProviderCatalogItem,
+  ProviderParseInput,
+  ProviderParseOutput,
+  ProviderParseResult,
+  ProviderParser,
+} from "#/types.ts";
+import {
+  ProviderCatalogItemSchema,
+  ProviderManifestSchema,
+  providerParseFailed,
+  unwrapProviderParseResult,
+} from "#/types.ts";
+import { uptimeKumaProviderAdapter } from "#/uptime-kuma/index.ts";
+
+export interface ProviderRegistryAuditOptions {
+  messageKeys?: ReadonlySet<string>;
+}
+
+export interface ProviderRegistryAuditResult {
+  warnings: string[];
+}
 
 export class ProviderRegistry {
-  private readonly parsers = new Map<SourceProvider, ProviderParser>();
+  private readonly adapters = new Map<SourceProvider, ProviderAdapter>();
 
-  register(parser: ProviderParser): void {
-    if (this.parsers.has(parser.kind)) {
-      throw new Error(`Provider parser already registered: ${parser.kind}`);
+  register(adapter: ProviderAdapter): void {
+    const manifest = ProviderManifestSchema.parse(adapter.manifest);
+
+    if (this.adapters.has(manifest.provider)) {
+      throw new Error(`Provider adapter already registered: ${manifest.provider}`);
     }
 
-    this.parsers.set(parser.kind, parser);
+    this.adapters.set(manifest.provider, adapter);
   }
 
-  get(kind: SourceProvider): ProviderParser {
-    const parser = this.parsers.get(kind);
+  get(provider: SourceProvider): ProviderAdapter {
+    const adapter = this.adapters.get(provider);
 
-    if (!parser) {
-      throw new Error(`Unknown provider parser: ${kind}`);
+    if (!adapter) {
+      throw new Error(`Unknown provider adapter: ${provider}`);
     }
 
-    return parser;
+    return adapter;
   }
 
-  parse(kind: SourceProvider, input: ProviderParseInput): ProviderParseResult {
-    return this.get(kind).parse(input);
+  parse(provider: SourceProvider, input: ProviderParseInput<unknown>): ProviderParseResult {
+    const adapter = this.get(provider);
+    const config = adapter.configSchema.parse(input.config);
+
+    try {
+      return adapter.parse({ ...input, config });
+    } catch (error) {
+      return providerParseFailed({
+        reason: "invalid_payload",
+        message: error instanceof Error ? error.message : String(error),
+        providerMetadata: {
+          provider,
+          parserVersion: adapter.manifest.configVersion,
+        },
+      });
+    }
   }
 
-  list(): ProviderParser[] {
-    return [...this.parsers.values()];
+  parseOrThrow(provider: SourceProvider, input: ProviderParseInput<unknown>): ProviderParseOutput {
+    return unwrapProviderParseResult(this.parse(provider, input));
+  }
+
+  parseConfig(provider: SourceProvider, config: unknown): unknown {
+    return this.get(provider).configSchema.parse(config);
+  }
+
+  toCatalog(): ProviderCatalogItem[] {
+    return this.list().map((adapter) =>
+      ProviderCatalogItemSchema.parse({
+        provider: adapter.manifest.provider,
+        configVersion: adapter.manifest.configVersion,
+        lifecycle: adapter.manifest.lifecycle,
+        displayNameKey: adapter.manifest.displayNameKey,
+        descriptionKey: adapter.manifest.descriptionKey,
+        iconName: adapter.manifest.iconName,
+        configFields: adapter.manifest.configFields,
+        capabilities: adapter.manifest.capabilities,
+      }),
+    );
+  }
+
+  audit(options: ProviderRegistryAuditOptions = {}): ProviderRegistryAuditResult {
+    const warnings: string[] = [];
+    const registeredProviders = new Set(this.adapters.keys());
+    const enumProviders = new Set(SourceProviderSchema.options);
+
+    for (const provider of enumProviders) {
+      if (!registeredProviders.has(provider)) {
+        warnings.push(`Source provider is missing from registry: ${provider}`);
+      }
+    }
+
+    for (const provider of registeredProviders) {
+      if (!enumProviders.has(provider)) {
+        warnings.push(`Provider registry contains provider outside core enum: ${provider}`);
+      }
+
+      const adapter = this.get(provider);
+      const sensitivePaths = new Set(
+        adapter.manifest.configFields.filter((field) => field.sensitive).map((field) => field.path),
+      );
+      const secretPaths = new Set(adapter.manifest.secretFields.map((field) => field.path));
+
+      for (const path of sensitivePaths) {
+        if (!secretPaths.has(path)) {
+          warnings.push(
+            `Provider ${provider} marks sensitive config without secret field: ${path}`,
+          );
+        }
+      }
+
+      this.auditMessageKey(
+        warnings,
+        options.messageKeys,
+        provider,
+        adapter.manifest.displayNameKey,
+      );
+      this.auditMessageKey(
+        warnings,
+        options.messageKeys,
+        provider,
+        adapter.manifest.descriptionKey,
+      );
+      this.auditMessageKey(
+        warnings,
+        options.messageKeys,
+        provider,
+        adapter.manifest.lifecycle.messageKey,
+      );
+
+      for (const field of adapter.manifest.configFields) {
+        this.auditMessageKey(warnings, options.messageKeys, provider, field.labelKey);
+        this.auditMessageKey(warnings, options.messageKeys, provider, field.descriptionKey);
+        this.auditMessageKey(warnings, options.messageKeys, provider, field.placeholderKey);
+
+        if (field.type === "select") {
+          for (const option of field.options) {
+            this.auditMessageKey(warnings, options.messageKeys, provider, option.labelKey);
+          }
+        }
+      }
+
+      for (const field of adapter.manifest.secretFields) {
+        this.auditMessageKey(warnings, options.messageKeys, provider, field.labelKey);
+      }
+    }
+
+    const catalog = this.toCatalog();
+
+    for (const item of catalog) {
+      const unsafe = item as unknown as Record<string, unknown>;
+
+      if ("secretFields" in unsafe || "configSchema" in unsafe || "parse" in unsafe) {
+        warnings.push(`Provider catalog item leaks runtime internals: ${item.provider}`);
+      }
+    }
+
+    return { warnings };
+  }
+
+  list(): ProviderAdapter[] {
+    return [...this.adapters.values()];
+  }
+
+  private auditMessageKey(
+    warnings: string[],
+    messageKeys: ReadonlySet<string> | undefined,
+    provider: SourceProvider,
+    key: string | undefined,
+  ): void {
+    if (messageKeys && key && !messageKeys.has(key)) {
+      warnings.push(`Provider ${provider} references missing i18n key: ${key}`);
+    }
   }
 }
 
 export function createDefaultProviderRegistry(): ProviderRegistry {
   const registry = new ProviderRegistry();
-  registry.register(genericProviderParser);
-  registry.register(signozProviderParser);
-  registry.register(grafanaProviderParser);
-  registry.register(uptimeKumaProviderParser);
-  registry.register(alertmanagerProviderParser);
+  registry.register(genericProviderAdapter);
+  registry.register(signozProviderAdapter);
+  registry.register(grafanaProviderAdapter);
+  registry.register(uptimeKumaProviderAdapter);
+  registry.register(alertmanagerProviderAdapter);
   return registry;
 }
+
+export type {
+  ProviderAdapter,
+  ProviderCatalogItem,
+  ProviderParseInput,
+  ProviderParseOutput,
+  ProviderParseResult,
+  ProviderParser,
+};
