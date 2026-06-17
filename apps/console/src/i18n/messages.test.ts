@@ -14,6 +14,11 @@ describe("i18n messages", () => {
     expectFlatMessages(zhHansMessages);
   });
 
+  it("keeps translatable prose free of sentence periods", () => {
+    expectNoSentencePeriods(enUsMessages);
+    expectNoSentencePeriods(zhHansMessages);
+  });
+
   it("expands flat source files for use-intl runtime lookup", () => {
     expect(getMessages("en-US")).toMatchObject({
       common: {
@@ -30,4 +35,31 @@ function expectFlatMessages(messages: Record<string, unknown>): void {
     expect(key).toContain(".");
     expect(value).toEqual(expect.any(String));
   }
+}
+
+function expectNoSentencePeriods(messages: Record<string, unknown>): void {
+  const violations = Object.entries(messages)
+    .filter(([, value]) => typeof value === "string")
+    .flatMap(([key, value]) => {
+      const message = value as string;
+
+      if (isNonProseValue(message)) {
+        return [];
+      }
+
+      const hasSentencePeriod = /[。；]|;|\.(?:\s|$)/.test(message);
+
+      return hasSentencePeriod ? [`${key}: ${message}`] : [];
+    });
+
+  expect(violations).toEqual([]);
+}
+
+function isNonProseValue(message: string): boolean {
+  return (
+    message === "" ||
+    message.includes("\n") ||
+    /^[\w.+-]+@[\w.-]+$/.test(message) ||
+    /^https?:\/\//.test(message)
+  );
 }

@@ -1,8 +1,9 @@
-import { RiErrorWarningLine } from "@remixicon/react";
+import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import type {
   DestinationPreviewNotice,
@@ -95,10 +96,24 @@ export function DestinationsPage() {
       main={
         <>
           <DestinationsPageToolbar
-            destinationCount={configuration.destinations.length}
-            pending={pending}
-            actions={<DestinationAddDialog disabled={pending} onPreview={previewDraft} />}
-            onRefresh={() => void refreshConfiguration()}
+            actions={
+              <>
+                <DestinationAddDialog disabled={pending} onPreview={previewDraft} />
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => void refreshConfiguration()}
+                  title={t("destinations.page.refreshTitle")}
+                  className="w-fit"
+                >
+                  <RiRefreshLine data-icon="inline-start" aria-hidden />
+                  {t("common.actions.refresh")}
+                </Button>
+              </>
+            }
           />
           {formError ? (
             <Alert variant="destructive" className="mx-3 mt-4">

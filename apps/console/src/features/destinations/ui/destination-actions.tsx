@@ -1,5 +1,7 @@
 import { RiEditLine, RiEyeLine, RiPlayLine, RiShutDownLine } from "@remixicon/react";
 
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
+import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
 import { Button } from "#/components/ui/button.tsx";
 import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
@@ -20,56 +22,66 @@ export function DestinationActions({
   onToggle: (destination: DestinationSummary) => void;
 }) {
   const t = useTranslations();
+  const testLabel = t("destinations.table.actions.testTitle", { name: destination.name });
+  const previewLabel = t("destinations.table.actions.previewTitle", {
+    name: destination.name,
+  });
+  const editLabel = t("destinations.table.actions.edit");
+  const toggleLabel = destination.enabled
+    ? t("destinations.table.actions.disableTitle")
+    : t("destinations.table.actions.enableTitle");
 
   return (
-    <div className="flex min-w-0 justify-end gap-1">
-      <Button
-        variant="ghost"
-        size="xs"
-        disabled={pending}
-        title={t("destinations.table.actions.testTitle", { name: destination.name })}
-        onClick={() => onTest(destination)}
-      >
-        <RiPlayLine data-icon="inline-start" aria-hidden />
-        {t("destinations.table.actions.test")}
-      </Button>
-      <Button
-        variant="ghost"
-        size="xs"
-        disabled={pending}
-        title={t("destinations.table.actions.previewTitle", {
-          name: destination.name,
-        })}
-        onClick={() => onPreview(destination)}
-      >
-        <RiEyeLine data-icon="inline-start" aria-hidden />
-        {t("destinations.table.actions.preview")}
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        disabled={pending}
-        title={t("destinations.table.actions.edit")}
-        onClick={() => onEdit(destination.id)}
-      >
-        <RiEditLine data-icon aria-hidden />
-      </Button>
-      <Button
-        variant="ghost"
-        size="xs"
-        disabled={pending}
-        title={
-          destination.enabled
-            ? t("destinations.table.actions.disableTitle")
-            : t("destinations.table.actions.enableTitle")
-        }
-        onClick={() => onToggle(destination)}
-      >
-        <RiShutDownLine data-icon="inline-start" aria-hidden />
-        {destination.enabled
-          ? t("destinations.table.actions.disable")
-          : t("destinations.table.actions.enable")}
-      </Button>
+    <div className="flex justify-center gap-1">
+      <IconTooltip label={testLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={testLabel}
+          onClick={() => onTest(destination)}
+        >
+          <RiPlayLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+      <IconTooltip label={previewLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={previewLabel}
+          onClick={() => onPreview(destination)}
+        >
+          <RiEyeLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+      <IconTooltip label={editLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={editLabel}
+          onClick={() => onEdit(destination.id)}
+        >
+          <RiEditLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+      <IconTooltip label={toggleLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={toggleLabel}
+          className={powerActionButtonClassName(destination.enabled)}
+          onClick={() => onToggle(destination)}
+        >
+          <RiShutDownLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
     </div>
   );
 }

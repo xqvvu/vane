@@ -52,7 +52,6 @@
     "codemirror": "catalog:codemirror",
     "es-toolkit": "catalog:",
     "lezer-toml": "catalog:codemirror",
-    "lucide-react": "catalog:",
     "react": "catalog:react",
     "react-dom": "catalog:react",
     "smol-toml": "catalog:",

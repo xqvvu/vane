@@ -41,7 +41,7 @@ export interface ApplicationContainer {
   getProviderRegistry(): ProviderRegistry;
   getDestinationRegistry(): DestinationRegistry;
   createConfigurationService(
-    options?: Partial<Omit<ConfigurationServiceOptions, "store" | "destinations">>,
+    options?: Partial<Omit<ConfigurationServiceOptions, "store" | "providers" | "destinations">>,
   ): ConfigurationService;
   createWebhookIntakeService(
     options?: Partial<Omit<WebhookIntakeServiceOptions, "store" | "providers">>,
@@ -136,6 +136,7 @@ export function createApplicationContainer(
     createConfigurationService(serviceOptions = {}) {
       return new ConfigurationService({
         store: container.getSqliteStore(),
+        providers: container.getProviderRegistry(),
         destinations: container.getDestinationRegistry(),
         ...serviceOptions,
       });

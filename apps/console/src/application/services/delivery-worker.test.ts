@@ -421,7 +421,7 @@ describe("delivery worker", () => {
     store.close();
   });
 
-  it("marks thrown sender errors as retryable delivery failures", async () => {
+  it("marks transport failures from destination adapters as retryable delivery failures", async () => {
     const store = createStore();
     const delivery = seedDelivery(store);
     const worker = new DeliveryWorker({
@@ -445,12 +445,14 @@ describe("delivery worker", () => {
       retrying: 1,
     });
     expect(detail?.job.state).toBe("pending");
-    expect(detail?.job.lastError).toBe("network down token=[REDACTED]");
+    expect(detail?.job.lastError).toBe(
+      "Destination transport failed: network down token=[REDACTED]",
+    );
     expect(detail?.attempts).toMatchObject([
       {
         attemptNumber: 1,
         state: "failed",
-        error: "network down token=[REDACTED]",
+        error: "Destination transport failed: network down token=[REDACTED]",
       },
     ]);
     expect(JSON.stringify(detail)).not.toContain("transport-token");

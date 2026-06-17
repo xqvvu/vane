@@ -23,8 +23,9 @@ changes, update the appropriate document under `docs` instead.
 - Write project docs in Chinese by default.
 - After creating or updating docs, use the `obsidian-vault` skill to sync them
   into Obsidian.
-- Before syncing docs to Obsidian, inspect the previously synced Vane notes and
-  sync into the same vault directory.
+- Sync Vane notes into `/Users/chuanhu9/Documents/Obsidian/Vane`.
+- Before syncing docs to Obsidian, inspect the previously synced Vane notes in
+  that directory and keep the same note naming/linking style.
 - If the `obsidian-vault` skill is unavailable, say that the sync was skipped
   and continue with the repository change.
 
@@ -38,6 +39,14 @@ changes, update the appropriate document under `docs` instead.
 - `packages/providers` owns inbound provider parsers and the provider registry.
 - `packages/destinations` owns outbound destination senders, templates, and the
   destination registry.
+
+Third-party provider and destination adapters live in one directory per adapter.
+Keep each integration's `index.ts` as a public barrel only; split config schema,
+JSON-safe manifest, adapter wiring, payload rendering, and parse logic into
+sibling files. Shared parsing or normalization helpers belong in a package-level
+`shared/` module instead of being imported through another concrete integration.
+Package roots aggregate these modules, and package manifests expose adapter
+subpaths such as `@vane/providers/grafana` and `@vane/destinations/feishu`.
 
 Keep reusable integration code in packages. Keep console runtime concerns in
 `apps/console`. Do not introduce new deployable services, required middleware,
@@ -190,6 +199,29 @@ Server functions are the client/server boundary for console data.
   and must not be imported by client-safe code.
 - `*.schema.ts`, `*.types.ts`, and `*.model.ts` may be shared only when they do
   not import server-only modules.
+- Default to shared files. Declare a module server-only or client-only because
+  of its concrete imports and runtime APIs, not because of its folder name or
+  conceptual layer.
+- Keep server function command schemas, input validators, DTO types, and other
+  client-safe contracts in shared contract/model files, such as
+  `apps/console/src/application/contracts/*` or feature `model/*`, when they
+  are reused outside a server-only implementation.
+- `application/contracts/*` files are shared contracts. They must not import
+  environment-specific APIs or modules, including `node:*`, `#/infra/*`,
+  `#/application/runtime/*`, `#/lib/auth.server.ts`, modules marked with
+  TanStack Start import protection, or modules with `.server` / `.client`
+  suffixes.
+- `*.functions.ts` files should keep static imports client-safe: TanStack Start,
+  shared contracts, server function middleware, and other isomorphic helpers.
+  Do not statically import `#/infra/*`, `#/application/runtime/*`,
+  `#/lib/auth.server.ts`, modules marked with TanStack Start import protection,
+  modules with `.server` / `.client` suffixes, or modules that import `node:*`.
+  A normal application/service module may be statically imported only while its
+  own static import graph remains environment-neutral.
+- Private dashboard server functions should normally reach services through
+  `requireDashboardContextMiddleware` and `context.dashboardRequest.container`.
+  Public server functions that cannot use the throwing dashboard middleware may
+  dynamically import runtime modules inside the handler.
 - Server functions must validate inputs and perform their own server-side auth
   checks when returning private dashboard data.
 - Server functions should return DTOs shaped for UI needs. Do not return
@@ -382,6 +414,10 @@ Use shadcn for shared UI primitives and app composition.
   current compiler settings.
 - Keep server-only imports out of client components, feature UI, route loaders,
   query option files, and serialized route data.
+- Keep environment-specific imports out of shared contracts and out of the
+  static import chain of `*.functions.ts` files. If a shared schema/type needs
+  something from a server-only module, move the shared part upward instead of
+  weakening import protection.
 - Keep `.server` / `.client` suffixes rare and pair-driven. For one-off
   server-only or browser-only modules, use a normal filename plus the matching
   TanStack Start side-effect import.

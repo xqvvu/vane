@@ -23,6 +23,9 @@ const config = defineConfig({
         quoteStyle: "double",
         generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
       },
+      importProtection: {
+        behavior: "error",
+      },
     }),
     viteReact(),
     babel({

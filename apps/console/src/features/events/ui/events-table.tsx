@@ -1,8 +1,19 @@
-import { RiArrowRightLine, RiEyeLine, RiRefreshLine } from "@remixicon/react";
+import { RiEyeLine, RiInboxArchiveLine } from "@remixicon/react";
+import type { ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
 
-import { SimpleTable } from "#/components/common/simple-table.tsx";
+import { HistoryPagination } from "#/components/common/history-pagination.tsx";
+import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
+import { OperationsTable } from "#/components/common/operations-table.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "#/components/ui/empty.tsx";
 import { SeverityBadge } from "#/features/events/ui/severity-badge.tsx";
 import { formatDateTime } from "#/features/operations/model/operation-format.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
@@ -24,63 +35,118 @@ export function EventsTable({
   onLatest: () => void;
 }) {
   const t = useTranslations();
+  const data = React.useMemo(() => events, [events]);
+  const columns = React.useMemo<Array<ColumnDef<Operations["events"]["items"][number]>>>(
+    () => [
+      {
+        id: "event",
+        header: t("events.table.headers.event"),
+        cell: ({ row }) => (
+          <EventTitleCell
+            title={row.original.title}
+            fingerprint={row.original.fingerprint}
+            severity={row.original.severity}
+          />
+        ),
+      },
+      {
+        id: "source",
+        header: t("events.table.headers.source"),
+        cell: ({ row }) => (
+          <span className="block truncate" title={row.original.sourceName}>
+            {row.original.sourceName}
+          </span>
+        ),
+      },
+      {
+        id: "state",
+        header: t("events.table.headers.state"),
+        cell: ({ row }) => <EventStateCell status={row.original.status} />,
+      },
+      {
+        id: "deliveries",
+        header: t("events.table.headers.deliveries"),
+        cell: ({ row }) => <DeliveryCountsCell counts={row.original.deliveryCounts} />,
+      },
+      {
+        id: "received",
+        header: t("events.table.headers.received"),
+        cell: ({ row }) => (
+          <span title={formatDateTime(row.original.receivedAt)}>
+            {formatDateTime(row.original.receivedAt)}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: t("events.table.headers.actions"),
+        cell: ({ row }) => (
+          <EventActions eventId={row.original.id} pending={pending} onInspect={onInspect} />
+        ),
+      },
+    ],
+    [onInspect, pending, t],
+  );
 
   return (
-    <section className="bg-background">
-      <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
-        <h3 className="text-xs font-semibold">{t("events.table.title")}</h3>
-        <span className="text-muted-foreground text-xs">{t("events.table.order")}</span>
-      </div>
-      <SimpleTable
-        variant="flush"
-        empty={t("events.table.empty")}
-        headers={[
-          t("events.table.headers.event"),
-          t("events.table.headers.source"),
-          t("events.table.headers.state"),
-          t("events.table.headers.deliveries"),
-          t("events.table.headers.received"),
-          t("events.table.headers.actions"),
-        ]}
-        columnClassNames={["w-[34%]", "w-[14%]", "w-[10%]", "w-[20%]", "w-[16%]", "w-[6%]"]}
-        rows={events.map((event) => ({
-          key: event.id,
-          cells: [
-            <EventTitleCell
-              key="event"
-              title={event.title}
-              fingerprint={event.fingerprint}
-              severity={event.severity}
-            />,
-            <span key="source" className="truncate" title={event.sourceName}>
-              {event.sourceName}
-            </span>,
-            <EventStateCell key="state" status={event.status} />,
-            <DeliveryCountsCell key="deliveries" counts={event.deliveryCounts} />,
-            <span key="received" title={formatDateTime(event.receivedAt)}>
-              {formatDateTime(event.receivedAt)}
-            </span>,
-            <div key="actions" className="flex justify-end">
-              <Button
-                variant="outline"
-                size="icon-xs"
-                disabled={pending}
-                title={t("events.table.inspect")}
-                onClick={() => onInspect(event.id)}
-              >
-                <RiEyeLine aria-hidden />
-              </Button>
-            </div>,
-          ],
-        }))}
+    <section className="bg-background flex min-h-0 flex-1 flex-col">
+      <OperationsTable
+        data={data}
+        columns={columns}
+        pageSize={eventsPageSize}
+        showPagination={false}
+        emptyState={<EventsEmptyState />}
+        getRowId={(event) => event.id}
+        columnClassName={eventsColumnClassName}
+        isPrimaryColumn={(columnId) => columnId === "event"}
+        rangeLabel={({ total }) => t("events.table.range", { total })}
+        emptyRangeLabel={t("events.table.emptyRange")}
+        pageLabel={({ page, pageCount }) => t("events.table.page", { page, pageCount })}
+        previousLabel={t("events.table.previous")}
+        nextLabel={t("events.table.next")}
       />
-      <HistoryPaginationControls
-        hasPrevious={nextCursor !== null}
+
+      <HistoryPagination
+        latestLabel={t("operations.history.latest")}
+        olderLabel={t("operations.history.older")}
+        showLatestLabel={t("operations.history.showLatest")}
+        showOlderLabel={t("operations.history.showOlder")}
+        hasOlder={nextCursor !== null}
         pending={pending}
         onOlder={nextCursor ? () => onOlder(nextCursor) : undefined}
         onLatest={onLatest}
       />
     </section>
+  );
+}
+
+function EventActions({
+  eventId,
+  pending,
+  onInspect,
+}: {
+  eventId: string;
+  pending: boolean;
+  onInspect: (eventId: string) => void;
+}) {
+  const t = useTranslations();
+  const inspectLabel = t("events.table.inspect");
+
+  return (
+    <div className="flex justify-center">
+      <IconTooltip label={inspectLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={inspectLabel}
+          onClick={() => onInspect(eventId)}
+        >
+          <RiEyeLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+    </div>
   );
 }
 
@@ -130,7 +196,7 @@ function DeliveryCountsCell({
   }
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap justify-center gap-1">
       <DeliveryStateCount state="pending" value={counts.pending} />
       <DeliveryStateCount state="running" value={counts.running} />
       <DeliveryStateCount state="succeeded" value={counts.succeeded} />
@@ -170,43 +236,39 @@ function deliveryCountVariant(
   return state === "failed" ? "destructive" : state === "succeeded" ? "default" : "outline";
 }
 
-function HistoryPaginationControls({
-  hasPrevious,
-  pending,
-  onOlder,
-  onLatest,
-}: {
-  hasPrevious: boolean;
-  pending: boolean;
-  onOlder?: () => void;
-  onLatest: () => void;
-}) {
+function EventsEmptyState() {
   const t = useTranslations();
 
   return (
-    <div className="border-border flex items-center justify-end gap-1 border-t px-3 py-3">
-      <Button
-        type="button"
-        variant="outline"
-        size="xs"
-        disabled={pending}
-        onClick={onLatest}
-        title={t("operations.history.showLatest")}
-      >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
-        {t("operations.history.latest")}
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="xs"
-        disabled={pending || !hasPrevious || !onOlder}
-        onClick={onOlder}
-        title={t("operations.history.showOlder")}
-      >
-        {t("operations.history.older")}
-        <RiArrowRightLine data-icon="inline-end" aria-hidden />
-      </Button>
-    </div>
+    <Empty className="border-none p-4">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <RiInboxArchiveLine aria-hidden />
+        </EmptyMedia>
+        <EmptyTitle>{t("events.table.empty")}</EmptyTitle>
+        <EmptyDescription>{t("events.table.order")}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
+
+function eventsColumnClassName(columnId: string): string | null {
+  switch (columnId) {
+    case "event":
+      return "w-[34%]";
+    case "source":
+      return "w-[14%]";
+    case "state":
+      return "w-[10%]";
+    case "deliveries":
+      return "w-[20%]";
+    case "received":
+      return "w-[16%]";
+    case "actions":
+      return "w-[6%]";
+    default:
+      return null;
+  }
+}
+
+const eventsPageSize = 20;

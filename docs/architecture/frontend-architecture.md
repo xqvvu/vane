@@ -309,10 +309,11 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 - 列表页优先表格、过滤器、分页、行操作、详情页或 drawer。
 - Sources、Routes、Destinations 的启停、删除、测试、轮换 token 等动作必须显式且可复核。
 - Sources 与 Destinations 这类配置列表应共享表格外壳、分页、状态 badge、row height 和动作密度；
-  具体列内容、route coverage、secret-safe 配置说明和 actions 仍由各自 feature 拥有。
-- Destinations 表格默认展示安全且能指导操作的事实：目标 identity、adapter kind、启停状态、启用路由
-  覆盖、secret-safe 配置说明，以及 test / preview / edit / toggle actions。不要在表格或普通 query
-  data 中展示 plaintext endpoint、signing secret、token、password 或 raw config。
+  具体列内容、route coverage 和 actions 仍由各自 feature 拥有。
+- Destinations 表格默认展示安全且能指导操作的事实：目标 identity（包含 adapter kind）、启停状态、
+  启用路由覆盖，以及 test / preview / edit / toggle actions。不要在表格或普通 query data 中展示
+  plaintext endpoint、signing secret、token、password 或 raw config。只有在服务端提供
+  secret-safe metadata DTO 后，才把配置摘要作为独立列或详情内容展示。
 - Destinations 的“最近 delivery 健康度”应作为后续服务端安全汇总 DTO 接入，例如最近成功/失败时间、
   失败计数、最后错误摘要和 pending/running job 数；不要在前端从 raw payload、secret config 或完整
   delivery detail 临时拼装。

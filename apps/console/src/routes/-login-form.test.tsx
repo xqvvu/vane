@@ -118,7 +118,7 @@ describe("login form", () => {
         queryKey: authQueryKeys.all,
       });
       expect(testState.toast.success).toHaveBeenCalledWith("Logged in", {
-        description: "Opening the dashboard.",
+        description: "Opening the dashboard",
       });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/",

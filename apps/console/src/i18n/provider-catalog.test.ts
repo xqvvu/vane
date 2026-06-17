@@ -1,0 +1,13 @@
+import { createDefaultProviderRegistry } from "@vane/providers";
+import { describe, expect, it } from "vitest";
+
+import enUsMessages from "#/i18n/messages/en-US.json";
+
+describe("provider catalog i18n", () => {
+  it("keeps default provider manifest message keys backed by console messages", () => {
+    const registry = createDefaultProviderRegistry();
+    const messageKeys = new Set(Object.keys(enUsMessages));
+
+    expect(registry.audit({ messageKeys })).toEqual({ warnings: [] });
+  });
+});

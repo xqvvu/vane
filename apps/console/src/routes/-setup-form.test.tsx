@@ -78,7 +78,7 @@ describe("setup form", () => {
         password: "correct horse battery staple",
       });
       expect(testState.toast.success).toHaveBeenCalledWith("Owner account created", {
-        description: "Opening the dashboard.",
+        description: "Opening the dashboard",
       });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/",

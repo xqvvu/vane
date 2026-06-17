@@ -55,6 +55,12 @@
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "ef32aea0a8fab9b365ff9e08a95f8d353e20ca21ea46ec2e73587c86dd341351"
     },
+    "obsidian-vault": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/personal/obsidian-vault/SKILL.md",
+      "computedHash": "960437c7c2febc15cf9d49964f0c8bd889d90a56e81b6eaa33f3ac5b594291c3"
+    },
     "organization-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",

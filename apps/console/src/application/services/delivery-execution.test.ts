@@ -28,10 +28,9 @@ describe("delivery execution", () => {
         expect(sendContext).toBe(context);
 
         return {
-          success: true,
+          ok: true,
           statusCode: 202,
           responseBody: "accepted token=downstream-token",
-          error: null,
           renderedPayload: {
             eventId: input.eventId,
             title: input.normalizedEvent.title,
@@ -66,10 +65,12 @@ describe("delivery execution", () => {
     const destinations = {
       async send() {
         return {
-          success: false,
+          ok: false,
+          errorKind: "http_error",
+          retryHint: "retryable",
+          errorMessage: "Destination returned token=downstream-token",
           statusCode: 503,
           responseBody: "unavailable password: downstream-password",
-          error: "Destination returned token=downstream-token",
           renderedPayload: {},
         };
       },

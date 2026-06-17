@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { AlertSeveritySchema, AlertStatusSchema, DeliveryStateSchema } from "@vane/core";
 import { z } from "zod";
 
-import { requireDashboardRequestContext } from "#/application/runtime/request-context.ts";
+import { requireDashboardContextMiddleware } from "#/application/functions/dashboard-context.middleware.ts";
 
 const ListOperationsInputSchema = z
   .object({
@@ -29,11 +29,10 @@ const RunWorkerInputSchema = z
   .optional();
 
 export const listOperationsFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
   .validator(ListOperationsInputSchema)
-  .handler(async ({ data }) => {
-    const context = await requireDashboardRequestContext();
-
-    const store = context.container.getSqliteStore();
+  .handler(async ({ data, context }) => {
+    const store = context.dashboardRequest.container.getSqliteStore();
     const limit = data?.limit ?? 20;
 
     return {
@@ -59,36 +58,33 @@ export const listOperationsFn = createServerFn({ method: "GET" })
   });
 
 export const getEventDetailFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
   .validator(DetailInputSchema)
-  .handler(async ({ data }) => {
-    const context = await requireDashboardRequestContext();
-
-    return context.container.getSqliteStore().history.getEventDetail(data.id);
-  });
+  .handler(async ({ data, context }) =>
+    context.dashboardRequest.container.getSqliteStore().history.getEventDetail(data.id),
+  );
 
 export const getDeliveryDetailFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
   .validator(DetailInputSchema)
-  .handler(async ({ data }) => {
-    const context = await requireDashboardRequestContext();
-
-    return context.container.getSqliteStore().deliveries.get(data.id);
-  });
+  .handler(async ({ data, context }) =>
+    context.dashboardRequest.container.getSqliteStore().deliveries.get(data.id),
+  );
 
 export const retryDeliveryFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
   .validator(DetailInputSchema)
-  .handler(async ({ data }) => {
-    const context = await requireDashboardRequestContext();
-
-    return context.container.getSqliteStore().deliveries.retryNow({
+  .handler(async ({ data, context }) => {
+    return context.dashboardRequest.container.getSqliteStore().deliveries.retryNow({
       deliveryId: data.id,
     });
   });
 
 export const runDeliveryWorkerFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
   .validator(RunWorkerInputSchema)
-  .handler(async ({ data }) => {
-    const context = await requireDashboardRequestContext();
-    const worker = context.container.createDeliveryWorker();
+  .handler(async ({ data, context }) => {
+    const worker = context.dashboardRequest.container.createDeliveryWorker();
 
     return worker.runOnce({
       limit: data?.limit ?? 10,

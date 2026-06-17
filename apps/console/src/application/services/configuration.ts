@@ -1,13 +1,7 @@
 import "@tanstack/react-start/server-only";
 import { randomBytes } from "node:crypto";
 
-import {
-  DestinationKindSchema,
-  JsonObjectSchema,
-  RouteDefinitionSchema,
-  SourceProviderSchema,
-  redactText,
-} from "@vane/core";
+import { JsonObjectSchema, redactText } from "@vane/core";
 import type {
   DestinationKind,
   DestinationSummary,
@@ -17,9 +11,43 @@ import type {
   RouteDefinition,
   SourceSummary,
 } from "@vane/core";
-import type { DestinationRegistry, DestinationSendContext } from "@vane/destinations";
-import { z } from "zod";
+import type {
+  DestinationCatalogItem,
+  DestinationRegistry,
+  DestinationSendContext,
+} from "@vane/destinations";
+import type { ProviderCatalogItem, ProviderRegistry } from "@vane/providers";
 
+import {
+  CreateDestinationCommandSchema,
+  CreateRouteCommandSchema,
+  CreateSourceCommandSchema,
+  ExportConfigurationCommandSchema,
+  ImportConfigurationCommandSchema,
+  PreviewDestinationDraftCommandSchema,
+  PreviewDestinationCommandSchema,
+  PreviewDestinationUpdateCommandSchema,
+  RotateSourceTokenCommandSchema,
+  TestDestinationCommandSchema,
+  UpdateAppSettingsCommandSchema,
+  UpdateDestinationCommandSchema,
+  UpdateRouteCommandSchema,
+  UpdateSourceCommandSchema,
+  type CreateDestinationCommand,
+  type CreateRouteCommand,
+  type CreateSourceCommand,
+  type ExportConfigurationCommand,
+  type ImportConfigurationCommand,
+  type PreviewDestinationDraftCommand,
+  type PreviewDestinationCommand,
+  type PreviewDestinationUpdateCommand,
+  type RotateSourceTokenCommand,
+  type TestDestinationCommand,
+  type UpdateAppSettingsCommand,
+  type UpdateDestinationCommand,
+  type UpdateRouteCommand,
+  type UpdateSourceCommand,
+} from "#/application/contracts/configuration-commands.ts";
 import {
   createPortableConfiguration,
   parsePortableConfigurationToml,
@@ -33,108 +61,9 @@ import {
 import { hashSourceToken } from "#/application/services/intake.ts";
 import type { SqliteStore } from "#/infra/sqlite/store.ts";
 
-export const CreateSourceCommandSchema = z.object({
-  name: z.string().trim().min(1),
-  provider: SourceProviderSchema,
-  enabled: z.boolean().default(true),
-  config: JsonObjectSchema.default({}),
-});
-
-export const UpdateSourceCommandSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().trim().min(1).optional(),
-  provider: SourceProviderSchema.optional(),
-  enabled: z.boolean().optional(),
-  config: JsonObjectSchema.optional(),
-});
-
-export const RotateSourceTokenCommandSchema = z.object({
-  id: z.string().min(1),
-});
-
-export const CreateDestinationCommandSchema = z.object({
-  name: z.string().trim().min(1),
-  kind: DestinationKindSchema,
-  enabled: z.boolean().default(true),
-  config: JsonObjectSchema.default({}),
-  secretRefs: JsonObjectSchema.default({}),
-});
-
-export const UpdateDestinationCommandSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().trim().min(1).optional(),
-  kind: DestinationKindSchema.optional(),
-  enabled: z.boolean().optional(),
-  config: JsonObjectSchema.optional(),
-  secretRefs: JsonObjectSchema.optional(),
-});
-
-export const TestDestinationCommandSchema = z.object({
-  id: z.string().min(1),
-});
-
-export const PreviewDestinationCommandSchema = z.object({
-  id: z.string().min(1),
-});
-
-export const PreviewDestinationDraftCommandSchema = z.object({
-  name: z.string().trim().min(1),
-  kind: DestinationKindSchema,
-  config: JsonObjectSchema.default({}),
-});
-
-export const PreviewDestinationUpdateCommandSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().trim().min(1).optional(),
-  config: JsonObjectSchema.default({}),
-});
-
-export const ExportConfigurationCommandSchema = z
-  .object({
-    includeSecrets: z.literal(false).optional(),
-  })
-  .default({});
-
-export const ImportConfigurationCommandSchema = z.object({
-  toml: z.string().min(1),
-});
-
-export const UpdateAppSettingsCommandSchema = z.object({
-  rawPayloadRetentionDays: z.number().int().min(0).max(3650),
-});
-
-export const CreateRouteCommandSchema = z.object({
-  name: z.string().trim().min(1),
-  enabled: z.boolean().default(true),
-  rule: RouteDefinitionSchema.shape.rule.optional(),
-  destinationIds: RouteDefinitionSchema.shape.destinationIds,
-});
-
-export const UpdateRouteCommandSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().trim().min(1).optional(),
-  enabled: z.boolean().optional(),
-  rule: RouteDefinitionSchema.shape.rule.optional(),
-  destinationIds: RouteDefinitionSchema.shape.destinationIds.optional(),
-});
-
-export type CreateSourceCommand = z.input<typeof CreateSourceCommandSchema>;
-export type UpdateSourceCommand = z.input<typeof UpdateSourceCommandSchema>;
-export type RotateSourceTokenCommand = z.input<typeof RotateSourceTokenCommandSchema>;
-export type CreateDestinationCommand = z.input<typeof CreateDestinationCommandSchema>;
-export type UpdateDestinationCommand = z.input<typeof UpdateDestinationCommandSchema>;
-export type TestDestinationCommand = z.input<typeof TestDestinationCommandSchema>;
-export type PreviewDestinationCommand = z.input<typeof PreviewDestinationCommandSchema>;
-export type PreviewDestinationDraftCommand = z.input<typeof PreviewDestinationDraftCommandSchema>;
-export type PreviewDestinationUpdateCommand = z.input<typeof PreviewDestinationUpdateCommandSchema>;
-export type ExportConfigurationCommand = z.input<typeof ExportConfigurationCommandSchema>;
-export type ImportConfigurationCommand = z.input<typeof ImportConfigurationCommandSchema>;
-export type UpdateAppSettingsCommand = z.input<typeof UpdateAppSettingsCommandSchema>;
-export type CreateRouteCommand = z.input<typeof CreateRouteCommandSchema>;
-export type UpdateRouteCommand = z.input<typeof UpdateRouteCommandSchema>;
-
 export interface ConfigurationServiceOptions {
   store: SqliteStore;
+  providers?: ProviderRegistry;
   destinations: DestinationRegistry;
   generateSourceToken?: () => string;
   destinationSendContext?: DestinationSendContext;
@@ -174,12 +103,14 @@ export interface DestinationPreviewResult {
 
 export class ConfigurationService {
   private readonly store: SqliteStore;
+  private readonly providers?: ProviderRegistry;
   private readonly destinations: DestinationRegistry;
   private readonly generateSourceToken: () => string;
   private readonly destinationSendContext?: DestinationSendContext;
 
   constructor(options: ConfigurationServiceOptions) {
     this.store = options.store;
+    this.providers = options.providers;
     this.destinations = options.destinations;
     this.generateSourceToken = options.generateSourceToken ?? generateSourceToken;
     this.destinationSendContext = options.destinationSendContext;
@@ -192,6 +123,14 @@ export class ConfigurationService {
       destinations: this.store.destinations.list(),
       routes: this.store.routes.list(),
     };
+  }
+
+  listDestinationCatalog(): DestinationCatalogItem[] {
+    return this.destinations.toCatalog();
+  }
+
+  listProviderCatalog(): ProviderCatalogItem[] {
+    return this.providers?.toCatalog() ?? [];
   }
 
   createSource(command: CreateSourceCommand): CreatedSource {
@@ -297,10 +236,10 @@ export class ConfigurationService {
 
     return {
       destination: summary,
-      success: result.success,
+      success: result.ok,
       statusCode: result.statusCode,
       responseBody: redactNullableText(result.responseBody),
-      error: redactNullableText(result.error),
+      error: redactNullableText(result.ok ? null : result.errorMessage),
     };
   }
 
@@ -541,7 +480,7 @@ export class ConfigurationService {
   }
 
   private parseDestinationConfig(kind: DestinationKind, config: JsonObject): JsonObject {
-    return JsonObjectSchema.parse(this.destinations.get(kind).configSchema.parse(config));
+    return JsonObjectSchema.parse(this.destinations.parseConfig(kind, config));
   }
 
   private requireExistingSourceIds(

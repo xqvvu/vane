@@ -23,6 +23,7 @@ export interface OperationsTableProps<TData> {
   data: TData[];
   columns: Array<ColumnDef<TData>>;
   pageSize: number;
+  showPagination?: boolean;
   minWidthClassName?: string;
   emptyState: React.ReactNode;
   getRowId: (row: TData) => string;
@@ -39,6 +40,7 @@ export function OperationsTable<TData>({
   data,
   columns,
   pageSize,
+  showPagination = true,
   minWidthClassName = "min-w-245",
   emptyState,
   getRowId,
@@ -56,6 +58,10 @@ export function OperationsTable<TData>({
   });
 
   React.useEffect(() => {
+    if (!showPagination) {
+      return;
+    }
+
     setPagination((current) => {
       const nextPageCount = Math.max(Math.ceil(data.length / current.pageSize), 1);
 
@@ -68,23 +74,27 @@ export function OperationsTable<TData>({
         pageIndex: nextPageCount - 1,
       };
     });
-  }, [data.length]);
+  }, [data.length, showPagination]);
 
   const table = useReactTable({
     data,
     columns,
-    state: {
-      pagination,
-    },
-    onPaginationChange: setPagination,
+    ...(showPagination
+      ? {
+          state: {
+            pagination,
+          },
+          onPaginationChange: setPagination,
+          getPaginationRowModel: getPaginationRowModel(),
+        }
+      : {}),
     getRowId,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
   const visibleRows = table.getRowModel().rows;
   const isEmpty = visibleRows.length === 0;
-  const pageCount = table.getPageCount();
-  const pageIndex = table.getState().pagination.pageIndex;
+  const pageCount = showPagination ? table.getPageCount() : 1;
+  const pageIndex = showPagination ? table.getState().pagination.pageIndex : 0;
   const pageStart =
     data.length === 0 ? 0 : Math.min(pageIndex * pagination.pageSize + 1, data.length);
   const pageEnd =
@@ -153,26 +163,28 @@ export function OperationsTable<TData>({
         </Table>
       </div>
 
-      <TablePagination
-        rangeLabel={
-          data.length > 0
-            ? rangeLabel({
-                start: pageStart,
-                end: pageEnd,
-                total: data.length,
-              })
-            : emptyRangeLabel
-        }
-        pageLabel={pageLabel({
-          page: Math.min(pageIndex + 1, Math.max(pageCount, 1)),
-          pageCount: Math.max(pageCount, 1),
-        })}
-        previousLabel={previousLabel}
-        nextLabel={nextLabel}
-        pageIndex={pageIndex}
-        pageCount={pageCount}
-        onPageIndexChange={(nextPageIndex) => table.setPageIndex(nextPageIndex)}
-      />
+      {showPagination ? (
+        <TablePagination
+          rangeLabel={
+            data.length > 0
+              ? rangeLabel({
+                  start: pageStart,
+                  end: pageEnd,
+                  total: data.length,
+                })
+              : emptyRangeLabel
+          }
+          pageLabel={pageLabel({
+            page: Math.min(pageIndex + 1, Math.max(pageCount, 1)),
+            pageCount: Math.max(pageCount, 1),
+          })}
+          previousLabel={previousLabel}
+          nextLabel={nextLabel}
+          pageIndex={pageIndex}
+          pageCount={pageCount}
+          onPageIndexChange={(nextPageIndex) => table.setPageIndex(nextPageIndex)}
+        />
+      ) : null}
     </section>
   );
 }

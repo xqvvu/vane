@@ -7,7 +7,12 @@
     "#/*": "./src/*"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./email": "./src/email/index.ts",
+    "./feishu": "./src/feishu/index.ts",
+    "./generic-webhook": "./src/generic-webhook/index.ts",
+    "./slack": "./src/slack/index.ts",
+    "./assets/destination-icons/*": "./assets/destination-icons/*"
   },
   "scripts": {
     "test": "vitest run",

@@ -1,3 +1,4 @@
+export * from "#/adapter-manifest.ts";
 export * from "#/config.ts";
 export * from "#/delivery.ts";
 export * from "#/destination.ts";
