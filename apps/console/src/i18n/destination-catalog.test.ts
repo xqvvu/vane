@@ -1,5 +1,6 @@
-import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { describe, expect, it } from "vitest";
+
+import { createDefaultDestinationRegistry } from "@vane/destinations";
 
 import enUsMessages from "#/i18n/messages/en-US.json";
 

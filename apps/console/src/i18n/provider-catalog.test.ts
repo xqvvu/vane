@@ -1,5 +1,6 @@
-import { createDefaultProviderRegistry } from "@vane/providers";
 import { describe, expect, it } from "vitest";
+
+import { createDefaultProviderRegistry } from "@vane/providers";
 
 import enUsMessages from "#/i18n/messages/en-US.json";
 

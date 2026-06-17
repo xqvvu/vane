@@ -1,8 +1,9 @@
 import "@tanstack/react-start/server-only";
-import { createDefaultDestinationRegistry, type DestinationRegistry } from "@vane/destinations";
-import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/providers";
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+
+import { createDefaultDestinationRegistry, type DestinationRegistry } from "@vane/destinations";
+import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/providers";
 
 import { env } from "#/env.ts";
 import { createSqliteDatabase, type SqliteDatabase } from "#/infra/sqlite/connection.ts";

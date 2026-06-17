@@ -1,4 +1,5 @@
 import { RiMailLine } from "@remixicon/react";
+
 import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?url";
 import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";
 import webhookIconUrl from "@vane/destinations/assets/destination-icons/webhook.svg?url";

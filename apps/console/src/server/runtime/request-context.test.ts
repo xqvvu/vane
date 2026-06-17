@@ -1,6 +1,7 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
-import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ApplicationContainer, VaneAuth } from "#/server/runtime/container.ts";
 import {

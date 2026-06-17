@@ -1,5 +1,6 @@
 import { RiCompass3Line, RiHomeLine } from "@remixicon/react";
 import { Link, useLocation } from "@tanstack/react-router";
+
 import { redactText } from "@vane/core";
 
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";

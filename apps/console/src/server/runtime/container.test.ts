@@ -1,6 +1,7 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
-import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { WebhookIntakeService } from "#/server/intake/intake.service.ts";

@@ -1,5 +1,6 @@
-import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { describe, expect, it } from "vitest";
+
+import { createDefaultDestinationRegistry } from "@vane/destinations";
 
 import { openSqliteStore } from "#/infra/sqlite/store.ts";
 import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";

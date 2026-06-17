@@ -1,5 +1,6 @@
-import { createDefaultProviderRegistry } from "@vane/providers";
 import { describe, expect, it, vi } from "vitest";
+
+import { createDefaultProviderRegistry } from "@vane/providers";
 
 import { openSqliteStore } from "#/infra/sqlite/store.ts";
 import {

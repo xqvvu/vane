@@ -1,7 +1,8 @@
-import { createDefaultDestinationRegistry } from "@vane/destinations";
-import type { DestinationSendContext } from "@vane/destinations";
 import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
+
+import { createDefaultDestinationRegistry } from "@vane/destinations";
+import type { DestinationSendContext } from "@vane/destinations";
 
 import { openSqliteStore } from "#/infra/sqlite/store.ts";
 import { AppSettingsService } from "#/server/configuration/app-settings.service.ts";

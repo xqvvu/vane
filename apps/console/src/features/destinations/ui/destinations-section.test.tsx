@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
 import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?url";
 import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";
 import webhookIconUrl from "@vane/destinations/assets/destination-icons/webhook.svg?url";
-import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section.tsx";

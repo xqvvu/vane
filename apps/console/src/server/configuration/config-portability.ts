@@ -1,3 +1,5 @@
+import { parse, stringify } from "smol-toml";
+
 import {
   isSensitiveKey,
   isSafeVaneSecretPath,
@@ -13,7 +15,6 @@ import {
   type VaneConfiguration,
   type VaneSecretReferences,
 } from "@vane/core";
-import { parse, stringify } from "smol-toml";
 
 import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
 import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface.ts";

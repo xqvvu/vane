@@ -5,6 +5,21 @@
 
   "sortTailwindcss": true,
   "sortImports": {
+    "customGroups": [
+      {
+        "groupName": "vane",
+        "elementNamePattern": ["@vane/**"]
+      }
+    ],
+    "groups": [
+      "builtin",
+      "external",
+      "vane",
+      ["internal", "subpath"],
+      ["parent", "sibling", "index"],
+      "style",
+      "unknown"
+    ],
     "internalPattern": ["~~/", "~/", "#/", "@/"]
   }
 }

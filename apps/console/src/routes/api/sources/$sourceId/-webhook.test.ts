@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import type { JsonObject } from "@vane/core";
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import {
@@ -5,7 +7,6 @@ import {
   type ProviderParseInput,
   type ProviderParseResult,
 } from "@vane/providers";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { handleSourceWebhookPost } from "#/routes/api/sources/$sourceId/webhook.ts";
