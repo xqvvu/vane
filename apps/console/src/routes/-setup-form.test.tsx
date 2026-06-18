@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  authBootstrapQueryOptions,
+  authQueryKeys,
+  dashboardSessionQueryOptions,
+} from "#/features/auth/api/auth.queries.ts";
 import { VaneIntlProvider } from "#/i18n/provider.tsx";
 import { SetupFormClient } from "#/routes/-setup-form-impl.tsx";
 import { SetupForm } from "#/routes/-setup-form.tsx";
@@ -51,7 +56,11 @@ describe("setup form", () => {
 
   it("submits first setup through Better Auth sign-up and returns to the dashboard", async () => {
     const queryClient = new QueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
     testState.authClient.signUp.email.mockResolvedValueOnce({ error: null });
+    queryClient.setQueryData(dashboardSessionQueryOptions().queryKey, null);
+    queryClient.setQueryData(authBootstrapQueryOptions().queryKey, { setupRequired: true });
+
     render(
       <QueryClientProvider client={queryClient}>
         <VaneIntlProvider locale="en-US">
@@ -77,11 +86,17 @@ describe("setup form", () => {
         email: "owner@example.test",
         password: "correct horse battery staple",
       });
+      expect(queryClient.getQueryData(dashboardSessionQueryOptions().queryKey)).toBeUndefined();
+      expect(queryClient.getQueryData(authBootstrapQueryOptions().queryKey)).toBeUndefined();
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: authQueryKeys.all,
+      });
       expect(testState.toast.success).toHaveBeenCalledWith("Owner account created", {
         description: "Opening the dashboard",
       });
       expect(testState.navigate).toHaveBeenCalledWith({
         to: "/",
+        replace: true,
       });
     });
   });

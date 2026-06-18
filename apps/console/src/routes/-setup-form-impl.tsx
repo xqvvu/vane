@@ -52,6 +52,12 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
           return;
         }
 
+        queryClient.removeQueries({
+          queryKey: authQueryKeys.dashboardSession(),
+        });
+        queryClient.removeQueries({
+          queryKey: authQueryKeys.bootstrap(),
+        });
         await queryClient.invalidateQueries({
           queryKey: authQueryKeys.all,
         });
@@ -60,6 +66,7 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
         });
         await navigate({
           to: redirectTo as never,
+          replace: true,
         });
       } catch (caught) {
         toast.error(t("auth.setup.failureTitle"), {
