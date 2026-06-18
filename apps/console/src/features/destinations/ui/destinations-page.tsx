@@ -1,20 +1,17 @@
-import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
+import { RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
+import { toast } from "sonner";
 
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
-import type {
-  DestinationPreviewNotice,
-  DestinationTestNotice,
-} from "#/features/configuration/model/configuration-types.ts";
+import type { DestinationPreviewNotice } from "#/features/configuration/model/configuration-types.ts";
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
 import { DestinationAddDialog } from "#/features/destinations/ui/destination-add-dialog.tsx";
 import { DestinationEditDialog } from "#/features/destinations/ui/destination-edit-dialog.tsx";
 import {
   DestinationPreviewDialog,
-  DestinationTestNoticePanel,
+  showDestinationTestToast,
 } from "#/features/destinations/ui/destination-notices.tsx";
 import type {
   CreateDestinationFormInput,
@@ -36,14 +33,11 @@ export function DestinationsPage() {
     testDestination,
     updateDestination,
   } = useDestinationMutations();
-  const [destinationTestNotice, setDestinationTestNotice] =
-    React.useState<DestinationTestNotice | null>(null);
   const [destinationPreviewNotice, setDestinationPreviewNotice] =
     React.useState<DestinationPreviewNotice | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = React.useState(false);
   const [editingDestinationId, setEditingDestinationId] = React.useState<string | null>(null);
   const [destinationEditorOpen, setDestinationEditorOpen] = React.useState(false);
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingDestination = editingDestinationId
     ? (configuration.destinations.find((destination) => destination.id === editingDestinationId) ??
@@ -51,8 +45,16 @@ export function DestinationsPage() {
     : null;
   const pending = pendingAction !== null;
 
-  async function refreshConfiguration() {
-    await invalidateDestinations();
+  async function refreshConfiguration(): Promise<boolean> {
+    try {
+      await invalidateDestinations();
+      return true;
+    } catch (error) {
+      toast.error(t("destinations.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   async function runAction<T>(
@@ -61,7 +63,6 @@ export function DestinationsPage() {
     options: { refresh?: boolean } = {},
   ): Promise<T | null> {
     setPendingAction(action);
-    setFormError(null);
 
     try {
       const result = await fn();
@@ -72,7 +73,9 @@ export function DestinationsPage() {
 
       return result;
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      toast.error(t("destinations.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
       return null;
     } finally {
       setPendingAction(null);
@@ -131,16 +134,6 @@ export function DestinationsPage() {
               </>
             }
           />
-          {formError ? (
-            <Alert variant="destructive" className="mx-3 mt-4">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>{t("destinations.page.operationFailed")}</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
-          {destinationTestNotice ? (
-            <DestinationTestNoticePanel notice={destinationTestNotice} />
-          ) : null}
           <DestinationPreviewDialog
             notice={destinationPreviewNotice}
             open={previewDialogOpen && destinationPreviewNotice !== null}
@@ -159,7 +152,7 @@ export function DestinationsPage() {
                     id: destination.id,
                   },
                 });
-                setDestinationTestNotice(result);
+                showDestinationTestToast(result, t);
                 return result;
               })
             }

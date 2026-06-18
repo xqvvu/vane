@@ -1,4 +1,3 @@
-import { RiCheckboxCircleLine, RiErrorWarningLine } from "@remixicon/react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -10,7 +9,6 @@ import {
   CodeBlockHeader,
   CodeBlockTitle,
 } from "#/components/ai-elements/code-block.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import {
   Dialog,
   DialogContent,
@@ -24,34 +22,34 @@ import type {
 } from "#/features/configuration/model/configuration-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
-export function DestinationTestNoticePanel({ notice }: { notice: DestinationTestNotice }) {
-  const t = useTranslations();
+type TranslationFn = ReturnType<typeof useTranslations>;
+
+export function showDestinationTestToast(notice: DestinationTestNotice, t: TranslationFn) {
   const title = notice.success
     ? t("destinations.notice.testAcceptedTitle", { name: notice.destination.name })
     : t("destinations.notice.testFailedTitle", { name: notice.destination.name });
-
-  return (
-    <Alert variant={notice.success ? "default" : "destructive"} className="mx-3 mt-4">
-      {notice.success ? <RiCheckboxCircleLine aria-hidden /> : <RiErrorWarningLine aria-hidden />}
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>
-        {notice.success
-          ? notice.statusCode
-            ? t("destinations.notice.testAcceptedWithStatus", { statusCode: notice.statusCode })
-            : t("destinations.notice.testAccepted")
-          : (notice.error ?? t("destinations.notice.testRejected"))}
-        {notice.responseBody ? (
-          <CodeBlock
-            code={notice.responseBody}
-            language="text"
-            className="mt-2"
-            contentClassName="max-h-28"
-            preClassName="p-2"
-          />
-        ) : null}
-      </AlertDescription>
-    </Alert>
+  const message = notice.success
+    ? notice.statusCode
+      ? t("destinations.notice.testAcceptedWithStatus", { statusCode: notice.statusCode })
+      : t("destinations.notice.testAccepted")
+    : (notice.error ?? t("destinations.notice.testRejected"));
+  const description = (
+    <div className="flex max-w-[min(28rem,calc(100vw-3rem))] flex-col gap-2">
+      <span>{message}</span>
+      {notice.responseBody ? (
+        <pre className="bg-muted text-muted-foreground max-h-28 overflow-auto p-2 font-mono text-[11px] whitespace-pre-wrap">
+          {notice.responseBody}
+        </pre>
+      ) : null}
+    </div>
   );
+
+  if (notice.success) {
+    toast.success(title, { description });
+    return;
+  }
+
+  toast.error(title, { description });
 }
 
 export function DestinationPreviewDialog({

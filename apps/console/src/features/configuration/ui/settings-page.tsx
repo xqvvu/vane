@@ -1,16 +1,11 @@
-import {
-  RiDatabase2Line,
-  RiErrorWarningLine,
-  RiRefreshLine,
-  RiShieldKeyholeLine,
-} from "@remixicon/react";
+import { RiDatabase2Line, RiRefreshLine, RiShieldKeyholeLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
+import { toast } from "sonner";
 
 import { FormPanel, ContentPanel } from "#/components/common/content-panel.tsx";
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
@@ -35,25 +30,33 @@ export function SettingsPage() {
   } = useConfigurationMutations();
   const [configToml, setConfigToml] = React.useState("");
   const [importNotice, setImportNotice] = React.useState<ImportConfigurationResult | null>(null);
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState<"ui" | "toml">("ui");
   const pending = pendingAction !== null;
 
-  async function refreshConfiguration() {
-    await invalidateConfiguration();
+  async function refreshConfiguration(): Promise<boolean> {
+    try {
+      await invalidateConfiguration();
+      return true;
+    } catch (error) {
+      toast.error(t("configuration.settings.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
     setPendingAction(action);
-    setFormError(null);
 
     try {
       const result = await fn();
       await refreshConfiguration();
       return result;
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      toast.error(t("configuration.settings.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
       return null;
     } finally {
       setPendingAction(null);
@@ -69,17 +72,9 @@ export function SettingsPage() {
           className="gap-4"
         >
           <SettingsPageToolbar pending={pending} onRefresh={() => void refreshConfiguration()} />
-          {formError || importNotice ? (
+          {importNotice ? (
             <div className="min-h-0">
-              {formError ? (
-                <Alert variant="destructive">
-                  <RiErrorWarningLine aria-hidden />
-                  <AlertTitle>{t("configuration.settings.operationFailed")}</AlertTitle>
-                  <AlertDescription>{formError}</AlertDescription>
-                </Alert>
-              ) : importNotice ? (
-                <ImportNoticePanel notice={importNotice} />
-              ) : null}
+              <ImportNoticePanel notice={importNotice} />
             </div>
           ) : null}
           <TabsContent value="ui" className="flex flex-col gap-4">

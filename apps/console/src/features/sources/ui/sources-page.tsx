@@ -1,8 +1,8 @@
-import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
+import { RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
+import { toast } from "sonner";
 
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
@@ -25,27 +25,35 @@ export function SourcesPage() {
   const [tokenNotice, setTokenNotice] = React.useState<SourceTokenNotice | null>(null);
   const [editingSourceId, setEditingSourceId] = React.useState<string | null>(null);
   const [sourceEditorOpen, setSourceEditorOpen] = React.useState(false);
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingSource = editingSourceId
     ? (configuration.sources.find((source) => source.id === editingSourceId) ?? null)
     : null;
   const pending = pendingAction !== null;
 
-  async function refreshConfiguration() {
-    await invalidateSources();
+  async function refreshConfiguration(): Promise<boolean> {
+    try {
+      await invalidateSources();
+      return true;
+    } catch (error) {
+      toast.error(t("sources.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
     setPendingAction(action);
-    setFormError(null);
 
     try {
       const result = await fn();
       await refreshConfiguration();
       return result;
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      toast.error(t("sources.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
       return null;
     } finally {
       setPendingAction(null);
@@ -76,14 +84,6 @@ export function SourcesPage() {
               </>
             }
           />
-
-          {formError ? (
-            <Alert variant="destructive" className="mx-3 mt-4">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>{t("sources.page.operationFailed")}</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
 
           {tokenNotice ? (
             <SourceTokenNoticePanel notice={tokenNotice} onDismiss={() => setTokenNotice(null)} />

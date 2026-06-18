@@ -1,10 +1,10 @@
-import { RiErrorWarningLine, RiFilterOffLine, RiPlayLine } from "@remixicon/react";
+import { RiFilterOffLine, RiPlayLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
+import { toast } from "sonner";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
@@ -14,9 +14,8 @@ import type {
   DashboardOperationSearch,
   OperationFilterData,
 } from "#/features/operations/model/operation-search.ts";
-import type { WorkerRunNotice } from "#/features/operations/model/operation-types.ts";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
-import { WorkerNoticePanel } from "#/features/operations/ui/worker-notice-panel.tsx";
+import { showWorkerRunToast } from "#/features/operations/ui/worker-notice-panel.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
@@ -33,8 +32,6 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
   const { invalidateOperations, retryDelivery, runDeliveryWorker } = useOperationMutations();
-  const [workerNotice, setWorkerNotice] = React.useState<WorkerRunNotice | null>(null);
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const pending = pendingAction !== null;
 
@@ -55,14 +52,15 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
 
   async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
     setPendingAction(action);
-    setFormError(null);
 
     try {
       const result = await fn();
       await refreshOperations();
       return result;
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      toast.error(t("deliveries.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
       return null;
     } finally {
       setPendingAction(null);
@@ -82,20 +80,12 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
                     limit: 10,
                   },
                 });
-                setWorkerNotice(result);
+                showWorkerRunToast(result, t);
                 return result;
               })
             }
             onResetFilters={resetFilters}
           />
-          {formError ? (
-            <Alert variant="destructive" className="mx-3 mt-4">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>{t("deliveries.page.operationFailed")}</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
-          {workerNotice ? <WorkerNoticePanel notice={workerNotice} /> : null}
           <DeliveriesTable
             deliveries={operations.deliveries.items}
             nextCursor={operations.deliveries.nextCursor}

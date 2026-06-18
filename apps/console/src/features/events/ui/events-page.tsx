@@ -1,10 +1,10 @@
-import { RiErrorWarningLine, RiFilterOffLine, RiRefreshLine } from "@remixicon/react";
+import { RiFilterOffLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
+import { toast } from "sonner";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
@@ -32,18 +32,18 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
   const { invalidateOperations } = useOperationMutations();
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const pending = pendingAction !== null;
 
   async function refreshOperations() {
     setPendingAction("refresh-events");
-    setFormError(null);
 
     try {
       await invalidateOperations();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      toast.error(t("events.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setPendingAction(null);
     }
@@ -69,13 +69,6 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
             onRefresh={() => void refreshOperations()}
             onResetFilters={resetFilters}
           />
-          {formError ? (
-            <Alert variant="destructive" className="mx-3 mt-4">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>{t("events.page.operationFailed")}</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
           <EventsTable
             events={operations.events.items}
             nextCursor={operations.events.nextCursor}

@@ -1,9 +1,9 @@
-import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
+import { RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import * as React from "react";
+import { toast } from "sonner";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
@@ -18,27 +18,35 @@ export function RoutesPage() {
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { createRoute, invalidateRoutes, updateRoute } = useRouteMutations();
   const [editingRouteId, setEditingRouteId] = React.useState<string | null>(null);
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingRoute = editingRouteId
     ? (configuration.routes.find((route) => route.id === editingRouteId) ?? null)
     : null;
   const pending = pendingAction !== null;
 
-  async function refreshConfiguration() {
-    await invalidateRoutes();
+  async function refreshConfiguration(): Promise<boolean> {
+    try {
+      await invalidateRoutes();
+      return true;
+    } catch (error) {
+      toast.error(t("routing.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   async function submitAction<T>(action: string, fn: () => Promise<T>): Promise<T | null> {
     setPendingAction(action);
-    setFormError(null);
 
     try {
       const result = await fn();
       await refreshConfiguration();
       return result;
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      toast.error(t("routing.page.operationFailed"), {
+        description: error instanceof Error ? error.message : String(error),
+      });
       return null;
     } finally {
       setPendingAction(null);
@@ -58,13 +66,6 @@ export function RoutesPage() {
             }
             onRefresh={() => void refreshConfiguration()}
           />
-          {formError ? (
-            <Alert variant="destructive" className="mx-3 mt-4">
-              <RiErrorWarningLine aria-hidden />
-              <AlertTitle>{t("routing.page.operationFailed")}</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
           <RoutesSection
             routes={configuration.routes}
             sources={configuration.sources}
