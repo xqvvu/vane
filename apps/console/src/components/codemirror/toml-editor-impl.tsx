@@ -1,12 +1,12 @@
 import "@tanstack/react-start/client-only";
 import { EditorView } from "@codemirror/view";
-import { githubLight } from "@uiw/codemirror-theme-github";
 import CodeMirror from "@uiw/react-codemirror";
 
-import type { TomlEditorProps } from "#/components/codemirror/toml-editor";
-import { toml } from "#/components/codemirror/toml-language";
+import { tomlEditorTheme } from "#/components/codemirror/toml-editor-theme.ts";
+import type { TomlEditorProps } from "#/components/codemirror/toml-editor.tsx";
+import { toml } from "#/components/codemirror/toml-language.ts";
 
-const tomlExtensions = [toml(), EditorView.lineWrapping];
+const tomlExtensions = [toml(), EditorView.lineWrapping, tomlEditorTheme];
 
 export function TomlEditorClient({
   id,
@@ -16,7 +16,10 @@ export function TomlEditorClient({
   onChange,
 }: TomlEditorProps) {
   return (
-    <div id={id} className="border-border bg-background min-w-0 overflow-hidden border">
+    <div
+      id={id}
+      className="border-border bg-background focus-within:ring-ring/30 min-w-0 overflow-hidden border transition-shadow focus-within:ring-[1px]"
+    >
       <CodeMirror
         value={value}
         height="28rem"
@@ -24,7 +27,7 @@ export function TomlEditorClient({
         basicSetup={{
           bracketMatching: true,
           closeBrackets: true,
-          foldGutter: true,
+          foldGutter: false,
           highlightActiveLine: true,
           highlightActiveLineGutter: true,
           lineNumbers: true,
@@ -34,8 +37,8 @@ export function TomlEditorClient({
         editable={!readOnly}
         readOnly={readOnly}
         placeholder={placeholder}
-        theme={githubLight}
-        className="min-w-0 text-[12px] [&_.cm-content]:font-mono [&_.cm-content]:leading-5 [&_.cm-editor]:outline-none [&_.cm-scroller]:max-w-full"
+        theme="none"
+        className="min-w-0"
         onChange={onChange}
       />
     </div>

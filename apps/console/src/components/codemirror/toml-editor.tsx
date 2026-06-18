@@ -13,7 +13,7 @@ export interface TomlEditorProps {
 
 const TomlEditorClient = React.lazy(
   createClientOnlyFn(async () => {
-    const module = await import("#/components/codemirror/toml-editor-impl");
+    const module = await import("#/components/codemirror/toml-editor-impl.tsx");
 
     return { default: module.TomlEditorClient };
   }),
@@ -26,19 +26,20 @@ function TomlEditorRoot(props: TomlEditorProps) {
 function TomlEditorSkeleton() {
   return (
     <div className="border-border bg-background min-w-0 overflow-hidden border">
-      <div className="border-border bg-muted/40 flex h-8 items-center gap-2 border-b px-2">
-        <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-3 w-16" />
-      </div>
-      <div className="flex min-h-[28rem] min-w-0">
-        <div className="bg-muted/40 border-border w-11 shrink-0 border-r px-2 py-3">
-          <Skeleton className="h-full w-full" />
+      <div className="flex min-h-112 min-w-0">
+        <div className="bg-muted/70 border-border flex w-16 shrink-0 flex-col gap-3 border-r px-3 py-3">
+          <Skeleton className="h-3 w-8" />
+          <Skeleton className="h-3 w-8" />
+          <Skeleton className="h-3 w-8" />
+          <Skeleton className="h-3 w-8" />
+          <Skeleton className="h-3 w-8" />
         </div>
-        <div className="min-w-0 flex-1 p-3">
-          <Skeleton className="h-3 w-3/4" />
-          <Skeleton className="mt-3 h-3 w-1/2" />
-          <Skeleton className="mt-3 h-3 w-2/3" />
-          <Skeleton className="mt-3 h-3 w-5/6" />
+        <div className="min-w-0 flex-1 p-4">
+          <Skeleton className="h-3 w-48" />
+          <Skeleton className="mt-4 h-3 w-5/6" />
+          <Skeleton className="mt-4 h-3 w-2/3" />
+          <Skeleton className="mt-4 h-3 w-4/5" />
+          <Skeleton className="mt-4 h-3 w-1/2" />
         </div>
       </div>
     </div>

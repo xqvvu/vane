@@ -41,6 +41,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --cm-toml-heading: oklch(0.473 0.137 46.201);
+  --cm-toml-table: oklch(0.37 0.12 242);
+  --cm-toml-key: oklch(0.34 0.06 258);
+  --cm-toml-string: oklch(0.43 0.11 152);
+  --cm-toml-number: oklch(0.45 0.14 32);
+  --cm-toml-bool: oklch(0.47 0.15 300);
+  --cm-toml-atom: oklch(0.43 0.1 220);
+  --cm-toml-comment: oklch(0.56 0 0);
+  --cm-toml-punctuation: oklch(0.48 0 0);
 }
 
 .dark {
@@ -76,6 +85,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --cm-toml-heading: oklch(0.77 0.16 70);
+  --cm-toml-table: oklch(0.78 0.1 235);
+  --cm-toml-key: oklch(0.78 0.06 252);
+  --cm-toml-string: oklch(0.75 0.11 150);
+  --cm-toml-number: oklch(0.78 0.13 44);
+  --cm-toml-bool: oklch(0.8 0.13 315);
+  --cm-toml-atom: oklch(0.78 0.1 214);
+  --cm-toml-comment: oklch(0.7 0 0);
+  --cm-toml-punctuation: oklch(0.76 0 0);
 }
 
 @theme inline {

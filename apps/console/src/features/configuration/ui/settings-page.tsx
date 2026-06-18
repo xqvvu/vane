@@ -17,6 +17,7 @@ import { OperationalSummary } from "#/features/configuration/ui/operational-summ
 import { PortableConfigForm } from "#/features/configuration/ui/portable-config-form.tsx";
 import { LanguageSelector } from "#/i18n/language-switcher.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
+import { downloadTextFile } from "#/lib/browser.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export function SettingsPage() {
@@ -32,11 +33,60 @@ export function SettingsPage() {
   const [importNotice, setImportNotice] = React.useState<ImportConfigurationResult | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState<"ui" | "toml">("ui");
+  const [hasLoadedToml, setHasLoadedToml] = React.useState(false);
+  const [hasTriedAutoLoadToml, setHasTriedAutoLoadToml] = React.useState(false);
   const pending = pendingAction !== null;
 
-  async function refreshConfiguration(): Promise<boolean> {
+  const loadCurrentToml = React.useCallback(async () => {
+    const result = await exportConfigurationToml({
+      data: {
+        includeSecrets: false,
+      },
+    });
+
+    setConfigToml(result.toml);
+    setHasLoadedToml(true);
+    return result.toml;
+  }, [exportConfigurationToml]);
+
+  React.useEffect(() => {
+    if (activeTab !== "toml" || hasLoadedToml || hasTriedAutoLoadToml || pending) {
+      return;
+    }
+
+    setHasTriedAutoLoadToml(true);
+    setPendingAction("load-config-toml");
+
+    void loadCurrentToml()
+      .catch((error: unknown) => {
+        toast.error(t("configuration.settings.operationFailed"), {
+          description: error instanceof Error ? error.message : String(error),
+        });
+      })
+      .finally(() => {
+        setPendingAction(null);
+      });
+  }, [activeTab, hasLoadedToml, hasTriedAutoLoadToml, loadCurrentToml, pending, t]);
+
+  function invalidateTomlDraft() {
+    setHasLoadedToml(false);
+    setHasTriedAutoLoadToml(false);
+
+    if (activeTab !== "toml") {
+      setConfigToml("");
+    }
+  }
+
+  async function refreshConfiguration(
+    options: { invalidateToml?: boolean } = {},
+  ): Promise<boolean> {
     try {
       await invalidateConfiguration();
+
+      if (options.invalidateToml) {
+        invalidateTomlDraft();
+      }
+
       return true;
     } catch (error) {
       toast.error(t("configuration.settings.operationFailed"), {
@@ -63,6 +113,16 @@ export function SettingsPage() {
     }
   }
 
+  async function submitConfigurationChange<T>(action: string, fn: () => Promise<T>) {
+    const result = await submitAction(action, fn);
+
+    if (result) {
+      invalidateTomlDraft();
+    }
+
+    return result;
+  }
+
   return (
     <DashboardContentLayout
       main={
@@ -71,7 +131,10 @@ export function SettingsPage() {
           onValueChange={(value) => setActiveTab(value === "toml" ? "toml" : "ui")}
           className="gap-4"
         >
-          <SettingsPageToolbar pending={pending} onRefresh={() => void refreshConfiguration()} />
+          <SettingsPageToolbar
+            pending={pending}
+            onRefresh={() => void refreshConfiguration({ invalidateToml: true })}
+          />
           {importNotice ? (
             <div className="min-h-0">
               <ImportNoticePanel notice={importNotice} />
@@ -92,7 +155,9 @@ export function SettingsPage() {
                 settings={configuration.settings}
                 pending={pending}
                 onSubmit={(input) =>
-                  void submitAction("update-settings", () => updateAppSettings({ data: input }))
+                  void submitConfigurationChange("update-settings", () =>
+                    updateAppSettings({ data: input }),
+                  )
                 }
               />
               <LanguageSettingsPanel />
@@ -106,17 +171,19 @@ export function SettingsPage() {
                 onChange={setConfigToml}
                 onExport={() =>
                   submitAction("export-config", async () => {
-                    const result = await exportConfigurationToml({
-                      data: {
-                        includeSecrets: false,
-                      },
+                    const toml = await loadCurrentToml();
+
+                    downloadTextFile({
+                      filename: "vane.toml",
+                      text: toml,
+                      type: "application/toml;charset=utf-8",
                     });
-                    setConfigToml(result.toml);
-                    return result;
+
+                    return { toml };
                   })
                 }
                 onImport={(toml) =>
-                  submitAction("import-config", async () => {
+                  submitConfigurationChange("import-config", async () => {
                     const result = await importConfigurationToml({
                       data: {
                         toml,
