@@ -7,7 +7,7 @@ import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 export const Route = createFileRoute("/_dashboard/settings")({
   loader: ({ context }) => context.queryClient.ensureQueryData(configurationQueryOptions()),
   component: SettingsPage,
-  pendingComponent: DashboardContentLayout.Skeleton,
+  pendingComponent: DashboardContentLayout.SettingsSkeleton,
   pendingMs: 120,
   pendingMinMs: 250,
 });

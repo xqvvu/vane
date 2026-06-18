@@ -1,12 +1,10 @@
-import { RiFilterOffLine, RiPlayLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
+import { DeliveriesPageToolbar } from "#/features/deliveries/ui/deliveries-page-toolbar.tsx";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
 import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
 import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
@@ -122,50 +120,6 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             layout="rail"
           />
         </DashboardSidebar>
-      }
-    />
-  );
-}
-
-function DeliveriesPageToolbar({
-  pending,
-  onRunWorker,
-  onResetFilters,
-}: {
-  pending: boolean;
-  onRunWorker: () => void;
-  onResetFilters: () => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <PageToolbar
-      description={t("deliveries.page.description")}
-      actions={
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={onResetFilters}
-            title={t("deliveries.page.resetTitle")}
-          >
-            <RiFilterOffLine data-icon="inline-start" aria-hidden />
-            {t("common.actions.resetFilters")}
-          </Button>
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            disabled={pending}
-            onClick={onRunWorker}
-            title={t("deliveries.page.runWorkerTitle")}
-          >
-            <RiPlayLine data-icon="inline-start" aria-hidden />
-            {t("common.actions.runWorker")}
-          </Button>
-        </>
       }
     />
   );

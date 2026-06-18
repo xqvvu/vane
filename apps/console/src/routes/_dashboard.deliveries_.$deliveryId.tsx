@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_dashboard/deliveries_/$deliveryId")({
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(deliveryDetailQueryOptions(params.deliveryId)),
   component: DeliveryDetailRoute,
-  pendingComponent: DashboardContentLayout.Skeleton,
+  pendingComponent: DashboardContentLayout.DetailSkeleton,
   pendingMs: 120,
   pendingMinMs: 250,
 });

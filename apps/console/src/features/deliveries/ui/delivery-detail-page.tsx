@@ -21,7 +21,7 @@ export function DeliveryDetailPage({ deliveryId }: { deliveryId: string }) {
         <>
           <DeliveryDetailPageToolbar deliveryId={deliveryId} />
           {detail ? (
-            <section className="border-border bg-background border p-3">
+            <section className="min-h-0 flex-1 overflow-hidden">
               <DeliveryDetailView detail={detail} />
             </section>
           ) : (
@@ -42,6 +42,7 @@ function DeliveryDetailPageToolbar({ deliveryId }: { deliveryId: string }) {
 
   return (
     <PageToolbar
+      title={t("deliveries.detail.title")}
       description={t("deliveries.detail.description")}
       badge={deliveryId}
       actions={

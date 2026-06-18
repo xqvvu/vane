@@ -134,6 +134,35 @@ describe("dashboard user menu", () => {
     });
   });
 
+  it("renders language selection as a compact toggle group", () => {
+    const queryClient = new QueryClient();
+    const session = {
+      user: {
+        id: "user-1",
+        name: "Vane Owner",
+        email: "owner@example.test",
+        image: null,
+        role: "owner",
+      },
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <VaneIntlProvider locale="en-US">
+          <DashboardUserMenuClient user={session.user} />
+        </VaneIntlProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("group", { name: "Language" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "English" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "简体中文" }).getAttribute("aria-pressed")).toBe(
+      "false",
+    );
+  });
+
   it("exposes a colocated skeleton", () => {
     const { container } = render(
       <VaneIntlProvider locale="en-US">

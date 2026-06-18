@@ -1,19 +1,18 @@
-import { RiEyeLine, RiInboxArchiveLine, RiRestartLine } from "@remixicon/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
 import { HistoryPagination } from "#/components/common/history-pagination.tsx";
-import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { OperationsTable } from "#/components/common/operations-table.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { DeliveriesEmptyState } from "#/features/deliveries/ui/deliveries-empty-state.tsx";
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "#/components/ui/empty.tsx";
+  deliveriesColumnClassName,
+  deliveriesPageSize,
+  deliveriesTableMinWidthClassName,
+} from "#/features/deliveries/ui/deliveries-table-layout.ts";
+import { DeliveryActions } from "#/features/deliveries/ui/delivery-actions.tsx";
+import { DeliveryEventCell } from "#/features/deliveries/ui/delivery-event-cell.tsx";
 import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
+import { DeliveryTargetCell } from "#/features/deliveries/ui/delivery-target-cell.tsx";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
 import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
@@ -88,7 +87,7 @@ export function DeliveriesTable({
       {
         id: "updated",
         header: t("deliveries.table.headers.updated"),
-        cell: ({ row }) => <OperationTimestamp format="time" value={row.original.updatedAt} />,
+        cell: ({ row }) => <OperationTimestamp format="dateTime" value={row.original.updatedAt} />,
       },
       {
         id: "actions",
@@ -113,6 +112,7 @@ export function DeliveriesTable({
         columns={columns}
         pageSize={deliveriesPageSize}
         showPagination={false}
+        minWidthClassName={deliveriesTableMinWidthClassName}
         emptyState={<DeliveriesEmptyState />}
         getRowId={(delivery) => delivery.id}
         columnClassName={deliveriesColumnClassName}
@@ -137,128 +137,3 @@ export function DeliveriesTable({
     </section>
   );
 }
-
-function DeliveryActions({
-  delivery,
-  pending,
-  onInspect,
-  onRetry,
-}: {
-  delivery: Operations["deliveries"]["items"][number];
-  pending: boolean;
-  onInspect: (deliveryId: string) => void;
-  onRetry: (deliveryId: string) => void;
-}) {
-  const t = useTranslations();
-  const retryLabel = t("deliveries.table.retry");
-  const inspectLabel = t("deliveries.table.inspect");
-
-  return (
-    <div className="flex justify-center gap-1">
-      {delivery.state === "failed" ? (
-        <IconTooltip label={retryLabel}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            disabled={pending}
-            aria-label={retryLabel}
-            onClick={() => onRetry(delivery.id)}
-          >
-            <RiRestartLine data-icon="inline-start" aria-hidden />
-          </Button>
-        </IconTooltip>
-      ) : null}
-      <IconTooltip label={inspectLabel}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          disabled={pending}
-          aria-label={inspectLabel}
-          onClick={() => onInspect(delivery.id)}
-        >
-          <RiEyeLine data-icon="inline-start" aria-hidden />
-        </Button>
-      </IconTooltip>
-    </div>
-  );
-}
-
-function DeliveryTargetCell({
-  destinationName,
-  routeName,
-}: {
-  destinationName: string;
-  routeName: string | null;
-}) {
-  const t = useTranslations();
-
-  return (
-    <div className="min-w-0">
-      <div className="truncate font-medium" title={destinationName}>
-        {destinationName}
-      </div>
-      <div
-        className="text-muted-foreground truncate text-[11px]"
-        title={routeName ?? t("deliveries.table.manual")}
-      >
-        {routeName ?? t("deliveries.table.manual")}
-      </div>
-    </div>
-  );
-}
-
-function DeliveryEventCell({ eventId, sourceName }: { eventId: string; sourceName: string }) {
-  return (
-    <div className="min-w-0">
-      <div className="truncate font-medium" title={sourceName}>
-        {sourceName}
-      </div>
-      <div className="text-muted-foreground truncate font-mono text-[11px]" title={eventId}>
-        {eventId}
-      </div>
-    </div>
-  );
-}
-
-function DeliveriesEmptyState() {
-  const t = useTranslations();
-
-  return (
-    <Empty className="border-none p-4">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <RiInboxArchiveLine aria-hidden />
-        </EmptyMedia>
-        <EmptyTitle>{t("deliveries.table.empty")}</EmptyTitle>
-        <EmptyDescription>{t("deliveries.table.order")}</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
-}
-
-function deliveriesColumnClassName(columnId: string): string | null {
-  switch (columnId) {
-    case "target":
-      return "w-[18%]";
-    case "event":
-      return "w-[20%]";
-    case "state":
-      return "w-[10%]";
-    case "attempts":
-      return "w-[9%]";
-    case "next":
-      return "w-[10%]";
-    case "lastError":
-      return "w-[19%]";
-    case "updated":
-      return "w-[10%]";
-    case "actions":
-      return "w-[4%]";
-    default:
-      return null;
-  }
-}
-
-const deliveriesPageSize = 20;

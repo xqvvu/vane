@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_dashboard/events_/$eventId")({
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(eventDetailQueryOptions(params.eventId)),
   component: EventDetailRoute,
-  pendingComponent: DashboardContentLayout.Skeleton,
+  pendingComponent: DashboardContentLayout.DetailSkeleton,
   pendingMs: 120,
   pendingMinMs: 250,
 });

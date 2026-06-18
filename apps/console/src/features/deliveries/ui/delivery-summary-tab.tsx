@@ -1,0 +1,69 @@
+import { DeliveryDetailSectionHeader } from "#/features/deliveries/ui/delivery-detail-section-header.tsx";
+import { DeliveryDetailTerm } from "#/features/deliveries/ui/delivery-detail-term.tsx";
+import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types.ts";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
+
+export function DeliverySummaryTab({ detail }: { detail: DeliveryDetailData }) {
+  const t = useTranslations();
+
+  return (
+    <section className="border-border bg-background flex min-h-0 min-w-0 flex-col overflow-hidden border">
+      <DeliveryDetailSectionHeader title={t("deliveries.detail.sections.fields")} />
+      <dl className="grid grid-cols-[112px_minmax(0,1fr)] gap-x-3 gap-y-2 p-3 text-xs lg:max-w-3xl">
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.destination")}
+          value={detail.destination.name}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.kind")}
+          value={t(`destinations.kinds.${detail.destination.kind}`)}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.route")}
+          value={detail.route?.name ?? t("deliveries.detail.manual")}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.source")}
+          value={detail.source.name}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.event")}
+          value={detail.event.normalized.title}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.deliveryId")}
+          value={detail.job.id}
+          mono
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.eventId")}
+          value={detail.event.id}
+          mono
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.state")}
+          value={t(`common.deliveryState.${detail.job.state}`)}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.attempts")}
+          value={`${detail.job.attemptCount}/${detail.job.maxAttempts}`}
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.nextAttempt")}
+          value={
+            detail.job.nextAttemptAt ? (
+              <OperationTimestamp format="dateTime" value={detail.job.nextAttemptAt} />
+            ) : (
+              "-"
+            )
+          }
+        />
+        <DeliveryDetailTerm
+          label={t("deliveries.detail.terms.lastError")}
+          value={detail.job.lastError ?? "-"}
+        />
+      </dl>
+    </section>
+  );
+}

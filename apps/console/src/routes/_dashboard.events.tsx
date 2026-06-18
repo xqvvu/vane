@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_dashboard/events")({
     return { filters };
   },
   component: EventsRoute,
-  pendingComponent: DashboardContentLayout.Skeleton,
+  pendingComponent: DashboardContentLayout.SkeletonWithRail,
   pendingMs: 120,
   pendingMinMs: 250,
 });

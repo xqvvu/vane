@@ -164,6 +164,41 @@ payload。真实 secret 只在 `send` 内部用于构造网络请求，不能进
 MVP 不让 adapter manifest 控制 rate limit 或 concurrency。Delivery worker 先使用全局
 batch/backoff 策略，per-destination policy 未来单独设计。
 
+## TODO：通知模板扩展
+
+当前 MVP 的 `messageTemplate` 先保持为文本模板：只允许安全、确定性的变量插值，不执行用户提供的
+JavaScript、表达式、SQL、shell 或任意动态代码。这个能力足够覆盖 Feishu 文本消息、Slack 正文、
+Email 文本正文和 generic webhook 的 `message` 字段，但它不是 Destination 模板能力的最终形态。
+
+后续需要专门设计适配器感知的结构化通知模板，至少覆盖：
+
+- Feishu：支持文本消息和交互式卡片，卡片结构需要 adapter 级 schema 校验与预览。
+- Slack：支持普通文本和 Block Kit 风格的结构化消息。
+- Email：支持文本正文、HTML 正文、主题模板，以及安全的 HTML 转义边界。
+- Generic webhook：支持可校验的 JSON payload 模板，而不仅是 `message` 字段。
+
+扩展设计应满足这些约束：
+
+- 兼容现有 `messageTemplate`。已有文本模板继续可用，迁移到结构化模板时必须有明确 fallback。
+- 模板仍然是安全解释执行，不引入用户 JavaScript、远程代码、shell、SQL 或不受控表达式求值。
+- 模板输入仍以 normalized event、Source summary、Destination summary 和安全上下文为主，不暴露
+  destination secrets、source token、raw sensitive headers 或未脱敏 raw payload。
+- Preview、test result 和 Delivery `renderedPayload` 继续只保存 secret-safe debug representation；
+  真实 wire payload 可以由 adapter 在 `send` 内部追加签名、鉴权字段或平台特定 envelope。
+- Adapter manifest/catalog 需要表达模板能力，例如支持的模式、字段、默认模板、预览能力和是否需要
+  console UI override。
+- TOML import/export 需要能表示结构化模板，并保持 secret 与模板内容的边界清晰。
+- UI 应为不同 destination 展示对应的模板编辑体验，例如飞书卡片 JSON/表单预览、Slack blocks
+  预览、Email HTML 预览；复杂交互留在 `features/destinations` 的 adapter-specific override 中。
+
+待定问题：
+
+- 模板是继续作为 Destination config 的一部分，还是抽象成可复用的 Template 资源再由多个
+  Destinations 引用。
+- 文本模板、结构化 JSON 模板、平台原生卡片/blocks schema 之间是否共享一套变量语法。
+- 是否需要模板版本号、模板迁移和按 adapter `configVersion` 绑定的兼容策略。
+- 结构化模板校验失败时，Delivery 是失败、回退文本模板，还是在保存配置时就禁止启用。
+
 ## 路由与 Metadata
 
 路由规则只匹配 Source、severity、status、labels、title 和 message。它不匹配

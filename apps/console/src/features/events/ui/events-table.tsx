@@ -8,7 +8,11 @@ import { EventDeliveryCountsCell } from "#/features/events/ui/event-delivery-cou
 import { EventStateCell } from "#/features/events/ui/event-state-cell.tsx";
 import { EventTitleCell } from "#/features/events/ui/event-title-cell.tsx";
 import { EventsEmptyState } from "#/features/events/ui/events-empty-state.tsx";
-import { eventsColumnClassName, eventsPageSize } from "#/features/events/ui/events-table-layout.ts";
+import {
+  eventsColumnClassName,
+  eventsPageSize,
+  eventsTableMinWidthClassName,
+} from "#/features/events/ui/events-table-layout.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
 import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
@@ -85,6 +89,7 @@ export function EventsTable({
         columns={columns}
         pageSize={eventsPageSize}
         showPagination={false}
+        minWidthClassName={eventsTableMinWidthClassName}
         emptyState={<EventsEmptyState />}
         getRowId={(event) => event.id}
         columnClassName={eventsColumnClassName}

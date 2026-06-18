@@ -1,11 +1,7 @@
 import "@tanstack/react-start/client-only";
 import { RiGlobalLine } from "@remixicon/react";
 
-import {
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-} from "#/components/ui/dropdown-menu.tsx";
+import { DropdownMenuGroup, DropdownMenuLabel } from "#/components/ui/dropdown-menu.tsx";
 import {
   Select,
   SelectContent,
@@ -14,8 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select.tsx";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group.tsx";
 import { writeLocaleCookie } from "#/i18n/locale-cookie.ts";
-import { localeDisplayName, supportedLocales, type AppLocale } from "#/i18n/locales.ts";
+import {
+  isAppLocale,
+  localeDisplayName,
+  supportedLocales,
+  type AppLocale,
+} from "#/i18n/locales.ts";
 import { useLocale, useTranslations } from "#/i18n/use-i18n.ts";
 import { hardReloadPage } from "#/lib/browser.ts";
 
@@ -58,16 +60,31 @@ export function LanguageMenuGroupClient() {
   return (
     <DropdownMenuGroup>
       <DropdownMenuLabel>{t("locale.label")}</DropdownMenuLabel>
-      {supportedLocales.map((availableLocale) => (
-        <DropdownMenuItem
-          key={availableLocale}
-          onClick={() => setLocale(availableLocale)}
-          disabled={availableLocale === locale}
+      <div className="px-2 pb-2">
+        <ToggleGroup
+          aria-label={t("locale.label")}
+          className="border-input bg-muted/40 grid w-full grid-cols-2 border p-0.5"
+          spacing={0}
+          value={[locale]}
+          onValueChange={(value) => {
+            const [nextLocale] = value;
+
+            if (nextLocale && isAppLocale(nextLocale) && nextLocale !== locale) {
+              setLocale(nextLocale);
+            }
+          }}
         >
-          <RiGlobalLine aria-hidden />
-          {localeDisplayName(availableLocale)}
-        </DropdownMenuItem>
-      ))}
+          {supportedLocales.map((availableLocale) => (
+            <ToggleGroupItem
+              key={availableLocale}
+              value={availableLocale}
+              className="aria-pressed:bg-background aria-pressed:text-foreground data-pressed:bg-background data-pressed:text-foreground h-7 min-w-0 px-2 aria-pressed:shadow-xs data-pressed:shadow-xs"
+            >
+              {localeDisplayName(availableLocale)}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
     </DropdownMenuGroup>
   );
 }

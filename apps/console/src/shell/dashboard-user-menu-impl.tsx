@@ -1,11 +1,12 @@
 import "@tanstack/react-start/client-only";
-import { RiLogoutCircleLine, RiUser3Line } from "@remixicon/react";
+import { RiLogoutCircleLine } from "@remixicon/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar.tsx";
+import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
   DropdownMenu,
@@ -82,17 +83,21 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
             <div className="flex min-w-0 items-center gap-2">
               <UserAvatar fallbackInitial={t("shell.userMenu.fallbackInitial")} user={user} />
               <div className="min-w-0">
-                <div className="text-foreground truncate font-medium">
-                  {user.name ?? user.email}
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <div className="text-foreground min-w-0 truncate font-medium">
+                    {user.name ?? user.email}
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-muted-foreground flex h-4 shrink-0 items-center px-1.5 py-0 font-mono text-[10px]"
+                  >
+                    {user.role ?? t("shell.userMenu.defaultRole")}
+                  </Badge>
                 </div>
                 <div className="truncate">{user.email}</div>
               </div>
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuItem disabled>
-            <RiUser3Line aria-hidden />
-            {user.role ?? t("shell.userMenu.defaultRole")}
-          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <LanguageMenuGroupClient />

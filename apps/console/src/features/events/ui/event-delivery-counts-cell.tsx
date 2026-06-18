@@ -8,15 +8,21 @@ export function EventDeliveryCountsCell({ counts }: { counts: EventDeliveryCount
   const total = counts.pending + counts.running + counts.succeeded + counts.failed;
 
   if (total === 0) {
-    return <span className="text-muted-foreground text-xs">0</span>;
+    return (
+      <div className="flex justify-center">
+        <Badge variant="outline" className="min-w-8 justify-center font-mono tabular-nums">
+          0
+        </Badge>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-wrap justify-center gap-1">
-      <EventDeliveryStateCount state="pending" value={counts.pending} />
-      <EventDeliveryStateCount state="running" value={counts.running} />
-      <EventDeliveryStateCount state="succeeded" value={counts.succeeded} />
+    <div className="flex min-w-0 flex-wrap justify-center gap-1">
       <EventDeliveryStateCount state="failed" value={counts.failed} />
+      <EventDeliveryStateCount state="running" value={counts.running} />
+      <EventDeliveryStateCount state="pending" value={counts.pending} />
+      <EventDeliveryStateCount state="succeeded" value={counts.succeeded} />
     </div>
   );
 }
@@ -38,10 +44,10 @@ function EventDeliveryStateCount({
     <Badge
       variant={deliveryCountVariant(state)}
       title={`${t(`common.deliveryState.${state}`)}: ${value}`}
-      className="px-1.5"
+      className="min-w-12 justify-center gap-1 px-1.5"
     >
-      {t(`events.table.deliveryShort.${state}`)}
-      <span className="text-muted-foreground">{value}</span>
+      {t(`common.deliveryState.${state}`)}
+      <span className="self-baseline font-mono tabular-nums">{value}</span>
     </Badge>
   );
 }
