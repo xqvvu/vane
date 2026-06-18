@@ -20,6 +20,8 @@ FROM deps AS build
 COPY . .
 
 RUN pnpm --filter @vane/console build
+RUN pnpm --filter @vane/console --prod deploy /deploy
+RUN cp -R apps/console/.output /deploy/.output
 
 FROM node:24-bookworm-slim AS runtime
 
@@ -30,15 +32,14 @@ ENV VANE_DATABASE_PATH=/data/vane.sqlite
 
 WORKDIR /app
 
-RUN corepack enable \
-  && mkdir -p /data \
+RUN mkdir -p /data /app \
   && chown -R node:node /data /app
 
-COPY --from=build --chown=node:node /app /app
+COPY --from=build --chown=node:node /deploy ./
 
 USER node
 
 EXPOSE 3000
 VOLUME ["/data"]
 
-CMD ["pnpm", "--filter", "@vane/console", "preview", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["node", ".output/server/index.mjs"]
