@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 
+import fs from "node:fs/promises";
 import path from "node:path";
 
 import babel from "@rolldown/plugin-babel";
@@ -28,7 +29,17 @@ const config = defineConfig({
         behavior: "error",
       },
     }),
-    nitro(),
+    nitro({
+      hooks: {
+        async compiled(nitro) {
+          await fs.cp(
+            path.join(import.meta.dirname, "src/infra/sqlite/migrations"),
+            path.join(nitro.options.output.serverDir, "_ssr/migrations"),
+            { recursive: true },
+          );
+        },
+      },
+    }),
     viteReact(),
     babel({
       presets: [reactCompilerPreset()],

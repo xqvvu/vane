@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS deps
+FROM node:24-trixie-slim AS deps
 
 WORKDIR /app
 
@@ -20,10 +20,8 @@ FROM deps AS build
 COPY . .
 
 RUN pnpm --filter @vane/console build
-RUN pnpm --filter @vane/console --prod deploy /deploy
-RUN cp -R apps/console/.output /deploy/.output
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24-trixie-slim AS runtime
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
@@ -35,7 +33,7 @@ WORKDIR /app
 RUN mkdir -p /data /app \
   && chown -R node:node /data /app
 
-COPY --from=build --chown=node:node /deploy ./
+COPY --from=build --chown=node:node /app/apps/console/.output ./.output
 
 USER node
 
