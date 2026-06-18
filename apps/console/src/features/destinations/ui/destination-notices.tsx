@@ -1,6 +1,23 @@
-import { RiCheckboxCircleLine, RiErrorWarningLine, RiEyeLine } from "@remixicon/react";
+import { RiCheckboxCircleLine, RiErrorWarningLine } from "@remixicon/react";
+import * as React from "react";
+import { toast } from "sonner";
 
+import {
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockCopyButton,
+  CodeBlockFilename,
+  CodeBlockHeader,
+  CodeBlockTitle,
+} from "#/components/ai-elements/code-block.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "#/components/ui/dialog.tsx";
 import type {
   DestinationPreviewNotice,
   DestinationTestNotice,
@@ -24,28 +41,68 @@ export function DestinationTestNoticePanel({ notice }: { notice: DestinationTest
             : t("destinations.notice.testAccepted")
           : (notice.error ?? t("destinations.notice.testRejected"))}
         {notice.responseBody ? (
-          <pre className="border-border bg-muted/50 text-foreground mt-2 max-h-28 overflow-auto border p-2 font-mono text-[11px] leading-5">
-            {notice.responseBody}
-          </pre>
+          <CodeBlock
+            code={notice.responseBody}
+            language="text"
+            className="mt-2"
+            contentClassName="max-h-28"
+            preClassName="p-2"
+          />
         ) : null}
       </AlertDescription>
     </Alert>
   );
 }
 
-export function DestinationPreviewNoticePanel({ notice }: { notice: DestinationPreviewNotice }) {
+export function DestinationPreviewDialog({
+  notice,
+  open,
+  onOpenChange,
+}: {
+  notice: DestinationPreviewNotice | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const t = useTranslations();
+  const renderedPayload = React.useMemo(
+    () => (notice ? JSON.stringify(notice.renderedPayload, null, 2) : ""),
+    [notice],
+  );
 
   return (
-    <Alert className="mx-3 mt-4">
-      <RiEyeLine aria-hidden />
-      <AlertTitle>
-        {t("destinations.notice.previewTitle", { name: notice.destination.name })}
-      </AlertTitle>
-      <AlertDescription>{t("destinations.notice.previewDescription")}</AlertDescription>
-      <pre className="border-border bg-muted/50 col-start-2 mt-2 max-h-56 overflow-auto border p-2 font-mono text-[11px] leading-5">
-        {JSON.stringify(notice.renderedPayload, null, 2)}
-      </pre>
-    </Alert>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[min(760px,calc(100dvh-2rem))] overflow-hidden sm:max-w-4xl">
+        <DialogHeader className="pr-8">
+          <DialogTitle>
+            {notice ? t("destinations.notice.previewTitle", { name: notice.destination.name }) : ""}
+          </DialogTitle>
+          <DialogDescription>{t("destinations.notice.previewDescription")}</DialogDescription>
+        </DialogHeader>
+        {notice ? (
+          <CodeBlock
+            code={renderedPayload}
+            language="json"
+            showLineNumbers
+            contentClassName="max-h-[min(520px,calc(100dvh-14rem))]"
+          >
+            <CodeBlockHeader>
+              <CodeBlockTitle>
+                <CodeBlockFilename>
+                  {t("destinations.notice.previewPayloadFilename")}
+                </CodeBlockFilename>
+              </CodeBlockTitle>
+              <CodeBlockActions>
+                <CodeBlockCopyButton
+                  aria-label={t("destinations.notice.copyPreviewPayload")}
+                  title={t("destinations.notice.copyPreviewPayload")}
+                  onCopy={() => toast.success(t("common.actions.copied"))}
+                  onError={() => toast.error(t("common.actions.copyFailed"))}
+                />
+              </CodeBlockActions>
+            </CodeBlockHeader>
+          </CodeBlock>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }

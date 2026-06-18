@@ -380,6 +380,8 @@
   "destinations.notice.testRejected": "通知目标拒绝了测试投递",
   "destinations.notice.previewTitle": "预览 {name}",
   "destinations.notice.previewDescription": "基于固定测试事件渲染的投递载荷",
+  "destinations.notice.previewPayloadFilename": "payload.json",
+  "destinations.notice.copyPreviewPayload": "复制渲染载荷",
   "events.page.operationFailed": "操作失败",
   "events.page.title": "事件",
   "events.page.loaded": "已加载 {count} 条",

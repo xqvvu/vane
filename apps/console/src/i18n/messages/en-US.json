@@ -380,6 +380,8 @@
   "destinations.notice.testRejected": "Destination sender rejected the test",
   "destinations.notice.previewTitle": "Preview {name}",
   "destinations.notice.previewDescription": "Rendered payload for a deterministic test event",
+  "destinations.notice.previewPayloadFilename": "payload.json",
+  "destinations.notice.copyPreviewPayload": "Copy rendered payload",
   "events.page.operationFailed": "Operation failed",
   "events.page.title": "Events",
   "events.page.loaded": "{count} loaded",

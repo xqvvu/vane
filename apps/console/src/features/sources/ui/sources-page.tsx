@@ -24,6 +24,7 @@ export function SourcesPage() {
   const { invalidateSources, rotateSourceToken, updateSource } = useSourceMutations();
   const [tokenNotice, setTokenNotice] = React.useState<SourceTokenNotice | null>(null);
   const [editingSourceId, setEditingSourceId] = React.useState<string | null>(null);
+  const [sourceEditorOpen, setSourceEditorOpen] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingSource = editingSourceId
@@ -92,7 +93,10 @@ export function SourcesPage() {
             sources={configuration.sources}
             routes={configuration.routes}
             pending={pending}
-            onEdit={setEditingSourceId}
+            onEdit={(sourceId) => {
+              setEditingSourceId(sourceId);
+              setSourceEditorOpen(true);
+            }}
             onToggle={(source) =>
               void submitAction(`toggle-source-${source.id}`, () =>
                 updateSource({
@@ -122,12 +126,10 @@ export function SourcesPage() {
 
           <SourcesEditDialog
             source={editingSource}
-            open={editingSource !== null}
+            open={sourceEditorOpen && editingSource !== null}
             disabled={pending}
             onOpenChange={(open) => {
-              if (!open) {
-                setEditingSourceId(null);
-              }
+              setSourceEditorOpen(open);
             }}
           />
         </>
