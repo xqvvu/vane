@@ -1,0 +1,84 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#/components/ui/table.tsx";
+import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
+import { EventDetailSectionHeader } from "#/features/events/ui/event-detail-section-header.tsx";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
+import { useTranslations } from "#/i18n/use-i18n.ts";
+
+export function EventDetailDeliveriesTable({
+  deliveries,
+}: {
+  deliveries: EventDetailData["deliveries"];
+}) {
+  const t = useTranslations();
+
+  return (
+    <section className="flex h-full min-h-0 flex-col gap-2">
+      <EventDetailSectionHeader
+        title={t("events.detail.eventDeliveriesTitle")}
+        meta={t("events.detail.summary.deliveries", { count: deliveries.length })}
+      />
+      <div className="border-border bg-background min-h-0 flex-1 overflow-auto border">
+        <Table className="min-w-190 table-fixed">
+          <TableHeader className="bg-muted/50 text-muted-foreground sticky top-0 z-10">
+            <TableRow>
+              <TableHead className="w-[22%]">
+                {t("events.detail.deliveryHeaders.destination")}
+              </TableHead>
+              <TableHead className="w-[18%]">{t("events.detail.deliveryHeaders.route")}</TableHead>
+              <TableHead className="w-[14%]">{t("events.detail.deliveryHeaders.state")}</TableHead>
+              <TableHead className="w-[12%]">
+                {t("events.detail.deliveryHeaders.attempts")}
+              </TableHead>
+              <TableHead className="w-[14%]">{t("events.detail.deliveryHeaders.next")}</TableHead>
+              <TableHead>{t("events.detail.deliveryHeaders.lastError")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {deliveries.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-muted-foreground" colSpan={6}>
+                  {t("events.detail.empty.deliveries")}
+                </TableCell>
+              </TableRow>
+            ) : (
+              deliveries.map((delivery) => (
+                <TableRow key={delivery.id} className="align-top">
+                  <TableCell className="truncate font-medium" title={delivery.destinationName}>
+                    {delivery.destinationName}
+                  </TableCell>
+                  <TableCell className="truncate" title={delivery.routeName ?? undefined}>
+                    {delivery.routeName ?? t("events.detail.manual")}
+                  </TableCell>
+                  <TableCell>
+                    <DeliveryStateBadge state={delivery.state} />
+                  </TableCell>
+                  <TableCell>
+                    {delivery.attemptCount}/{delivery.maxAttempts}
+                  </TableCell>
+                  <TableCell className="truncate">
+                    {delivery.nextAttemptAt ? (
+                      <OperationTimestamp format="time" value={delivery.nextAttemptAt} />
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell className="truncate" title={delivery.lastError ?? undefined}>
+                    {delivery.lastError ?? "-"}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
+  );
+}

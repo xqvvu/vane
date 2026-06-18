@@ -21,7 +21,7 @@ export function EventDetailPage({ eventId }: { eventId: string }) {
         <>
           <EventDetailPageToolbar eventId={eventId} />
           {detail ? (
-            <section className="border-border bg-background border p-3">
+            <section className="min-h-0 flex-1 overflow-hidden">
               <EventDetailView detail={detail} />
             </section>
           ) : (
@@ -42,6 +42,7 @@ function EventDetailPageToolbar({ eventId }: { eventId: string }) {
 
   return (
     <PageToolbar
+      title={t("events.detail.title")}
       description={t("events.detail.description")}
       badge={eventId}
       actions={

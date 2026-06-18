@@ -1,13 +1,11 @@
-import { RiFilterOffLine, RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Button } from "#/components/ui/button.tsx";
 import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
+import { EventsPageToolbar } from "#/features/events/ui/events-page-toolbar.tsx";
 import { EventsTable } from "#/features/events/ui/events-table.tsx";
 import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
 import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
@@ -97,50 +95,6 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
           />
           <OperationalSummary configuration={configuration} layout="rail" />
         </DashboardSidebar>
-      }
-    />
-  );
-}
-
-function EventsPageToolbar({
-  pending,
-  onRefresh,
-  onResetFilters,
-}: {
-  pending: boolean;
-  onRefresh: () => void;
-  onResetFilters: () => void;
-}) {
-  const t = useTranslations();
-
-  return (
-    <PageToolbar
-      description={t("events.page.description")}
-      actions={
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={onRefresh}
-            title={t("events.page.refreshTitle")}
-          >
-            <RiRefreshLine data-icon="inline-start" aria-hidden />
-            {t("common.actions.refresh")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={onResetFilters}
-            title={t("events.page.resetTitle")}
-          >
-            <RiFilterOffLine data-icon="inline-start" aria-hidden />
-            {t("common.actions.resetFilters")}
-          </Button>
-        </>
       }
     />
   );

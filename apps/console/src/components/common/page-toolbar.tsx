@@ -29,14 +29,14 @@ export function PageToolbar({
     >
       <div className="flex min-w-0 flex-col gap-3">
         {title || badge ? (
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             {title ? (
-              <h1 className="font-heading truncate text-lg leading-none font-semibold">{title}</h1>
+              <h1 className="font-heading min-w-0 text-lg leading-none font-semibold">{title}</h1>
             ) : null}
             {badge ? (
               <Badge
                 variant="outline"
-                className="max-w-52 shrink-0 truncate text-[10px] font-bold tracking-wider uppercase"
+                className="max-w-full shrink truncate text-[10px] font-bold tracking-wider uppercase"
               >
                 {badge}
               </Badge>

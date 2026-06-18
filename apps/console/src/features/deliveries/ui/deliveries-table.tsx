@@ -14,8 +14,8 @@ import {
   EmptyTitle,
 } from "#/components/ui/empty.tsx";
 import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
-import { formatDateTime, formatTime } from "#/features/operations/model/operation-format.ts";
 import type { Operations } from "#/features/operations/model/operation-types.ts";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function DeliveriesTable({
@@ -70,7 +70,11 @@ export function DeliveriesTable({
         id: "next",
         header: t("deliveries.table.headers.next"),
         cell: ({ row }) =>
-          row.original.nextAttemptAt ? formatTime(row.original.nextAttemptAt) : "—",
+          row.original.nextAttemptAt ? (
+            <OperationTimestamp format="time" value={row.original.nextAttemptAt} />
+          ) : (
+            "—"
+          ),
       },
       {
         id: "lastError",
@@ -84,11 +88,7 @@ export function DeliveriesTable({
       {
         id: "updated",
         header: t("deliveries.table.headers.updated"),
-        cell: ({ row }) => (
-          <span title={formatDateTime(row.original.updatedAt)}>
-            {formatTime(row.original.updatedAt)}
-          </span>
-        ),
+        cell: ({ row }) => <OperationTimestamp format="time" value={row.original.updatedAt} />,
       },
       {
         id: "actions",

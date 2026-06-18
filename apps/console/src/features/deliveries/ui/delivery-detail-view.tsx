@@ -1,11 +1,11 @@
+import type { ReactNode } from "react";
+
 import { Badge } from "#/components/ui/badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { DeliveryAttemptStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
-import {
-  formatDateTime,
-  summarizeResponseBody,
-} from "#/features/operations/model/operation-format.ts";
+import { summarizeResponseBody } from "#/features/operations/model/operation-format.ts";
 import type { DeliveryDetail } from "#/features/operations/model/operation-types.ts";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function DeliveryDetailView({ detail }: { detail: NonNullable<DeliveryDetail> }) {
@@ -69,7 +69,13 @@ export function DeliveryDetailView({ detail }: { detail: NonNullable<DeliveryDet
             />
             <DetailTerm
               label={t("deliveries.detail.terms.nextAttempt")}
-              value={detail.job.nextAttemptAt ? formatDateTime(detail.job.nextAttemptAt) : "—"}
+              value={
+                detail.job.nextAttemptAt ? (
+                  <OperationTimestamp format="dateTime" value={detail.job.nextAttemptAt} />
+                ) : (
+                  "—"
+                )
+              }
             />
             <DetailTerm
               label={t("deliveries.detail.terms.lastError")}
@@ -151,14 +157,15 @@ function DeliveryAttemptsTable({
                       <DeliveryAttemptStateBadge state={attempt.state} />
                     </td>
                     <td className="px-2 py-2">{attempt.responseStatus ?? "—"}</td>
-                    <td className="truncate px-2 py-2" title={formatDateTime(attempt.startedAt)}>
-                      {formatDateTime(attempt.startedAt)}
+                    <td className="truncate px-2 py-2">
+                      <OperationTimestamp format="dateTime" value={attempt.startedAt} />
                     </td>
-                    <td
-                      className="truncate px-2 py-2"
-                      title={attempt.finishedAt ? formatDateTime(attempt.finishedAt) : undefined}
-                    >
-                      {attempt.finishedAt ? formatDateTime(attempt.finishedAt) : "—"}
+                    <td className="truncate px-2 py-2">
+                      {attempt.finishedAt ? (
+                        <OperationTimestamp format="dateTime" value={attempt.finishedAt} />
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="truncate px-2 py-2" title={note === "—" ? undefined : note}>
                       {note}
@@ -174,7 +181,7 @@ function DeliveryAttemptsTable({
   );
 }
 
-function DetailTerm({ label, value }: { label: string; value: string }) {
+function DetailTerm({ label, value }: { label: string; value: ReactNode }) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
