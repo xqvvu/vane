@@ -14,7 +14,7 @@ services:
       HOST: "0.0.0.0"
       PORT: "3000"
       BETTER_AUTH_URL: "${BETTER_AUTH_URL:-http://localhost:3000}"
-      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET to a 32+ character random value}"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-70c18d50d2b212c625494ffb8e5963878cb72447c2ff3a0f97fcfb793f90d444}"
       SERVER_URL: "${SERVER_URL:-http://localhost:3000}"
       VANE_DATABASE_PATH: "/data/vane.sqlite"
       VANE_MAX_WEBHOOK_BYTES: "${VANE_MAX_WEBHOOK_BYTES:-1048576}"
@@ -25,7 +25,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "node -e \"const port = process.env.PORT || '3000'; fetch('http://127.0.0.1:' + port + '/robots.txt').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\"",
+          'node -e "const port = process.env.PORT || ''3000''; fetch(''http://127.0.0.1:'' + port + ''/robots.txt'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
         ]
       interval: 30s
       timeout: 5s
