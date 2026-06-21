@@ -51,6 +51,7 @@
     "clsx": "catalog:",
     "codemirror": "catalog:codemirror",
     "es-toolkit": "catalog:",
+    "kysely": "catalog:",
     "lezer-toml": "catalog:codemirror",
     "lucide-react": "catalog:",
     "nitro": "catalog:",
