@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vane">
+  <circle cx="256" cy="256" r="232" fill="#edf6f4" />
+  <circle
+    cx="256"
+    cy="256"
+    r="232"
+    fill="none"
+    stroke="#d7e6e3"
+    stroke-width="10"
+  />
+  <g transform="translate(52 52) scale(.796875)">
+    <path
+      d="M232 222V104c0-13 7-25 18-32l45-28c10-6 23 1 23 13v137c0 16-12 28-28 28h-21v-74l-13-11-13 11v74h-11Z"
+      fill="#1fbfa5"
+    />
+    <path
+      d="M280 290v118c0 13-7 25-18 32l-45 28c-10 6-23-1-23-13V318c0-16 12-28 28-28h21v74l13 11 13-11v-74h11Z"
+      fill="#1fbfa5"
+    />
+    <path
+      d="M222 232H92c-12 0-23-7-29-17l-31-52c-6-10 1-22 13-22h143c15 0 27 12 27 27v18h-74l-12 14 12 14h81v18Z"
+      fill="#11181c"
+    />
+    <path
+      d="M290 232h130c12 0 23 7 29 17l31 52c6 10-1 22-13 22H324c-15 0-27-12-27-27v-18h74l12-14-12-14h-81v-18Z"
+      fill="#11181c"
+    />
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M256 142v78" stroke="#e9fff8" stroke-width="18" />
+      <path d="M256 370v-78" stroke="#e9fff8" stroke-width="18" />
+      <path d="M142 256h78" stroke="#e9fff8" stroke-width="18" />
+      <path d="M292 256h78" stroke="#e9fff8" stroke-width="18" />
+      <path d="M228 256h-22" stroke="#1fbfa5" stroke-width="10" />
+      <path d="M284 256h22" stroke="#1fbfa5" stroke-width="10" />
+      <path d="M256 228v-22" stroke="#11181c" stroke-width="10" />
+      <path d="M256 284v22" stroke="#11181c" stroke-width="10" />
+    </g>
+    <circle cx="256" cy="142" r="18" fill="#e9fff8" />
+    <circle cx="256" cy="142" r="8" fill="#11181c" />
+    <circle cx="256" cy="370" r="18" fill="#e9fff8" />
+    <circle cx="256" cy="370" r="8" fill="#11181c" />
+    <circle cx="142" cy="256" r="18" fill="#e9fff8" />
+    <circle cx="142" cy="256" r="8" fill="#11181c" />
+    <circle cx="370" cy="256" r="18" fill="#e9fff8" />
+    <circle cx="370" cy="256" r="8" fill="#11181c" />
+    <circle cx="256" cy="256" r="51" fill="#e9fff8" />
+    <circle cx="256" cy="256" r="34" fill="#11181c" />
+    <circle cx="256" cy="256" r="18" fill="#ffb02e" />
+  </g>
+</svg>

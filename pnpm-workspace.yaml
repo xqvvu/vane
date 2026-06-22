@@ -26,6 +26,7 @@ catalog:
   nitro: 3.0.260610-beta
   srvx: ^0.11.17
   kysely: ^0.29.2
+  cnfast: ^0.0.6
 
 catalogs:
   codemirror:

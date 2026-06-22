@@ -7,11 +7,33 @@ export interface AuthRuntimeEnvironment {
   NODE_ENV?: string;
 }
 
+export type BetterAuthBaseUrl =
+  | string
+  | {
+      allowedHosts: string[];
+      fallback?: string | undefined;
+      protocol: "auto";
+    };
+
+export interface BetterAuthBaseUrlOptions {
+  allowedHosts?: string[] | undefined;
+}
+
 export function requireBetterAuthBaseUrl(
   baseUrl: string | undefined,
   environment: AuthRuntimeEnvironment = process.env,
-): string | undefined {
+  options: BetterAuthBaseUrlOptions = {},
+): BetterAuthBaseUrl | undefined {
+  const allowedHosts = options.allowedHosts ?? [];
   const trimmed = baseUrl?.trim();
+
+  if (allowedHosts.length > 0) {
+    return {
+      allowedHosts,
+      fallback: trimmed || undefined,
+      protocol: "auto",
+    };
+  }
 
   if (trimmed) {
     return trimmed;

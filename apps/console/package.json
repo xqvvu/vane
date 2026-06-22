@@ -49,6 +49,7 @@
     "better-sqlite3": "catalog:",
     "class-variance-authority": "catalog:ui",
     "clsx": "catalog:",
+    "cnfast": "catalog:",
     "codemirror": "catalog:codemirror",
     "es-toolkit": "catalog:",
     "kysely": "catalog:",

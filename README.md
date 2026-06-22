@@ -106,6 +106,8 @@ pnpm --filter @vane/console build
 | --- | --- |
 | `BETTER_AUTH_URL` | Better Auth 对外 URL，本地通常是 dev server URL。 |
 | `BETTER_AUTH_SECRET` | Better Auth secret，生产必须使用 32+ 字符随机值。 |
+| `BETTER_AUTH_ALLOWED_HOSTS` | 可选，逗号或换行分隔的 Better Auth 动态 base URL Host 白名单，例如 `localhost:6180,vane.example.com`。通过 PVC、反向代理或预览域名访问时需要加入外部 Host。 |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | 可选，逗号或换行分隔的额外可信 Origin，例如 `http://localhost:6180,https://vane.example.com`，用于通过 Better Auth 的 CSRF/origin 检查。 |
 | `SERVER_URL` | Vane 对外访问 URL，用于生成 webhook URL 等。 |
 | `VANE_DATABASE_PATH` | SQLite 数据库路径。 |
 | `VANE_MAX_WEBHOOK_BYTES` | 入站 webhook 最大 payload 大小。 |

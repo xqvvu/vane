@@ -14,6 +14,17 @@ pnpm --filter @vane/console dev
 
 默认 `.env.example` 使用 `http://localhost:6180`。如果 dev server 端口变了，需要同步更新 `BETTER_AUTH_URL` 和 `SERVER_URL`。
 
+如果通过 PVC、反向代理或临时外部域名访问本地 dev server，把外部 Host 加进
+`BETTER_AUTH_ALLOWED_HOSTS`，并把完整外部 Origin 加进
+`BETTER_AUTH_TRUSTED_ORIGINS`。例如：
+
+```env
+BETTER_AUTH_URL=https://vane.example.test
+BETTER_AUTH_ALLOWED_HOSTS=localhost:6180,vane.example.test
+BETTER_AUTH_TRUSTED_ORIGINS=http://localhost:6180,https://vane.example.test
+SERVER_URL=https://vane.example.test
+```
+
 ## 常用脚本
 
 ```bash

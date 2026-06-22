@@ -1,6 +1,11 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+const delimitedListSchema = z
+  .string()
+  .transform(parseDelimitedEnvList)
+  .refine((items) => items.length > 0, "Expected at least one value");
+
 const runtimeEnv = {
   ...import.meta.env,
   ...(typeof process !== "undefined" ? process.env : {}),
@@ -10,6 +15,8 @@ export const env = createEnv({
   server: {
     BETTER_AUTH_SECRET: z.string().min(32).optional(),
     BETTER_AUTH_URL: z.url().optional(),
+    BETTER_AUTH_ALLOWED_HOSTS: delimitedListSchema.optional(),
+    BETTER_AUTH_TRUSTED_ORIGINS: delimitedListSchema.optional(),
     SERVER_URL: z.url().optional(),
     VANE_DATABASE_PATH: z.string().min(1).optional(),
     VANE_MAX_WEBHOOK_BYTES: z.coerce
@@ -60,3 +67,19 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 });
+
+function parseDelimitedEnvList(value: string): string[] {
+  const seen = new Set<string>();
+
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter((item) => {
+      if (!item || seen.has(item)) {
+        return false;
+      }
+
+      seen.add(item);
+      return true;
+    });
+}

@@ -1,4 +1,5 @@
 import "@tanstack/react-start/server-only";
+import fs from "node:fs";
 import type { PathLike } from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -13,6 +14,11 @@ export interface CreateSqliteDatabaseOptions {
 
 export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): SqliteDatabase {
   const databasePath = String(options.databasePath ?? path.join(process.cwd(), "data.sqlite"));
+
+  if (databasePath !== ":memory:") {
+    fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+  }
+
   const db = new Database(databasePath, {
     timeout: 5000,
   });

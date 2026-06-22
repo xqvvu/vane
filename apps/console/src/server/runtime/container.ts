@@ -310,8 +310,11 @@ function createDefaultBetterAuthDatabase(): SqliteDatabase {
 
 function createDefaultAuth(input: { database: SqliteDatabase }): VaneAuth {
   return betterAuth({
-    baseURL: requireBetterAuthBaseUrl(env.BETTER_AUTH_URL ?? env.SERVER_URL),
+    baseURL: requireBetterAuthBaseUrl(env.BETTER_AUTH_URL ?? env.SERVER_URL, process.env, {
+      allowedHosts: env.BETTER_AUTH_ALLOWED_HOSTS,
+    }),
     database: input.database,
+    trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS,
     advanced: {
       database: {
         generateId: "uuid",

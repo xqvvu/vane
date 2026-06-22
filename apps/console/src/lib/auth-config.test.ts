@@ -38,4 +38,34 @@ describe("auth runtime config", () => {
       }),
     ).toBe("0123456789abcdef0123456789abcdef");
   });
+
+  it("uses dynamic base URL host allowlists when multiple public hosts are configured", () => {
+    expect(
+      requireBetterAuthBaseUrl(
+        "https://vane.example.test",
+        { NODE_ENV: "production" },
+        {
+          allowedHosts: ["localhost:6180", "vane.example.test", "*.preview.example.test"],
+        },
+      ),
+    ).toEqual({
+      allowedHosts: ["localhost:6180", "vane.example.test", "*.preview.example.test"],
+      fallback: "https://vane.example.test",
+      protocol: "auto",
+    });
+
+    expect(
+      requireBetterAuthBaseUrl(
+        undefined,
+        { NODE_ENV: "development" },
+        {
+          allowedHosts: ["localhost:6180"],
+        },
+      ),
+    ).toEqual({
+      allowedHosts: ["localhost:6180"],
+      fallback: undefined,
+      protocol: "auto",
+    });
+  });
 });

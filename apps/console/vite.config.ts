@@ -30,6 +30,9 @@ const config = defineConfig({
       },
     }),
     nitro({
+      wasm: {
+        silent: true,
+      },
       hooks: {
         async compiled(nitro) {
           await fs.cp(
@@ -45,6 +48,10 @@ const config = defineConfig({
       presets: [reactCompilerPreset()],
     }),
   ],
+
+  build: {
+    chunkSizeWarningLimit: 1024,
+  },
 
   server: {
     port: 6180,
