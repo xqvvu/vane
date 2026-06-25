@@ -6,7 +6,7 @@ import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/prov
 
 import { env } from "#/env.ts";
 import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
-import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
+import { migrateSqliteDatabase } from "#/infra/sqlite/migrate";
 import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";

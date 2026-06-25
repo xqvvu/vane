@@ -2,8 +2,8 @@ import type { IsoDateTimeString } from "@vane/core";
 
 import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
 import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
-import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
-import type { SqliteMigration } from "#/infra/sqlite/migrate.ts";
+import type { SqliteMigration } from "#/infra/sqlite/migrate";
+import { migrateSqliteDatabase } from "#/infra/sqlite/migrate";
 import type { DeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
 import { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository.ts";
 import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface.ts";

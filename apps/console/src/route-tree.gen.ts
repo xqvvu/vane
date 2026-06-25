@@ -13,6 +13,8 @@ import { Route as SetupRouteImport } from "./routes/setup";
 import { Route as LoginRouteImport } from "./routes/login";
 import { Route as DashboardRouteImport } from "./routes/_dashboard";
 import { Route as IndexRouteImport } from "./routes/index";
+import { Route as ApiReadyRouteImport } from "./routes/api/ready";
+import { Route as ApiHealthRouteImport } from "./routes/api/health";
 import { Route as DashboardSourcesRouteImport } from "./routes/_dashboard.sources";
 import { Route as DashboardSettingsRouteImport } from "./routes/_dashboard.settings";
 import { Route as DashboardRoutesRouteImport } from "./routes/_dashboard.routes";
@@ -41,6 +43,16 @@ const DashboardRoute = DashboardRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiReadyRoute = ApiReadyRouteImport.update({
+  id: "/api/ready",
+  path: "/api/ready",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: "/api/health",
+  path: "/api/health",
   getParentRoute: () => rootRouteImport,
 } as any);
 const DashboardSourcesRoute = DashboardSourcesRouteImport.update({
@@ -106,6 +118,8 @@ export interface FileRoutesByFullPath {
   "/routes": typeof DashboardRoutesRoute;
   "/settings": typeof DashboardSettingsRoute;
   "/sources": typeof DashboardSourcesRoute;
+  "/api/health": typeof ApiHealthRoute;
+  "/api/ready": typeof ApiReadyRoute;
   "/deliveries/$deliveryId": typeof DashboardDeliveriesDeliveryIdRoute;
   "/events/$eventId": typeof DashboardEventsEventIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
@@ -121,6 +135,8 @@ export interface FileRoutesByTo {
   "/routes": typeof DashboardRoutesRoute;
   "/settings": typeof DashboardSettingsRoute;
   "/sources": typeof DashboardSourcesRoute;
+  "/api/health": typeof ApiHealthRoute;
+  "/api/ready": typeof ApiReadyRoute;
   "/deliveries/$deliveryId": typeof DashboardDeliveriesDeliveryIdRoute;
   "/events/$eventId": typeof DashboardEventsEventIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
@@ -138,6 +154,8 @@ export interface FileRoutesById {
   "/_dashboard/routes": typeof DashboardRoutesRoute;
   "/_dashboard/settings": typeof DashboardSettingsRoute;
   "/_dashboard/sources": typeof DashboardSourcesRoute;
+  "/api/health": typeof ApiHealthRoute;
+  "/api/ready": typeof ApiReadyRoute;
   "/_dashboard/deliveries_/$deliveryId": typeof DashboardDeliveriesDeliveryIdRoute;
   "/_dashboard/events_/$eventId": typeof DashboardEventsEventIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
@@ -155,6 +173,8 @@ export interface FileRouteTypes {
     | "/routes"
     | "/settings"
     | "/sources"
+    | "/api/health"
+    | "/api/ready"
     | "/deliveries/$deliveryId"
     | "/events/$eventId"
     | "/api/auth/$"
@@ -170,6 +190,8 @@ export interface FileRouteTypes {
     | "/routes"
     | "/settings"
     | "/sources"
+    | "/api/health"
+    | "/api/ready"
     | "/deliveries/$deliveryId"
     | "/events/$eventId"
     | "/api/auth/$"
@@ -186,6 +208,8 @@ export interface FileRouteTypes {
     | "/_dashboard/routes"
     | "/_dashboard/settings"
     | "/_dashboard/sources"
+    | "/api/health"
+    | "/api/ready"
     | "/_dashboard/deliveries_/$deliveryId"
     | "/_dashboard/events_/$eventId"
     | "/api/auth/$"
@@ -197,6 +221,8 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren;
   LoginRoute: typeof LoginRoute;
   SetupRoute: typeof SetupRoute;
+  ApiHealthRoute: typeof ApiHealthRoute;
+  ApiReadyRoute: typeof ApiReadyRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   ApiSourcesSourceIdWebhookRoute: typeof ApiSourcesSourceIdWebhookRoute;
 }
@@ -229,6 +255,20 @@ declare module "@tanstack/react-router" {
       path: "/";
       fullPath: "/";
       preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/ready": {
+      id: "/api/ready";
+      path: "/api/ready";
+      fullPath: "/api/ready";
+      preLoaderRoute: typeof ApiReadyRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/health": {
+      id: "/api/health";
+      path: "/api/health";
+      fullPath: "/api/health";
+      preLoaderRoute: typeof ApiHealthRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/_dashboard/sources": {
@@ -335,6 +375,8 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
   SetupRoute: SetupRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiReadyRoute: ApiReadyRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiSourcesSourceIdWebhookRoute: ApiSourcesSourceIdWebhookRoute,
 };
