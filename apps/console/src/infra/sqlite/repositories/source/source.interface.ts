@@ -15,13 +15,13 @@ export interface SourceRow {
 }
 
 export interface SourceRepository {
-  list(): SourceSummary[];
-  listEnabled(): SourceSummary[];
-  get(id: string): SourceRuntimeConfig | null;
-  findByTokenHash(tokenHash: string): SourceRuntimeConfig | null;
-  create(input: CreateSourceInput): SourceSummary;
-  update(id: string, input: UpdateSourceInput): SourceSummary;
-  setEnabled(id: string, enabled: boolean): SourceSummary;
+  list(): Promise<SourceSummary[]>;
+  listEnabled(): Promise<SourceSummary[]>;
+  get(id: string): Promise<SourceRuntimeConfig | null>;
+  findByTokenHash(tokenHash: string): Promise<SourceRuntimeConfig | null>;
+  create(input: CreateSourceInput): Promise<SourceSummary>;
+  update(id: string, input: UpdateSourceInput): Promise<SourceSummary>;
+  setEnabled(id: string, enabled: boolean): Promise<SourceSummary>;
 }
 
 export interface SourceRuntimeConfig extends SourceSummary {

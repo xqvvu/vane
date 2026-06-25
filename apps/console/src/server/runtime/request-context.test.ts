@@ -119,33 +119,33 @@ describe("request context", () => {
 
 function createFakeContainer(): ApplicationContainer {
   return {
-    getSqliteStore: () => {
+    getSqliteStore: async () => {
       throw new Error("SQLite store is not used by request context tests");
     },
     getProviderRegistry: () => createDefaultProviderRegistry(),
     getDestinationRegistry: () => createDefaultDestinationRegistry(),
-    createSourceService: () => {
+    createSourceService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },
-    createDestinationService: () => {
+    createDestinationService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },
-    createRouteService: () => {
+    createRouteService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },
-    createAppSettingsService: () => {
+    createAppSettingsService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },
-    createConfigPortabilityService: () => {
+    createConfigPortabilityService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },
-    createWebhookIntakeService: () => {
+    createWebhookIntakeService: async () => {
       throw new Error("Webhook intake service is not used by request context tests");
     },
-    createDeliveryWorker: () => {
+    createDeliveryWorker: async () => {
       throw new Error("Delivery worker is not used by request context tests");
     },
-    ensureDeliveryWorkerRunner: () => ({
+    ensureDeliveryWorkerRunner: async () => ({
       runNow: async () => null,
       getHealth: () => ({
         state: "idle",
@@ -156,11 +156,11 @@ function createFakeContainer(): ApplicationContainer {
       }),
       stop: () => {},
     }),
-    getBetterAuthDatabase: () => {
+    getBetterAuthDatabase: async () => {
       throw new Error("Auth database is not used by request context tests");
     },
-    hasRegisteredUsers: () => false,
-    getAuth: () => fakeAuth,
-    dispose: () => {},
+    hasRegisteredUsers: async () => false,
+    getAuth: async () => fakeAuth,
+    dispose: async () => {},
   } satisfies ApplicationContainer;
 }

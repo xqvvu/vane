@@ -30,8 +30,9 @@ export interface EventRow {
 }
 
 export interface IntakeRepository {
-  recordEvent(input: RecordEventInput): EventRecord;
-  pruneRawPayloads(input: PruneRawPayloadsInput): number;
+  recordEvent(input: RecordEventInput): Promise<EventRecord>;
+  get(id: string): Promise<EventRecord | null>;
+  pruneRawPayloads(input: PruneRawPayloadsInput): Promise<number>;
 }
 
 export interface RecordEventInput {

@@ -29,10 +29,10 @@ export class SourceService {
     this.generateSourceToken = options.generateSourceToken ?? defaultGenerateSourceToken;
   }
 
-  createSource(command: CreateSourceCommand): CreatedSource {
+  async createSource(command: CreateSourceCommand): Promise<CreatedSource> {
     const input = CreateSourceCommandSchema.parse(command);
     const token = this.generateSourceToken();
-    const source = this.store.sources.create({
+    const source = await this.store.sources.create({
       name: input.name,
       provider: input.provider,
       enabled: input.enabled,
@@ -43,9 +43,9 @@ export class SourceService {
     return { source, token };
   }
 
-  updateSource(command: UpdateSourceCommand): SourceSummary {
+  async updateSource(command: UpdateSourceCommand): Promise<SourceSummary> {
     const input = UpdateSourceCommandSchema.parse(command);
-    const current = this.store.sources.get(input.id);
+    const current = await this.store.sources.get(input.id);
     const config =
       current && input.config ? mergeJsonObjects(current.config, input.config) : input.config;
 
@@ -57,10 +57,10 @@ export class SourceService {
     });
   }
 
-  rotateSourceToken(command: RotateSourceTokenCommand): RotatedSourceToken {
+  async rotateSourceToken(command: RotateSourceTokenCommand): Promise<RotatedSourceToken> {
     const input = RotateSourceTokenCommandSchema.parse(command);
     const token = this.generateSourceToken();
-    const source = this.store.sources.update(input.id, {
+    const source = await this.store.sources.update(input.id, {
       tokenHash: hashSourceToken(token),
     });
 

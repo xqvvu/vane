@@ -7,6 +7,8 @@ export class SqliteError extends Error {
 
 export class SqliteDataIntegrityError extends SqliteError {}
 
+export class SqliteMigrationError extends SqliteError {}
+
 export class RecordNotFoundError extends SqliteError {
   constructor(
     readonly resource: string,

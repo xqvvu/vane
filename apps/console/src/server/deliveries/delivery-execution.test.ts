@@ -176,14 +176,14 @@ function createExecutionStore(input: {
 }): DeliveryExecutionStore {
   return {
     deliveries: {
-      markSucceeded(command) {
+      async markSucceeded(command) {
         input.succeeded.push(command);
         return deliveryJob({
           state: "succeeded",
           finishedAt: command.finishedAt ?? now,
         });
       },
-      markFailed(command) {
+      async markFailed(command) {
         input.failed.push(command);
         return deliveryJob({
           state: input.failedState ?? "failed",

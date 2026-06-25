@@ -53,15 +53,15 @@ export interface DeliveryDedupeKeyRow {
 }
 
 export interface DeliveryRepository {
-  enqueueForEvent(input: EnqueueDeliveriesInput): EnqueueDeliveriesResult;
+  enqueueForEvent(input: EnqueueDeliveriesInput): Promise<EnqueueDeliveriesResult>;
   reclaimStaleRunning(
     input: ReclaimStaleRunningDeliveriesInput,
-  ): ReclaimStaleRunningDeliveriesResult;
-  claimNext(input: ClaimDeliveriesInput): ClaimedDelivery[];
-  markSucceeded(input: MarkDeliverySucceededInput): DeliveryJob;
-  markFailed(input: MarkDeliveryFailedInput): DeliveryJob;
-  retryNow(input: RetryDeliveryInput): DeliveryJob;
-  get(id: string): DeliveryDetail | null;
+  ): Promise<ReclaimStaleRunningDeliveriesResult>;
+  claimNext(input: ClaimDeliveriesInput): Promise<ClaimedDelivery[]>;
+  markSucceeded(input: MarkDeliverySucceededInput): Promise<DeliveryJob>;
+  markFailed(input: MarkDeliveryFailedInput): Promise<DeliveryJob>;
+  retryNow(input: RetryDeliveryInput): Promise<DeliveryJob>;
+  get(id: string): Promise<DeliveryDetail | null>;
 }
 
 export interface EnqueueDeliveriesInput {

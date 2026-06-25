@@ -1,15 +1,16 @@
 import "@tanstack/react-start/server-only";
 import { betterAuth } from "better-auth";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 import { createDefaultDestinationRegistry, type DestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/providers";
 
 import { env } from "#/env.ts";
-import { createSqliteDatabase, type SqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
 import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";
+import { createBaseBetterAuthOptions } from "#/lib/auth-options.ts";
 import { assignOwnerRoleBeforeUserCreate, hasRegisteredUsers } from "#/lib/auth-owner-bootstrap.ts";
 import { AppSettingsService } from "#/server/configuration/app-settings.service.ts";
 import { ConfigPortabilityService } from "#/server/configuration/config-portability.service.ts";
@@ -41,39 +42,41 @@ export interface VaneAuth {
 }
 
 export interface ApplicationContainer {
-  getSqliteStore(): SqliteStore;
+  getSqliteStore(): Promise<SqliteStore>;
   getProviderRegistry(): ProviderRegistry;
   getDestinationRegistry(): DestinationRegistry;
-  createSourceService(options?: Partial<Omit<SourceServiceOptions, "store">>): SourceService;
+  createSourceService(
+    options?: Partial<Omit<SourceServiceOptions, "store">>,
+  ): Promise<SourceService>;
   createDestinationService(
     options?: Partial<Omit<DestinationServiceOptions, "store" | "destinations">>,
-  ): DestinationService;
-  createRouteService(): RouteService;
-  createAppSettingsService(): AppSettingsService;
+  ): Promise<DestinationService>;
+  createRouteService(): Promise<RouteService>;
+  createAppSettingsService(): Promise<AppSettingsService>;
   createConfigPortabilityService(
     options?: Partial<
       Omit<ConfigPortabilityServiceOptions, "store" | "providers" | "destinations">
     >,
-  ): ConfigPortabilityService;
+  ): Promise<ConfigPortabilityService>;
   createWebhookIntakeService(
     options?: Partial<Omit<WebhookIntakeServiceOptions, "store" | "providers">>,
-  ): WebhookIntakeService;
+  ): Promise<WebhookIntakeService>;
   createDeliveryWorker(
     options?: Partial<Omit<DeliveryWorkerOptions, "store" | "destinations">>,
-  ): DeliveryWorker;
-  ensureDeliveryWorkerRunner(): DeliveryWorkerRunner;
-  getBetterAuthDatabase(): SqliteDatabase;
-  hasRegisteredUsers(): boolean;
-  getAuth(): VaneAuth;
-  dispose(): void;
+  ): Promise<DeliveryWorker>;
+  ensureDeliveryWorkerRunner(): Promise<DeliveryWorkerRunner>;
+  getBetterAuthDatabase(): Promise<VaneSqliteKysely>;
+  hasRegisteredUsers(): Promise<boolean>;
+  getAuth(): Promise<VaneAuth>;
+  dispose(): Promise<void>;
 }
 
 export interface ApplicationContainerOptions {
-  openStore?: () => SqliteStore;
+  openStore?: () => Promise<SqliteStore>;
   createProviderRegistry?: () => ProviderRegistry;
   createDestinationRegistry?: () => DestinationRegistry;
-  createAuthDatabase?: () => SqliteDatabase;
-  createAuth?: (input: { database: SqliteDatabase }) => VaneAuth;
+  createAuthDatabase?: () => Promise<VaneSqliteKysely>;
+  createAuth?: (input: { db: VaneSqliteKysely }) => VaneAuth;
   createWorkerRunner?: (options: DeliveryWorkerRunnerOptions) => DeliveryWorkerRunner;
   workerIntervalMs?: number;
   workerBatchSize?: number;
@@ -94,18 +97,22 @@ export function disposeApplicationContainer(): void {
   const container = applicationContainer;
 
   applicationContainer = undefined;
-  container?.dispose();
+  void container?.dispose();
 }
 
 export function createApplicationContainer(
   options: ApplicationContainerOptions = {},
 ): ApplicationContainer {
   let sqliteStore: SqliteStore | undefined;
+  let sqliteStorePromise: Promise<SqliteStore> | undefined;
   let providers: ProviderRegistry | undefined;
   let destinations: DestinationRegistry | undefined;
-  let authDatabase: SqliteDatabase | undefined;
+  let authDatabase: VaneSqliteKysely | undefined;
+  let authDatabasePromise: Promise<VaneSqliteKysely> | undefined;
   let auth: VaneAuth | undefined;
+  let authPromise: Promise<VaneAuth> | undefined;
   let runner: DeliveryWorkerRunner | undefined;
+  let runnerPromise: Promise<DeliveryWorkerRunner> | undefined;
 
   const openStore =
     options.openStore ??
@@ -130,11 +137,11 @@ export function createApplicationContainer(
     });
 
   const container: ApplicationContainer = {
-    getSqliteStore() {
-      sqliteStore ??= openStore();
-      container.ensureDeliveryWorkerRunner();
+    async getSqliteStore() {
+      const store = await getOrOpenSqliteStore();
+      void container.ensureDeliveryWorkerRunner();
 
-      return sqliteStore;
+      return store;
     },
 
     getProviderRegistry() {
@@ -149,49 +156,49 @@ export function createApplicationContainer(
       return destinations;
     },
 
-    createSourceService(serviceOptions = {}) {
+    async createSourceService(serviceOptions = {}) {
       return new SourceService({
-        store: container.getSqliteStore(),
+        store: await container.getSqliteStore(),
         ...serviceOptions,
       });
     },
 
-    createDestinationService(serviceOptions = {}) {
+    async createDestinationService(serviceOptions = {}) {
       return new DestinationService({
-        store: container.getSqliteStore(),
+        store: await container.getSqliteStore(),
         destinations: container.getDestinationRegistry(),
         ...serviceOptions,
       });
     },
 
-    createRouteService() {
-      return new RouteService({ store: container.getSqliteStore() });
+    async createRouteService() {
+      return new RouteService({ store: await container.getSqliteStore() });
     },
 
-    createAppSettingsService() {
-      return new AppSettingsService({ store: container.getSqliteStore() });
+    async createAppSettingsService() {
+      return new AppSettingsService({ store: await container.getSqliteStore() });
     },
 
-    createConfigPortabilityService(serviceOptions = {}) {
+    async createConfigPortabilityService(serviceOptions = {}) {
       return new ConfigPortabilityService({
-        store: container.getSqliteStore(),
+        store: await container.getSqliteStore(),
         providers: container.getProviderRegistry(),
         destinations: container.getDestinationRegistry(),
         ...serviceOptions,
       });
     },
 
-    createWebhookIntakeService(serviceOptions = {}) {
+    async createWebhookIntakeService(serviceOptions = {}) {
       return new WebhookIntakeService({
-        store: container.getSqliteStore(),
+        store: await container.getSqliteStore(),
         providers: container.getProviderRegistry(),
         ...serviceOptions,
       });
     },
 
-    createDeliveryWorker(workerOptions = {}) {
+    async createDeliveryWorker(workerOptions = {}) {
       return new DeliveryWorker({
-        store: getOrOpenSqliteStore(),
+        store: await getOrOpenSqliteStore(),
         destinations: container.getDestinationRegistry(),
         staleRunningTimeoutMs: workerStaleRunningMs,
         ...workerOptions,
@@ -199,51 +206,63 @@ export function createApplicationContainer(
     },
 
     ensureDeliveryWorkerRunner() {
-      runner ??= createWorkerRunner({
-        worker: container.createDeliveryWorker(),
-        intervalMs: workerIntervalMs,
-        limit: workerBatchSize,
-        onRunComplete: onWorkerRunComplete,
-        onError: onWorkerError,
-      });
+      runnerPromise ??= (async () => {
+        runner ??= createWorkerRunner({
+          worker: await container.createDeliveryWorker(),
+          intervalMs: workerIntervalMs,
+          limit: workerBatchSize,
+          onRunComplete: onWorkerRunComplete,
+          onError: onWorkerError,
+        });
 
-      return runner;
+        return runner;
+      })();
+
+      return runnerPromise;
     },
 
-    getBetterAuthDatabase() {
-      authDatabase ??= createAuthDatabase();
+    async getBetterAuthDatabase() {
+      authDatabase ??= await getOrCreateAuthDatabase();
 
       return authDatabase;
     },
 
-    hasRegisteredUsers() {
-      return hasRegisteredUsers(container.getBetterAuthDatabase());
+    async hasRegisteredUsers() {
+      return hasRegisteredUsers(await container.getBetterAuthDatabase());
     },
 
     getAuth() {
-      auth ??= createAuth({
-        database: container.getBetterAuthDatabase(),
-      });
+      authPromise ??= (async () => {
+        auth ??= createAuth({
+          db: await container.getBetterAuthDatabase(),
+        });
 
-      return auth;
+        return auth;
+      })();
+
+      return authPromise;
     },
 
-    dispose() {
+    async dispose() {
       const currentRunner = runner;
       const currentSqliteStore = sqliteStore;
       const currentAuthDatabase = authDatabase;
       const errors: unknown[] = [];
 
       runner = undefined;
+      runnerPromise = undefined;
       sqliteStore = undefined;
-      authDatabase = undefined;
+      sqliteStorePromise = undefined;
       providers = undefined;
       destinations = undefined;
+      authDatabase = undefined;
+      authDatabasePromise = undefined;
       auth = undefined;
+      authPromise = undefined;
 
       tryDispose(() => currentRunner?.stop(), errors);
-      tryDispose(() => currentSqliteStore?.close(), errors);
-      tryDispose(() => currentAuthDatabase?.close(), errors);
+      await tryDisposeAsync(() => currentSqliteStore?.close(), errors);
+      await tryDisposeAsync(() => currentAuthDatabase?.destroy(), errors);
 
       if (errors.length === 1) {
         throw errors[0];
@@ -255,10 +274,22 @@ export function createApplicationContainer(
     },
   };
 
-  function getOrOpenSqliteStore(): SqliteStore {
-    sqliteStore ??= openStore();
+  async function getOrOpenSqliteStore(): Promise<SqliteStore> {
+    sqliteStorePromise ??= openStore().then((store) => {
+      sqliteStore = store;
+      return store;
+    });
 
-    return sqliteStore;
+    return sqliteStorePromise;
+  }
+
+  async function getOrCreateAuthDatabase(): Promise<VaneSqliteKysely> {
+    authDatabasePromise ??= createAuthDatabase().then((db) => {
+      authDatabase = db;
+      return db;
+    });
+
+    return authDatabasePromise;
   }
 
   return container;
@@ -267,6 +298,17 @@ export function createApplicationContainer(
 function tryDispose(dispose: () => void, errors: unknown[]): void {
   try {
     dispose();
+  } catch (error) {
+    errors.push(error);
+  }
+}
+
+async function tryDisposeAsync(
+  dispose: () => Promise<void> | void | undefined,
+  errors: unknown[],
+): Promise<void> {
+  try {
+    await dispose();
   } catch (error) {
     errors.push(error);
   }
@@ -298,52 +340,38 @@ function logWorkerRunComplete(result: DeliveryWorkerRunResult): void {
   });
 }
 
-function createDefaultBetterAuthDatabase(): SqliteDatabase {
-  const database = createSqliteDatabase({
+async function createDefaultBetterAuthDatabase(): Promise<VaneSqliteKysely> {
+  const db = createSqliteDatabase({
     databasePath: env.VANE_DATABASE_PATH,
   });
 
-  migrateSqliteDatabase(database);
+  await migrateSqliteDatabase(db);
 
-  return database;
+  return db;
 }
 
-function createDefaultAuth(input: { database: SqliteDatabase }): VaneAuth {
+function createDefaultAuth(input: { db: VaneSqliteKysely }): VaneAuth {
   return betterAuth({
+    ...createBaseBetterAuthOptions(),
     baseURL: requireBetterAuthBaseUrl(env.BETTER_AUTH_URL ?? env.SERVER_URL, process.env, {
       allowedHosts: env.BETTER_AUTH_ALLOWED_HOSTS,
     }),
-    database: input.database,
+    database: {
+      db: input.db,
+      type: "sqlite",
+      casing: "snake",
+    },
     trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS,
-    advanced: {
-      database: {
-        generateId: "uuid",
-      },
-    },
-    user: {
-      additionalFields: {
-        role: {
-          type: ["owner", "admin", "member"],
-          required: false,
-          defaultValue: "member",
-          input: false,
-        },
-      },
-    },
     databaseHooks: {
       user: {
         create: {
           before: async (user) =>
             assignOwnerRoleBeforeUserCreate(user, {
-              hasRegisteredUsers: () => hasRegisteredUsers(input.database),
+              hasRegisteredUsers: () => hasRegisteredUsers(input.db),
             }),
         },
       },
     },
-    emailAndPassword: {
-      enabled: true,
-    },
     secret: requireBetterAuthSecret(env.BETTER_AUTH_SECRET),
-    plugins: [tanstackStartCookies()],
   }) as VaneAuth;
 }

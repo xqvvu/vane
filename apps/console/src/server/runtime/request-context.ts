@@ -88,7 +88,7 @@ export function createBaseRequestContext(options: RequestContextOptions = {}): B
 }
 
 async function getBetterAuthSession(input: { headers: HeadersInit }) {
-  return getApplicationContainer().getAuth().api.getSession(input);
+  return (await getApplicationContainer().getAuth()).api.getSession(input);
 }
 
 function readRequestId(headers: Headers): string | null {

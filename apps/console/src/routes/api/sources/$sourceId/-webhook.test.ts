@@ -36,10 +36,10 @@ vi.mock("@vane/providers", () => ({
 }));
 
 describe("source webhook API route", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     let nextId = 0;
 
-    testState.store = openSqliteStore({
+    testState.store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -67,8 +67,8 @@ describe("source webhook API route", () => {
     });
   });
 
-  afterEach(() => {
-    testState.store?.close();
+  afterEach(async () => {
+    await testState.store?.close();
     testState.store = undefined;
     testState.parseProvider = undefined;
     vi.restoreAllMocks();
@@ -115,7 +115,7 @@ describe("source webhook API route", () => {
   });
 
   it("accepts authenticated webhooks and returns delivery counts", async () => {
-    configureSourceRouteAndDestination();
+    await configureSourceRouteAndDestination();
 
     const response = await postWebhook({
       headers: {
@@ -135,11 +135,11 @@ describe("source webhook API route", () => {
       deliveriesDeduped: 0,
     });
 
-    expect(testState.store?.history.getEventDetail("event-1")?.deliveries).toHaveLength(1);
+    expect((await testState.store?.history.getEventDetail("event-1"))?.deliveries).toHaveLength(1);
   });
 
   it("accepts a webhook, delivers it asynchronously, and leaves inspectable history", async () => {
-    configureSourceRouteAndDestination({
+    await configureSourceRouteAndDestination({
       destinationConfig: {
         url: "https://relay.example.test/alerts",
         messageTemplate: "{{event.title}} for {{event.labels.service}}",
@@ -191,8 +191,8 @@ describe("source webhook API route", () => {
       finishedAt: now,
     });
 
-    const eventDetail = store.history.getEventDetail("event-1");
-    const deliveryDetail = store.deliveries.get("delivery-2");
+    const eventDetail = await store.history.getEventDetail("event-1");
+    const deliveryDetail = await store.deliveries.get("delivery-2");
 
     expect(calls[0]?.url).toBe("https://relay.example.test/alerts");
     expect(JSON.parse(calls[0]?.init.body as string)).toMatchObject({
@@ -251,7 +251,7 @@ describe("source webhook API route", () => {
   });
 
   it("accepts source tokens from the x-vane-source-token header", async () => {
-    configureSourceRouteAndDestination();
+    await configureSourceRouteAndDestination();
 
     const response = await postWebhook({
       headers: {
@@ -270,13 +270,15 @@ describe("source webhook API route", () => {
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
     });
-    expect(testState.store?.history.getEventDetail("event-1")?.event.rawHeaders).toMatchObject({
+    expect(
+      (await testState.store?.history.getEventDetail("event-1"))?.event.rawHeaders,
+    ).toMatchObject({
       "x-vane-source-token": "[REDACTED]",
     });
   });
 
   it("accepts configured additional shared secrets without a Vane source token", async () => {
-    configureSourceRouteAndDestination({
+    await configureSourceRouteAndDestination({
       sourceConfig: {
         signingSecret: "provider-secret",
       },
@@ -299,13 +301,15 @@ describe("source webhook API route", () => {
       deliveriesCreated: 1,
       deliveriesDeduped: 0,
     });
-    expect(testState.store?.history.getEventDetail("event-1")?.event.rawHeaders).toMatchObject({
+    expect(
+      (await testState.store?.history.getEventDetail("event-1"))?.event.rawHeaders,
+    ).toMatchObject({
       "x-vane-provider-secret": "[REDACTED]",
     });
   });
 
   it("records duplicate webhook retries as events without creating duplicate deliveries", async () => {
-    configureSourceRouteAndDestination();
+    await configureSourceRouteAndDestination();
     const request = {
       headers: {
         authorization: "Bearer source-token",
@@ -334,15 +338,11 @@ describe("source webhook API route", () => {
       deliveriesDeduped: 1,
     });
 
-    expect(
-      testState.store?.history
-        .listEvents()
-        .items.map((event) => event.id)
-        .sort(),
-    ).toEqual(["event-1", "event-3"]);
-    expect(testState.store?.history.listDeliveries().items.map((delivery) => delivery.id)).toEqual([
-      "delivery-2",
-    ]);
+    const events = await testState.store?.history.listEvents();
+    const deliveries = await testState.store?.history.listDeliveries();
+
+    expect(events?.items.map((event) => event.id).sort()).toEqual(["event-1", "event-3"]);
+    expect(deliveries?.items.map((delivery) => delivery.id)).toEqual(["delivery-2"]);
   });
 
   it("rejects unknown sources without creating an audit event", async () => {
@@ -361,12 +361,12 @@ describe("source webhook API route", () => {
       error: "Source not found: missing-source",
       eventId: null,
     });
-    expect(testState.store?.history.listEvents().items).toEqual([]);
+    expect((await testState.store?.history.listEvents())?.items).toEqual([]);
   });
 
   it("rejects disabled sources without creating deliveries", async () => {
-    configureSourceRouteAndDestination();
-    requireTestStore().sources.setEnabled("source-1", false);
+    await configureSourceRouteAndDestination();
+    await requireTestStore().sources.setEnabled("source-1", false);
 
     const response = await postWebhook({
       headers: {
@@ -382,12 +382,12 @@ describe("source webhook API route", () => {
       error: "Source is disabled: source-1",
       eventId: null,
     });
-    expect(testState.store?.history.listEvents().items).toEqual([]);
-    expect(testState.store?.history.listDeliveries().items).toEqual([]);
+    expect((await testState.store?.history.listEvents())?.items).toEqual([]);
+    expect((await testState.store?.history.listDeliveries())?.items).toEqual([]);
   });
 
   it("rejects invalid source tokens without creating an audit event", async () => {
-    configureSourceRouteAndDestination();
+    await configureSourceRouteAndDestination();
 
     const response = await postWebhook({
       headers: {
@@ -403,11 +403,11 @@ describe("source webhook API route", () => {
       error: "Invalid source token",
       eventId: null,
     });
-    expect(testState.store?.history.listEvents().items).toEqual([]);
+    expect((await testState.store?.history.listEvents())?.items).toEqual([]);
   });
 
   it("returns parser failures with an audit event id and no deliveries", async () => {
-    configureSourceRouteAndDestination();
+    await configureSourceRouteAndDestination();
     testState.parseProvider = () => ({
       ok: false,
       reason: "invalid_payload",
@@ -429,7 +429,7 @@ describe("source webhook API route", () => {
       eventId: "event-1",
     });
 
-    const detail = testState.store?.history.getEventDetail("event-1");
+    const detail = await testState.store?.history.getEventDetail("event-1");
 
     expect(detail?.event.normalized.labels).toMatchObject({
       parse_failed: "true",
@@ -438,25 +438,25 @@ describe("source webhook API route", () => {
   });
 });
 
-function configureSourceRouteAndDestination(
+async function configureSourceRouteAndDestination(
   input: { sourceConfig?: JsonObject; destinationConfig?: JsonObject } = {},
-): void {
+): Promise<void> {
   const store = requireTestStore();
 
-  store.sources.create({
+  await store.sources.create({
     id: "source-1",
     name: "Generic source",
     provider: "generic",
     tokenHash: hashSourceToken("source-token"),
     config: input.sourceConfig,
   });
-  store.destinations.create({
+  await store.destinations.create({
     id: "destination-1",
     name: "Ops webhook",
     kind: "generic_webhook",
     config: input.destinationConfig,
   });
-  store.routes.create({
+  await store.routes.create({
     id: "route-1",
     name: "Critical checkout",
     rule: {
@@ -498,34 +498,34 @@ function requireTestStore(): SqliteStore {
 
 function createTestContainer(): ApplicationContainer {
   return {
-    getSqliteStore: () => requireTestStore(),
+    getSqliteStore: async () => requireTestStore(),
     getProviderRegistry: () => createDefaultProviderRegistry(),
     getDestinationRegistry: () => createDefaultDestinationRegistry(),
-    createSourceService: () => {
+    createSourceService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },
-    createDestinationService: () => {
+    createDestinationService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },
-    createRouteService: () => {
+    createRouteService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },
-    createAppSettingsService: () => {
+    createAppSettingsService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },
-    createConfigPortabilityService: () => {
+    createConfigPortabilityService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },
-    createWebhookIntakeService() {
+    async createWebhookIntakeService() {
       return new WebhookIntakeService({
         store: requireTestStore(),
         providers: this.getProviderRegistry(),
       });
     },
-    createDeliveryWorker: () => {
+    createDeliveryWorker: async () => {
       throw new Error("Delivery worker is not used by webhook route handler tests");
     },
-    ensureDeliveryWorkerRunner: () => ({
+    ensureDeliveryWorkerRunner: async () => ({
       runNow: async () => null,
       getHealth: () => ({
         state: "idle",
@@ -536,13 +536,13 @@ function createTestContainer(): ApplicationContainer {
       }),
       stop: () => {},
     }),
-    getBetterAuthDatabase: () => {
+    getBetterAuthDatabase: async () => {
       throw new Error("Auth database is not used by webhook tests");
     },
-    hasRegisteredUsers: () => false,
-    getAuth: () => {
+    hasRegisteredUsers: async () => false,
+    getAuth: async () => {
       throw new Error("Dashboard auth is not used by webhook tests");
     },
-    dispose: () => {},
+    dispose: async () => {},
   } satisfies ApplicationContainer;
 }

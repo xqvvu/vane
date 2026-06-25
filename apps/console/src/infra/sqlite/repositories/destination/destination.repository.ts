@@ -1,7 +1,7 @@
 import { encodeJsonObject } from "@vane/core";
 import type { DestinationSummary } from "@vane/core";
 
-import { rowOrUndefined, rowsAs, toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
+import { toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import {
   destinationRuntimeFromRow,
@@ -12,7 +12,6 @@ import {
 import type {
   CreateDestinationInput,
   DestinationRepository,
-  DestinationRow,
   DestinationRuntimeConfig,
   UpdateDestinationInput,
 } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
@@ -20,78 +19,81 @@ import type {
 export class SqliteDestinationRepository implements DestinationRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
-  list(): DestinationSummary[] {
-    return rowsAs<DestinationRow>(
-      this.context.db.prepare("SELECT * FROM destinations ORDER BY name").all(),
-    ).map((row) => destinationSummaryFromRow(row));
+  async list(): Promise<DestinationSummary[]> {
+    const rows = await this.context.db
+      .selectFrom("destinations")
+      .selectAll()
+      .orderBy("name")
+      .execute();
+
+    return rows.map((row) => destinationSummaryFromRow(row));
   }
 
-  listEnabled(): DestinationSummary[] {
-    return rowsAs<DestinationRow>(
-      this.context.db.prepare("SELECT * FROM destinations WHERE enabled = 1 ORDER BY name").all(),
-    ).map((row) => destinationSummaryFromRow(row));
+  async listEnabled(): Promise<DestinationSummary[]> {
+    const rows = await this.context.db
+      .selectFrom("destinations")
+      .selectAll()
+      .where("enabled", "=", 1)
+      .orderBy("name")
+      .execute();
+
+    return rows.map((row) => destinationSummaryFromRow(row));
   }
 
-  get(id: string): DestinationRuntimeConfig | null {
-    const row = rowOrUndefined<DestinationRow>(
-      this.context.db.prepare("SELECT * FROM destinations WHERE id = ?").get(id),
-    );
+  async get(id: string): Promise<DestinationRuntimeConfig | null> {
+    const row = await this.context.db
+      .selectFrom("destinations")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
     return row ? destinationRuntimeFromRow(row) : null;
   }
 
-  create(input: CreateDestinationInput): DestinationSummary {
+  async create(input: CreateDestinationInput): Promise<DestinationSummary> {
     const now = this.context.now();
     const id = input.id ?? this.context.ids.destination();
     const createdAt = input.createdAt ?? now;
     const updatedAt = input.updatedAt ?? createdAt;
 
-    this.context.db
-      .prepare(
-        `
-          INSERT INTO destinations (id, name, kind, enabled, config_json, secret_refs_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-      )
-      .run(
+    await this.context.db
+      .insertInto("destinations")
+      .values({
         id,
-        input.name,
-        input.kind,
-        toSqliteBoolean(input.enabled ?? true),
-        encodeJsonObject(input.config ?? {}),
-        encodeJsonObject(input.secretRefs ?? {}),
-        createdAt,
-        updatedAt,
-      );
+        name: input.name,
+        kind: input.kind,
+        enabled: toSqliteBoolean(input.enabled ?? true),
+        config_json: encodeJsonObject(input.config ?? {}),
+        secret_refs_json: encodeJsonObject(input.secretRefs ?? {}),
+        created_at: createdAt,
+        updated_at: updatedAt,
+      })
+      .execute();
 
-    return destinationSummaryFromRuntime(requireDestination(this.get(id)));
+    return destinationSummaryFromRuntime(requireDestination(await this.get(id)));
   }
 
-  update(id: string, input: UpdateDestinationInput): DestinationSummary {
-    const current = requireDestination(this.get(id));
+  async update(id: string, input: UpdateDestinationInput): Promise<DestinationSummary> {
+    const current = requireDestination(await this.get(id));
     const updatedAt = input.updatedAt ?? this.context.now();
 
-    this.context.db
-      .prepare(
-        `
-          UPDATE destinations
-          SET name = ?, kind = ?, enabled = ?, config_json = ?, secret_refs_json = ?, updated_at = ?
-          WHERE id = ?
-        `,
-      )
-      .run(
-        input.name ?? current.name,
-        input.kind ?? current.kind,
-        toSqliteBoolean(input.enabled ?? current.enabled),
-        encodeJsonObject(input.config ?? current.config),
-        encodeJsonObject(input.secretRefs ?? current.secretRefs),
-        updatedAt,
-        id,
-      );
+    await this.context.db
+      .updateTable("destinations")
+      .set({
+        name: input.name ?? current.name,
+        kind: input.kind ?? current.kind,
+        enabled: toSqliteBoolean(input.enabled ?? current.enabled),
+        config_json: encodeJsonObject(input.config ?? current.config),
+        secret_refs_json: encodeJsonObject(input.secretRefs ?? current.secretRefs),
+        updated_at: updatedAt,
+      })
+      .where("id", "=", id)
+      .execute();
 
-    return destinationSummaryFromRuntime(requireDestination(this.get(id)));
+    return destinationSummaryFromRuntime(requireDestination(await this.get(id)));
   }
 
-  setEnabled(id: string, enabled: boolean): DestinationSummary {
+  setEnabled(id: string, enabled: boolean): Promise<DestinationSummary> {
     return this.update(id, { enabled });
   }
 }

@@ -13,7 +13,7 @@ describe("auth owner bootstrap", () => {
   it("assigns the first registered user the owner role", async () => {
     await expect(
       assignOwnerRoleBeforeUserCreate(user, {
-        hasRegisteredUsers: () => false,
+        hasRegisteredUsers: async () => false,
       }),
     ).resolves.toEqual({
       data: {
@@ -26,7 +26,7 @@ describe("auth owner bootstrap", () => {
   it("rejects later dashboard self-registration attempts", async () => {
     await expect(
       assignOwnerRoleBeforeUserCreate(user, {
-        hasRegisteredUsers: () => true,
+        hasRegisteredUsers: async () => true,
       }),
     ).rejects.toMatchObject({
       message: "Owner user already exists",
@@ -34,7 +34,7 @@ describe("auth owner bootstrap", () => {
 
     await expect(
       assignOwnerRoleBeforeUserCreate(user, {
-        hasRegisteredUsers: () => true,
+        hasRegisteredUsers: async () => true,
       }),
     ).rejects.toBeInstanceOf(APIError);
   });

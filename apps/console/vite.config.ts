@@ -1,6 +1,5 @@
 /// <reference types="vitest/config" />
 
-import fs from "node:fs/promises";
 import path from "node:path";
 
 import babel from "@rolldown/plugin-babel";
@@ -11,55 +10,54 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
-const config = defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
+const config = defineConfig(({ mode }) => {
+  const isTest = mode === "test";
 
-  plugins: [
-    devtools(),
-    tailwindcss(),
-    tanstackStart({
-      router: {
-        semicolons: true,
-        quoteStyle: "double",
-        generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
-      },
-      importProtection: {
-        behavior: "error",
-      },
-    }),
-    nitro({
-      wasm: {
-        silent: true,
-      },
-      hooks: {
-        async compiled(nitro) {
-          await fs.cp(
-            path.join(import.meta.dirname, "src/infra/sqlite/migrations"),
-            path.join(nitro.options.output.serverDir, "_ssr/migrations"),
-            { recursive: true },
-          );
-        },
-      },
-    }),
-    viteReact(),
-    babel({
-      presets: [reactCompilerPreset()],
-    }),
-  ],
+  return {
+    resolve: {
+      tsconfigPaths: true,
+    },
 
-  build: {
-    chunkSizeWarningLimit: 1024,
-  },
+    plugins: [
+      isTest ? false : devtools(),
+      tailwindcss(),
+      isTest
+        ? false
+        : tanstackStart({
+            router: {
+              semicolons: true,
+              quoteStyle: "double",
+              generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
+            },
+            importProtection: {
+              behavior: "error",
+            },
+          }),
+      isTest
+        ? false
+        : nitro({
+            wasm: {
+              silent: true,
+            },
+          }),
+      viteReact(),
+      babel({
+        presets: [reactCompilerPreset()],
+      }),
+    ],
 
-  server: {
-    port: 6180,
-    strictPort: true,
-    host: true,
-  },
+    build: {
+      chunkSizeWarningLimit: 1024,
+    },
 
-  test: {},
+    server: {
+      port: 6180,
+      strictPort: true,
+      host: true,
+    },
+
+    test: {},
+  };
 });
 
 export default config;

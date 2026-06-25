@@ -19,11 +19,11 @@ export class RouteService {
     this.store = options.store;
   }
 
-  createRoute(command: CreateRouteCommand): RouteDefinition {
+  async createRoute(command: CreateRouteCommand): Promise<RouteDefinition> {
     const input = CreateRouteCommandSchema.parse(command);
 
-    requireExistingSourceIds(input.rule?.sourceIds ?? [], this.store.sources);
-    requireExistingDestinationIds(input.destinationIds, this.store.destinations);
+    await requireExistingSourceIds(input.rule?.sourceIds ?? [], this.store.sources);
+    await requireExistingDestinationIds(input.destinationIds, this.store.destinations);
 
     return this.store.routes.create({
       name: input.name,
@@ -33,15 +33,15 @@ export class RouteService {
     });
   }
 
-  updateRoute(command: UpdateRouteCommand): RouteDefinition {
+  async updateRoute(command: UpdateRouteCommand): Promise<RouteDefinition> {
     const input = UpdateRouteCommandSchema.parse(command);
 
     if (input.rule) {
-      requireExistingSourceIds(input.rule.sourceIds, this.store.sources);
+      await requireExistingSourceIds(input.rule.sourceIds, this.store.sources);
     }
 
     if (input.destinationIds) {
-      requireExistingDestinationIds(input.destinationIds, this.store.destinations);
+      await requireExistingDestinationIds(input.destinationIds, this.store.destinations);
     }
 
     return this.store.routes.update(input.id, {

@@ -42,12 +42,12 @@ export class ConfigPortabilityService {
     this.generateSourceToken = options.generateSourceToken ?? defaultGenerateSourceToken;
   }
 
-  listConfiguration(): ConfigurationSnapshot {
+  async listConfiguration(): Promise<ConfigurationSnapshot> {
     return {
-      settings: this.store.settings.get(),
-      sources: this.store.sources.list(),
-      destinations: this.store.destinations.list(),
-      routes: this.store.routes.list(),
+      settings: await this.store.settings.get(),
+      sources: await this.store.sources.list(),
+      destinations: await this.store.destinations.list(),
+      routes: await this.store.routes.list(),
     };
   }
 
@@ -55,18 +55,18 @@ export class ConfigPortabilityService {
     return this.providers?.toCatalog() ?? [];
   }
 
-  exportToml(options: ExportConfigurationOptions = {}): string {
-    const sources = this.store.sources
-      .list()
-      .map((source) => this.store.sources.get(source.id))
-      .filter((source): source is NonNullable<typeof source> => source !== null);
-    const destinations = this.store.destinations
-      .list()
-      .map((destination) => this.store.destinations.get(destination.id))
-      .filter(
-        (destination): destination is NonNullable<typeof destination> => destination !== null,
-      );
-    const routes = this.store.routes.list();
+  async exportToml(options: ExportConfigurationOptions = {}): Promise<string> {
+    const sourceSummaries = await this.store.sources.list();
+    const sources = (
+      await Promise.all(sourceSummaries.map((source) => this.store.sources.get(source.id)))
+    ).filter((source): source is NonNullable<typeof source> => source !== null);
+    const destinationSummaries = await this.store.destinations.list();
+    const destinations = (
+      await Promise.all(
+        destinationSummaries.map((destination) => this.store.destinations.get(destination.id)),
+      )
+    ).filter((destination): destination is NonNullable<typeof destination> => destination !== null);
+    const routes = await this.store.routes.list();
 
     return serializePortableConfigurationToml(
       createPortableConfiguration(
@@ -74,14 +74,14 @@ export class ConfigPortabilityService {
           sources,
           destinations,
           routes,
-          settings: this.store.settings.get(),
+          settings: await this.store.settings.get(),
         },
         options,
       ),
     );
   }
 
-  exportTomlFromCommand(command: ExportConfigurationCommand = {}): string {
+  async exportTomlFromCommand(command: ExportConfigurationCommand = {}): Promise<string> {
     const input = ExportConfigurationCommandSchema.parse(command) ?? {};
 
     return this.exportToml({
@@ -89,7 +89,9 @@ export class ConfigPortabilityService {
     });
   }
 
-  importTomlFromCommand(command: ImportConfigurationCommand): ImportedConfigurationResult {
+  async importTomlFromCommand(
+    command: ImportConfigurationCommand,
+  ): Promise<ImportedConfigurationResult> {
     const input = ImportConfigurationCommandSchema.parse(command);
 
     return this.importToml(input.toml, {
@@ -97,22 +99,25 @@ export class ConfigPortabilityService {
     });
   }
 
-  importToml(toml: string, options: ImportConfigurationOptions = {}): ImportedConfigurationResult {
+  async importToml(
+    toml: string,
+    options: ImportConfigurationOptions = {},
+  ): Promise<ImportedConfigurationResult> {
     const portable = parsePortableConfigurationToml(toml);
     const generatedSourceTokens: ImportedConfigurationResult["generatedSourceTokens"] = [];
 
-    this.store.transaction((tx) => {
-      tx.settings.update({
+    await this.store.transaction(async (tx) => {
+      await tx.settings.update({
         rawPayloadRetentionDays: portable.settings.rawPayloadRetentionDays,
       });
 
       for (const source of portable.sources.map((entry) =>
         resolveSourceSecretRefs(entry, options),
       )) {
-        const existing = tx.sources.get(source.id);
+        const existing = await tx.sources.get(source.id);
 
         if (existing) {
-          tx.sources.update(source.id, {
+          await tx.sources.update(source.id, {
             name: source.name,
             provider: source.provider,
             enabled: source.enabled,
@@ -122,7 +127,7 @@ export class ConfigPortabilityService {
         }
 
         const token = this.generateSourceToken();
-        tx.sources.create({
+        await tx.sources.create({
           id: source.id,
           name: source.name,
           provider: source.provider,
@@ -140,7 +145,7 @@ export class ConfigPortabilityService {
       for (const destination of portable.destinations.map((entry) =>
         resolveDestinationSecretRefs(entry, options),
       )) {
-        const existing = tx.destinations.get(destination.id);
+        const existing = await tx.destinations.get(destination.id);
         const config = parseDestinationConfig(
           this.destinations,
           destination.kind,
@@ -148,7 +153,7 @@ export class ConfigPortabilityService {
         );
 
         if (existing) {
-          tx.destinations.update(destination.id, {
+          await tx.destinations.update(destination.id, {
             name: destination.name,
             kind: destination.kind,
             enabled: destination.enabled,
@@ -158,7 +163,7 @@ export class ConfigPortabilityService {
           continue;
         }
 
-        tx.destinations.create({
+        await tx.destinations.create({
           id: destination.id,
           name: destination.name,
           kind: destination.kind,
@@ -169,13 +174,13 @@ export class ConfigPortabilityService {
       }
 
       for (const route of portable.routes) {
-        const existing = tx.routes.get(route.id);
+        const existing = await tx.routes.get(route.id);
 
-        requireExistingSourceIds(route.rule.sourceIds, tx.sources);
-        requireExistingDestinationIds(route.destinationIds, tx.destinations);
+        await requireExistingSourceIds(route.rule.sourceIds, tx.sources);
+        await requireExistingDestinationIds(route.destinationIds, tx.destinations);
 
         if (existing) {
-          tx.routes.update(route.id, {
+          await tx.routes.update(route.id, {
             name: route.name,
             enabled: route.enabled,
             rule: route.rule,
@@ -184,7 +189,7 @@ export class ConfigPortabilityService {
           continue;
         }
 
-        tx.routes.create({
+        await tx.routes.create({
           id: route.id,
           name: route.name,
           enabled: route.enabled,

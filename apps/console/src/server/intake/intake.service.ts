@@ -11,8 +11,9 @@ import {
   toJsonValue,
 } from "@vane/core";
 import type { JsonValue } from "@vane/core";
-import type { ProviderParseFailure } from "@vane/providers";
+import type { ProviderParseFailure, ProviderParseSuccess } from "@vane/providers";
 
+import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface.ts";
 import type {
   AcceptedWebhook,
   AcceptWebhookInput,
@@ -49,9 +50,9 @@ export class WebhookIntakeService {
     this.dedupeWindowMs = options.dedupeWindowMs ?? 5 * 60 * 1000;
   }
 
-  acceptWebhook(input: AcceptWebhookInput): AcceptedWebhook {
+  async acceptWebhook(input: AcceptWebhookInput): Promise<AcceptedWebhook> {
     const receivedAt = input.receivedAt ?? this.now();
-    const source = this.store.sources.get(input.sourceId);
+    const source = await this.store.sources.get(input.sourceId);
 
     if (!source) {
       throw new WebhookIntakeError("source_not_found", `Source not found: ${input.sourceId}`);
@@ -69,50 +70,15 @@ export class WebhookIntakeService {
     const rawHeaders = redactHeaders(input.headers);
     const rawPayload = redactJsonValue(payload) as JsonValue;
 
-    const parseResult = (() => {
-      try {
-        return this.providers.parse(source.provider, {
-          source: {
-            id: source.id,
-            name: source.name,
-            provider: source.provider,
-            enabled: source.enabled,
-          },
-          sourceId: source.id,
-          sourceName: source.name,
-          receivedAt,
-          headers: rawHeaders,
-          payload,
-          config: source.config,
-        });
-      } catch (error) {
-        return this.raiseProviderParseFailure({
-          sourceId: source.id,
-          sourceProvider: source.provider,
-          payload,
-          rawPayload,
-          rawHeaders,
-          receivedAt,
-          error,
-        });
-      }
-    })();
+    const parsed = await this.parseProviderPayload({
+      source,
+      payload,
+      rawPayload,
+      rawHeaders,
+      receivedAt,
+    });
 
-    if (!parseResult.ok) {
-      this.raiseProviderParseFailure({
-        sourceId: source.id,
-        sourceProvider: source.provider,
-        payload,
-        rawPayload,
-        rawHeaders,
-        receivedAt,
-        error: parseResult,
-      });
-    }
-
-    const parsed = parseResult;
-
-    const routes = this.store.routes.list();
+    const routes = await this.store.routes.list();
     const routeMatches = routes.map((route) =>
       evaluateRouteMatch(route, {
         sourceId: source.id,
@@ -127,9 +93,9 @@ export class WebhookIntakeService {
       },
     );
 
-    return this.store.transaction((tx) => {
-      const settings = tx.settings.get();
-      const event = tx.intake.recordEvent({
+    return this.store.transaction(async (tx) => {
+      const settings = await tx.settings.get();
+      const event = await tx.intake.recordEvent({
         sourceId: source.id,
         idempotencyKey: parsed.idempotencyKey,
         normalized: parsed.normalized,
@@ -139,7 +105,7 @@ export class WebhookIntakeService {
         routeMatches,
         receivedAt,
       });
-      const enqueue = tx.deliveries.enqueueForEvent({
+      const enqueue = await tx.deliveries.enqueueForEvent({
         event,
         matches: matchedRoutes.map((match) => ({
           routeId: match.routeId,
@@ -150,7 +116,7 @@ export class WebhookIntakeService {
         ).toISOString(),
         now: receivedAt,
       });
-      tx.intake.pruneRawPayloads({
+      await tx.intake.pruneRawPayloads({
         before: retentionCutoff(receivedAt, settings.rawPayloadRetentionDays),
       });
 
@@ -164,7 +130,7 @@ export class WebhookIntakeService {
     });
   }
 
-  private recordParserFailureEvent(input: ParserFailureRecordInput): string {
+  private recordParserFailureEvent(input: ParserFailureRecordInput): Promise<string> {
     const payloadHash = createStableHash(input.payload);
     const parseFailure = isProviderParseFailure(input.error) ? input.error : null;
     const errorMessage = redactText(
@@ -172,9 +138,9 @@ export class WebhookIntakeService {
         (input.error instanceof Error ? input.error.message : String(input.error)),
     );
 
-    return this.store.transaction((tx) => {
-      const settings = tx.settings.get();
-      const event = tx.intake.recordEvent({
+    return this.store.transaction(async (tx) => {
+      const settings = await tx.settings.get();
+      const event = await tx.intake.recordEvent({
         sourceId: input.sourceId,
         idempotencyKey: null,
         normalized: {
@@ -207,7 +173,7 @@ export class WebhookIntakeService {
         routeMatches: [],
         receivedAt: input.receivedAt,
       });
-      tx.intake.pruneRawPayloads({
+      await tx.intake.pruneRawPayloads({
         before: retentionCutoff(input.receivedAt, settings.rawPayloadRetentionDays),
       });
 
@@ -215,8 +181,60 @@ export class WebhookIntakeService {
     });
   }
 
-  private raiseProviderParseFailure(input: ParserFailureRecordInput): never {
-    const eventId = this.recordParserFailureEvent(input);
+  private async parseProviderPayload(input: {
+    source: SourceRuntimeConfig;
+    payload: JsonValue;
+    rawPayload: JsonValue;
+    rawHeaders: Record<string, string>;
+    receivedAt: string;
+  }): Promise<ProviderParseSuccess> {
+    const { source, payload, rawPayload, rawHeaders, receivedAt } = input;
+    const result = await (async (): Promise<ProviderParseSuccess | ProviderParseFailure> => {
+      try {
+        return this.providers.parse(source.provider, {
+          source: {
+            id: source.id,
+            name: source.name,
+            provider: source.provider,
+            enabled: source.enabled,
+          },
+          sourceId: source.id,
+          sourceName: source.name,
+          receivedAt,
+          headers: rawHeaders,
+          payload,
+          config: source.config,
+        });
+      } catch (error) {
+        return this.raiseProviderParseFailure({
+          sourceId: source.id,
+          sourceProvider: source.provider,
+          payload,
+          rawPayload,
+          rawHeaders,
+          receivedAt,
+          error,
+        });
+      }
+    })();
+
+    if (result.ok) {
+      return result;
+    }
+
+    return this.raiseProviderParseFailure({
+      sourceId: source.id,
+      sourceProvider: source.provider,
+      payload,
+      rawPayload,
+      rawHeaders,
+      receivedAt,
+      error: result,
+    });
+  }
+
+  private async raiseProviderParseFailure(input: ParserFailureRecordInput): Promise<never> {
+    const eventId = await this.recordParserFailureEvent(input);
 
     throw new WebhookIntakeError(
       "provider_parse_failed",

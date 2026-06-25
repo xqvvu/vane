@@ -52,10 +52,10 @@ export async function handleSourceWebhookPost(input: {
     return Response.json({ error: "Expected JSON webhook payload" }, { status: 400 });
   }
 
-  const service = context.container.createWebhookIntakeService();
+  const service = await context.container.createWebhookIntakeService();
 
   try {
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: input.sourceId,
       token: context.sourceToken,
       headers: context.headersRecord,

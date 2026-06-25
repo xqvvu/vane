@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
 import { APIError } from "better-auth/api";
 
-import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
 
 export interface BetterAuthUserCreateInput {
   id: string;
@@ -15,14 +15,14 @@ export interface BetterAuthUserCreateInput {
 }
 
 export interface RegisteredUserCounter {
-  hasRegisteredUsers(): boolean;
+  hasRegisteredUsers(): Promise<boolean>;
 }
 
 export async function assignOwnerRoleBeforeUserCreate(
   user: BetterAuthUserCreateInput,
   counter: RegisteredUserCounter,
 ) {
-  if (counter.hasRegisteredUsers()) {
+  if (await counter.hasRegisteredUsers()) {
     throw new APIError("FORBIDDEN", {
       message: "Owner user already exists",
     });
@@ -36,10 +36,11 @@ export async function assignOwnerRoleBeforeUserCreate(
   };
 }
 
-export function hasRegisteredUsers(database: SqliteDatabase): boolean {
-  const row = database.prepare('SELECT COUNT(*) AS count FROM "user"').get() as
-    | { count: number }
-    | undefined;
+export async function hasRegisteredUsers(db: VaneSqliteKysely): Promise<boolean> {
+  const row = await db
+    .selectFrom("user")
+    .select((eb) => eb.fn.countAll<number>().as("count"))
+    .executeTakeFirst();
 
   return (row?.count ?? 0) > 0;
 }

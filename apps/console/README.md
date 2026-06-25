@@ -33,14 +33,27 @@ pnpm --filter @vane/console fmt:check
 pnpm --filter @vane/console lint
 pnpm --filter @vane/console test
 pnpm --filter @vane/console build
+pnpm --filter @vane/console auth:schema
 ```
+
+`auth:schema` 使用 Better Auth CLI 的 Kysely/SQLite 生成模式，把当前 auth 表结构写到
+`src/infra/sqlite/migrate/better-auth.generated.sql`。它和手写 Kysely builder 放在同一目录，
+用于对照 Better Auth 当前需要的表结构；运行时不会直接执行这个 SQL 文件。
+
+Better Auth 表的物理列使用 snake_case；`src/lib/auth-options.ts` 负责把 Better Auth 的
+camelCase 模型字段映射到 SQLite 列名。
+
+当前 MVP 阶段数据库 schema 尚未稳定，正式 schema 计划只保留一个完整 baseline：
+`src/infra/sqlite/migrate/0001_initial_schema.ts`，并在 `src/infra/sqlite/migrate/plan.ts`
+显式注册。baseline 内部按职责拆到 `vane-schema.ts` 和 `better-auth-schema.ts`，优先使用
+Kysely schema/query builder；需要 SQLite 表达式时，可以使用 Kysely `sql` escape hatch。
 
 ## 目录边界
 
 - `src/routes`：TanStack Router 文件路由、loader、URL search params、薄页面入口和 API routes。
 - `src/features`：Sources、Routes、Destinations、Events、Deliveries、Settings/Auth 的 client-safe UI、query/mutation 和 model。
 - `src/server`：server functions、request context、application container、按能力组织的 `*.service.ts` / `*.service.types.ts`。
-- `src/infra/sqlite`：SQLite connection、migrations、repository implementations、store assembly。
+- `src/infra/sqlite`：Kysely-first SQLite connection、migrations、repository implementations、store assembly。
 - `src/components/ui`：shadcn primitives。
 - `src/components/common`：跨 feature 复用但不拥有业务规则的 console UI 组合。
 

@@ -1,3 +1,8 @@
 import { getApplicationContainer } from "#/server/runtime/container.ts";
 
-export const auth = getApplicationContainer().getAuth();
+export function getAuth() {
+  return getApplicationContainer().getAuth();
+}
+
+export type Auth = Awaited<ReturnType<typeof getAuth>>;
+export declare const auth: Auth;

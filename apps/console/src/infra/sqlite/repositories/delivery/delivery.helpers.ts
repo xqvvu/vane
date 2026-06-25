@@ -1,13 +1,13 @@
 import { decodeJson, DeliveryJobSchema, redactText } from "@vane/core";
 import type { DeliveryAttempt, DeliveryJob, JsonValue } from "@vane/core";
 
-import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
 import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
 import type {
   DeliveryAttemptRow,
   DeliveryDedupeKeyRow,
   DeliveryRow,
 } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
+import type { VaneSqliteExecutor } from "#/infra/sqlite/schema.ts";
 
 export function deliveryFromRow(row: DeliveryRow): DeliveryJob {
   return DeliveryJobSchema.parse({
@@ -60,55 +60,30 @@ export function requireAttempt(attempt: DeliveryAttempt | null): DeliveryAttempt
   return attempt;
 }
 
-export function reserveDedupeKey(
-  db: SqliteDatabase,
+export async function reserveDedupeKey(
+  db: VaneSqliteExecutor,
   row: DeliveryDedupeKeyRow,
-): DeliveryDedupeKeyRow | null {
-  const existing = db
-    .prepare(
-      `
-        SELECT *
-        FROM delivery_dedupe_keys
-        WHERE source_id = ?
-          AND idempotency_key = ?
-          AND route_id = ?
-          AND destination_id = ?
-      `,
-    )
-    .get(row.source_id, row.idempotency_key, row.route_id, row.destination_id) as
-    | DeliveryDedupeKeyRow
-    | undefined;
+): Promise<DeliveryDedupeKeyRow | null> {
+  const existing = await db
+    .selectFrom("delivery_dedupe_keys")
+    .selectAll()
+    .where("source_id", "=", row.source_id)
+    .where("idempotency_key", "=", row.idempotency_key)
+    .where("route_id", "=", row.route_id)
+    .where("destination_id", "=", row.destination_id)
+    .executeTakeFirst();
 
   if (existing) {
     return existing;
   }
 
-  db.prepare(
-    `
-      INSERT INTO delivery_dedupe_keys (
-        source_id,
-        idempotency_key,
-        route_id,
-        destination_id,
-        first_event_id,
-        created_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-    `,
-  ).run(
-    row.source_id,
-    row.idempotency_key,
-    row.route_id,
-    row.destination_id,
-    row.first_event_id,
-    row.created_at,
-  );
+  await db.insertInto("delivery_dedupe_keys").values(row).execute();
 
   return null;
 }
 
-export function pruneDedupeKeys(db: SqliteDatabase, startsAt: string): void {
-  db.prepare("DELETE FROM delivery_dedupe_keys WHERE created_at < ?").run(startsAt);
+export async function pruneDedupeKeys(db: VaneSqliteExecutor, startsAt: string): Promise<void> {
+  await db.deleteFrom("delivery_dedupe_keys").where("created_at", "<", startsAt).execute();
 }
 
 export function redactNullableText(value: string | null | undefined): string | null {

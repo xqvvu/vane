@@ -15,9 +15,9 @@ import {
 describe("application container", () => {
   let store: SqliteStore | undefined;
 
-  afterEach(() => {
+  afterEach(async () => {
     disposeApplicationContainer();
-    store?.close();
+    await store?.close();
     store = undefined;
     vi.restoreAllMocks();
   });
@@ -35,9 +35,9 @@ describe("application container", () => {
     expect(third).not.toBe(first);
   });
 
-  it("caches long-lived dependencies and creates services through explicit factories", () => {
-    const openStore = vi.fn<() => SqliteStore>(() => {
-      store = openSqliteStore({
+  it("caches long-lived dependencies and creates services through explicit factories", async () => {
+    const openStore = vi.fn<() => Promise<SqliteStore>>(async () => {
+      store = await openSqliteStore({
         databasePath: ":memory:",
       });
 
@@ -70,21 +70,23 @@ describe("application container", () => {
       workerBatchSize: 7,
     });
 
-    expect(container.getSqliteStore()).toBe(container.getSqliteStore());
+    await expect(container.getSqliteStore()).resolves.toBe(await container.getSqliteStore());
     expect(container.getProviderRegistry()).toBe(container.getProviderRegistry());
     expect(container.getDestinationRegistry()).toBe(container.getDestinationRegistry());
     expect(openStore).toHaveBeenCalledTimes(1);
     expect(createProviderRegistry).toHaveBeenCalledTimes(1);
     expect(createDestinationRegistry).toHaveBeenCalledTimes(1);
 
-    const firstSourceService = container.createSourceService();
-    const secondSourceService = container.createSourceService();
-    const webhookIntakeService = container.createWebhookIntakeService();
+    const firstSourceService = await container.createSourceService();
+    const secondSourceService = await container.createSourceService();
+    const webhookIntakeService = await container.createWebhookIntakeService();
 
     expect(firstSourceService).not.toBe(secondSourceService);
     expect(webhookIntakeService).toBeInstanceOf(WebhookIntakeService);
 
-    expect(container.ensureDeliveryWorkerRunner()).toBe(container.ensureDeliveryWorkerRunner());
+    await expect(container.ensureDeliveryWorkerRunner()).resolves.toBe(
+      await container.ensureDeliveryWorkerRunner(),
+    );
     expect(createWorkerRunner).toHaveBeenCalledTimes(1);
     expect(createWorkerRunner).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -95,18 +97,18 @@ describe("application container", () => {
     );
   });
 
-  it("disposes opened long-lived dependencies", () => {
-    let openedStoreClose: ReturnType<typeof vi.fn<() => void>> | undefined;
-    const openStore = vi.fn<() => SqliteStore>(() => {
-      const nextStore = openSqliteStore({
+  it("disposes opened long-lived dependencies", async () => {
+    let openedStoreClose: ReturnType<typeof vi.fn<() => Promise<void>>> | undefined;
+    const openStore = vi.fn<() => Promise<SqliteStore>>(async () => {
+      const nextStore = await openSqliteStore({
         databasePath: ":memory:",
       });
       openedStoreClose = vi.spyOn(nextStore, "close");
 
       return nextStore;
     });
-    const authDatabaseClose = vi.fn<() => void>();
-    const authDatabase = { close: authDatabaseClose };
+    const authDatabaseDestroy = vi.fn<() => Promise<void>>(async () => {});
+    const authDatabase = { destroy: authDatabaseDestroy };
     const runner = {
       runNow: async () => null,
       getHealth: () => ({
@@ -120,7 +122,7 @@ describe("application container", () => {
     };
     const container = createApplicationContainer({
       openStore,
-      createAuthDatabase: () => authDatabase as never,
+      createAuthDatabase: async () => authDatabase as never,
       createAuth: () =>
         ({
           handler: async () => new Response(null),
@@ -131,30 +133,30 @@ describe("application container", () => {
       createWorkerRunner: () => runner,
     });
 
-    container.getSqliteStore();
-    container.getAuth();
+    await container.getSqliteStore();
+    await container.getAuth();
 
-    container.dispose();
-    container.dispose();
+    await container.dispose();
+    await container.dispose();
 
     expect(runner.stop).toHaveBeenCalledTimes(1);
     expect(openedStoreClose).toHaveBeenCalledTimes(1);
-    expect(authDatabaseClose).toHaveBeenCalledTimes(1);
+    expect(authDatabaseDestroy).toHaveBeenCalledTimes(1);
   });
 
-  it("clears resource references before reporting dispose errors", () => {
+  it("clears resource references before reporting dispose errors", async () => {
     const sqliteCloseError = new Error("sqlite close failed");
     const authCloseError = new Error("auth close failed");
-    const sqliteStoreClose = vi.fn<() => void>(() => {
+    const sqliteStoreClose = vi.fn<() => Promise<void>>(async () => {
       throw sqliteCloseError;
     });
     const sqliteStore = {
       close: sqliteStoreClose,
     } as unknown as SqliteStore;
-    const authDatabaseClose = vi.fn<() => void>(() => {
+    const authDatabaseDestroy = vi.fn<() => Promise<void>>(async () => {
       throw authCloseError;
     });
-    const authDatabase = { close: authDatabaseClose };
+    const authDatabase = { destroy: authDatabaseDestroy };
     const runner = {
       runNow: async () => null,
       getHealth: () => ({
@@ -167,8 +169,8 @@ describe("application container", () => {
       stop: vi.fn<() => void>(),
     };
     const container = createApplicationContainer({
-      openStore: () => sqliteStore,
-      createAuthDatabase: () => authDatabase as never,
+      openStore: async () => sqliteStore,
+      createAuthDatabase: async () => authDatabase as never,
       createAuth: () =>
         ({
           handler: async () => new Response(null),
@@ -179,13 +181,13 @@ describe("application container", () => {
       createWorkerRunner: () => runner,
     });
 
-    container.getSqliteStore();
-    container.getAuth();
+    await container.getSqliteStore();
+    await container.getAuth();
 
-    expect(() => container.dispose()).toThrow(AggregateError);
-    expect(() => container.dispose()).not.toThrow();
+    await expect(container.dispose()).rejects.toThrow(AggregateError);
+    await expect(container.dispose()).resolves.toBeUndefined();
     expect(runner.stop).toHaveBeenCalledTimes(1);
     expect(sqliteStoreClose).toHaveBeenCalledTimes(1);
-    expect(authDatabaseClose).toHaveBeenCalledTimes(1);
+    expect(authDatabaseDestroy).toHaveBeenCalledTimes(1);
   });
 });

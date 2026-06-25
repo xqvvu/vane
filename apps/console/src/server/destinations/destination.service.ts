@@ -44,7 +44,7 @@ export class DestinationService {
     return this.destinations.toCatalog();
   }
 
-  createDestination(command: CreateDestinationCommand): DestinationSummary {
+  async createDestination(command: CreateDestinationCommand): Promise<DestinationSummary> {
     const input = CreateDestinationCommandSchema.parse(command);
 
     return this.store.destinations.create({
@@ -56,9 +56,9 @@ export class DestinationService {
     });
   }
 
-  updateDestination(command: UpdateDestinationCommand): DestinationSummary {
+  async updateDestination(command: UpdateDestinationCommand): Promise<DestinationSummary> {
     const input = UpdateDestinationCommandSchema.parse(command);
-    const current = this.store.destinations.get(input.id);
+    const current = await this.store.destinations.get(input.id);
     const kind = input.kind ?? current?.kind;
     const config =
       current && (input.config !== undefined || input.kind !== undefined)
@@ -76,7 +76,7 @@ export class DestinationService {
 
   async testDestination(command: TestDestinationCommand): Promise<DestinationTestResult> {
     const input = TestDestinationCommandSchema.parse(command);
-    const destination = this.store.destinations.get(input.id);
+    const destination = await this.store.destinations.get(input.id);
 
     if (!destination) {
       throw new Error(`Destination not found: ${input.id}`);
@@ -118,7 +118,7 @@ export class DestinationService {
 
   async previewDestination(command: PreviewDestinationCommand): Promise<DestinationPreviewResult> {
     const input = PreviewDestinationCommandSchema.parse(command);
-    const destination = this.store.destinations.get(input.id);
+    const destination = await this.store.destinations.get(input.id);
 
     if (!destination) {
       throw new Error(`Destination not found: ${input.id}`);
@@ -153,7 +153,7 @@ export class DestinationService {
     command: PreviewDestinationUpdateCommand,
   ): Promise<DestinationPreviewResult> {
     const input = PreviewDestinationUpdateCommandSchema.parse(command);
-    const current = this.store.destinations.get(input.id);
+    const current = await this.store.destinations.get(input.id);
 
     if (!current) {
       throw new Error(`Destination not found: ${input.id}`);

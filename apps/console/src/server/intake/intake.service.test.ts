@@ -12,7 +12,7 @@ import {
 
 const now = "2026-06-09T08:00:00.000Z";
 
-function createStore() {
+async function createStore() {
   let nextId = 0;
 
   return openSqliteStore({
@@ -27,7 +27,7 @@ function createStore() {
 }
 
 describe("webhook intake service", () => {
-  it("verifies source tokens against persisted hashes without accepting malformed hashes", () => {
+  it("verifies source tokens against persisted hashes without accepting malformed hashes", async () => {
     const tokenHash = hashSourceToken("source-token");
 
     expect(verifySourceToken("source-token", tokenHash)).toBe(true);
@@ -35,26 +35,26 @@ describe("webhook intake service", () => {
     expect(verifySourceToken("source-token", "not-a-sha256-hash")).toBe(false);
   });
 
-  it("persists a webhook event, matches enabled routes, and enqueues deliveries", () => {
-    const store = createStore();
+  it("persists a webhook event, matches enabled routes, and enqueues deliveries", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "Critical checkout",
       rule: {
@@ -64,7 +64,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-1",
       token: "source-token",
       headers: {
@@ -88,7 +88,7 @@ describe("webhook intake service", () => {
     expect(result.dedupedDeliveryCount).toBe(0);
     expect(result.matchedRoutes.map((match) => match.routeId)).toEqual(["route-1"]);
 
-    const detail = store.history.getEventDetail(result.eventId);
+    const detail = await store.history.getEventDetail(result.eventId);
 
     expect(detail?.event.rawHeaders).toEqual({
       authorization: "[REDACTED]",
@@ -99,29 +99,29 @@ describe("webhook intake service", () => {
     });
     expect(detail?.deliveries).toHaveLength(1);
 
-    store.close();
+    await store.close();
   });
 
-  it("preserves route match explanations from intake time", () => {
-    const store = createStore();
+  it("preserves route match explanations from intake time", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "Critical checkout",
       rule: {
@@ -131,7 +131,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-1",
       token: "source-token",
       headers: {},
@@ -146,7 +146,7 @@ describe("webhook intake service", () => {
       receivedAt: now,
     });
 
-    store.routes.update("route-1", {
+    await store.routes.update("route-1", {
       name: "Warnings only",
       rule: {
         severities: ["warning"],
@@ -154,7 +154,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const detail = store.history.getEventDetail(result.eventId);
+    const detail = await store.history.getEventDetail(result.eventId);
 
     expect(detail?.routeMatches).toMatchObject([
       {
@@ -179,29 +179,29 @@ describe("webhook intake service", () => {
       },
     ]);
 
-    store.close();
+    await store.close();
   });
 
-  it("records duplicate webhook events while deduping deliveries", () => {
-    const store = createStore();
+  it("records duplicate webhook events while deduping deliveries", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "All alerts",
       destinationIds: ["destination-1"],
@@ -219,40 +219,40 @@ describe("webhook intake service", () => {
       receivedAt: now,
     };
 
-    const first = service.acceptWebhook(input);
-    const second = service.acceptWebhook(input);
+    const first = await service.acceptWebhook(input);
+    const second = await service.acceptWebhook(input);
 
     expect(first.eventId).not.toBe(second.eventId);
     expect(first.createdDeliveryIds).toHaveLength(1);
     expect(second.createdDeliveryIds).toHaveLength(0);
     expect(second.dedupedDeliveryCount).toBe(1);
 
-    const events = store.history.listEvents();
+    const events = await store.history.listEvents();
 
     expect(events.items).toHaveLength(2);
 
-    store.close();
+    await store.close();
   });
 
-  it("prunes retained raw payloads after the configured retention window", () => {
-    const store = createStore();
+  it("prunes retained raw payloads after the configured retention window", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.settings.update({
+    await store.settings.update({
       rawPayloadRetentionDays: 1,
     });
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
       tokenHash: hashSourceToken("source-token"),
     });
 
-    const old = service.acceptWebhook({
+    const old = await service.acceptWebhook({
       sourceId: "source-1",
       token: "source-token",
       headers: {
@@ -265,7 +265,7 @@ describe("webhook intake service", () => {
       },
       receivedAt: "2026-06-01T08:00:00.000Z",
     });
-    const fresh = service.acceptWebhook({
+    const fresh = await service.acceptWebhook({
       sourceId: "source-1",
       token: "source-token",
       headers: {
@@ -279,26 +279,26 @@ describe("webhook intake service", () => {
       receivedAt: now,
     });
 
-    expect(store.history.getEventDetail(old.eventId)?.event.rawPayload).toEqual({
+    expect((await store.history.getEventDetail(old.eventId))?.event.rawPayload).toEqual({
       retentionPruned: true,
     });
-    expect(store.history.getEventDetail(old.eventId)?.event.rawHeaders).toEqual({});
-    expect(store.history.getEventDetail(fresh.eventId)?.event.rawPayload).toMatchObject({
+    expect((await store.history.getEventDetail(old.eventId))?.event.rawHeaders).toEqual({});
+    expect((await store.history.getEventDetail(fresh.eventId))?.event.rawPayload).toMatchObject({
       title: "Fresh alert",
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("rejects disabled sources and invalid source tokens", () => {
-    const store = createStore();
+  it("rejects disabled sources and invalid source tokens", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
@@ -306,7 +306,7 @@ describe("webhook intake service", () => {
       enabled: false,
     });
 
-    expect(() =>
+    await expect(
       service.acceptWebhook({
         sourceId: "source-1",
         token: "source-token",
@@ -314,11 +314,11 @@ describe("webhook intake service", () => {
         payload: {},
         receivedAt: now,
       }),
-    ).toThrow(new WebhookIntakeError("source_disabled", "Source is disabled: source-1"));
+    ).rejects.toThrow(new WebhookIntakeError("source_disabled", "Source is disabled: source-1"));
 
-    store.sources.setEnabled("source-1", true);
+    await store.sources.setEnabled("source-1", true);
 
-    expect(() =>
+    await expect(
       service.acceptWebhook({
         sourceId: "source-1",
         token: "wrong",
@@ -326,20 +326,20 @@ describe("webhook intake service", () => {
         payload: {},
         receivedAt: now,
       }),
-    ).toThrow(new WebhookIntakeError("invalid_token", "Invalid source token"));
+    ).rejects.toThrow(new WebhookIntakeError("invalid_token", "Invalid source token"));
 
-    store.close();
+    await store.close();
   });
 
-  it("accepts configured additional shared secrets without a Vane source token", () => {
-    const store = createStore();
+  it("accepts configured additional shared secrets without a Vane source token", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
@@ -349,7 +349,7 @@ describe("webhook intake service", () => {
       },
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-1",
       headers: {
         "x-vane-provider-secret": "provider-secret",
@@ -361,15 +361,15 @@ describe("webhook intake service", () => {
     });
 
     expect(result.accepted).toBe(true);
-    expect(store.history.getEventDetail(result.eventId)?.event.rawHeaders).toEqual({
+    expect((await store.history.getEventDetail(result.eventId))?.event.rawHeaders).toEqual({
       "x-vane-provider-secret": "[REDACTED]",
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("records parser failures as audit events without enqueuing deliveries", () => {
-    const store = createStore();
+  it("records parser failures as audit events without enqueuing deliveries", async () => {
+    const store = await createStore();
     const providers = createDefaultProviderRegistry();
     const service = new WebhookIntakeService({
       store,
@@ -381,18 +381,18 @@ describe("webhook intake service", () => {
       throw new Error("unsupported provider shape token=parser-token password: parser-password");
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Generic source",
       provider: "generic",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "All alerts",
       destinationIds: ["destination-1"],
@@ -401,7 +401,7 @@ describe("webhook intake service", () => {
     let error: unknown;
 
     try {
-      service.acceptWebhook({
+      await service.acceptWebhook({
         sourceId: "source-1",
         token: "source-token",
         headers: {
@@ -423,7 +423,7 @@ describe("webhook intake service", () => {
       eventId: "event-1",
     });
 
-    const detail = store.history.getEventDetail("event-1");
+    const detail = await store.history.getEventDetail("event-1");
 
     expect(detail?.event.normalized).toMatchObject({
       title: "Provider parser rejected webhook payload",
@@ -449,32 +449,32 @@ describe("webhook intake service", () => {
       unexpected: true,
     });
     expect(detail?.deliveries).toHaveLength(0);
-    expect(store.history.listEvents().items).toHaveLength(1);
-    expect(store.history.listDeliveries().items).toHaveLength(0);
+    expect((await store.history.listEvents()).items).toHaveLength(1);
+    expect((await store.history.listDeliveries()).items).toHaveLength(0);
 
-    store.close();
+    await store.close();
   });
 
-  it("records real provider parser shape failures as audit events", () => {
-    const store = createStore();
+  it("records real provider parser shape failures as audit events", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-grafana",
       name: "Grafana",
       provider: "grafana",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "Grafana checkout",
       destinationIds: ["destination-1"],
@@ -483,7 +483,7 @@ describe("webhook intake service", () => {
     let error: unknown;
 
     try {
-      service.acceptWebhook({
+      await service.acceptWebhook({
         sourceId: "source-grafana",
         token: "source-token",
         headers: {},
@@ -500,7 +500,7 @@ describe("webhook intake service", () => {
       eventId: "event-1",
     });
 
-    const detail = store.history.getEventDetail("event-1");
+    const detail = await store.history.getEventDetail("event-1");
 
     expect(detail?.event.normalized.labels).toEqual({
       provider: "grafana",
@@ -513,31 +513,31 @@ describe("webhook intake service", () => {
     });
     expect(detail?.event.rawPayload).toBe("not an object");
     expect(detail?.deliveries).toHaveLength(0);
-    expect(store.history.listDeliveries().items).toHaveLength(0);
+    expect((await store.history.listDeliveries()).items).toHaveLength(0);
 
-    store.close();
+    await store.close();
   });
 
-  it("accepts Grafana webhooks through configured Grafana sources", () => {
-    const store = createStore();
+  it("accepts Grafana webhooks through configured Grafana sources", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-grafana",
       name: "Grafana",
       provider: "grafana",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "Grafana checkout",
       rule: {
@@ -547,7 +547,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-grafana",
       token: "source-token",
       headers: {},
@@ -576,7 +576,7 @@ describe("webhook intake service", () => {
     expect(result.createdDeliveryIds).toEqual(["delivery-2"]);
     expect(result.matchedRoutes.map((match) => match.routeId)).toEqual(["route-1"]);
 
-    const detail = store.history.getEventDetail(result.eventId);
+    const detail = await store.history.getEventDetail(result.eventId);
 
     expect(detail?.event.normalized).toMatchObject({
       title: "[FIRING:1] CheckoutLatencyHigh",
@@ -585,29 +585,29 @@ describe("webhook intake service", () => {
       fingerprint: "grafana-fingerprint-1",
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("accepts SigNoz webhooks through configured SigNoz sources", () => {
-    const store = createStore();
+  it("accepts SigNoz webhooks through configured SigNoz sources", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-signoz",
       name: "SigNoz",
       provider: "signoz",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "SigNoz warning",
       rule: {
@@ -617,7 +617,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-signoz",
       token: "source-token",
       headers: {},
@@ -649,7 +649,7 @@ describe("webhook intake service", () => {
     expect(result.createdDeliveryIds).toEqual(["delivery-2"]);
     expect(result.matchedRoutes.map((match) => match.routeId)).toEqual(["route-1"]);
 
-    const detail = store.history.getEventDetail(result.eventId);
+    const detail = await store.history.getEventDetail(result.eventId);
 
     expect(detail?.event.normalized).toMatchObject({
       title: "HighErrorRate",
@@ -658,29 +658,29 @@ describe("webhook intake service", () => {
       fingerprint: "signoz-fingerprint-1",
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("accepts Uptime Kuma webhooks through configured Uptime Kuma sources", () => {
-    const store = createStore();
+  it("accepts Uptime Kuma webhooks through configured Uptime Kuma sources", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-uptime-kuma",
       name: "Uptime Kuma",
       provider: "uptime_kuma",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "Uptime Kuma down",
       rule: {
@@ -690,7 +690,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-uptime-kuma",
       token: "source-token",
       headers: {},
@@ -713,7 +713,7 @@ describe("webhook intake service", () => {
     expect(result.createdDeliveryIds).toEqual(["delivery-2"]);
     expect(result.matchedRoutes.map((match) => match.routeId)).toEqual(["route-1"]);
 
-    const detail = store.history.getEventDetail(result.eventId);
+    const detail = await store.history.getEventDetail(result.eventId);
 
     expect(detail?.event.normalized).toMatchObject({
       title: "Vane API is firing",
@@ -722,29 +722,29 @@ describe("webhook intake service", () => {
       fingerprint: "uptime_kuma:42",
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("accepts Alertmanager webhooks through configured Alertmanager sources", () => {
-    const store = createStore();
+  it("accepts Alertmanager webhooks through configured Alertmanager sources", async () => {
+    const store = await createStore();
     const service = new WebhookIntakeService({
       store,
       providers: createDefaultProviderRegistry(),
       now: () => now,
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-alertmanager",
       name: "Alertmanager",
       provider: "alertmanager",
       tokenHash: hashSourceToken("source-token"),
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    store.routes.create({
+    await store.routes.create({
       id: "route-1",
       name: "Alertmanager critical",
       rule: {
@@ -754,7 +754,7 @@ describe("webhook intake service", () => {
       destinationIds: ["destination-1"],
     });
 
-    const result = service.acceptWebhook({
+    const result = await service.acceptWebhook({
       sourceId: "source-alertmanager",
       token: "source-token",
       headers: {},
@@ -786,7 +786,7 @@ describe("webhook intake service", () => {
     expect(result.createdDeliveryIds).toEqual(["delivery-2"]);
     expect(result.matchedRoutes.map((match) => match.routeId)).toEqual(["route-1"]);
 
-    const detail = store.history.getEventDetail(result.eventId);
+    const detail = await store.history.getEventDetail(result.eventId);
 
     expect(detail?.event.normalized).toMatchObject({
       title: "InstanceDown",
@@ -795,6 +795,6 @@ describe("webhook intake service", () => {
       fingerprint: "alertmanager-fingerprint-1",
     });
 
-    store.close();
+    await store.close();
   });
 });

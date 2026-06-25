@@ -38,22 +38,34 @@ export function parseDestinationConfig(
   return JsonObjectSchema.parse(destinations.parseConfig(kind, config));
 }
 
-export function requireExistingSourceIds(
+export async function requireExistingSourceIds(
   sourceIds: string[],
   sources: Pick<SqliteStore["sources"], "get">,
-): void {
-  const missing = [...new Set(sourceIds)].filter((id) => sources.get(id) === null);
+): Promise<void> {
+  const missing: string[] = [];
+
+  for (const id of new Set(sourceIds)) {
+    if ((await sources.get(id)) === null) {
+      missing.push(id);
+    }
+  }
 
   if (missing.length > 0) {
     throw new Error(`Unknown source IDs: ${missing.join(", ")}`);
   }
 }
 
-export function requireExistingDestinationIds(
+export async function requireExistingDestinationIds(
   destinationIds: string[],
   destinations: Pick<SqliteStore["destinations"], "get">,
-): void {
-  const missing = [...new Set(destinationIds)].filter((id) => destinations.get(id) === null);
+): Promise<void> {
+  const missing: string[] = [];
+
+  for (const id of new Set(destinationIds)) {
+    if ((await destinations.get(id)) === null) {
+      missing.push(id);
+    }
+  }
 
   if (missing.length > 0) {
     throw new Error(`Unknown destination IDs: ${missing.join(", ")}`);

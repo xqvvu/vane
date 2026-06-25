@@ -1,7 +1,8 @@
+import { sql } from "kysely";
+
 import { encodeJson, redactText } from "@vane/core";
 import type { DeliveryAttempt, DeliveryDetail, DeliveryJob } from "@vane/core";
 
-import { rowAs, rowOrUndefined, rowsAs } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import {
   attemptFromRow,
@@ -16,9 +17,7 @@ import {
 import type {
   ClaimDeliveriesInput,
   ClaimedDelivery,
-  DeliveryAttemptRow,
   DeliveryRepository,
-  DeliveryRow,
   EnqueueDeliveriesInput,
   EnqueueDeliveriesResult,
   DedupedDelivery,
@@ -35,14 +34,18 @@ import {
   requireDestination,
 } from "#/infra/sqlite/repositories/destination/destination.helpers.ts";
 import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
+import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destination/destination.repository.ts";
 import { requireEvent } from "#/infra/sqlite/repositories/intake/intake.helpers.ts";
 import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository.ts";
+import { SqliteIntakeRepository as SqliteIntakeRepositoryImpl } from "#/infra/sqlite/repositories/intake/intake.repository.ts";
 import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface.ts";
+import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository.ts";
 import {
   requireSource,
   sourceSummaryFromRuntime,
 } from "#/infra/sqlite/repositories/source/source.helpers.ts";
 import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface.ts";
+import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository.ts";
 
 export class SqliteDeliveryRepository implements DeliveryRepository {
   constructor(
@@ -53,19 +56,20 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     private readonly intake: SqliteIntakeRepository,
   ) {}
 
-  enqueueForEvent(input: EnqueueDeliveriesInput): EnqueueDeliveriesResult {
-    return this.context.runInTransaction(() => {
+  enqueueForEvent(input: EnqueueDeliveriesInput): Promise<EnqueueDeliveriesResult> {
+    return this.context.runInTransaction(async (context) => {
+      const repository = this.withContext(context);
       const created: DeliveryJob[] = [];
       const deduped: DedupedDelivery[] = [];
       const now = input.now ?? this.context.now();
       const maxAttempts = input.maxAttempts ?? 3;
 
-      pruneDedupeKeys(this.context.db, input.dedupeWindowStartsAt);
+      await pruneDedupeKeys(context.db, input.dedupeWindowStartsAt);
 
       for (const match of input.matches) {
         for (const destinationId of match.destinationIds) {
           if (input.event.idempotencyKey) {
-            const dedupe = reserveDedupeKey(this.context.db, {
+            const dedupe = await reserveDedupeKey(context.db, {
               source_id: input.event.sourceId,
               idempotency_key: input.event.idempotencyKey,
               route_id: match.routeId,
@@ -87,30 +91,26 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
           }
 
           const id = this.context.ids.delivery();
-          this.context.db
-            .prepare(
-              `
-                INSERT INTO deliveries (
-                  id,
-                  event_id,
-                  destination_id,
-                  route_id,
-                  state,
-                  attempt_count,
-                  max_attempts,
-                  next_attempt_at,
-                  last_error,
-                  rendered_payload_json,
-                  created_at,
-                  updated_at,
-                  finished_at
-                )
-                VALUES (?, ?, ?, ?, 'pending', 0, ?, NULL, NULL, NULL, ?, ?, NULL)
-              `,
-            )
-            .run(id, input.event.id, destinationId, match.routeId, maxAttempts, now, now);
+          await context.db
+            .insertInto("deliveries")
+            .values({
+              id,
+              event_id: input.event.id,
+              destination_id: destinationId,
+              route_id: match.routeId,
+              state: "pending",
+              attempt_count: 0,
+              max_attempts: maxAttempts,
+              next_attempt_at: null,
+              last_error: null,
+              rendered_payload_json: null,
+              created_at: now,
+              updated_at: now,
+              finished_at: null,
+            })
+            .execute();
 
-          created.push(requireDelivery(this.getJob(id)));
+          created.push(requireDelivery(await repository.getJob(id)));
         }
       }
 
@@ -120,35 +120,31 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
 
   reclaimStaleRunning(
     input: ReclaimStaleRunningDeliveriesInput,
-  ): ReclaimStaleRunningDeliveriesResult {
-    return this.context.runInTransaction(() => {
+  ): Promise<ReclaimStaleRunningDeliveriesResult> {
+    return this.context.runInTransaction(async (context) => {
+      const repository = this.withContext(context);
       const now = input.now ?? this.context.now();
       const error = input.error ?? "Delivery attempt timed out before completion";
-      const rows = rowsAs<DeliveryRow & { attempt_id: string }>(
-        this.context.db
-          .prepare(
-            `
-              SELECT deliveries.*, delivery_attempts.id AS attempt_id
-              FROM deliveries
-              JOIN delivery_attempts ON delivery_attempts.delivery_id = deliveries.id
-              WHERE deliveries.state = 'running'
-                AND delivery_attempts.state = 'running'
-                AND delivery_attempts.started_at <= ?
-              ORDER BY delivery_attempts.started_at
-            `,
-          )
-          .all(input.staleBefore),
-      );
+      const rows = await context.db
+        .selectFrom("deliveries")
+        .innerJoin("delivery_attempts", "delivery_attempts.delivery_id", "deliveries.id")
+        .selectAll("deliveries")
+        .select("delivery_attempts.id as attempt_id")
+        .where("deliveries.state", "=", "running")
+        .where("delivery_attempts.state", "=", "running")
+        .where("delivery_attempts.started_at", "<=", input.staleBefore)
+        .orderBy("delivery_attempts.started_at")
+        .execute();
       let reclaimed = 0;
 
       for (const row of rows) {
-        const current = requireDelivery(this.getJob(row.id));
+        const current = requireDelivery(await repository.getJob(row.id));
 
         if (current.state !== "running") {
           continue;
         }
 
-        this.markFailed({
+        await repository.markFailed({
           deliveryId: row.id,
           attemptId: row.attempt_id,
           error,
@@ -162,75 +158,73 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     });
   }
 
-  claimNext(input: ClaimDeliveriesInput): ClaimedDelivery[] {
-    return this.context.runInTransaction(() => {
+  claimNext(input: ClaimDeliveriesInput): Promise<ClaimedDelivery[]> {
+    return this.context.runInTransaction(async (context) => {
+      const repository = this.withContext(context);
       const now = input.now ?? this.context.now();
-      const rows = rowsAs<DeliveryRow>(
-        this.context.db
-          .prepare(
-            `
-              SELECT deliveries.*
-              FROM deliveries
-              JOIN destinations ON destinations.id = deliveries.destination_id
-              LEFT JOIN routes ON routes.id = deliveries.route_id
-              WHERE deliveries.state = 'pending'
-                AND destinations.enabled = 1
-                AND (deliveries.route_id IS NULL OR routes.enabled = 1)
-                AND (deliveries.next_attempt_at IS NULL OR deliveries.next_attempt_at <= ?)
-                AND deliveries.attempt_count < deliveries.max_attempts
-              ORDER BY COALESCE(deliveries.next_attempt_at, deliveries.created_at), deliveries.created_at
-              LIMIT ?
-            `,
-          )
-          .all(now, input.limit),
-      );
+      const rows = await context.db
+        .selectFrom("deliveries")
+        .innerJoin("destinations", "destinations.id", "deliveries.destination_id")
+        .leftJoin("routes", "routes.id", "deliveries.route_id")
+        .selectAll("deliveries")
+        .where("deliveries.state", "=", "pending")
+        .where("destinations.enabled", "=", 1)
+        .where((eb) => eb.or([eb("deliveries.route_id", "is", null), eb("routes.enabled", "=", 1)]))
+        .where((eb) =>
+          eb.or([
+            eb("deliveries.next_attempt_at", "is", null),
+            eb("deliveries.next_attempt_at", "<=", now),
+          ]),
+        )
+        .whereRef("deliveries.attempt_count", "<", "deliveries.max_attempts")
+        .orderBy((eb) => eb.fn.coalesce("deliveries.next_attempt_at", "deliveries.created_at"))
+        .orderBy("deliveries.created_at")
+        .limit(input.limit)
+        .execute();
       const claimed: ClaimedDelivery[] = [];
 
       for (const row of rows) {
         const attemptNumber = row.attempt_count + 1;
         const attemptId = this.context.ids.attempt();
 
-        this.context.db
-          .prepare(
-            `
-              UPDATE deliveries
-              SET state = 'running', attempt_count = ?, updated_at = ?
-              WHERE id = ? AND state = 'pending'
-          `,
-          )
-          .run(attemptNumber, now, row.id);
+        const updateResult = await context.db
+          .updateTable("deliveries")
+          .set({
+            state: "running",
+            attempt_count: attemptNumber,
+            updated_at: now,
+          })
+          .where("id", "=", row.id)
+          .where("state", "=", "pending")
+          .executeTakeFirst();
 
-        const updateResult = this.context.db.prepare("SELECT changes() AS changes").get() as {
-          changes: number;
-        };
-
-        if (updateResult.changes > 0) {
-          this.context.db
-            .prepare(
-              `
-                INSERT INTO delivery_attempts (
-                  id,
-                  delivery_id,
-                  attempt_number,
-                  state,
-                  response_status,
-                  response_body,
-                  error,
-                  started_at,
-                  finished_at
-                )
-                VALUES (?, ?, ?, 'running', NULL, NULL, NULL, ?, NULL)
-              `,
-            )
-            .run(attemptId, row.id, attemptNumber, now);
+        if (updateResult.numUpdatedRows > 0n) {
+          await context.db
+            .insertInto("delivery_attempts")
+            .values({
+              id: attemptId,
+              delivery_id: row.id,
+              attempt_number: attemptNumber,
+              state: "running",
+              response_status: null,
+              response_body: null,
+              error: null,
+              started_at: now,
+              finished_at: null,
+            })
+            .execute();
+        } else {
+          continue;
         }
 
-        const job = requireDelivery(this.getJob(row.id));
-        const event = requireEvent(this.intake.get(job.eventId));
-        const source = requireSource(this.sources.get(event.sourceId));
-        const destination = requireDestination(this.destinations.get(job.destinationId));
-        const route = job.routeId ? this.routes.get(job.routeId) : null;
-        const attempt = requireAttempt(this.getAttempt(attemptId));
+        const job = requireDelivery(await repository.getJob(row.id));
+        const event = requireEvent(await repository.intake.get(job.eventId));
+        const source = requireSource(await repository.sources.get(event.sourceId));
+        const destination = requireDestination(
+          await repository.destinations.get(job.destinationId),
+        );
+        const route = job.routeId ? await repository.routes.get(job.routeId) : null;
+        const attempt = requireAttempt(await repository.getAttempt(attemptId));
 
         claimed.push({ job, attempt, event, source, destination, route });
       }
@@ -239,148 +233,141 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     });
   }
 
-  markSucceeded(input: MarkDeliverySucceededInput): DeliveryJob {
-    return this.context.runInTransaction(() => {
+  markSucceeded(input: MarkDeliverySucceededInput): Promise<DeliveryJob> {
+    return this.context.runInTransaction(async (context) => {
+      const repository = this.withContext(context);
       const finishedAt = input.finishedAt ?? this.context.now();
 
-      this.context.db
-        .prepare(
-          `
-            UPDATE delivery_attempts
-            SET state = 'succeeded', response_status = ?, response_body = ?, error = NULL, finished_at = ?
-            WHERE id = ? AND delivery_id = ?
-          `,
-        )
-        .run(
-          input.responseStatus ?? null,
-          redactNullableText(input.responseBody),
-          finishedAt,
-          input.attemptId,
-          input.deliveryId,
-        );
+      await context.db
+        .updateTable("delivery_attempts")
+        .set({
+          state: "succeeded",
+          response_status: input.responseStatus ?? null,
+          response_body: redactNullableText(input.responseBody),
+          error: null,
+          finished_at: finishedAt,
+        })
+        .where("id", "=", input.attemptId)
+        .where("delivery_id", "=", input.deliveryId)
+        .execute();
 
-      this.context.db
-        .prepare(
-          `
-            UPDATE deliveries
-            SET state = 'succeeded',
-                next_attempt_at = NULL,
-                last_error = NULL,
-                rendered_payload_json = COALESCE(?, rendered_payload_json),
-                updated_at = ?,
-                finished_at = ?
-            WHERE id = ?
-          `,
-        )
-        .run(
-          input.renderedPayload === undefined ? null : encodeJson(input.renderedPayload),
-          finishedAt,
-          finishedAt,
-          input.deliveryId,
-        );
+      await context.db
+        .updateTable("deliveries")
+        .set((eb) => ({
+          state: "succeeded",
+          next_attempt_at: null,
+          last_error: null,
+          rendered_payload_json:
+            input.renderedPayload === undefined
+              ? eb.ref("rendered_payload_json")
+              : encodeJson(input.renderedPayload),
+          updated_at: finishedAt,
+          finished_at: finishedAt,
+        }))
+        .where("id", "=", input.deliveryId)
+        .execute();
 
-      return requireDelivery(this.getJob(input.deliveryId));
+      return requireDelivery(await repository.getJob(input.deliveryId));
     });
   }
 
-  markFailed(input: MarkDeliveryFailedInput): DeliveryJob {
-    return this.context.runInTransaction(() => {
+  markFailed(input: MarkDeliveryFailedInput): Promise<DeliveryJob> {
+    return this.context.runInTransaction(async (context) => {
+      const repository = this.withContext(context);
       const finishedAt = input.finishedAt ?? this.context.now();
-      const current = requireDelivery(this.getJob(input.deliveryId));
+      const current = requireDelivery(await repository.getJob(input.deliveryId));
       const shouldRetry = input.retryAt !== null && current.attemptCount < current.maxAttempts;
       const nextState = shouldRetry ? "pending" : "failed";
       const nextAttemptAt = shouldRetry ? input.retryAt : null;
       const finishedDeliveryAt = shouldRetry ? null : finishedAt;
 
-      this.context.db
-        .prepare(
-          `
-            UPDATE delivery_attempts
-            SET state = 'failed', response_status = ?, response_body = ?, error = ?, finished_at = ?
-            WHERE id = ? AND delivery_id = ?
-          `,
-        )
-        .run(
-          input.responseStatus ?? null,
-          redactNullableText(input.responseBody),
-          redactText(input.error),
-          finishedAt,
-          input.attemptId,
-          input.deliveryId,
-        );
+      await context.db
+        .updateTable("delivery_attempts")
+        .set({
+          state: "failed",
+          response_status: input.responseStatus ?? null,
+          response_body: redactNullableText(input.responseBody),
+          error: redactText(input.error),
+          finished_at: finishedAt,
+        })
+        .where("id", "=", input.attemptId)
+        .where("delivery_id", "=", input.deliveryId)
+        .execute();
 
-      this.context.db
-        .prepare(
-          `
-            UPDATE deliveries
-            SET state = ?, next_attempt_at = ?, last_error = ?, updated_at = ?, finished_at = ?
-            WHERE id = ?
-          `,
-        )
-        .run(
-          nextState,
-          nextAttemptAt,
-          redactText(input.error),
-          finishedAt,
-          finishedDeliveryAt,
-          input.deliveryId,
-        );
+      await context.db
+        .updateTable("deliveries")
+        .set({
+          state: nextState,
+          next_attempt_at: nextAttemptAt,
+          last_error: redactText(input.error),
+          updated_at: finishedAt,
+          finished_at: finishedDeliveryAt,
+        })
+        .where("id", "=", input.deliveryId)
+        .execute();
 
-      return requireDelivery(this.getJob(input.deliveryId));
+      return requireDelivery(await repository.getJob(input.deliveryId));
     });
   }
 
-  retryNow(input: RetryDeliveryInput): DeliveryJob {
-    return this.context.runInTransaction(() => {
+  retryNow(input: RetryDeliveryInput): Promise<DeliveryJob> {
+    return this.context.runInTransaction(async (context) => {
+      const repository = this.withContext(context);
       const requestedAt = input.requestedAt ?? this.context.now();
-      const current = requireDelivery(this.getJob(input.deliveryId));
+      const current = requireDelivery(await repository.getJob(input.deliveryId));
 
       if (current.state !== "failed") {
         throw new InvalidDeliveryStateError(input.deliveryId, current.state, "retry");
       }
 
-      this.context.db
-        .prepare(
-          `
-            UPDATE deliveries
-            SET state = 'pending',
-                max_attempts = CASE
-                  WHEN max_attempts <= attempt_count THEN attempt_count + 1
-                  ELSE max_attempts
-                END,
-                next_attempt_at = ?,
-                last_error = NULL,
-                updated_at = ?,
-                finished_at = NULL
-            WHERE id = ?
+      await context.db
+        .updateTable("deliveries")
+        .set({
+          state: "pending",
+          max_attempts: sql<number>`
+            CASE
+              WHEN max_attempts <= attempt_count THEN attempt_count + 1
+              ELSE max_attempts
+            END
           `,
-        )
-        .run(requestedAt, requestedAt, input.deliveryId);
+          next_attempt_at: requestedAt,
+          last_error: null,
+          updated_at: requestedAt,
+          finished_at: null,
+        })
+        .where("id", "=", input.deliveryId)
+        .execute();
 
-      return requireDelivery(this.getJob(input.deliveryId));
+      return requireDelivery(await repository.getJob(input.deliveryId));
     });
   }
 
-  get(id: string): DeliveryDetail | null {
-    const job = this.getJob(id);
+  async get(id: string): Promise<DeliveryDetail | null> {
+    const job = await this.getJob(id);
 
     if (!job) {
       return null;
     }
 
-    const event = requireEvent(this.intake.get(job.eventId));
-    const source = sourceSummaryFromRuntime(requireSource(this.sources.get(event.sourceId)));
-    const destinationRuntime = requireDestination(this.destinations.get(job.destinationId));
+    const event = requireEvent(await this.intake.get(job.eventId));
+    const source = sourceSummaryFromRuntime(requireSource(await this.sources.get(event.sourceId)));
+    const destinationRuntime = requireDestination(await this.destinations.get(job.destinationId));
     const destination = destinationSummaryFromRuntime(destinationRuntime);
     const destinationMetadata = destinationMetadataFromRuntime(destinationRuntime);
-    const route = job.routeId ? this.routes.get(job.routeId) : null;
-    const attempts = this.context.db
-      .prepare("SELECT * FROM delivery_attempts WHERE delivery_id = ? ORDER BY attempt_number")
-      .all(job.id)
-      .map((row) => attemptFromRow(rowAs<DeliveryAttemptRow>(row)));
-    const row = rowOrUndefined<Pick<DeliveryRow, "rendered_payload_json">>(
-      this.context.db.prepare("SELECT rendered_payload_json FROM deliveries WHERE id = ?").get(id),
-    );
+    const route = job.routeId ? await this.routes.get(job.routeId) : null;
+    const attempts = (
+      await this.context.db
+        .selectFrom("delivery_attempts")
+        .selectAll()
+        .where("delivery_id", "=", job.id)
+        .orderBy("attempt_number")
+        .execute()
+    ).map((row) => attemptFromRow(row));
+    const row = await this.context.db
+      .selectFrom("deliveries")
+      .select("rendered_payload_json")
+      .where("id", "=", id)
+      .executeTakeFirst();
 
     return {
       job,
@@ -394,17 +381,32 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     };
   }
 
-  getJob(id: string): DeliveryJob | null {
-    const row = rowOrUndefined<DeliveryRow>(
-      this.context.db.prepare("SELECT * FROM deliveries WHERE id = ?").get(id),
-    );
+  async getJob(id: string): Promise<DeliveryJob | null> {
+    const row = await this.context.db
+      .selectFrom("deliveries")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
     return row ? deliveryFromRow(row) : null;
   }
 
-  getAttempt(id: string): DeliveryAttempt | null {
-    const row = rowOrUndefined<DeliveryAttemptRow>(
-      this.context.db.prepare("SELECT * FROM delivery_attempts WHERE id = ?").get(id),
-    );
+  async getAttempt(id: string): Promise<DeliveryAttempt | null> {
+    const row = await this.context.db
+      .selectFrom("delivery_attempts")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
     return row ? attemptFromRow(row) : null;
+  }
+
+  private withContext(context: SqliteRepositoryContext): SqliteDeliveryRepository {
+    const sources = new SqliteSourceRepository(context);
+    const destinations = new SqliteDestinationRepository(context);
+    const routes = new SqliteRouteRepository(context);
+    const intake = new SqliteIntakeRepositoryImpl(context);
+
+    return new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
   }
 }

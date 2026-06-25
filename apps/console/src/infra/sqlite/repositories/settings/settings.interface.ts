@@ -3,6 +3,6 @@ export interface AppSettings {
 }
 
 export interface SettingsRepository {
-  get(): AppSettings;
-  update(input: Partial<AppSettings>): AppSettings;
+  get(): Promise<AppSettings>;
+  update(input: Partial<AppSettings>): Promise<AppSettings>;
 }

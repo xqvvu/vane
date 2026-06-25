@@ -1,8 +1,9 @@
 import type { IsoDateTimeString } from "@vane/core";
 
-import { createSqliteDatabase, type SqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
 import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate.ts";
+import type { SqliteMigration } from "#/infra/sqlite/migrate.ts";
 import type { DeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
 import { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository.ts";
 import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
@@ -17,12 +18,12 @@ import type { SettingsRepository } from "#/infra/sqlite/repositories/settings/se
 import { SqliteSettingsRepository } from "#/infra/sqlite/repositories/settings/settings.repository.ts";
 import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface.ts";
 import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository.ts";
-import type { SyncTransactionGuard } from "#/infra/sqlite/transaction.ts";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
 
 export interface OpenSqliteStoreOptions {
   databasePath?: string;
   migrate?: boolean;
-  migrationsDir?: string;
+  migrationPlan?: readonly SqliteMigration[];
   now?: () => IsoDateTimeString;
   ids?: Partial<{
     source: () => string;
@@ -45,10 +46,10 @@ export interface SqliteStoreUnitOfWork {
 }
 
 export interface SqliteStore extends SqliteStoreUnitOfWork {
-  readonly schemaVersion: string | null;
+  schemaVersion(): Promise<string | null>;
 
-  close(): void;
-  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T, ...guard: SyncTransactionGuard<T>): T;
+  close(): Promise<void>;
+  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => Promise<T>): Promise<T>;
 }
 
 export interface SqliteRepositorySet extends SqliteStoreUnitOfWork {}
@@ -77,16 +78,19 @@ export class OpenedSqliteStore implements SqliteStore {
   private readonly repositories: SqliteRepositorySet;
 
   constructor(
-    private readonly db: SqliteDatabase,
+    private readonly db: VaneSqliteKysely,
     private readonly context: SqliteRepositoryContext,
   ) {
     this.repositories = createSqliteRepositories(context);
   }
 
-  get schemaVersion(): string | null {
-    const row = this.db
-      .prepare("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1")
-      .get() as { version: string } | undefined;
+  async schemaVersion(): Promise<string | null> {
+    const row = await this.db
+      .selectFrom("schema_migrations")
+      .select("version")
+      .orderBy("version", "desc")
+      .limit(1)
+      .executeTakeFirst();
 
     return row?.version ?? null;
   }
@@ -119,20 +123,20 @@ export class OpenedSqliteStore implements SqliteStore {
     return this.repositories.settings;
   }
 
-  close(): void {
-    this.db.close();
+  async close(): Promise<void> {
+    await this.db.destroy();
   }
 
-  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T, ...guard: SyncTransactionGuard<T>): T {
-    return this.context.runInTransaction(() => fn(this.repositories), ...guard);
+  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => Promise<T>): Promise<T> {
+    return this.context.runInTransaction(async (context) => fn(createSqliteRepositories(context)));
   }
 }
 
-export function openSqliteStore(options: OpenSqliteStoreOptions = {}): SqliteStore {
+export async function openSqliteStore(options: OpenSqliteStoreOptions = {}): Promise<SqliteStore> {
   const db = createSqliteDatabase({ databasePath: options.databasePath });
 
   if (options.migrate ?? true) {
-    migrateSqliteDatabase(db, options.migrationsDir);
+    await migrateSqliteDatabase(db, { plan: options.migrationPlan });
   }
 
   const context = new SqliteRepositoryContext({

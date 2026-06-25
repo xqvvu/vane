@@ -31,8 +31,9 @@
 | request context | `apps/console/src/server/runtime/request-context.ts` | 当前不加；直接使用 TanStack server headers 和 container accessor，只能从 server path 调用 |
 | dashboard session/auth 错误类型 | `apps/console/src/server/runtime/dashboard-session.ts` | 不加；纯后端类型/错误 |
 | SQLite connection/migration/context | `apps/console/src/infra/sqlite/{connection,migrate,context}.ts` | 直接触碰 driver/Node API 的模块加 |
+| SQLite Kysely schema types | `apps/console/src/infra/sqlite/schema.ts` | 不加；纯类型 |
 | SQLite repository/store/codecs/errors/types | `apps/console/src/infra/sqlite/**` | 默认不加；但前端仍不得导入 `#/infra/*` |
-| Better Auth server config / owner bootstrap | `apps/console/src/lib/*auth*.ts` | 直接触碰 Better Auth/env/secret 时加 |
+| Better Auth server config / owner bootstrap | `apps/console/src/lib/*auth*.ts` | 直接触碰 Better Auth/env/secret/server plugin 时加 |
 | browser-only implementation | `*.client.ts(x)` 或 `client-only` | 直接使用浏览器 API 时加 |
 
 判断标准：shared by default，server/client only by direct dependency。如果只是因为同文件混了共享 schema/type 和 server implementation 才需要 marker，应拆文件，把共享部分移到 `@vane/core` 或 feature `model/*`。
@@ -64,7 +65,7 @@ export const createSourceFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(CreateSourceCommandSchema)
   .handler(async ({ data, context }) => {
-    return context.dashboardRequest.container.createSourceService().createSource(data);
+    return (await context.dashboardRequest.container.createSourceService()).createSource(data);
   });
 ```
 

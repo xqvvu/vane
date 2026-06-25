@@ -118,7 +118,7 @@
   "configuration.portableConfig.exportCurrent": "Export current config",
   "configuration.portableConfig.applyImport": "Apply import",
   "configuration.portableConfig.confirmImportTitle": "Apply TOML import?",
-  "configuration.portableConfig.confirmImportDescription": "This will validate the editor contents and replace the current Sources, Destinations, Routes, and app settings. Plaintext secrets are not restored from exports.",
+  "configuration.portableConfig.confirmImportDescription": "This will validate the editor contents, replace current configuration, and skip plaintext secrets from exports",
   "configuration.portableConfig.cancelImport": "Cancel",
   "configuration.portableConfig.confirmImport": "Apply import",
   "configuration.importNotice.title": "Imported configuration",

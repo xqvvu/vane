@@ -4,9 +4,9 @@ export function getSqliteStore() {
   return getApplicationContainer().getSqliteStore();
 }
 
-export function createDefaultDeliveryWorkerDependencies() {
+export async function createDefaultDeliveryWorkerDependencies() {
   return {
-    store: getApplicationContainer().getSqliteStore(),
+    store: await getApplicationContainer().getSqliteStore(),
     destinations: getApplicationContainer().getDestinationRegistry(),
   };
 }

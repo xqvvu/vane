@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 
 import type { IsoDateTimeString } from "@vane/core";
 
-import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
-import { transaction, type SyncTransactionGuard } from "#/infra/sqlite/transaction.ts";
+import type { VaneSqliteExecutor, VaneSqliteTransaction } from "#/infra/sqlite/schema.ts";
+import { transaction } from "#/infra/sqlite/transaction.ts";
 
 export interface SqliteRepositoryContextOptions {
-  db: SqliteDatabase;
+  db: VaneSqliteExecutor;
   now?: () => IsoDateTimeString;
   ids?: Partial<{
     source: () => string;
@@ -20,7 +20,7 @@ export interface SqliteRepositoryContextOptions {
 }
 
 export class SqliteRepositoryContext {
-  readonly db: SqliteDatabase;
+  readonly db: VaneSqliteExecutor;
   readonly now: () => IsoDateTimeString;
   readonly ids: {
     source: () => string;
@@ -44,7 +44,19 @@ export class SqliteRepositoryContext {
     };
   }
 
-  runInTransaction<T>(fn: () => T, ...guard: SyncTransactionGuard<T>): T {
-    return transaction(this.db, fn, ...guard);
+  async runInTransaction<T>(fn: (context: SqliteRepositoryContext) => Promise<T>): Promise<T> {
+    if (this.db.isTransaction) {
+      return fn(this);
+    }
+
+    return transaction(this.db, async (tx) => fn(this.withDb(tx)));
+  }
+
+  private withDb(db: VaneSqliteTransaction): SqliteRepositoryContext {
+    return new SqliteRepositoryContext({
+      db,
+      now: this.now,
+      ids: this.ids,
+    });
   }
 }

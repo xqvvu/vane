@@ -1,7 +1,7 @@
 import { encodeJsonObject } from "@vane/core";
 import type { SourceSummary } from "@vane/core";
 
-import { rowOrUndefined, rowsAs, toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
+import { toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import {
   requireSource,
@@ -12,7 +12,6 @@ import {
 import type {
   CreateSourceInput,
   SourceRepository,
-  SourceRow,
   SourceRuntimeConfig,
   UpdateSourceInput,
 } from "#/infra/sqlite/repositories/source/source.interface.ts";
@@ -20,85 +19,87 @@ import type {
 export class SqliteSourceRepository implements SourceRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
-  list(): SourceSummary[] {
-    return rowsAs<SourceRow>(
-      this.context.db.prepare("SELECT * FROM sources ORDER BY name").all(),
-    ).map((row) => sourceSummaryFromRow(row));
+  async list(): Promise<SourceSummary[]> {
+    const rows = await this.context.db.selectFrom("sources").selectAll().orderBy("name").execute();
+
+    return rows.map((row) => sourceSummaryFromRow(row));
   }
 
-  listEnabled(): SourceSummary[] {
-    return rowsAs<SourceRow>(
-      this.context.db.prepare("SELECT * FROM sources WHERE enabled = 1 ORDER BY name").all(),
-    ).map((row) => sourceSummaryFromRow(row));
+  async listEnabled(): Promise<SourceSummary[]> {
+    const rows = await this.context.db
+      .selectFrom("sources")
+      .selectAll()
+      .where("enabled", "=", 1)
+      .orderBy("name")
+      .execute();
+
+    return rows.map((row) => sourceSummaryFromRow(row));
   }
 
-  get(id: string): SourceRuntimeConfig | null {
-    const row = rowOrUndefined<SourceRow>(
-      this.context.db.prepare("SELECT * FROM sources WHERE id = ?").get(id),
-    );
+  async get(id: string): Promise<SourceRuntimeConfig | null> {
+    const row = await this.context.db
+      .selectFrom("sources")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
     return row ? sourceRuntimeFromRow(row) : null;
   }
 
-  findByTokenHash(tokenHash: string): SourceRuntimeConfig | null {
-    const row = rowOrUndefined<SourceRow>(
-      this.context.db.prepare("SELECT * FROM sources WHERE token_hash = ?").get(tokenHash),
-    );
+  async findByTokenHash(tokenHash: string): Promise<SourceRuntimeConfig | null> {
+    const row = await this.context.db
+      .selectFrom("sources")
+      .selectAll()
+      .where("token_hash", "=", tokenHash)
+      .executeTakeFirst();
+
     return row ? sourceRuntimeFromRow(row) : null;
   }
 
-  create(input: CreateSourceInput): SourceSummary {
+  async create(input: CreateSourceInput): Promise<SourceSummary> {
     const now = this.context.now();
     const id = input.id ?? this.context.ids.source();
     const createdAt = input.createdAt ?? now;
     const updatedAt = input.updatedAt ?? createdAt;
 
-    this.context.db
-      .prepare(
-        `
-          INSERT INTO sources (id, name, provider, token_hash, enabled, config_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-      )
-      .run(
+    await this.context.db
+      .insertInto("sources")
+      .values({
         id,
-        input.name,
-        input.provider,
-        input.tokenHash,
-        toSqliteBoolean(input.enabled ?? true),
-        encodeJsonObject(input.config ?? {}),
-        createdAt,
-        updatedAt,
-      );
+        name: input.name,
+        provider: input.provider,
+        token_hash: input.tokenHash,
+        enabled: toSqliteBoolean(input.enabled ?? true),
+        config_json: encodeJsonObject(input.config ?? {}),
+        created_at: createdAt,
+        updated_at: updatedAt,
+      })
+      .execute();
 
-    return requireSource(this.get(id));
+    return sourceSummaryFromRuntime(requireSource(await this.get(id)));
   }
 
-  update(id: string, input: UpdateSourceInput): SourceSummary {
-    const current = requireSource(this.get(id));
+  async update(id: string, input: UpdateSourceInput): Promise<SourceSummary> {
+    const current = requireSource(await this.get(id));
     const updatedAt = input.updatedAt ?? this.context.now();
 
-    this.context.db
-      .prepare(
-        `
-          UPDATE sources
-          SET name = ?, provider = ?, token_hash = ?, enabled = ?, config_json = ?, updated_at = ?
-          WHERE id = ?
-        `,
-      )
-      .run(
-        input.name ?? current.name,
-        input.provider ?? current.provider,
-        input.tokenHash ?? current.tokenHash,
-        toSqliteBoolean(input.enabled ?? current.enabled),
-        encodeJsonObject(input.config ?? current.config),
-        updatedAt,
-        id,
-      );
+    await this.context.db
+      .updateTable("sources")
+      .set({
+        name: input.name ?? current.name,
+        provider: input.provider ?? current.provider,
+        token_hash: input.tokenHash ?? current.tokenHash,
+        enabled: toSqliteBoolean(input.enabled ?? current.enabled),
+        config_json: encodeJsonObject(input.config ?? current.config),
+        updated_at: updatedAt,
+      })
+      .where("id", "=", id)
+      .execute();
 
-    return sourceSummaryFromRuntime(requireSource(this.get(id)));
+    return sourceSummaryFromRuntime(requireSource(await this.get(id)));
   }
 
-  setEnabled(id: string, enabled: boolean): SourceSummary {
+  setEnabled(id: string, enabled: boolean): Promise<SourceSummary> {
     return this.update(id, { enabled });
   }
 }

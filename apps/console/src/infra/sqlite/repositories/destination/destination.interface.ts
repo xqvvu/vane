@@ -15,12 +15,12 @@ export interface DestinationRow {
 }
 
 export interface DestinationRepository {
-  list(): DestinationSummary[];
-  listEnabled(): DestinationSummary[];
-  get(id: string): DestinationRuntimeConfig | null;
-  create(input: CreateDestinationInput): DestinationSummary;
-  update(id: string, input: UpdateDestinationInput): DestinationSummary;
-  setEnabled(id: string, enabled: boolean): DestinationSummary;
+  list(): Promise<DestinationSummary[]>;
+  listEnabled(): Promise<DestinationSummary[]>;
+  get(id: string): Promise<DestinationRuntimeConfig | null>;
+  create(input: CreateDestinationInput): Promise<DestinationSummary>;
+  update(id: string, input: UpdateDestinationInput): Promise<DestinationSummary>;
+  setEnabled(id: string, enabled: boolean): Promise<DestinationSummary>;
 }
 
 export interface DestinationRuntimeConfig extends DestinationSummary {

@@ -422,10 +422,17 @@ Use shadcn for shared UI primitives and app composition.
 
 ## SQLite And Migrations
 
-- Put explicit migrations in `apps/console/src/infra/sqlite/migrations/`.
+- Put SQLite schema code in `apps/console/src/infra/sqlite/migrate/`.
 - Apply migrations through `apps/console/src/infra/sqlite/migrate.ts`.
 - Record applied migrations in `schema_migrations`.
-- Migrations move forward only. Do not edit old committed migrations.
+- During MVP, the database schema is not stable yet. Keep one complete baseline
+  step, `migrate/0001_initial_schema.ts`, and update that baseline as the MVP
+  schema changes.
+- Once a public release needs upgrade compatibility, switch back to forward-only
+  migration steps and do not edit old committed migrations.
+- Prefer Kysely schema/query builders for schema code. Keep Better Auth CLI
+  output beside the builders as a generated reference snapshot, not as runtime
+  SQL that business code executes directly.
 - Use one consistent timestamp representation across tables.
 - Business code should not scatter schema creation. Route handlers and server
   functions should delegate persistence to repositories or services.

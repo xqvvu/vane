@@ -118,7 +118,7 @@
   "configuration.portableConfig.exportCurrent": "导出当前配置",
   "configuration.portableConfig.applyImport": "应用导入",
   "configuration.portableConfig.confirmImportTitle": "确认应用 TOML 导入？",
-  "configuration.portableConfig.confirmImportDescription": "系统会先校验编辑器内容，再替换当前告警源、通知目标、路由和应用设置。导出的 TOML 不会恢复明文密钥。",
+  "configuration.portableConfig.confirmImportDescription": "系统会先校验编辑器内容，替换当前配置，并跳过导出中的明文密钥",
   "configuration.portableConfig.cancelImport": "取消",
   "configuration.portableConfig.confirmImport": "确认导入",
   "configuration.importNotice.title": "配置已导入",

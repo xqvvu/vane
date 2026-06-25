@@ -14,9 +14,9 @@ const runner = {
   stop: vi.fn<() => void>(),
 };
 const container = {
-  getSqliteStore: vi.fn<() => typeof store>(() => store),
+  getSqliteStore: vi.fn<() => Promise<typeof store>>(async () => store),
   getDestinationRegistry: vi.fn<() => typeof destinations>(() => destinations),
-  ensureDeliveryWorkerRunner: vi.fn<() => typeof runner>(() => runner),
+  ensureDeliveryWorkerRunner: vi.fn<() => Promise<typeof runner>>(async () => runner),
 };
 
 vi.mock("#/server/runtime/container.ts", () => ({
@@ -32,12 +32,12 @@ describe("application store facade", () => {
     const { createDefaultDeliveryWorkerDependencies, ensureDeliveryWorkerRunner, getSqliteStore } =
       await import("#/server/runtime/store.ts");
 
-    expect(getSqliteStore()).toBe(store);
-    expect(createDefaultDeliveryWorkerDependencies()).toEqual({
+    await expect(getSqliteStore()).resolves.toBe(store);
+    await expect(createDefaultDeliveryWorkerDependencies()).resolves.toEqual({
       store,
       destinations,
     });
-    expect(ensureDeliveryWorkerRunner()).toBe(runner);
+    await expect(ensureDeliveryWorkerRunner()).resolves.toBe(runner);
     expect(container.getSqliteStore).toHaveBeenCalledTimes(2);
     expect(container.getDestinationRegistry).toHaveBeenCalledTimes(1);
     expect(container.ensureDeliveryWorkerRunner).toHaveBeenCalledTimes(1);

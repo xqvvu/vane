@@ -27,8 +27,8 @@ Vane 的 MVP 约束不变：单进程、SQLite-first、server-only 后端运行�
 | `SqliteStore` | 默认 container 内懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、Settings 等仓储。 |
 | `ProviderRegistry` | 默认 container 内懒加载 | 默认来自 `createDefaultProviderRegistry()`，用于把 Source payload 解析为 normalized Event。 |
 | `DestinationRegistry` | 默认 container 内懒加载 | 默认来自 `createDefaultDestinationRegistry()`，用于校验 Destination config、preview 和 send。 |
-| Better Auth database | 默认 container 内懒加载 | 使用与 SQLite store 同一套 connection/migration 入口。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务 repository。 |
-| `VaneAuth` | 默认 container 内懒加载 | Better Auth server runtime，包含 HTTP handler 与 `api.getSession(...)`。 |
+| Better Auth database | 默认 container 内懒加载 | 使用与 SQLite store 同一套 Kysely-first connection/migration 入口。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务 repository。 |
+| `VaneAuth` | 默认 container 内懒加载 | Better Auth server runtime，通过 Kysely SQLite adapter 配置连接数据库，包含 HTTP handler 与 `api.getSession(...)`。 |
 | `DeliveryWorkerRunner` | 默认 container 内单例 | 由 `DeliveryWorker` + store + destination registry + env worker 配置组装，维持 MVP 的 in-process SQLite-backed delivery worker。 |
 | service factory | 每次调用新建 | `createSourceService()`、`createDestinationService()`、`createRouteService()`、`createAppSettingsService()`、`createConfigPortabilityService()`、`createWebhookIntakeService()`、`createDeliveryWorker()` 返回显式注入依赖的 service 实例。 |
 
@@ -102,7 +102,7 @@ export const createSourceFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(CreateSourceCommandSchema)
   .handler(async ({ data, context }) => {
-    return context.dashboardRequest.container.createSourceService().createSource(data);
+    return (await context.dashboardRequest.container.createSourceService()).createSource(data);
   });
 ```
 
@@ -120,7 +120,7 @@ export async function handleSourceWebhookPost(input: {
   request: Request;
 }): Promise<Response> {
   const context = createWebhookRequestContext({ request: input.request });
-  const service = context.container.createWebhookIntakeService();
+  const service = await context.container.createWebhookIntakeService();
 
   // 读取和限制 raw JSON payload 后，调用 WebhookIntakeService。
 }
@@ -133,7 +133,7 @@ Webhook intake 认证是 Source token / 额外共享密钥；它不会调用 `re
 Delivery worker 是进程级后台循环，默认通过 container 组装：
 
 ```ts
-const runner = getApplicationContainer().ensureDeliveryWorkerRunner();
+const runner = await getApplicationContainer().ensureDeliveryWorkerRunner();
 ```
 
 默认 container dispose 时必须停止该 runner。`container.ts` 在支持 HMR 的运行时中注册 `import.meta.hot.dispose(disposeApplicationContainer)`，避免开发模式热替换后遗留旧 interval 和旧 SQLite 连接。
@@ -141,7 +141,7 @@ const runner = getApplicationContainer().ensureDeliveryWorkerRunner();
 手动触发 worker（例如 dashboard 的 run-once server function）通过 request container 创建临时 worker：
 
 ```ts
-const worker = context.dashboardRequest.container.createDeliveryWorker();
+const worker = await context.dashboardRequest.container.createDeliveryWorker();
 
 return worker.runOnce({ limit });
 ```

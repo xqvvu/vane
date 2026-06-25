@@ -1,15 +1,8 @@
-import type { SqliteDatabase } from "#/infra/sqlite/connection.ts";
-
-type PromiseLikeReturn<T> = Extract<T, PromiseLike<unknown>>;
-
-export type SyncTransactionGuard<T> = [PromiseLikeReturn<T>] extends [never]
-  ? []
-  : ["SQLite transaction callbacks must be synchronous"];
+import type { VaneSqliteKysely, VaneSqliteTransaction } from "#/infra/sqlite/schema.ts";
 
 export function transaction<T>(
-  db: SqliteDatabase,
-  fn: () => T,
-  ..._guard: SyncTransactionGuard<T>
-): T {
-  return db.transaction(fn).immediate();
+  db: VaneSqliteKysely,
+  fn: (tx: VaneSqliteTransaction) => Promise<T>,
+): Promise<T> {
+  return db.transaction().execute(fn);
 }

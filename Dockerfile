@@ -31,13 +31,13 @@ ENV VANE_DATABASE_PATH=/data/vane.sqlite
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends gosu \
+  && apt-get install -y --no-install-recommends gosu curl \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /data /app \
   && chown -R node:node /data /app
 
 COPY --from=build --chown=node:node /app/apps/console/.output ./.output
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

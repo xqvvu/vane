@@ -58,7 +58,7 @@ export class DeliveryExecution {
       );
 
       if (sendResult.ok) {
-        this.store.deliveries.markSucceeded({
+        await this.store.deliveries.markSucceeded({
           deliveryId: delivery.job.id,
           attemptId: delivery.attempt.id,
           renderedPayload: sendResult.renderedPayload,
@@ -70,7 +70,7 @@ export class DeliveryExecution {
         return "succeeded";
       }
 
-      return this.markFailed(delivery, {
+      return await this.markFailed(delivery, {
         error: sendResult.errorMessage,
         responseStatus: sendResult.statusCode ?? undefined,
         responseBody: redactOptionalText(sendResult.responseBody),
@@ -78,14 +78,14 @@ export class DeliveryExecution {
         finishedAt: now,
       });
     } catch (error) {
-      return this.markFailed(delivery, {
+      return await this.markFailed(delivery, {
         error: redactText(error instanceof Error ? error.message : String(error)),
         finishedAt: now,
       });
     }
   }
 
-  private markFailed(
+  private async markFailed(
     delivery: ClaimedDelivery,
     input: {
       error: string;
@@ -94,9 +94,9 @@ export class DeliveryExecution {
       responseBody?: string;
       finishedAt: string;
     },
-  ): "retrying" | "failed" {
+  ): Promise<"retrying" | "failed"> {
     const retryAt = this.nextRetryAt(delivery, input.finishedAt, input.retryHint);
-    const updated = this.store.deliveries.markFailed({
+    const updated = await this.store.deliveries.markFailed({
       deliveryId: delivery.job.id,
       attemptId: delivery.attempt.id,
       error: redactText(input.error),

@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { describe, expect, it } from "vitest";
 
 import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
@@ -5,41 +6,47 @@ import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import { transaction } from "#/infra/sqlite/transaction.ts";
 
 describe("sqlite transactions", () => {
-  it("rolls nested transactions back to a savepoint without aborting the outer transaction", () => {
+  it("rolls back a failed Kysely transaction", async () => {
+    const db = createSqliteDatabase({ databasePath: ":memory:" });
+
+    try {
+      await sql`CREATE TABLE items (id TEXT PRIMARY KEY)`.execute(db);
+
+      await expect(
+        transaction(db, async (tx) => {
+          await sql`INSERT INTO items (id) VALUES (${"outer"})`.execute(tx);
+          throw new Error("transaction failure");
+        }),
+      ).rejects.toThrow("transaction failure");
+
+      const result = await sql<{ id: string }>`SELECT id FROM items ORDER BY id`.execute(db);
+
+      expect(result.rows).toEqual([]);
+    } finally {
+      await db.destroy();
+    }
+  });
+
+  it("reuses the active transaction context for nested repository transactions", async () => {
     const db = createSqliteDatabase({ databasePath: ":memory:" });
     const context = new SqliteRepositoryContext({ db });
 
-    db.exec("CREATE TABLE items (id TEXT PRIMARY KEY)");
+    try {
+      await sql`CREATE TABLE items (id TEXT PRIMARY KEY)`.execute(db);
 
-    context.runInTransaction(() => {
-      db.prepare("INSERT INTO items (id) VALUES (?)").run("outer");
+      await context.runInTransaction(async (outer) => {
+        await sql`INSERT INTO items (id) VALUES (${"outer"})`.execute(outer.db);
 
-      expect(() =>
-        context.runInTransaction(() => {
-          db.prepare("INSERT INTO items (id) VALUES (?)").run("inner");
-          throw new Error("nested failure");
-        }),
-      ).toThrow("nested failure");
+        await outer.runInTransaction(async (inner) => {
+          await sql`INSERT INTO items (id) VALUES (${"inner"})`.execute(inner.db);
+        });
+      });
 
-      db.prepare("INSERT INTO items (id) VALUES (?)").run("after");
-    });
+      const result = await sql<{ id: string }>`SELECT id FROM items ORDER BY id`.execute(db);
 
-    expect(db.prepare("SELECT id FROM items ORDER BY id").all()).toEqual([
-      { id: "after" },
-      { id: "outer" },
-    ]);
-
-    db.close();
-  });
-
-  it("rejects async transaction callbacks", () => {
-    const db = createSqliteDatabase({ databasePath: ":memory:" });
-    const asyncCallback = (() => Promise.resolve("async")) as () => unknown;
-
-    expect(() => transaction(db, asyncCallback)).toThrow(
-      "Transaction function cannot return a promise",
-    );
-
-    db.close();
+      expect(result.rows).toEqual([{ id: "inner" }, { id: "outer" }]);
+    } finally {
+      await db.destroy();
+    }
   });
 });

@@ -12,7 +12,7 @@ export class AppSettingsService {
     this.store = options.store;
   }
 
-  updateAppSettings(command: UpdateAppSettingsCommand): UpdateAppSettingsResult {
+  async updateAppSettings(command: UpdateAppSettingsCommand): Promise<UpdateAppSettingsResult> {
     const input = UpdateAppSettingsCommandSchema.parse(command);
 
     return this.store.settings.update({

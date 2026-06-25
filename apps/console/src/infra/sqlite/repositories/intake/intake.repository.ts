@@ -7,7 +7,6 @@ import {
 } from "@vane/core";
 import type { EventRecord } from "@vane/core";
 
-import { rowOrUndefined } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import {
   eventFromRow,
@@ -15,7 +14,6 @@ import {
   requireEvent,
 } from "#/infra/sqlite/repositories/intake/intake.helpers.ts";
 import type {
-  EventRow,
   IntakeRepository,
   PruneRawPayloadsInput,
   RecordEventInput,
@@ -24,7 +22,7 @@ import type {
 export class SqliteIntakeRepository implements IntakeRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
-  recordEvent(input: RecordEventInput): EventRecord {
+  async recordEvent(input: RecordEventInput): Promise<EventRecord> {
     const now = this.context.now();
     const id = input.id ?? this.context.ids.event();
     const receivedAt = input.receivedAt ?? now;
@@ -36,73 +34,55 @@ export class SqliteIntakeRepository implements IntakeRepository {
       ? RouteMatchResultsSchema.parse(input.routeMatches)
       : null;
 
-    this.context.db
-      .prepare(
-        `
-          INSERT INTO events (
-            id,
-            source_id,
-            idempotency_key,
-            fingerprint,
-            severity,
-            status,
-            title,
-            message,
-            labels_json,
-            normalized_json,
-            provider_metadata_json,
-            raw_payload_json,
-            raw_headers_json,
-            route_matches_json,
-            received_at,
-            occurred_at,
-            created_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-      )
-      .run(
+    await this.context.db
+      .insertInto("events")
+      .values({
         id,
-        input.sourceId,
-        input.idempotencyKey,
-        normalized.fingerprint,
-        normalized.severity,
-        normalized.status,
-        normalized.title,
-        normalized.message,
-        encodeJsonObject(normalized.labels),
-        encodeJson(normalized),
-        encodeJsonObject(providerMetadata),
-        encodeJson(input.rawPayload),
-        encodeJsonObject(rawHeaders),
-        routeMatches === null ? null : encodeSchemaJson(RouteMatchResultsSchema, routeMatches),
-        receivedAt,
-        normalized.occurredAt,
-        createdAt,
-      );
+        source_id: input.sourceId,
+        idempotency_key: input.idempotencyKey,
+        fingerprint: normalized.fingerprint,
+        severity: normalized.severity,
+        status: normalized.status,
+        title: normalized.title,
+        message: normalized.message,
+        labels_json: encodeJsonObject(normalized.labels),
+        normalized_json: encodeJson(normalized),
+        provider_metadata_json: encodeJsonObject(providerMetadata),
+        raw_payload_json: encodeJson(input.rawPayload),
+        raw_headers_json: encodeJsonObject(rawHeaders),
+        route_matches_json:
+          routeMatches === null ? null : encodeSchemaJson(RouteMatchResultsSchema, routeMatches),
+        received_at: receivedAt,
+        occurred_at: normalized.occurredAt,
+        created_at: createdAt,
+      })
+      .execute();
 
-    return requireEvent(this.get(id));
+    return requireEvent(await this.get(id));
   }
 
-  get(id: string): EventRecord | null {
-    const row = rowOrUndefined<EventRow>(
-      this.context.db.prepare("SELECT * FROM events WHERE id = ?").get(id),
-    );
+  async get(id: string): Promise<EventRecord | null> {
+    const row = await this.context.db
+      .selectFrom("events")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
     return row ? eventFromRow(row) : null;
   }
 
-  pruneRawPayloads(input: PruneRawPayloadsInput): number {
+  async pruneRawPayloads(input: PruneRawPayloadsInput): Promise<number> {
     const prunedPayload = encodeJson(PRUNED_RAW_PAYLOAD);
-    const result = this.context.db
-      .prepare(
-        `
-          UPDATE events
-          SET raw_payload_json = ?, raw_headers_json = ?
-          WHERE received_at < ? AND raw_payload_json != ?
-        `,
-      )
-      .run(prunedPayload, encodeJsonObject({}), input.before, prunedPayload);
+    const result = await this.context.db
+      .updateTable("events")
+      .set({
+        raw_payload_json: prunedPayload,
+        raw_headers_json: encodeJsonObject({}),
+      })
+      .where("received_at", "<", input.before)
+      .where("raw_payload_json", "!=", prunedPayload)
+      .executeTakeFirst();
 
-    return result.changes;
+    return Number(result.numUpdatedRows);
   }
 }

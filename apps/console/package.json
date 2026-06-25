@@ -9,6 +9,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
+    "auth:schema": "pnpm dlx auth@latest generate --config src/lib/auth-cli.ts --adapter kysely --dialect sqlite --output src/infra/sqlite/migrate/better-auth.generated.sql --yes",
     "test": "vitest run",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

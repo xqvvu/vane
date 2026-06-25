@@ -33,11 +33,10 @@ export const listOperationsFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
   .validator(ListOperationsInputSchema)
   .handler(async ({ data, context }) => {
-    const store = context.dashboardRequest.container.getSqliteStore();
+    const store = await context.dashboardRequest.container.getSqliteStore();
     const limit = data?.limit ?? 20;
-
-    return {
-      events: store.history.listEvents({
+    const [events, deliveries] = await Promise.all([
+      store.history.listEvents({
         limit,
         sourceId: data?.sourceId,
         severity: data?.severity,
@@ -45,7 +44,7 @@ export const listOperationsFn = createServerFn({ method: "GET" })
         q: data?.q,
         cursor: data?.eventCursor,
       }),
-      deliveries: store.history.listDeliveries({
+      store.history.listDeliveries({
         limit,
         sourceId: data?.sourceId,
         severity: data?.severity,
@@ -55,6 +54,11 @@ export const listOperationsFn = createServerFn({ method: "GET" })
         q: data?.q,
         cursor: data?.deliveryCursor,
       }),
+    ]);
+
+    return {
+      events,
+      deliveries,
     };
   });
 
@@ -62,21 +66,21 @@ export const getEventDetailFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
   .validator(DetailInputSchema)
   .handler(async ({ data, context }) =>
-    context.dashboardRequest.container.getSqliteStore().history.getEventDetail(data.id),
+    (await context.dashboardRequest.container.getSqliteStore()).history.getEventDetail(data.id),
   );
 
 export const getDeliveryDetailFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
   .validator(DetailInputSchema)
   .handler(async ({ data, context }) =>
-    context.dashboardRequest.container.getSqliteStore().deliveries.get(data.id),
+    (await context.dashboardRequest.container.getSqliteStore()).deliveries.get(data.id),
   );
 
 export const retryDeliveryFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(DetailInputSchema)
   .handler(async ({ data, context }) => {
-    return context.dashboardRequest.container.getSqliteStore().deliveries.retryNow({
+    return (await context.dashboardRequest.container.getSqliteStore()).deliveries.retryNow({
       deliveryId: data.id,
     });
   });
@@ -86,7 +90,7 @@ export const runDeliveryWorkerFn = createServerFn({ method: "POST" })
   .validator(RunWorkerInputSchema)
   .handler(async ({ data, context }) => {
     const container = context.dashboardRequest.container;
-    const worker = container.createDeliveryWorker();
+    const worker = await container.createDeliveryWorker();
     const result = await worker.runOnce({
       limit: data?.limit ?? 10,
     });
@@ -94,6 +98,6 @@ export const runDeliveryWorkerFn = createServerFn({ method: "POST" })
     return {
       ...result,
       health: worker.getHealth(),
-      runnerHealth: container.ensureDeliveryWorkerRunner().getHealth(),
+      runnerHealth: (await container.ensureDeliveryWorkerRunner()).getHealth(),
     };
   });

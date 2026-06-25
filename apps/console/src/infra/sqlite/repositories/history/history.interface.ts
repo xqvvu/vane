@@ -10,9 +10,9 @@ import type { Page } from "@vane/core";
 export type { DeliveryListItem, EventDetail, EventDetailDelivery, EventListItem } from "@vane/core";
 
 export interface HistoryRepository {
-  listEvents(query?: EventListQuery): Page<EventListItem>;
-  getEventDetail(eventId: string): EventDetail | null;
-  listDeliveries(query?: DeliveryListQuery): Page<DeliveryListItem>;
+  listEvents(query?: EventListQuery): Promise<Page<EventListItem>>;
+  getEventDetail(eventId: string): Promise<EventDetail | null>;
+  listDeliveries(query?: DeliveryListQuery): Promise<Page<DeliveryListItem>>;
 }
 
 export interface EventListQuery {

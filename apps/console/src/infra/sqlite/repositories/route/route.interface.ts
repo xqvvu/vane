@@ -14,12 +14,12 @@ export interface RouteRow {
 }
 
 export interface RouteRepository {
-  list(): RouteDefinition[];
-  listEnabled(): RouteDefinition[];
-  get(id: string): RouteDefinition | null;
-  create(input: CreateRouteInput): RouteDefinition;
-  update(id: string, input: UpdateRouteInput): RouteDefinition;
-  setEnabled(id: string, enabled: boolean): RouteDefinition;
+  list(): Promise<RouteDefinition[]>;
+  listEnabled(): Promise<RouteDefinition[]>;
+  get(id: string): Promise<RouteDefinition | null>;
+  create(input: CreateRouteInput): Promise<RouteDefinition>;
+  update(id: string, input: UpdateRouteInput): Promise<RouteDefinition>;
+  setEnabled(id: string, enabled: boolean): Promise<RouteDefinition>;
 }
 
 export interface CreateRouteInput {

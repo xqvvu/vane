@@ -1,8 +1,9 @@
+import { sql } from "kysely";
+
 import type { DeliveryListItem, EventDetail, EventListItem } from "@vane/core";
 import { evaluateRouteMatch } from "@vane/core";
 import type { Page } from "@vane/core";
 
-import { rowAs } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import type { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository.ts";
 import {
@@ -33,83 +34,75 @@ export class SqliteHistoryRepository implements HistoryRepository {
     _deliveries: SqliteDeliveryRepository,
   ) {}
 
-  listEvents(query: EventListQuery = {}): Page<EventListItem> {
+  async listEvents(query: EventListQuery = {}): Promise<Page<EventListItem>> {
     const limit = query.limit ?? 50;
-    const filters: string[] = [];
-    const params: Array<string | number> = [];
+    let builder = this.context.db
+      .selectFrom("events")
+      .innerJoin("sources", "sources.id", "events.source_id")
+      .leftJoin("deliveries", "deliveries.event_id", "events.id")
+      .select([
+        "events.id as id",
+        "events.source_id as source_id",
+        "sources.name as source_name",
+        "events.severity as severity",
+        "events.status as status",
+        "events.title as title",
+        "events.fingerprint as fingerprint",
+        "events.received_at as received_at",
+        sql<number>`SUM(CASE WHEN deliveries.state = 'pending' THEN 1 ELSE 0 END)`.as(
+          "pending_count",
+        ),
+        sql<number>`SUM(CASE WHEN deliveries.state = 'running' THEN 1 ELSE 0 END)`.as(
+          "running_count",
+        ),
+        sql<number>`SUM(CASE WHEN deliveries.state = 'succeeded' THEN 1 ELSE 0 END)`.as(
+          "succeeded_count",
+        ),
+        sql<number>`SUM(CASE WHEN deliveries.state = 'failed' THEN 1 ELSE 0 END)`.as(
+          "failed_count",
+        ),
+      ])
+      .groupBy("events.id")
+      .orderBy("events.received_at", "desc")
+      .orderBy("events.id", "desc")
+      .limit(limit + 1);
 
     if (query.sourceId) {
-      filters.push("events.source_id = ?");
-      params.push(query.sourceId);
+      builder = builder.where("events.source_id", "=", query.sourceId);
     }
 
     if (query.severity) {
-      filters.push("events.severity = ?");
-      params.push(query.severity);
+      builder = builder.where("events.severity", "=", query.severity);
     }
 
     if (query.status) {
-      filters.push("events.status = ?");
-      params.push(query.status);
+      builder = builder.where("events.status", "=", query.status);
     }
 
     if (query.q) {
-      filters.push("(events.title LIKE ? OR events.message LIKE ?)");
-      params.push(`%${query.q}%`, `%${query.q}%`);
+      const q = `%${query.q}%`;
+
+      builder = builder.where((eb) =>
+        eb.or([eb("events.title", "like", q), eb("events.message", "like", q)]),
+      );
     }
 
     if (query.cursor) {
       const cursor = decodeHistoryCursor(query.cursor);
 
       if (cursor.id) {
-        filters.push("(events.received_at < ? OR (events.received_at = ? AND events.id < ?))");
-        params.push(cursor.time, cursor.time, cursor.id);
+        builder = builder.where((eb) =>
+          eb.or([
+            eb("events.received_at", "<", cursor.time),
+            eb.and([eb("events.received_at", "=", cursor.time), eb("events.id", "<", cursor.id)]),
+          ]),
+        );
       } else {
-        filters.push("events.received_at < ?");
-        params.push(cursor.time);
+        builder = builder.where("events.received_at", "<", cursor.time);
       }
     }
 
-    const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
-    const rows = this.context.db
-      .prepare(
-        `
-          SELECT
-            events.id,
-            events.source_id,
-            sources.name AS source_name,
-            events.severity,
-            events.status,
-            events.title,
-            events.fingerprint,
-            events.received_at,
-            SUM(CASE WHEN deliveries.state = 'pending' THEN 1 ELSE 0 END) AS pending_count,
-            SUM(CASE WHEN deliveries.state = 'running' THEN 1 ELSE 0 END) AS running_count,
-            SUM(CASE WHEN deliveries.state = 'succeeded' THEN 1 ELSE 0 END) AS succeeded_count,
-            SUM(CASE WHEN deliveries.state = 'failed' THEN 1 ELSE 0 END) AS failed_count
-          FROM events
-          JOIN sources ON sources.id = events.source_id
-          LEFT JOIN deliveries ON deliveries.event_id = events.id
-          ${where}
-          GROUP BY events.id
-          ORDER BY events.received_at DESC, events.id DESC
-          LIMIT ?
-        `,
-      )
-      .all(...params, limit + 1) as Array<{
-      id: string;
-      source_id: string;
-      source_name: string;
-      severity: EventListItem["severity"];
-      status: EventListItem["status"];
-      title: string;
-      fingerprint: string;
-      received_at: string;
-      pending_count: number | null;
-      running_count: number | null;
-      succeeded_count: number | null;
-      failed_count: number | null;
-    }>;
+    const rows = await builder.execute();
     const pageRows = rows.slice(0, limit);
 
     return {
@@ -136,128 +129,108 @@ export class SqliteHistoryRepository implements HistoryRepository {
     };
   }
 
-  getEventDetail(eventId: string): EventDetail | null {
-    const event = this.intake.get(eventId);
+  async getEventDetail(eventId: string): Promise<EventDetail | null> {
+    const event = await this.intake.get(eventId);
 
     if (!event) {
       return null;
     }
 
-    const source = sourceSummaryFromRuntime(requireSource(this.sources.get(event.sourceId)));
+    const source = sourceSummaryFromRuntime(requireSource(await this.sources.get(event.sourceId)));
     const routeMatches =
       event.routeMatches ??
-      this.routes.list().map((route) =>
+      (await this.routes.list()).map((route) =>
         evaluateRouteMatch(route, {
           sourceId: event.sourceId,
           event: event.normalized,
         }),
       );
-    const deliveries = this.context.db
-      .prepare(
-        `
-          SELECT
-            deliveries.*,
-            destinations.name AS destination_name,
-            routes.name AS route_name
-          FROM deliveries
-          JOIN destinations ON destinations.id = deliveries.destination_id
-          LEFT JOIN routes ON routes.id = deliveries.route_id
-          WHERE deliveries.event_id = ?
-          ORDER BY deliveries.created_at
-        `,
-      )
-      .all(eventId)
-      .map((row) => eventDetailDeliveryFromRow(rowAs<EventDetailDeliveryRow>(row)));
+    const deliveries = (
+      await this.context.db
+        .selectFrom("deliveries")
+        .innerJoin("destinations", "destinations.id", "deliveries.destination_id")
+        .leftJoin("routes", "routes.id", "deliveries.route_id")
+        .selectAll("deliveries")
+        .select(["destinations.name as destination_name", "routes.name as route_name"])
+        .where("deliveries.event_id", "=", eventId)
+        .orderBy("deliveries.created_at")
+        .execute()
+    ).map((row) => eventDetailDeliveryFromRow(row as EventDetailDeliveryRow));
 
     return { event, source, routeMatches, deliveries };
   }
 
-  listDeliveries(query: DeliveryListQuery = {}): Page<DeliveryListItem> {
+  async listDeliveries(query: DeliveryListQuery = {}): Promise<Page<DeliveryListItem>> {
     const limit = query.limit ?? 50;
-    const filters: string[] = [];
-    const params: Array<string | number> = [];
+    let builder = this.context.db
+      .selectFrom("deliveries")
+      .innerJoin("events", "events.id", "deliveries.event_id")
+      .innerJoin("sources", "sources.id", "events.source_id")
+      .innerJoin("destinations", "destinations.id", "deliveries.destination_id")
+      .leftJoin("routes", "routes.id", "deliveries.route_id")
+      .select([
+        "deliveries.id as id",
+        "deliveries.event_id as event_id",
+        "sources.name as source_name",
+        "destinations.name as destination_name",
+        "routes.name as route_name",
+        "deliveries.state as state",
+        "deliveries.attempt_count as attempt_count",
+        "deliveries.next_attempt_at as next_attempt_at",
+        "deliveries.last_error as last_error",
+        "deliveries.updated_at as updated_at",
+      ])
+      .orderBy("deliveries.updated_at", "desc")
+      .orderBy("deliveries.id", "desc")
+      .limit(limit + 1);
 
     if (query.sourceId) {
-      filters.push("events.source_id = ?");
-      params.push(query.sourceId);
+      builder = builder.where("events.source_id", "=", query.sourceId);
     }
 
     if (query.severity) {
-      filters.push("events.severity = ?");
-      params.push(query.severity);
+      builder = builder.where("events.severity", "=", query.severity);
     }
 
     if (query.status) {
-      filters.push("events.status = ?");
-      params.push(query.status);
+      builder = builder.where("events.status", "=", query.status);
     }
 
     if (query.destinationId) {
-      filters.push("deliveries.destination_id = ?");
-      params.push(query.destinationId);
+      builder = builder.where("deliveries.destination_id", "=", query.destinationId);
     }
 
     if (query.state) {
-      filters.push("deliveries.state = ?");
-      params.push(query.state);
+      builder = builder.where("deliveries.state", "=", query.state);
     }
 
     if (query.q) {
-      filters.push("(events.title LIKE ? OR events.message LIKE ?)");
-      params.push(`%${query.q}%`, `%${query.q}%`);
+      const q = `%${query.q}%`;
+
+      builder = builder.where((eb) =>
+        eb.or([eb("events.title", "like", q), eb("events.message", "like", q)]),
+      );
     }
 
     if (query.cursor) {
       const cursor = decodeHistoryCursor(query.cursor);
 
       if (cursor.id) {
-        filters.push(
-          "(deliveries.updated_at < ? OR (deliveries.updated_at = ? AND deliveries.id < ?))",
+        builder = builder.where((eb) =>
+          eb.or([
+            eb("deliveries.updated_at", "<", cursor.time),
+            eb.and([
+              eb("deliveries.updated_at", "=", cursor.time),
+              eb("deliveries.id", "<", cursor.id),
+            ]),
+          ]),
         );
-        params.push(cursor.time, cursor.time, cursor.id);
       } else {
-        filters.push("deliveries.updated_at < ?");
-        params.push(cursor.time);
+        builder = builder.where("deliveries.updated_at", "<", cursor.time);
       }
     }
 
-    const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
-    const rows = this.context.db
-      .prepare(
-        `
-          SELECT
-            deliveries.id,
-            deliveries.event_id,
-            sources.name AS source_name,
-            destinations.name AS destination_name,
-            routes.name AS route_name,
-            deliveries.state,
-            deliveries.attempt_count,
-            deliveries.next_attempt_at,
-            deliveries.last_error,
-            deliveries.updated_at
-          FROM deliveries
-          JOIN events ON events.id = deliveries.event_id
-          JOIN sources ON sources.id = events.source_id
-          JOIN destinations ON destinations.id = deliveries.destination_id
-          LEFT JOIN routes ON routes.id = deliveries.route_id
-          ${where}
-          ORDER BY deliveries.updated_at DESC, deliveries.id DESC
-          LIMIT ?
-        `,
-      )
-      .all(...params, limit + 1) as Array<{
-      id: string;
-      event_id: string;
-      source_name: string;
-      destination_name: string;
-      route_name: string | null;
-      state: DeliveryListItem["state"];
-      attempt_count: number;
-      next_attempt_at: string | null;
-      last_error: string | null;
-      updated_at: string;
-    }>;
+    const rows = await builder.execute();
     const pageRows = rows.slice(0, limit);
 
     return {

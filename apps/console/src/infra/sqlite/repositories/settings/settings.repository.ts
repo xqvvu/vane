@@ -11,43 +11,50 @@ import type {
 export class SqliteSettingsRepository implements SettingsRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
-  get(): AppSettings {
+  async get(): Promise<AppSettings> {
     return {
-      rawPayloadRetentionDays: this.getNumberSetting(
+      rawPayloadRetentionDays: await this.getNumberSetting(
         RAW_PAYLOAD_RETENTION_DAYS_KEY,
         DEFAULT_RAW_PAYLOAD_RETENTION_DAYS,
       ),
     };
   }
 
-  update(input: Partial<AppSettings>): AppSettings {
+  async update(input: Partial<AppSettings>): Promise<AppSettings> {
     if (input.rawPayloadRetentionDays !== undefined) {
-      this.setNumberSetting(RAW_PAYLOAD_RETENTION_DAYS_KEY, input.rawPayloadRetentionDays);
+      await this.setNumberSetting(RAW_PAYLOAD_RETENTION_DAYS_KEY, input.rawPayloadRetentionDays);
     }
 
     return this.get();
   }
 
-  private getNumberSetting(key: string, fallback: number): number {
-    const row = this.context.db.prepare("SELECT value FROM settings WHERE key = ?").get(key) as
-      | { value: string }
-      | undefined;
+  private async getNumberSetting(key: string, fallback: number): Promise<number> {
+    const row = await this.context.db
+      .selectFrom("settings")
+      .select("value")
+      .where("key", "=", key)
+      .executeTakeFirst();
     const value = row ? Number(row.value) : fallback;
 
     return Number.isFinite(value) ? value : fallback;
   }
 
-  private setNumberSetting(key: string, value: number): void {
+  private async setNumberSetting(key: string, value: number): Promise<void> {
     const now = this.context.now();
 
-    this.context.db
-      .prepare(
-        `
-          INSERT INTO settings (key, value, updated_at)
-          VALUES (?, ?, ?)
-          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-        `,
+    await this.context.db
+      .insertInto("settings")
+      .values({
+        key,
+        value: String(value),
+        updated_at: now,
+      })
+      .onConflict((oc) =>
+        oc.column("key").doUpdateSet({
+          value: String(value),
+          updated_at: now,
+        }),
       )
-      .run(key, String(value), now);
+      .execute();
   }
 }

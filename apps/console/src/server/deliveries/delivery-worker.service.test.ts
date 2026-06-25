@@ -7,7 +7,7 @@ import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";
 
 const now = "2026-06-09T08:00:00.000Z";
 
-function createStore() {
+async function createStore() {
   let nextId = 0;
 
   return openSqliteStore({
@@ -21,14 +21,17 @@ function createStore() {
   });
 }
 
-function seedDelivery(store: ReturnType<typeof createStore>, input: { maxAttempts?: number } = {}) {
-  store.sources.create({
+async function seedDelivery(
+  store: Awaited<ReturnType<typeof createStore>>,
+  input: { maxAttempts?: number } = {},
+) {
+  await store.sources.create({
     id: "source-1",
     name: "Generic source",
     provider: "generic",
     tokenHash: "token-hash",
   });
-  store.destinations.create({
+  await store.destinations.create({
     id: "destination-1",
     name: "Ops webhook",
     kind: "generic_webhook",
@@ -36,12 +39,12 @@ function seedDelivery(store: ReturnType<typeof createStore>, input: { maxAttempt
       url: "https://example.test/webhook",
     },
   });
-  const route = store.routes.create({
+  const route = await store.routes.create({
     id: "route-1",
     name: "All alerts",
     destinationIds: ["destination-1"],
   });
-  const event = store.intake.recordEvent({
+  const event = await store.intake.recordEvent({
     sourceId: "source-1",
     idempotencyKey: "request-1",
     normalized: {
@@ -55,7 +58,7 @@ function seedDelivery(store: ReturnType<typeof createStore>, input: { maxAttempt
     },
     rawPayload: {},
   });
-  const enqueue = store.deliveries.enqueueForEvent({
+  const enqueue = await store.deliveries.enqueueForEvent({
     event,
     matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
     dedupeWindowStartsAt: "2026-06-09T07:55:00.000Z",
@@ -67,8 +70,8 @@ function seedDelivery(store: ReturnType<typeof createStore>, input: { maxAttempt
 
 describe("delivery worker", () => {
   it("sends claimed deliveries and records successful attempts", async () => {
-    const store = createStore();
-    const delivery = seedDelivery(store);
+    const store = await createStore();
+    const delivery = await seedDelivery(store);
     const worker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
@@ -83,7 +86,7 @@ describe("delivery worker", () => {
     });
 
     const result = await worker.runOnce();
-    const detail = store.deliveries.get(delivery.id);
+    const detail = await store.deliveries.get(delivery.id);
 
     expect(result).toEqual({
       claimed: 1,
@@ -111,19 +114,19 @@ describe("delivery worker", () => {
       },
     ]);
 
-    store.close();
+    await store.close();
   });
 
   it("sends Feishu deliveries through the default destination registry", async () => {
-    const store = createStore();
+    const store = await createStore();
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Grafana source",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Feishu SRE",
       kind: "feishu",
@@ -131,12 +134,12 @@ describe("delivery worker", () => {
         webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
       },
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "Critical to Feishu",
       destinationIds: ["destination-1"],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: "request-1",
       normalized: {
@@ -150,7 +153,7 @@ describe("delivery worker", () => {
       },
       rawPayload: {},
     });
-    const enqueue = store.deliveries.enqueueForEvent({
+    const enqueue = await store.deliveries.enqueueForEvent({
       event,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-09T07:55:00.000Z",
@@ -173,7 +176,7 @@ describe("delivery worker", () => {
     });
 
     const result = await worker.runOnce();
-    const detail = store.deliveries.get(enqueue.created[0]!.id);
+    const detail = await store.deliveries.get(enqueue.created[0]!.id);
 
     expect(result).toEqual({
       claimed: 1,
@@ -192,19 +195,19 @@ describe("delivery worker", () => {
       },
     });
 
-    store.close();
+    await store.close();
   });
 
   it("sends Slack deliveries through the default destination registry", async () => {
-    const store = createStore();
+    const store = await createStore();
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Alertmanager source",
       provider: "alertmanager",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Slack SRE",
       kind: "slack",
@@ -212,12 +215,12 @@ describe("delivery worker", () => {
         webhookUrl: "https://hooks.slack.com/services/example",
       },
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "Critical to Slack",
       destinationIds: ["destination-1"],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: "request-1",
       normalized: {
@@ -231,7 +234,7 @@ describe("delivery worker", () => {
       },
       rawPayload: {},
     });
-    const enqueue = store.deliveries.enqueueForEvent({
+    const enqueue = await store.deliveries.enqueueForEvent({
       event,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-09T07:55:00.000Z",
@@ -254,7 +257,7 @@ describe("delivery worker", () => {
     });
 
     const result = await worker.runOnce();
-    const detail = store.deliveries.get(enqueue.created[0]!.id);
+    const detail = await store.deliveries.get(enqueue.created[0]!.id);
 
     expect(result).toEqual({
       claimed: 1,
@@ -271,19 +274,19 @@ describe("delivery worker", () => {
       blocks: expect.any(Array),
     });
 
-    store.close();
+    await store.close();
   });
 
   it("sends email deliveries through the default destination registry", async () => {
-    const store = createStore();
+    const store = await createStore();
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Uptime Kuma source",
       provider: "uptime_kuma",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Email SRE",
       kind: "email",
@@ -294,12 +297,12 @@ describe("delivery worker", () => {
         subjectPrefix: "[Vane]",
       },
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "Critical to email",
       destinationIds: ["destination-1"],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: "request-1",
       normalized: {
@@ -313,7 +316,7 @@ describe("delivery worker", () => {
       },
       rawPayload: {},
     });
-    const enqueue = store.deliveries.enqueueForEvent({
+    const enqueue = await store.deliveries.enqueueForEvent({
       event,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-09T07:55:00.000Z",
@@ -336,7 +339,7 @@ describe("delivery worker", () => {
     });
 
     const result = await worker.runOnce();
-    const detail = store.deliveries.get(enqueue.created[0]!.id);
+    const detail = await store.deliveries.get(enqueue.created[0]!.id);
 
     expect(result).toEqual({
       claimed: 1,
@@ -363,12 +366,12 @@ describe("delivery worker", () => {
     expect(detail?.renderedPayload).not.toHaveProperty("to");
     expect(detail?.renderedPayload).not.toHaveProperty("from");
 
-    store.close();
+    await store.close();
   });
 
   it("records failed attempts and schedules bounded retries with backoff", async () => {
-    const store = createStore();
-    const delivery = seedDelivery(store, { maxAttempts: 2 });
+    const store = await createStore();
+    const delivery = await seedDelivery(store, { maxAttempts: 2 });
     const worker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
@@ -387,7 +390,7 @@ describe("delivery worker", () => {
     });
 
     const first = await worker.runOnce();
-    const afterFirst = store.deliveries.get(delivery.id);
+    const afterFirst = await store.deliveries.get(delivery.id);
 
     expect(first).toEqual({
       claimed: 1,
@@ -405,7 +408,7 @@ describe("delivery worker", () => {
     const second = await worker.runOnce({
       now: "2026-06-09T08:01:00.000Z",
     });
-    const afterSecond = store.deliveries.get(delivery.id);
+    const afterSecond = await store.deliveries.get(delivery.id);
 
     expect(second).toEqual({
       claimed: 1,
@@ -436,12 +439,12 @@ describe("delivery worker", () => {
     expect(JSON.stringify(afterSecond)).not.toContain("downstream-token");
     expect(JSON.stringify(afterSecond)).not.toContain("downstream-password");
 
-    store.close();
+    await store.close();
   });
 
   it("marks transport failures from destination adapters as retryable delivery failures", async () => {
-    const store = createStore();
-    const delivery = seedDelivery(store);
+    const store = await createStore();
+    const delivery = await seedDelivery(store);
     const worker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
@@ -454,7 +457,7 @@ describe("delivery worker", () => {
     });
 
     const result = await worker.runOnce();
-    const detail = store.deliveries.get(delivery.id);
+    const detail = await store.deliveries.get(delivery.id);
 
     expect(result).toEqual({
       claimed: 1,
@@ -478,12 +481,12 @@ describe("delivery worker", () => {
     ]);
     expect(JSON.stringify(detail)).not.toContain("transport-token");
 
-    store.close();
+    await store.close();
   });
 
   it("reclaims stale running deliveries before claiming new work", async () => {
-    const store = createStore();
-    const delivery = seedDelivery(store, { maxAttempts: 2 });
+    const store = await createStore();
+    const delivery = await seedDelivery(store, { maxAttempts: 2 });
     const firstWorker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
@@ -499,7 +502,7 @@ describe("delivery worker", () => {
     void firstWorker.runOnce();
     await Promise.resolve();
 
-    const running = store.deliveries.get(delivery.id);
+    const running = await waitForDeliveryState(store, delivery.id, "running");
 
     expect(running?.job.state).toBe("running");
     expect(running?.attempts).toMatchObject([
@@ -529,7 +532,7 @@ describe("delivery worker", () => {
     });
 
     const result = await recoveryWorker.runOnce();
-    const recovered = store.deliveries.get(delivery.id);
+    const recovered = await store.deliveries.get(delivery.id);
 
     expect(result).toEqual({
       claimed: 1,
@@ -557,12 +560,12 @@ describe("delivery worker", () => {
       },
     ]);
 
-    store.close();
+    await store.close();
   });
 
   it("reclaims exhausted stale running deliveries as final failures", async () => {
-    const store = createStore();
-    const delivery = seedDelivery(store, { maxAttempts: 1 });
+    const store = await createStore();
+    const delivery = await seedDelivery(store, { maxAttempts: 1 });
     const firstWorker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
@@ -576,7 +579,7 @@ describe("delivery worker", () => {
     });
 
     void firstWorker.runOnce();
-    await Promise.resolve();
+    await waitForDeliveryState(store, delivery.id, "running");
 
     const recoveryWorker = new DeliveryWorker({
       store,
@@ -591,7 +594,7 @@ describe("delivery worker", () => {
     });
 
     const result = await recoveryWorker.runOnce();
-    const recovered = store.deliveries.get(delivery.id);
+    const recovered = await store.deliveries.get(delivery.id);
 
     expect(result).toEqual({
       claimed: 0,
@@ -612,12 +615,12 @@ describe("delivery worker", () => {
       },
     ]);
 
-    store.close();
+    await store.close();
   });
 
   it("exposes last-run health state with redacted worker failures", async () => {
-    const store = createStore();
-    seedDelivery(store);
+    const store = await createStore();
+    await seedDelivery(store);
     const worker = new DeliveryWorker({
       store,
       destinations: createDefaultDestinationRegistry(),
@@ -647,9 +650,9 @@ describe("delivery worker", () => {
       now: () => now,
       sendContext: {},
     });
-    store.close();
+    await store.close();
 
-    await expect(failingWorker.runOnce()).rejects.toThrow(/database/i);
+    await expect(failingWorker.runOnce()).rejects.toThrow(/driver has already been destroyed/i);
     expect(failingWorker.getHealth()).toMatchObject({
       state: "failed",
       lastStartedAt: now,
@@ -658,3 +661,21 @@ describe("delivery worker", () => {
     expect(failingWorker.getHealth().lastError).not.toContain("token=");
   });
 });
+
+async function waitForDeliveryState(
+  store: Awaited<ReturnType<typeof createStore>>,
+  deliveryId: string,
+  state: "pending" | "running" | "succeeded" | "failed",
+) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const detail = await store.deliveries.get(deliveryId);
+
+    if (detail?.job.state === state) {
+      return detail;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  return store.deliveries.get(deliveryId);
+}

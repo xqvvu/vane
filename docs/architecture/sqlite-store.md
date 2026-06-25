@@ -1,113 +1,177 @@
 # SQLite 存储层（`apps/console/src/infra/sqlite`）
 
-本文档详细说明 Vane 的 SQLite 持久化层：它的分层方式、目录结构，以及每个
-interface、type、class、函数的职责与签名。
+本文档说明 Vane console 的 SQLite 持久化层：连接组织、Kysely schema、迁移策略、
+repository 分层、事务边界，以及 Better Auth schema 的生成/落库方式。
 
-> 适用范围：`apps/console/src/infra/sqlite/`。跨包共享的领域 schema（如
-> `SourceSummary`、`DeliveryJob`、`NormalizedEvent`）定义在 `@vane/core`，本层只负责
-> 把它们持久化到 SQLite 并读回。
+> 适用范围：`apps/console/src/infra/sqlite/`。跨包共享的领域 schema、command、
+> DTO 和投影类型定义在 `@vane/core`；本层只负责把它们持久化到 SQLite 并读回。
 
 ---
 
 ## 1. 概述
 
-这一层是应用的**持久化适配器**：对外暴露一个 `SqliteStore`，内部由 7 个仓储
-（repository）组成，每个仓储对应一个聚合（aggregate）。所有 SQL、行（row）映射、
-事务、编解码都封死在这一层，外部只看到领域类型和仓储接口。
+SQLite 层是 Vane 的持久化适配器。对外暴露一个 `SqliteStore`，内部由 7 个 repository
+组成：
 
-入口只有一个函数：`openSqliteStore()`。
+- `sources`
+- `destinations`
+- `routes`
+- `intake`
+- `deliveries`
+- `history`
+- `settings`
+
+当前实现是 **Kysely-first**：
+
+- `connection.ts` 的公共入口 `createSqliteDatabase()` 返回的是 Kysely handle，命名为
+  `db`。
+- raw `better-sqlite3` 实例只在 `createSqliteDatabase()` 内部创建，用于
+  `SqliteDialect` 和必要 PRAGMA；不会作为 Vane 的公共 SQLite handle 暴露。
+- repository 通过 Kysely query builder 读写数据，不再手写 `prepare/run/get/all`。
+- store/repository/transaction API 都是 async。
+- DDL、migration ledger 和少量 SQLite 表达式使用 Kysely 的 `sql` raw capability 执行，
+  不绕过 Kysely handle。
+
+入口有两个层级：
+
+- `createSqliteDatabase()`：创建 Kysely SQLite handle。
+- `openSqliteStore()`：创建 Kysely handle、执行显式 migration、组装 repository set。
 
 ---
 
 ## 2. 设计原则
 
-1. **按聚合纵切，而非按技术种类横切。**
-   每个聚合（source / destination / route / intake / delivery / history / settings）是
-   `apps/console/src/infra/sqlite/repositories/<module>/` 下的一组小文件：`*.interface.ts`
-   放 Row 类型、Repository 接口和输入/输出 DTO，`*.helpers.ts` 放行↔领域映射函数，
-   `*.repository.ts` 放 SQLite 仓储类。
-   理解一个聚合只需打开同一个目录。
-
-2. **校验只发生在真正的边界。**
-   只有"跨越序列化/不可信边界"的数据才用 Zod `.parse()`（JSON 列、enum、写入前的
-   领域对象）。纯内部契约（Row、输入 DTO、投影）用手写 TypeScript interface，不做
-   运行时校验。详见 [§8 校验与编解码边界](#8-校验与编解码边界)。
-
-3. **`server-only` 是分层护栏，不是技术必需。**
-   触碰 SQLite/文件系统的模块标记 `server-only`，防止被打进客户端 bundle。纯
-   isomorphic 的东西（错误类、通用 JSON 编解码）不加这个标记。
-
-4. **依赖方向单向、无环。**
-   见 [§4 分层与依赖方向](#4-分层与依赖方向)。
+1. **Kysely 是公共数据库边界。** 调用方拿到的是 `VaneSqliteKysely` / `VaneSqliteExecutor`，
+   raw driver 不外泄。连接创建、调用、事务和销毁都围绕 Kysely handle 组织。
+2. **按聚合纵切。** 每个聚合在
+   `apps/console/src/infra/sqlite/repositories/<module>/` 下拆成
+   `*.interface.ts`、`*.helpers.ts`、`*.repository.ts`。
+3. **MVP 使用一个显式 baseline。** 当前 schema 尚未发布稳定版本，因此把完整数据库形状
+   收敛在 `migrate/0001_initial_schema.ts`，通过 `migrateSqliteDatabase()` 执行并记录到
+   `schema_migrations`。发布后需要升级兼容时，再切回 forward-only migration。
+4. **校验只发生在真正边界。** JSON 列、enum、布尔列、写入前领域对象等跨序列化/不可信
+   边界的数据做运行时校验；内部输入 DTO 和投影保持 TypeScript interface。
+5. **直接触碰环境 API 的模块才加 import protection。** connection/migrate/context/store
+   等 server-only 路径不能被客户端导入；纯类型文件如 `schema.ts` 不加 marker。
 
 ---
 
-## 3. 文件结构与职责
+## 3. 文件结构
 
-| 文件 | 角色 | 主要导出 |
-| --- | --- | --- |
-| `connection.ts` | 基础设施 | `createSqliteDatabase()`、`CreateSqliteDatabaseOptions`、`SqliteDatabase` |
-| `transaction.ts` | 基础设施 | `transaction()`（`better-sqlite3` transaction/savepoint 封装） |
-| `migrate.ts` | 基础设施 | `migrateSqliteDatabase()`、`readMigrations()` 等 |
-| `migrations/*.sql` | 迁移 | 显式、只前进的 schema 迁移 |
-| `types.ts` | 共享叶子 | `IsoDateTimeString`、`Page<T>`（零依赖） |
-| `errors.ts` | 共享叶子 | `SqliteError`、`SqliteDataIntegrityError`、`RecordNotFoundError` |
-| `codecs.ts` | 共享 | SQLite 物理表示助手（布尔、行 cast） |
-| `context.ts` | 共享 | `SqliteRepositoryContext`（依赖注入 + 事务入口） |
-| `repositories/source/*` | 聚合 | Source 的 Row/接口/DTO/映射/类 |
-| `repositories/destination/*` | 聚合 | Destination 同上 |
-| `repositories/route/*` | 聚合 | Route 同上 |
-| `repositories/intake/*` | 聚合 | Event 录入 |
-| `repositories/delivery/*` | 聚合 | 投递队列：入队/认领/标记/重试/详情 + 去重 + attempt |
-| `repositories/history/*` | 聚合 | 跨聚合只读投影（列表/详情） |
-| `repositories/settings/*` | 聚合 | 应用设置 |
-| `store.ts` | 组装根 | `SqliteStore`、`SqliteStoreUnitOfWork`、`openSqliteStore()` |
-
-通用的 schema-JSON 编解码（`encodeJson` / `decodeJson` / `encodeSchemaJson` 等）**不在
-本层**，而在 `@vane/core` 的 `json.ts`，因为它们是 isomorphic 的。
-
-Better Auth 的表（`user` / `session` / `account` / `verification`）也放在同一套显式
-SQLite migrations 里，但不做成 `SqliteStore` 仓储。认证读写由 Better Auth adapter
-拥有；Vane 只共享 `better-sqlite3` 连接工厂和迁移入口，避免把外部库的模型泄漏成业务
-聚合接口。
-
----
-
-## 4. 分层与依赖方向
-
-```
-types.ts            （叶子，零依赖）
-  ▲
-errors.ts / codecs.ts / context.ts   （共享基础）
-  ▲
-repositories/source / destination / route / intake   （独立聚合）
-  ▲
-repositories/delivery          （依赖 source/destination/route/intake）
-  ▲
-repositories/history           （依赖 source/intake/delivery）
-  ▲
-store.ts            （组装根，依赖全部聚合）
+```txt
+apps/console/src/infra/sqlite/
+  connection.ts                 # 创建 Kysely SQLite handle
+  schema.ts                     # Kysely database schema types
+  transaction.ts                # Kysely transaction helper
+  migrate.ts                    # 兼容导出，转发到 migrate/
+  migrate/                      # MVP baseline schema plan
+    0001_initial_schema.ts      # 当前完整 baseline，编排下列 builder
+    vane-schema.ts              # Vane 业务表和索引
+    better-auth-schema.ts       # Better Auth 表和索引的 Kysely builder
+    better-auth.generated.sql   # Better Auth CLI 生成的 schema 参考
+    index.ts                    # public migration API
+    runner.ts                   # schema plan runner、ledger 和校验
+    plan.ts                     # 显式 schema plan registry
+    types.ts                    # migration 类型和 defineSqliteMigration()
+  context.ts                    # repository context、clock、id、transaction reuse
+  codecs.ts                     # SQLite boolean / JSON text 物理表示 helper
+  errors.ts                     # SQLite 层错误类型
+  store.ts                      # repository 组装根、openSqliteStore()
+  repositories/
+    source/
+      source.interface.ts
+      source.helpers.ts
+      source.repository.ts
+    destination/
+    route/
+    intake/
+    delivery/
+    history/
+    settings/
 ```
 
-- `types.ts` 是最底层叶子，谁都能依赖它、它不依赖任何人。
-- `store.ts` 是顶层组装根，依赖所有聚合，没人依赖它（除了测试和外部调用方）。
-- 聚合之间只有 `delivery`、`history` 向下依赖其它聚合，方向单一，无循环。
+通用 JSON 编解码在 `@vane/core/json.ts`，不放在 SQLite 层。
 
 ---
 
-## 5. 公共入口
+## 4. Kysely 连接
 
-### `openSqliteStore(options?): SqliteStore`
+`createSqliteDatabase(options?)` 是底层连接工厂：
 
-唯一入口。打开数据库、可选执行迁移、构造仓储集，返回 `SqliteStore`。
+```ts
+export interface CreateSqliteDatabaseOptions {
+  databasePath?: PathLike;
+}
+
+export function createSqliteDatabase(options?: CreateSqliteDatabaseOptions): VaneSqliteKysely;
+```
+
+行为：
+
+- 默认数据库路径为 `path.join(process.cwd(), "data.sqlite")`。
+- 非 `:memory:` 数据库会先创建父目录。
+- 内部创建 `better-sqlite3` 实例并配置：
+  - `foreign_keys = ON`
+  - 非内存库启用 `journal_mode = WAL`
+  - 非内存库设置 `busy_timeout = 5000`
+- 返回 `new Kysely({ dialect: new SqliteDialect({ database: sqlite }) })`。
+
+关闭数据库通过 `await db.destroy()`。`OpenedSqliteStore.close()` 也只调用
+`db.destroy()`。
+
+---
+
+## 5. Kysely Schema
+
+`schema.ts` 定义 Kysely 的数据库形状：
+
+```ts
+export interface VaneSqliteDatabaseSchema {
+  sources: SourcesTable;
+  destinations: DestinationsTable;
+  routes: RoutesTable;
+  events: EventsTable;
+  deliveries: DeliveriesTable;
+  delivery_attempts: DeliveryAttemptsTable;
+  delivery_dedupe_keys: DeliveryDedupeKeysTable;
+  settings: SettingsTable;
+  schema_migrations: SchemaMigrationsTable;
+  user: BetterAuthUserTable;
+  session: BetterAuthSessionTable;
+  account: BetterAuthAccountTable;
+  verification: BetterAuthVerificationTable;
+}
+
+export type VaneSqliteKysely = Kysely<VaneSqliteDatabaseSchema>;
+export type VaneSqliteTransaction = Transaction<VaneSqliteDatabaseSchema>;
+export type VaneSqliteExecutor = VaneSqliteKysely | VaneSqliteTransaction;
+```
+
+字段类型尽量贴近领域类型，例如：
+
+- `SourcesTable.provider: SourceProvider`
+- `DestinationsTable.kind: DestinationKind`
+- `EventsTable.severity: AlertSeverity`
+- `EventsTable.status: AlertStatus`
+- `DeliveriesTable.state: DeliveryJob["state"]`
+- `DeliveryAttemptsTable.state: DeliveryAttempt["state"]`
+
+SQLite 没有原生 boolean，因此使用 `SqliteBoolean = 0 | 1`。JSON 列在 SQLite 里是
+TEXT，因此使用 `SqliteJsonText = string`。
+
+---
+
+## 6. Store 公共入口
+
+`openSqliteStore(options?)` 是业务持久化入口：
 
 ```ts
 export interface OpenSqliteStoreOptions {
-  databasePath?: string;            // 默认 connection.ts 里的 data.sqlite；":memory:" 用于测试
-  migrate?: boolean;                // 默认 true
-  migrationsDir?: string;           // 默认 migrations/
-  now?: () => IsoDateTimeString;    // 时间注入（测试用）
-  ids?: Partial<{                   // ID 生成器注入（测试用）
+  databasePath?: string;
+  migrate?: boolean;
+  migrationPlan?: readonly SqliteMigration[];
+  now?: () => IsoDateTimeString;
+  ids?: Partial<{
     source: () => string;
     destination: () => string;
     route: () => string;
@@ -116,27 +180,24 @@ export interface OpenSqliteStoreOptions {
     attempt: () => string;
   }>;
 }
+
+export async function openSqliteStore(options?: OpenSqliteStoreOptions): Promise<SqliteStore>;
 ```
 
-`now` 和 `ids` 可注入，是为了让测试得到确定性的时间戳和 ID。
+默认会执行 migration。测试可以传入 `databasePath: ":memory:"`、固定 `now` 和确定性
+ID 工厂。
 
-### `interface SqliteStore`
-
-对外的存储句柄。继承 `SqliteStoreUnitOfWork`（即直接挂着 6 个仓储），额外提供
-schema 版本读取、关闭、事务。
+`SqliteStore` 是 async repository set：
 
 ```ts
 export interface SqliteStore extends SqliteStoreUnitOfWork {
-  readonly schemaVersion: string | null;
-  close(): void;
-  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => T): T;
+  schemaVersion(): Promise<string | null>;
+  close(): Promise<void>;
+  transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => Promise<T>): Promise<T>;
 }
 ```
 
-### `interface SqliteStoreUnitOfWork`
-
-一组仓储的集合（工作单元）。`SqliteStore` 本身和 `transaction()` 回调里拿到的
-`tx` 都是这个类型，因此事务内外用的是同一套仓储 API。
+`SqliteStoreUnitOfWork` 同时用于 store 本身和 transaction callback：
 
 ```ts
 export interface SqliteStoreUnitOfWork {
@@ -150,357 +211,243 @@ export interface SqliteStoreUnitOfWork {
 }
 ```
 
-### `class OpenedSqliteStore implements SqliteStore`
-
-`SqliteStore` 的具体实现。构造时接收 `db` 和 `context`，内部用
-`createSqliteRepositories(context)` 建好仓储集。`schemaVersion` 从 `schema_migrations`
-账本表读取当前已应用的最高版本。`transaction()` 委托给 `context.runInTransaction`。
-
-### `createSqliteRepositories(context): SqliteRepositorySet`
-
-工厂函数：按依赖顺序实例化仓储类并组装成一个对象。`deliveries` 需要
-sources/destinations/routes/intake，`history` 需要 sources/intake/deliveries，所以构造
-有先后顺序；`settings` 独立读写 `settings` 表，用于应用级配置。
+`createSqliteRepositories(context)` 按依赖顺序实例化 repository。`deliveries` 需要
+sources/destinations/routes/intake；`history` 需要 sources/intake/routes/deliveries。
 
 ---
 
-## 6. 共享基础
+## 7. Repository Context 与事务
 
-### 6.1 `types.ts`
+`SqliteRepositoryContext` 持有 repository 共享依赖：
+
+- `db: VaneSqliteExecutor`
+- `now()`
+- `ids`
+
+事务入口：
 
 ```ts
-export type IsoDateTimeString = string;     // 全层统一的时间字符串表示（ISO 8601）
+async runInTransaction<T>(fn: (context: SqliteRepositoryContext) => Promise<T>): Promise<T>
+```
 
-export interface Page<T> {                  // 游标分页的通用返回
-  items: T[];
-  nextCursor: string | null;
+如果当前 `db` 已经是 Kysely transaction，`runInTransaction` 会复用当前 context；否则调用
+`transaction(this.db, ...)` 开启 Kysely transaction。这样 repository 内部方法可以独立
+使用，也可以被 `store.transaction()` 包裹复用。
+
+`transaction.ts` 只是窄封装：
+
+```ts
+export function transaction<T>(
+  db: VaneSqliteKysely,
+  fn: (tx: VaneSqliteTransaction) => Promise<T>,
+): Promise<T> {
+  return db.transaction().execute(fn);
 }
 ```
-
-### 6.2 `context.ts` — `SqliteRepositoryContext`
-
-所有仓储共享的运行时上下文，承载三件横切关注点：
-
-- `db`：`better-sqlite3` 的同步数据库句柄。
-- `now()`：当前时间生成器（默认 `new Date().toISOString()`，可注入）。
-- `ids`：`source` / `destination` / `route` / `event` / `delivery` / `attempt`
-  六个 ID 生成器（默认 `randomUUID`，可注入）。
-
-并提供**可重入的事务方法**：
-
-```ts
-runInTransaction<T>(fn: () => T, ...guard: SyncTransactionGuard<T>): T
-```
-
-事务由 `better-sqlite3` 的 `db.transaction(fn).immediate()` 承担：最外层使用
-`BEGIN IMMEDIATE`，嵌套调用自动变成 savepoint。这样仓储方法（如
-`deliveries.enqueueForEvent` 内部也调用 `runInTransaction`）既能单独用，也能被
-`store.transaction()` 包裹复用；如果内层失败并被外层捕获，只回滚内层 savepoint，不会
-悄悄保留半段写入。`better-sqlite3` 也会拒绝返回 Promise 的事务回调，避免同步 SQLite
-事务被异步代码拆开；`transaction.ts` 还通过 `SyncTransactionGuard<T>` 让业务代码里的
-Promise-returning transaction callback 尽量在 TypeScript 编译期暴露出来。
-
-### 6.3 `codecs.ts` — SQLite 物理表示助手
-
-只剩"SQLite 怪癖"相关的纯函数，**不依赖 `@vane/core`**：
-
-```ts
-export type SqliteBoolean = 0 | 1;          // SQLite 没有布尔，用 0/1
-export type SqliteJsonText = string;        // JSON 列在 SQLite 里是 TEXT
-
-export function toSqliteBoolean(value: boolean): SqliteBoolean
-export function fromSqliteBoolean(value: number): boolean   // 非 0/1 抛 SqliteDataIntegrityError
-
-export function rowOrUndefined<Row>(row: unknown): Row | undefined
-export function rowAs<Row>(row: unknown): Row
-export function rowsAs<Row>(rows: unknown[]): Row[]
-```
-
-`rowAs` / `rowsAs` / `rowOrUndefined` 是把 `db` 返回的 `unknown` 断言成具体 Row 类型的
-泛型助手（编译期断言，不做运行时校验，详见 §8）。
-
-> 通用 JSON 编解码（`encodeJson` / `decodeJson` / `encodeJsonObject` /
-> `decodeJsonObject` / `encodeSchemaJson` / `decodeSchemaJson`）在 `@vane/core` 的
-> `json.ts`，各聚合从那里导入。
-
-### 6.4 `errors.ts` — 错误家族
-
-本层专属的错误体系，全部继承自 `SqliteError`，方便上层 `instanceof SqliteError`
-一把抓住持久化层的错误：
-
-```ts
-export class SqliteError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = new.target.name;            // 子类名自动正确（日志/stack 友好）
-  }
-}
-
-export class SqliteDataIntegrityError extends SqliteError {}   // 数据完整性/解码不变量
-
-export class RecordNotFoundError extends SqliteError {
-  constructor(readonly resource: string, readonly id?: string) {
-    super(id ? `${resource} not found: ${id}` : `${resource} not found`);
-  }
-}
-```
-
-- `SqliteDataIntegrityError`：DB 里存了非法值（如布尔列不是 0/1）。属于"不该发生"
-  的不变量违例。
-- `RecordNotFoundError`：按 ID 取不到记录。带 `resource` / `id` 字段，将来 API 层可以
-  `instanceof` 它并映射成 404。
-
-`errors.ts` 不加 `server-only`：错误类是纯 isomorphic 的，上层（含将来的路由 error
-boundary）可能需要在任意位置 `instanceof`。
 
 ---
 
-## 7. 聚合详解
+## 8. 迁移方案
 
-每个聚合文件的内部结构都一致：**Row 类型 → Repository 接口 → 输入/输出 DTO →
-（运行时配置类型）→ 映射函数 → require 守卫 → 仓储类**。下面逐个说明。
+`migrateSqliteDatabase(db, options?)` 使用同一个 Kysely handle。默认情况下，runner 读取
+`migrate/plan.ts` 导出的 `sqliteSchemaPlan`；这些 TypeScript schema module 会随 server
+bundle 一起打包，不依赖部署环境里的源代码目录。测试或自定义工具可以通过 `options.plan`
+注入一个显式 schema plan。
 
-### 7.1 `sources.ts`
+当前 MVP schema plan 只有一个 baseline step：
 
-- **Row**：`SourceRow`（`id` / `name` / `provider` / `token_hash` / `enabled` /
-  `config_json` / `created_at` / `updated_at`）。
-- **运行时配置**：`SourceRuntimeConfig extends SourceSummary { tokenHash; config }`
-  —— 在 `SourceSummary` 之上补充敏感/运行时字段。
-- **接口**：
+- `0001_initial_schema.ts`
+
+`0001_initial_schema.ts` 只负责编排，不直接堆大量 DDL：
+
+- `vane-schema.ts` 创建 Vane 业务表、settings 默认值和业务索引。
+- `better-auth-schema.ts` 创建 Better Auth 所需表和索引。
+- `better-auth.generated.sql` 是 Better Auth CLI 生成的 schema 快照，用于人工和测试对照，
+  不是运行时执行的 SQL。
+
+Runner 行为：
+
+1. 读取 `migrate/plan.ts` 导出的 `sqliteSchemaPlan`。schema step 文件名形如
+   `0001_initial_schema.ts`，metadata 必须满足：
+   - `version` 是 4 位数字。
+   - `name` 只包含小写字母、数字和空格。
+   - `filename` 必须等于 `${version}_${name.replaceAll(" ", "_")}.ts`。
+2. 拒绝重复 version、重复 name、空 schema plan 和 metadata 不一致的 step。
+3. 用 Kysely schema builder 确保 `schema_migrations` 账本表存在。
+4. 读取已应用版本。
+5. 如果数据库账本里存在当前代码不认识的版本，拒绝继续运行。
+6. 对未应用 step 逐个开启 Kysely transaction。
+7. 调用 step 的 `up(tx)`。任意错误都会包装成带文件名的 `SqliteMigrationError`，并回滚当前
+   step。
+8. 写入 `schema_migrations`。
+
+Schema builder 优先使用 Kysely schema/query builder，因为这能让 DDL、默认值和少量初始化数据
+更 type friendly。需要 SQLite 特定表达式或约束时，可以使用 Kysely `sql` escape hatch；它仍然
+通过 Kysely executor 执行，不暴露 raw driver。
+
+在 MVP 发布前，数据库不承诺升级旧开发库，允许直接修改 `0001_initial_schema.ts` 和相关 builder，
+让 baseline 始终代表当前最完整 schema。发布后如果需要兼容已有部署，应新增 forward-only step，
+并在需要操作历史列或中间状态时引入 migration-only schema 类型。
+
+---
+
+## 9. Better Auth Schema
+
+Better Auth 的 `user` / `session` / `account` / `verification` 表与 Vane 表放在同一个
+SQLite 数据库中，但不包装成 `SqliteStore` repository。认证读写由 Better Auth adapter
+拥有。
+
+Vane 的 SQLite 物理列使用 snake_case。Better Auth 的模型字段在 TypeScript/API 层仍是
+`emailVerified`、`createdAt`、`userId` 这类 camelCase 名称，因此
+`lib/auth-options.ts` 通过 `user.fields`、`session.fields`、`account.fields` 和
+`verification.fields` 显式把它们映射到 `email_verified`、`created_at`、`user_id`
+等列。`database.casing: "snake"` 同时传给 Kysely adapter；CLI 生成 schema 时以
+`fields` 映射为准。
+
+运行：
+
+```bash
+pnpm --filter @vane/console auth:schema
+```
+
+会执行 Better Auth CLI：
+
+```bash
+pnpm dlx auth@latest generate \
+  --config src/lib/auth-cli.ts \
+  --adapter kysely \
+  --dialect sqlite \
+  --output src/infra/sqlite/migrate/better-auth.generated.sql \
+  --yes
+```
+
+生成文件只是当前 auth schema 的参考，和 `better-auth-schema.ts` 放在同一目录，方便对照
+CLI 输出和手写 Kysely builder。运行时迁移仍由 `0001_initial_schema.ts` 调用
+`better-auth-schema.ts` 创建表；涉及默认值、约束、owner bootstrap 等 Vane 语义时，以 Vane
+builder 为准。
+
+默认 runtime auth 配置在 `server/runtime/container.ts` 中通过：
+
+```ts
+database: {
+  db,
+  type: "sqlite",
+  casing: "snake",
+}
+```
+
+把同一个 `VaneSqliteKysely` 传给 Better Auth。
+
+---
+
+## 10. Repository 组织
+
+每个聚合目录使用同一结构：
+
+- `*.interface.ts`：repository interface、输入 DTO、运行时配置/投影类型、必要 row 类型。
+- `*.helpers.ts`：row 到领域对象的映射、JSON/boolean 解码、`requireX` 守卫。
+- `*.repository.ts`：Kysely query builder 实现。
+
+代表性接口：
 
 ```ts
 export interface SourceRepository {
-  list(): SourceSummary[];
-  listEnabled(): SourceSummary[];
-  get(id: string): SourceRuntimeConfig | null;
-  findByTokenHash(tokenHash: string): SourceRuntimeConfig | null;
-  create(input: CreateSourceInput): SourceSummary;
-  update(id: string, input: UpdateSourceInput): SourceSummary;
-  setEnabled(id: string, enabled: boolean): SourceSummary;
+  list(): Promise<SourceSummary[]>;
+  listEnabled(): Promise<SourceSummary[]>;
+  get(id: string): Promise<SourceRuntimeConfig | null>;
+  findByTokenHash(tokenHash: string): Promise<SourceRuntimeConfig | null>;
+  create(input: CreateSourceInput): Promise<SourceSummary>;
+  update(id: string, input: UpdateSourceInput): Promise<SourceSummary>;
+  setEnabled(id: string, enabled: boolean): Promise<SourceSummary>;
 }
 ```
 
-- **DTO**：`CreateSourceInput`、`UpdateSourceInput`。
-- **映射 / 守卫（导出，供 deliveries/history 复用）**：
-  `sourceSummaryFromRow`、`sourceRuntimeFromRow`、`sourceSummaryFromRuntime`、
-  `requireSource`。
-- **类**：`SqliteSourceRepository`。
+`delivery` 是唯一会组合多个聚合的写模型：它依赖 source/destination/route/intake，用于
+入队、去重、认领、成功/失败标记、手动重试和详情读取。
 
-### 7.2 `destinations.ts`
-
-- **Row**：`DestinationRow`（含 `config_json`、`secret_refs_json`）。
-- **运行时配置**：`DestinationRuntimeConfig extends DestinationSummary { config; secretRefs }`。
-- **安全投影**：`destinationMetadataFromRuntime` 从 runtime config 生成 Delivery detail 可展示的
-  metadata，只包含 method、header 名称、模板/签名开关、email to/from 等排障信息，不包含
-  webhook URL、sign secret、endpoint URL 或 header 值。
-- **接口**：`DestinationRepository`（`list` / `listEnabled` / `get` / `create` /
-  `update` / `setEnabled`）。
-- **DTO**：`CreateDestinationInput`、`UpdateDestinationInput`。
-- **映射 / 守卫**：`destinationSummaryFromRow`、`destinationRuntimeFromRow`、
-  `destinationSummaryFromRuntime`、`requireDestination`。
-- **类**：`SqliteDestinationRepository`。
-
-### 7.3 `routes.ts`
-
-- **Row**：`RouteRow`（含 `rule_json`、`destination_ids_json`）。
-- **接口**：`RouteRepository`，方法返回的是 `@vane/core` 的 `RouteDefinition`。
-- **DTO**：`CreateRouteInput`、`UpdateRouteInput`（`rule` 字段类型来自
-  `RouteDefinitionInput["rule"]`）。
-- **映射 / 编解码 / 守卫**：`routeFromRow`、`encodeDestinationIds`、
-  `decodeDestinationIds`、`requireRoute`。
-- **类**：`SqliteRouteRepository`。`create` / `update` 在写入前用
-  `RouteDefinitionSchema.parse(...)` 规整整条记录（含默认值、校验）。
-
-### 7.4 `intake.ts`
-
-- **Row**：`EventRow`（拍平了 `severity` / `status` / `title` / `fingerprint` 等便于
-  查询的列，同时保留 `normalized_json` / `raw_payload_json` / `raw_headers_json` 等
-  blob）。
-- **接口**：
-
-```ts
-export interface IntakeRepository {
-  recordEvent(input: RecordEventInput): EventRecord;
-  pruneRawPayloads(input: PruneRawPayloadsInput): number;
-}
-```
-
-- **DTO**：`RecordEventInput`、`PruneRawPayloadsInput`。
-- **映射 / 守卫**：`eventFromRow`、`requireEvent`。
-- **类**：`SqliteIntakeRepository`。`pruneRawPayloads` 不删除 Event，只把超过保留期的
-  `raw_payload_json` 替换为 tombstone、清空 `raw_headers_json`，从而保留审计行和
-  normalized 字段，同时控制 SQLite 体积。类上还有一个 `get(id): EventRecord | null`
-  （不在接口里），供 deliveries/history 内部按 ID 取事件。
-- **解析失败审计**：provider parser 抛错时，应用层 `intake.ts`
-  （`WebhookIntakeService`）仍会通过 `IntakeRepository.recordEvent` 写入一条审计
-  Event。这类 Event 使用 `unknown` severity/status、`parse_failed` 标签、解析错误
-  metadata、脱敏后的 raw payload/headers，并且不创建 deliveries。这样 webhook 入站有
-  可追踪记录，但不会进入投递队列。
-
-### 7.5 `deliveries.ts`（最复杂的聚合）
-
-- **Row**：`DeliveryRow`、`DeliveryAttemptRow`、`DeliveryDedupeKeyRow`。
-- **输出类型**：`DeliveryAttempt`（attempt 的领域形状，本层手写，暂未提到 core）。
-- **接口**：
-
-```ts
-export interface DeliveryRepository {
-  enqueueForEvent(input: EnqueueDeliveriesInput): EnqueueDeliveriesResult;
-  claimNext(input: ClaimDeliveriesInput): ClaimedDelivery[];
-  markSucceeded(input: MarkDeliverySucceededInput): DeliveryJob;
-  markFailed(input: MarkDeliveryFailedInput): DeliveryJob;
-  retryNow(input: RetryDeliveryInput): DeliveryJob;
-  get(id: string): DeliveryDetail | null;
-}
-```
-
-- **DTO**：`EnqueueDeliveriesInput` / `EnqueueDeliveriesResult` / `DedupedDelivery`、
-  `ClaimDeliveriesInput` / `ClaimedDelivery`、`MarkDeliverySucceededInput`、
-  `MarkDeliveryFailedInput`、`RetryDeliveryInput`、`DeliveryDetail`。
-- **映射 / 守卫**：`deliveryFromRow`、`attemptFromRow`、`decodeRenderedPayload`、
-  `requireDelivery`、`requireAttempt`。
-- **内部去重逻辑**（文件私有函数）：`reserveDedupeKey`、`pruneDedupeKeys`。
-- **类**：`SqliteDeliveryRepository`，构造时注入 sources/destinations/routes/intake，
-  以便在认领（claim）时把 job、event、source、destination、route、attempt 一并组装
-  成 `ClaimedDelivery`。
-  - 关键行为：`enqueueForEvent` / `claimNext` / `markSucceeded` / `markFailed` 都包在
-    `context.runInTransaction` 里；按 `idempotencyKey` 在去重窗口内对
-    `(source, idempotencyKey, route, destination)` 去重；`claimNext` 只认领 destination
-    enabled 且 route enabled（或无 route）的 pending delivery，并用条件 UPDATE +
-    `changes()` 实现乐观认领；`retryNow` 只接受 `failed` delivery，并在自动重试次数已耗尽时
-    把 `max_attempts` 推到 `attempt_count + 1`，确保手动重试会被 worker 认领为下一次
-    attempt。
-  - 类上还有 `getJob(id)` / `getAttempt(id)` 两个辅助读方法。
-
-### 7.6 `history.ts`（跨聚合只读投影）
-
-不拥有任何表，只做面向 UI 的联表读模型。
-
-- **接口**：
-
-```ts
-export interface HistoryRepository {
-  listEvents(query?: EventListQuery): Page<EventListItem>;
-  getEventDetail(eventId: string): EventDetail | null;
-  listDeliveries(query?: DeliveryListQuery): Page<DeliveryListItem>;
-}
-```
-
-- **查询 DTO**：`EventListQuery`、`DeliveryListQuery`（都支持过滤 + `cursor` 游标 +
-  `limit`）。Event 列表可按 source、severity、status、title/message 搜索；Delivery
-  列表可按 source、severity、status、destination、delivery state、title/message 搜索。
-- **投影类型**：`EventListItem`（含按状态聚合的 `deliveryCounts`）、`EventDetail`、
-  `EventDetailDelivery`、`DeliveryListItem`。`EventDetailDelivery` 在 `DeliveryJob`
-  基础上只补充 `destinationName` / `routeName`，让事件详情页能从一个地方读到投递目标、
-  状态、attempt 摘要和错误原因，同时不暴露 destination secret/config。
-- **类**：`SqliteHistoryRepository`。分页采用"多取一条判断是否有下一页"的游标方案，
-  `nextCursor` 取自最后一条的时间戳。
-- **事件详情路由解释**：`EventDetail` 包含 `routeMatches`。新写入的 Event 会在
-  intake 时把当时所有 Route 的匹配解释持久化到 `events.route_matches_json`，因此后续
-  修改 Route 名称、条件或启停状态时，旧事件详情仍能说明"当时为什么匹配/未匹配"。旧
-  数据库或旧事件没有快照时，`history` 会退回用已持久化的 normalized event 和当前
-  routes 重新计算解释。真正代表当时实际入队结果的历史证据仍然是 deliveries 行。
-
-### 7.7 `settings.ts`
-
-应用级设置仓储，当前只管理 `rawPayloadRetentionDays`。
-
-- **接口**：
-
-```ts
-export interface SettingsRepository {
-  get(): AppSettings;
-  update(input: Partial<AppSettings>): AppSettings;
-}
-```
-
-- **类**：`SqliteSettingsRepository`。使用 `settings` 表的 key/value 行存储，默认
-  raw payload 保留 30 天；写入时用 `ON CONFLICT` upsert。
+`history` 是跨聚合只读投影，不拥有表；它为 UI 提供事件列表、事件详情、投递列表。
 
 ---
 
-## 8. 校验与编解码边界
+## 11. 校验与编解码边界
 
-判据：**只有跨越序列化/不可信边界的数据才做运行时校验。**
+判据：只有跨越序列化/不可信边界的数据才做运行时校验。
 
-| 数据 | 是否运行时校验 | 怎么做 |
+| 数据 | 是否运行时校验 | 做法 |
 | --- | --- | --- |
-| JSON 列（`config_json`、`normalized_json`、`raw_payload_json` 等）读出 | ✅ 是 | `decodeJsonObject` / `decodeSchemaJson(Schema, ...)`（Zod parse） |
-| 领域对象写入前（如 route） | ✅ 是 | `RouteDefinitionSchema.parse(...)` |
-| 从行映射出领域类型（`eventFromRow` / `deliveryFromRow` / ...） | ✅ 是 | 对应 `XxxSchema.parse(...)` |
-| enum 列（`provider`、`kind`） | ✅ 是 | `SourceProviderSchema.parse` / `DestinationKindSchema.parse` |
-| 布尔列 | ✅ 是 | `fromSqliteBoolean`（非 0/1 抛错） |
-| 行的整体结构（`db.get()/all()` 的返回） | ❌ 否 | `rowAs` / `rowsAs` 编译期断言 |
-| 仓储输入 DTO（`CreateXInput` 等） | ❌ 否 | 手写 interface，调用方已是类型安全的内部代码 |
-| 只读投影（`EventListItem` 等） | ❌ 否 | 手写 interface，由已校验的片段在进程内拼装 |
+| JSON 列读出 | 是 | `decodeJsonObject` / `decodeSchemaJson` |
+| 写入前领域对象 | 是 | 对应 core schema `.parse()` |
+| enum / union 列 | 是 | core enum schema 或领域 schema |
+| SQLite boolean | 是 | `fromSqliteBoolean` |
+| repository 输入 DTO | 否 | 内部 TypeScript interface |
+| 只读投影 | 否 | 由已校验片段在进程内拼装 |
 
-要点：行的"物理结构"由迁移控制、是自家数据，所以用 `as` 断言即可；行里**真正
-来自外部的 JSON blob** 才是风险点，那些都过了 Zod。只用 `z.infer` 而不 `.parse()`
-和手写 interface 在安全性上完全等价，所以内部契约一律手写 interface。
+`codecs.ts` 仍保留 `rowAs` / `rowsAs` / `rowOrUndefined`，但 Kysely repository 不再依赖
+raw driver 的 unknown row 返回；这些 helper 只作为低层兼容工具保留。
 
 ---
 
-## 9. 错误模型
+## 12. 错误模型
 
-- 取不到记录 → `RecordNotFoundError`（6 处 `requireX` 守卫）。
-- 数据完整性违例 → `SqliteDataIntegrityError`（如 `fromSqliteBoolean`）。
-- JSON / schema 解析失败 → Zod 自身的 `ZodError`（未包装）。
-- 三者（前两者）都继承 `SqliteError`，上层可统一捕获。
+- 取不到记录：`RecordNotFoundError`。
+- 数据完整性违例：`SqliteDataIntegrityError`。
+- JSON / schema 解析失败：保留 Zod 自身错误。
 
----
-
-## 10. 连接与迁移
-
-- **`connection.ts` / `createSqliteDatabase()`**：打开数据库，开启
-  `PRAGMA foreign_keys = ON`；非 `:memory:` 时启用 `journal_mode = WAL` 和
-  `busy_timeout = 5000`。
-- **`transaction.ts` / `transaction()`**：基于 `better-sqlite3`
-  `db.transaction(fn).immediate()` 的事务封装，被
-  `SqliteRepositoryContext.runInTransaction` 和迁移入口复用；嵌套事务由 driver 的
-  savepoint 语义保证。
-- **`migrate.ts` / `migrateSqliteDatabase()`**：读取 `migrations/` 下形如
-  `0001_xxx.sql` 的文件，按版本顺序、逐个在事务内执行，并写入 `schema_migrations`
-  账本表；已应用的版本会跳过。迁移**只前进**，不修改已提交的旧迁移。
-- 当前 schema 共 13 张表：`sources` / `destinations` / `routes` / `events` /
-  `deliveries` / `delivery_attempts` / `delivery_dedupe_keys` / `settings` /
-  `schema_migrations`，以及 Better Auth 的 `user` / `session` / `account` /
-  `verification`。
+`errors.ts` 不加 `server-only`，因为错误类本身是纯 TypeScript 类型和 `Error` 子类。
 
 ---
 
-## 11. 测试
+## 13. 测试守护
 
-- `store.test.ts`：用 `openSqliteStore({ databasePath: ":memory:", now, ids })` 注入
-  确定性时间与 ID，覆盖全仓储 ID 注入、去重入队、认领上下文、标记成功、事件详情路由解释等端到端流程。
-- `intake.test.ts`：覆盖 webhook 入站服务，包括 provider parser 解析失败时记录审计
-  Event、脱敏 raw payload/headers、且不创建 deliveries。
-- `routes/api/sources/$sourceId/-webhook.test.ts`：覆盖 webhook endpoint 的 HTTP 行为，
-  包括缺 token、payload 超限、非法 JSON、成功 202 响应，以及 parser 失败时返回
-  `eventId`。
-- `migrate.test.ts`：验证迁移前进与账本记录、表清单，以及通过
-  `new OpenedSqliteStore(db, new SqliteRepositoryContext({ db })).schemaVersion` 从
-  `schema_migrations` 账本读取当前 schema 版本。
+重点测试：
+
+- `connection.test.ts`：验证文件数据库目录创建、Kysely handle 可执行查询。
+- `migrate.test.ts`：验证 baseline schema plan、账本、严格文件名、Better Auth 生成快照、
+  执行失败回滚、重复/未知 schema version 防护。
+- `transaction.test.ts`：验证 Kysely transaction rollback，以及嵌套 repository transaction
+  复用当前 transaction context。
+- `store.test.ts`：覆盖 ID 注入、去重入队、claim、retry、history/detail 等 store 行为。
+- `intake.service.test.ts` 和 webhook route 测试：覆盖 parser 失败审计、脱敏、delivery
+  入队和 HTTP 响应。
+
+修改 SQLite 层后至少运行：
+
+```bash
+pnpm --filter @vane/console exec tsc --noEmit --pretty false
+pnpm --filter @vane/console test
+```
+
+触碰 import boundary 或 TanStack Start server/runtime 时，再运行：
+
+```bash
+pnpm --filter @vane/console build
+```
 
 ---
 
-## 12. 如何扩展
+## 14. 扩展规则
 
-**新增一个聚合：**
+新增表或改 schema：
 
-1. 新建 `apps/console/src/infra/sqlite/repositories/<aggregate>/`，拆成
-   `<aggregate>.interface.ts`、`<aggregate>.helpers.ts`、`<aggregate>.repository.ts`。
-   其中 interface 文件放 Row 类型、Repository 接口和输入/输出 DTO；helpers 放映射函数和
-   require 守卫；repository 放 SQLite 仓储类。
-2. 在 `store.ts` 的 `SqliteStoreUnitOfWork` 加上该仓储，并在
-   `createSqliteRepositories` 里实例化、按依赖顺序注入。
-3. JSON 列用 `@vane/core` 的 `encode*/decode*`；布尔/行 cast 用本层 `codecs.ts`；
-   取不到记录抛 `RecordNotFoundError`。
+1. MVP 发布前，更新 `migrate/0001_initial_schema.ts`、`vane-schema.ts` 或
+   `better-auth-schema.ts`，让 baseline 代表当前完整 schema。
+2. 更新 `schema.ts` 的 Kysely table 类型。
+3. 更新对应 repository helper / implementation。
+4. 补充 schema plan 和 repository 测试。
+5. 如果 Better Auth 配置或 plugin 改变，先运行 `auth:schema` 生成参考 schema，再把差异转写
+   到 `better-auth-schema.ts`。
+6. 发布后需要兼容已有部署时，新增 forward-only step 并在 `migrate/plan.ts` 显式注册，不再
+   修改旧 step。
 
-**新增一张表 / 改 schema：**
+新增聚合：
 
-1. 在 `migrations/` 新建 `NNNN_描述.sql`（版本号递增），只前进。
-2. 不要改动已提交的旧迁移。
-3. 时间列统一用 `IsoDateTimeString`（TEXT，ISO 8601）。
+1. 新建 `repositories/<aggregate>/` 并拆成 `interface/helpers/repository`。
+2. 在 `SqliteStoreUnitOfWork` 和 `createSqliteRepositories()` 注册。
+3. 需要事务组合时通过 `SqliteRepositoryContext.runInTransaction()`，不要引入 module-level
+   singleton。
 
-**判断类型该用 Zod 还是手写 interface：** 见 [§8](#8-校验与编解码边界)——会跨边界、
-需要运行时校验的用 `@vane/core` 的 schema + `.parse()`；纯内部契约用手写 interface。
+Related:
+
+- [[Vane Index]]
+- [[Vane Application Container]]
+- [[Vane TanStack Start Import Boundaries]]

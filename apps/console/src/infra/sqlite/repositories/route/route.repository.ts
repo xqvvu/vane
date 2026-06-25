@@ -1,7 +1,7 @@
 import { encodeSchemaJson, RouteDefinitionSchema, RouteRuleSchema } from "@vane/core";
 import type { RouteDefinition } from "@vane/core";
 
-import { rowOrUndefined, rowsAs, toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
+import { toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
 import {
   encodeDestinationIds,
@@ -11,33 +11,40 @@ import {
 import type {
   CreateRouteInput,
   RouteRepository,
-  RouteRow,
   UpdateRouteInput,
 } from "#/infra/sqlite/repositories/route/route.interface.ts";
 
 export class SqliteRouteRepository implements RouteRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
-  list(): RouteDefinition[] {
-    return rowsAs<RouteRow>(
-      this.context.db.prepare("SELECT * FROM routes ORDER BY name").all(),
-    ).map((row) => routeFromRow(row));
+  async list(): Promise<RouteDefinition[]> {
+    const rows = await this.context.db.selectFrom("routes").selectAll().orderBy("name").execute();
+
+    return rows.map((row) => routeFromRow(row));
   }
 
-  listEnabled(): RouteDefinition[] {
-    return rowsAs<RouteRow>(
-      this.context.db.prepare("SELECT * FROM routes WHERE enabled = 1 ORDER BY name").all(),
-    ).map((row) => routeFromRow(row));
+  async listEnabled(): Promise<RouteDefinition[]> {
+    const rows = await this.context.db
+      .selectFrom("routes")
+      .selectAll()
+      .where("enabled", "=", 1)
+      .orderBy("name")
+      .execute();
+
+    return rows.map((row) => routeFromRow(row));
   }
 
-  get(id: string): RouteDefinition | null {
-    const row = rowOrUndefined<RouteRow>(
-      this.context.db.prepare("SELECT * FROM routes WHERE id = ?").get(id),
-    );
+  async get(id: string): Promise<RouteDefinition | null> {
+    const row = await this.context.db
+      .selectFrom("routes")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
     return row ? routeFromRow(row) : null;
   }
 
-  create(input: CreateRouteInput): RouteDefinition {
+  async create(input: CreateRouteInput): Promise<RouteDefinition> {
     const now = this.context.now();
     const createdAt = input.createdAt ?? now;
     const route = RouteDefinitionSchema.parse({
@@ -49,28 +56,24 @@ export class SqliteRouteRepository implements RouteRepository {
     });
     const updatedAt = input.updatedAt ?? createdAt;
 
-    this.context.db
-      .prepare(
-        `
-          INSERT INTO routes (id, name, enabled, rule_json, destination_ids_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
-      )
-      .run(
-        route.id,
-        route.name,
-        toSqliteBoolean(route.enabled),
-        encodeSchemaJson(RouteRuleSchema, route.rule),
-        encodeDestinationIds(route.destinationIds),
-        createdAt,
-        updatedAt,
-      );
+    await this.context.db
+      .insertInto("routes")
+      .values({
+        id: route.id,
+        name: route.name,
+        enabled: toSqliteBoolean(route.enabled),
+        rule_json: encodeSchemaJson(RouteRuleSchema, route.rule),
+        destination_ids_json: encodeDestinationIds(route.destinationIds),
+        created_at: createdAt,
+        updated_at: updatedAt,
+      })
+      .execute();
 
-    return requireRoute(this.get(route.id));
+    return requireRoute(await this.get(route.id));
   }
 
-  update(id: string, input: UpdateRouteInput): RouteDefinition {
-    const current = requireRoute(this.get(id));
+  async update(id: string, input: UpdateRouteInput): Promise<RouteDefinition> {
+    const current = requireRoute(await this.get(id));
     const route = RouteDefinitionSchema.parse({
       id,
       name: input.name ?? current.name,
@@ -79,27 +82,22 @@ export class SqliteRouteRepository implements RouteRepository {
       destinationIds: input.destinationIds ?? current.destinationIds,
     });
 
-    this.context.db
-      .prepare(
-        `
-          UPDATE routes
-          SET name = ?, enabled = ?, rule_json = ?, destination_ids_json = ?, updated_at = ?
-          WHERE id = ?
-        `,
-      )
-      .run(
-        route.name,
-        toSqliteBoolean(route.enabled),
-        encodeSchemaJson(RouteRuleSchema, route.rule),
-        encodeDestinationIds(route.destinationIds),
-        input.updatedAt ?? this.context.now(),
-        id,
-      );
+    await this.context.db
+      .updateTable("routes")
+      .set({
+        name: route.name,
+        enabled: toSqliteBoolean(route.enabled),
+        rule_json: encodeSchemaJson(RouteRuleSchema, route.rule),
+        destination_ids_json: encodeDestinationIds(route.destinationIds),
+        updated_at: input.updatedAt ?? this.context.now(),
+      })
+      .where("id", "=", id)
+      .execute();
 
-    return requireRoute(this.get(id));
+    return requireRoute(await this.get(id));
   }
 
-  setEnabled(id: string, enabled: boolean): RouteDefinition {
+  setEnabled(id: string, enabled: boolean): Promise<RouteDefinition> {
     return this.update(id, { enabled });
   }
 }

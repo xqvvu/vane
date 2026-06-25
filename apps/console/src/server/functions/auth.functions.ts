@@ -23,6 +23,6 @@ export const getDashboardSessionFn = createServerFn({ method: "GET" }).handler(a
 
 export const getAuthBootstrapFn = createServerFn({ method: "GET" }).handler(async () => {
   return {
-    setupRequired: !getApplicationContainer().hasRegisteredUsers(),
+    setupRequired: !(await getApplicationContainer().hasRegisteredUsers()),
   };
 });

@@ -4,31 +4,36 @@ import type { PathLike } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-import Database from "better-sqlite3";
+import Sqlite from "better-sqlite3";
+import { Kysely, SqliteDialect } from "kysely";
 
-export type SqliteDatabase = Database.Database;
+import type { VaneSqliteDatabaseSchema, VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
 
 export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;
 }
 
-export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): SqliteDatabase {
+export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): VaneSqliteKysely {
   const databasePath = String(options.databasePath ?? path.join(process.cwd(), "data.sqlite"));
 
   if (databasePath !== ":memory:") {
     fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   }
 
-  const db = new Database(databasePath, {
+  const sqlite = new Sqlite(databasePath, {
     timeout: 5000,
   });
 
-  db.pragma("foreign_keys = ON");
+  sqlite.pragma("foreign_keys = ON");
 
   if (databasePath !== ":memory:") {
-    db.pragma("journal_mode = WAL");
-    db.pragma("busy_timeout = 5000");
+    sqlite.pragma("journal_mode = WAL");
+    sqlite.pragma("busy_timeout = 5000");
   }
 
-  return db;
+  return new Kysely<VaneSqliteDatabaseSchema>({
+    dialect: new SqliteDialect({
+      database: sqlite,
+    }),
+  });
 }

@@ -50,11 +50,11 @@ export class DeliveryWorker {
     this.health.lastError = null;
 
     try {
-      const reclaimed = this.store.deliveries.reclaimStaleRunning({
+      const reclaimed = await this.store.deliveries.reclaimStaleRunning({
         staleBefore: staleRunningCutoff(now, this.staleRunningTimeoutMs),
         now,
       });
-      const claimed = this.store.deliveries.claimNext({
+      const claimed = await this.store.deliveries.claimNext({
         now,
         limit: options.limit ?? this.batchSize,
       });

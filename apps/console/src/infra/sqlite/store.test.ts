@@ -6,9 +6,9 @@ import { openSqliteStore } from "#/infra/sqlite/store.ts";
 const now = "2026-06-07T00:00:00.000Z";
 
 describe("sqlite store", () => {
-  it("uses injected id factories for every repository-owned record", () => {
+  it("uses injected id factories for every repository-owned record", async () => {
     let nextId = 0;
-    const store = openSqliteStore({
+    const store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -21,20 +21,20 @@ describe("sqlite store", () => {
       },
     });
 
-    const source = store.sources.create({
+    const source = await store.sources.create({
       name: "Grafana",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    const destination = store.destinations.create({
+    const destination = await store.destinations.create({
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       name: "All alerts",
       destinationIds: [destination.id],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: source.id,
       idempotencyKey: null,
       normalized: {
@@ -48,12 +48,14 @@ describe("sqlite store", () => {
       },
       rawPayload: {},
     });
-    const delivery = store.deliveries.enqueueForEvent({
-      event,
-      matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
-      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
-    }).created[0]!;
-    const claim = store.deliveries.claimNext({ limit: 1 })[0]!;
+    const delivery = (
+      await store.deliveries.enqueueForEvent({
+        event,
+        matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      })
+    ).created[0]!;
+    const claim = (await store.deliveries.claimNext({ limit: 1 }))[0]!;
 
     expect({
       sourceId: source.id,
@@ -71,12 +73,12 @@ describe("sqlite store", () => {
       attemptId: "attempt-6",
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("records duplicate events while deduping deliveries for the same idempotency key", () => {
+  it("records duplicate events while deduping deliveries for the same idempotency key", async () => {
     let nextId = 0;
-    const store = openSqliteStore({
+    const store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -86,18 +88,18 @@ describe("sqlite store", () => {
       },
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Grafana",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "Critical alerts",
       rule: {
@@ -124,14 +126,14 @@ describe("sqlite store", () => {
       },
     };
 
-    const firstEvent = store.intake.recordEvent(eventInput);
-    const firstEnqueue = store.deliveries.enqueueForEvent({
+    const firstEvent = await store.intake.recordEvent(eventInput);
+    const firstEnqueue = await store.deliveries.enqueueForEvent({
       event: firstEvent,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
     });
-    const duplicateEvent = store.intake.recordEvent(eventInput);
-    const duplicateEnqueue = store.deliveries.enqueueForEvent({
+    const duplicateEvent = await store.intake.recordEvent(eventInput);
+    const duplicateEnqueue = await store.deliveries.enqueueForEvent({
       event: duplicateEvent,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
@@ -151,7 +153,7 @@ describe("sqlite store", () => {
       },
     ]);
 
-    const events = store.history.listEvents();
+    const events = await store.history.listEvents();
 
     expect(events.items).toHaveLength(2);
     const duplicateEventItem = events.items.find((item) => item.id === duplicateEvent.id);
@@ -170,12 +172,12 @@ describe("sqlite store", () => {
       failed: 0,
     });
 
-    store.close();
+    await store.close();
   });
 
-  it("claims pending deliveries with event, source, destination, route, and attempt context", () => {
+  it("claims pending deliveries with event, source, destination, route, and attempt context", async () => {
     let nextId = 0;
-    const store = openSqliteStore({
+    const store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -185,13 +187,13 @@ describe("sqlite store", () => {
       },
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Grafana",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
@@ -199,12 +201,12 @@ describe("sqlite store", () => {
         url: "https://example.test/webhook",
       },
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "All alerts",
       destinationIds: ["destination-1"],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: null,
       normalized: {
@@ -219,13 +221,13 @@ describe("sqlite store", () => {
       rawPayload: {},
     });
 
-    store.deliveries.enqueueForEvent({
+    await store.deliveries.enqueueForEvent({
       event,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
     });
 
-    const claimed = store.deliveries.claimNext({ limit: 10 });
+    const claimed = await store.deliveries.claimNext({ limit: 10 });
 
     expect(claimed).toHaveLength(1);
     expect(claimed[0]?.event.id).toBe(event.id);
@@ -235,14 +237,14 @@ describe("sqlite store", () => {
     expect(claimed[0]?.attempt.attemptNumber).toBe(1);
     expect(claimed[0]?.job.state).toBe("running");
 
-    const updated = store.deliveries.markSucceeded({
+    const updated = await store.deliveries.markSucceeded({
       deliveryId: claimed[0]!.job.id,
       attemptId: claimed[0]!.attempt.id,
       responseStatus: 202,
       responseBody: "accepted token=delivery-secret password: hidden",
       renderedPayload: { ok: true },
     });
-    const detail = store.deliveries.get(updated.id);
+    const detail = await store.deliveries.get(updated.id);
 
     expect(updated.state).toBe("succeeded");
     expect(detail?.renderedPayload).toEqual({ ok: true });
@@ -255,12 +257,12 @@ describe("sqlite store", () => {
       },
     ]);
 
-    store.close();
+    await store.close();
   });
 
-  it("pauses pending delivery claims while the destination or route is disabled", () => {
+  it("pauses pending delivery claims while the destination or route is disabled", async () => {
     let nextId = 0;
-    const store = openSqliteStore({
+    const store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -270,13 +272,13 @@ describe("sqlite store", () => {
       },
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Grafana",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
@@ -284,12 +286,12 @@ describe("sqlite store", () => {
         url: "https://example.test/webhook",
       },
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "All alerts",
       destinationIds: ["destination-1"],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: null,
       normalized: {
@@ -304,28 +306,28 @@ describe("sqlite store", () => {
       rawPayload: {},
     });
 
-    store.deliveries.enqueueForEvent({
+    await store.deliveries.enqueueForEvent({
       event,
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
     });
 
-    store.destinations.setEnabled("destination-1", false);
-    expect(store.deliveries.claimNext({ limit: 1 })).toHaveLength(0);
+    await store.destinations.setEnabled("destination-1", false);
+    expect(await store.deliveries.claimNext({ limit: 1 })).toHaveLength(0);
 
-    store.destinations.setEnabled("destination-1", true);
-    store.routes.setEnabled("route-1", false);
-    expect(store.deliveries.claimNext({ limit: 1 })).toHaveLength(0);
+    await store.destinations.setEnabled("destination-1", true);
+    await store.routes.setEnabled("route-1", false);
+    expect(await store.deliveries.claimNext({ limit: 1 })).toHaveLength(0);
 
-    store.routes.setEnabled("route-1", true);
-    expect(store.deliveries.claimNext({ limit: 1 })).toHaveLength(1);
+    await store.routes.setEnabled("route-1", true);
+    expect(await store.deliveries.claimNext({ limit: 1 })).toHaveLength(1);
 
-    store.close();
+    await store.close();
   });
 
-  it("manual retry only accepts failed deliveries and schedules an exhausted job for one more attempt", () => {
+  it("manual retry only accepts failed deliveries and schedules an exhausted job for one more attempt", async () => {
     let nextId = 0;
-    const store = openSqliteStore({
+    const store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -335,13 +337,13 @@ describe("sqlite store", () => {
       },
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Grafana",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
@@ -349,12 +351,12 @@ describe("sqlite store", () => {
         url: "https://example.test/webhook",
       },
     });
-    const route = store.routes.create({
+    const route = await store.routes.create({
       id: "route-1",
       name: "All alerts",
       destinationIds: ["destination-1"],
     });
-    const event = store.intake.recordEvent({
+    const event = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: null,
       normalized: {
@@ -368,19 +370,21 @@ describe("sqlite store", () => {
       },
       rawPayload: {},
     });
-    const delivery = store.deliveries.enqueueForEvent({
-      event,
-      matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
-      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
-      maxAttempts: 1,
-    }).created[0]!;
+    const delivery = (
+      await store.deliveries.enqueueForEvent({
+        event,
+        matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+        maxAttempts: 1,
+      })
+    ).created[0]!;
 
-    expect(() => store.deliveries.retryNow({ deliveryId: delivery.id })).toThrow(
+    await expect(store.deliveries.retryNow({ deliveryId: delivery.id })).rejects.toThrow(
       InvalidDeliveryStateError,
     );
 
-    const claimed = store.deliveries.claimNext({ limit: 1 });
-    store.deliveries.markFailed({
+    const claimed = await store.deliveries.claimNext({ limit: 1 });
+    await store.deliveries.markFailed({
       deliveryId: claimed[0]!.job.id,
       attemptId: claimed[0]!.attempt.id,
       error: "destination unavailable",
@@ -390,7 +394,7 @@ describe("sqlite store", () => {
       finishedAt: "2026-06-07T00:01:00.000Z",
     });
 
-    const retried = store.deliveries.retryNow({
+    const retried = await store.deliveries.retryNow({
       deliveryId: delivery.id,
       requestedAt: "2026-06-07T00:02:00.000Z",
     });
@@ -404,17 +408,17 @@ describe("sqlite store", () => {
       finishedAt: null,
     });
 
-    store.destinations.setEnabled("destination-1", false);
+    await store.destinations.setEnabled("destination-1", false);
     expect(
-      store.deliveries.claimNext({
+      await store.deliveries.claimNext({
         now: "2026-06-07T00:02:00.000Z",
         limit: 1,
       }),
     ).toHaveLength(0);
 
-    store.destinations.setEnabled("destination-1", true);
+    await store.destinations.setEnabled("destination-1", true);
 
-    const retryClaim = store.deliveries.claimNext({
+    const retryClaim = await store.deliveries.claimNext({
       now: "2026-06-07T00:02:00.000Z",
       limit: 1,
     });
@@ -422,12 +426,12 @@ describe("sqlite store", () => {
     expect(retryClaim).toHaveLength(1);
     expect(retryClaim[0]?.attempt.attemptNumber).toBe(2);
 
-    store.close();
+    await store.close();
   });
 
-  it("filters operational history and exposes event and delivery details", () => {
+  it("filters operational history and exposes event and delivery details", async () => {
     let nextId = 0;
-    const store = openSqliteStore({
+    const store = await openSqliteStore({
       databasePath: ":memory:",
       now: () => now,
       ids: {
@@ -437,19 +441,19 @@ describe("sqlite store", () => {
       },
     });
 
-    store.sources.create({
+    await store.sources.create({
       id: "source-1",
       name: "Grafana",
       provider: "grafana",
       tokenHash: "token-hash",
     });
-    store.sources.create({
+    await store.sources.create({
       id: "source-2",
       name: "Uptime Kuma",
       provider: "uptime_kuma",
       tokenHash: "token-hash-2",
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-1",
       name: "Ops webhook",
       kind: "generic_webhook",
@@ -461,7 +465,7 @@ describe("sqlite store", () => {
         },
       },
     });
-    store.destinations.create({
+    await store.destinations.create({
       id: "destination-2",
       name: "Audit email",
       kind: "email",
@@ -471,7 +475,7 @@ describe("sqlite store", () => {
         from: "vane@example.test",
       },
     });
-    const criticalRoute = store.routes.create({
+    const criticalRoute = await store.routes.create({
       id: "route-1",
       name: "Critical route",
       rule: {
@@ -479,7 +483,7 @@ describe("sqlite store", () => {
       },
       destinationIds: ["destination-1"],
     });
-    const uptimeRoute = store.routes.create({
+    const uptimeRoute = await store.routes.create({
       id: "route-2",
       name: "Uptime audit",
       rule: {
@@ -488,7 +492,7 @@ describe("sqlite store", () => {
       destinationIds: ["destination-2"],
     });
 
-    const criticalEvent = store.intake.recordEvent({
+    const criticalEvent = await store.intake.recordEvent({
       sourceId: "source-1",
       idempotencyKey: "request-1",
       normalized: {
@@ -507,7 +511,7 @@ describe("sqlite store", () => {
         "x-provider": "grafana",
       },
     });
-    const uptimeEvent = store.intake.recordEvent({
+    const uptimeEvent = await store.intake.recordEvent({
       sourceId: "source-2",
       idempotencyKey: "request-2",
       normalized: {
@@ -524,19 +528,21 @@ describe("sqlite store", () => {
       },
     });
 
-    const criticalDelivery = store.deliveries.enqueueForEvent({
-      event: criticalEvent,
-      matches: [{ routeId: criticalRoute.id, destinationIds: criticalRoute.destinationIds }],
-      dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
-    }).created[0]!;
-    store.deliveries.enqueueForEvent({
+    const criticalDelivery = (
+      await store.deliveries.enqueueForEvent({
+        event: criticalEvent,
+        matches: [{ routeId: criticalRoute.id, destinationIds: criticalRoute.destinationIds }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      })
+    ).created[0]!;
+    await store.deliveries.enqueueForEvent({
       event: uptimeEvent,
       matches: [{ routeId: uptimeRoute.id, destinationIds: uptimeRoute.destinationIds }],
       dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
     });
 
-    const claimed = store.deliveries.claimNext({ limit: 1 });
-    store.deliveries.markFailed({
+    const claimed = await store.deliveries.claimNext({ limit: 1 });
+    await store.deliveries.markFailed({
       deliveryId: claimed[0]!.job.id,
       attemptId: claimed[0]!.attempt.id,
       error: "destination unavailable token=delivery-secret",
@@ -545,27 +551,31 @@ describe("sqlite store", () => {
       responseBody: "unavailable password: hidden",
     });
 
-    expect(store.history.listEvents({ severity: "critical" }).items).toHaveLength(1);
-    expect(store.history.listEvents({ status: "resolved" }).items[0]?.id).toBe(uptimeEvent.id);
-    expect(store.history.listEvents({ q: "CPU" }).items[0]?.id).toBe(criticalEvent.id);
-    expect(store.history.listDeliveries({ severity: "critical" }).items[0]?.id).toBe(
+    expect((await store.history.listEvents({ severity: "critical" })).items).toHaveLength(1);
+    expect((await store.history.listEvents({ status: "resolved" })).items[0]?.id).toBe(
+      uptimeEvent.id,
+    );
+    expect((await store.history.listEvents({ q: "CPU" })).items[0]?.id).toBe(criticalEvent.id);
+    expect((await store.history.listDeliveries({ severity: "critical" })).items[0]?.id).toBe(
       criticalDelivery.id,
     );
-    expect(store.history.listDeliveries({ status: "resolved" }).items).toHaveLength(1);
-    expect(store.history.listDeliveries({ q: "CPU" }).items[0]?.id).toBe(criticalDelivery.id);
-    expect(store.history.listDeliveries({ destinationId: "destination-1" }).items[0]?.id).toBe(
+    expect((await store.history.listDeliveries({ status: "resolved" })).items).toHaveLength(1);
+    expect((await store.history.listDeliveries({ q: "CPU" })).items[0]?.id).toBe(
       criticalDelivery.id,
     );
-    expect(store.history.listDeliveries({ state: "failed" }).items[0]?.lastError).toBe(
+    expect(
+      (await store.history.listDeliveries({ destinationId: "destination-1" })).items[0]?.id,
+    ).toBe(criticalDelivery.id);
+    expect((await store.history.listDeliveries({ state: "failed" })).items[0]?.lastError).toBe(
       "destination unavailable token=[REDACTED]",
     );
-    const eventFirstPage = store.history.listEvents({ limit: 1 });
-    const eventSecondPage = store.history.listEvents({
+    const eventFirstPage = await store.history.listEvents({ limit: 1 });
+    const eventSecondPage = await store.history.listEvents({
       limit: 1,
       cursor: eventFirstPage.nextCursor ?? undefined,
     });
-    const deliveryFirstPage = store.history.listDeliveries({ limit: 1 });
-    const deliverySecondPage = store.history.listDeliveries({
+    const deliveryFirstPage = await store.history.listDeliveries({ limit: 1 });
+    const deliverySecondPage = await store.history.listDeliveries({
       limit: 1,
       cursor: deliveryFirstPage.nextCursor ?? undefined,
     });
@@ -578,8 +588,8 @@ describe("sqlite store", () => {
     expect(deliverySecondPage.items[0]?.id).not.toBe(deliveryFirstPage.items[0]?.id);
     expect(deliverySecondPage.nextCursor).toBeNull();
 
-    const eventDetail = store.history.getEventDetail(criticalEvent.id);
-    const deliveryDetail = store.deliveries.get(criticalDelivery.id);
+    const eventDetail = await store.history.getEventDetail(criticalEvent.id);
+    const deliveryDetail = await store.deliveries.get(criticalDelivery.id);
 
     expect(eventDetail?.event.rawPayload).toEqual({ title: "CPU high" });
     expect(eventDetail?.event.rawHeaders).toEqual({ "x-provider": "grafana" });
@@ -642,6 +652,6 @@ describe("sqlite store", () => {
       },
     ]);
 
-    store.close();
+    await store.close();
   });
 });
