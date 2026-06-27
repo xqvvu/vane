@@ -105,7 +105,10 @@ describe("generic webhook sender", () => {
         ...input,
         config: {
           ...input.config,
-          messageTemplate: "  {{event.title}} -> {{destination.name}}  ",
+          template: {
+            mode: "text",
+            text: "  {{event.title}} -> {{destination.name}}  ",
+          },
         },
       },
       { fetch: fetcher },

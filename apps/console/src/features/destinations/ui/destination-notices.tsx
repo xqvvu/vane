@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "#/components/ui/dialog.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import type {
   DestinationPreviewNotice,
   DestinationTestNotice,
@@ -62,10 +63,7 @@ export function DestinationPreviewDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations();
-  const renderedPayload = React.useMemo(
-    () => (notice ? JSON.stringify(notice.renderedPayload, null, 2) : ""),
-    [notice],
-  );
+  const previewTabs = React.useMemo(() => createPreviewTabs(notice, t), [notice, t]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,30 +75,117 @@ export function DestinationPreviewDialog({
           <DialogDescription>{t("destinations.notice.previewDescription")}</DialogDescription>
         </DialogHeader>
         {notice ? (
-          <CodeBlock
-            code={renderedPayload}
-            language="json"
-            showLineNumbers
-            contentClassName="max-h-[min(520px,calc(100dvh-14rem))]"
-          >
-            <CodeBlockHeader>
-              <CodeBlockTitle>
-                <CodeBlockFilename>
-                  {t("destinations.notice.previewPayloadFilename")}
-                </CodeBlockFilename>
-              </CodeBlockTitle>
-              <CodeBlockActions>
-                <CodeBlockCopyButton
-                  aria-label={t("destinations.notice.copyPreviewPayload")}
-                  title={t("destinations.notice.copyPreviewPayload")}
-                  onCopy={() => toast.success(t("common.actions.copied"))}
-                  onError={() => toast.error(t("common.actions.copyFailed"))}
+          <Tabs defaultValue="payload" className="min-h-0">
+            <TabsList variant="bordered" className="max-w-full overflow-x-auto">
+              {previewTabs.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {previewTabs.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value} className="min-h-0">
+                <PreviewJsonBlock
+                  filename={tab.filename}
+                  value={tab.valueJson}
+                  copyLabel={t("destinations.notice.copyPreviewPayload")}
+                  t={t}
                 />
-              </CodeBlockActions>
-            </CodeBlockHeader>
-          </CodeBlock>
+              </TabsContent>
+            ))}
+          </Tabs>
         ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function createPreviewTabs(notice: DestinationPreviewNotice | null, t: TranslationFn) {
+  if (!notice) {
+    return [];
+  }
+
+  return [
+    {
+      value: "payload",
+      label: t("destinations.notice.previewTabs.payload"),
+      filename: t("destinations.notice.previewPayloadFilename"),
+      valueJson: notice.renderedPayload,
+    },
+    ...(notice.normalizedEvent
+      ? [
+          {
+            value: "normalized",
+            label: t("destinations.notice.previewTabs.normalized"),
+            filename: t("destinations.notice.previewNormalizedFilename"),
+            valueJson: notice.normalizedEvent,
+          },
+        ]
+      : []),
+    ...(notice.context
+      ? [
+          {
+            value: "context",
+            label: t("destinations.notice.previewTabs.context"),
+            filename: t("destinations.notice.previewContextFilename"),
+            valueJson: notice.context,
+          },
+        ]
+      : []),
+    ...(notice.rawPayloadReference
+      ? [
+          {
+            value: "raw",
+            label: t("destinations.notice.previewTabs.raw"),
+            filename: t("destinations.notice.previewRawFilename"),
+            valueJson: notice.rawPayloadReference,
+          },
+        ]
+      : []),
+    ...(notice.diagnostics
+      ? [
+          {
+            value: "diagnostics",
+            label: t("destinations.notice.previewTabs.diagnostics"),
+            filename: t("destinations.notice.previewDiagnosticsFilename"),
+            valueJson: notice.diagnostics,
+          },
+        ]
+      : []),
+  ];
+}
+
+function PreviewJsonBlock({
+  filename,
+  value,
+  copyLabel,
+  t,
+}: {
+  filename: string;
+  value: unknown;
+  copyLabel: string;
+  t: TranslationFn;
+}) {
+  return (
+    <CodeBlock
+      code={JSON.stringify(value, null, 2)}
+      language="json"
+      showLineNumbers
+      contentClassName="max-h-[min(490px,calc(100dvh-16rem))]"
+    >
+      <CodeBlockHeader>
+        <CodeBlockTitle>
+          <CodeBlockFilename>{filename}</CodeBlockFilename>
+        </CodeBlockTitle>
+        <CodeBlockActions>
+          <CodeBlockCopyButton
+            aria-label={copyLabel}
+            title={copyLabel}
+            onCopy={() => toast.success(t("common.actions.copied"))}
+            onError={() => toast.error(t("common.actions.copyFailed"))}
+          />
+        </CodeBlockActions>
+      </CodeBlockHeader>
+    </CodeBlock>
   );
 }

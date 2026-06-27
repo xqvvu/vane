@@ -34,6 +34,16 @@ export interface DestinationTestNotice {
 export interface DestinationPreviewNotice {
   destination: DestinationSummary;
   renderedPayload: JsonValue;
+  sample?: {
+    kind: "built_in" | "historical_event";
+    eventId: string;
+    source: SourceSummary;
+    receivedAt: string | null;
+  };
+  context?: unknown;
+  normalizedEvent?: unknown;
+  diagnostics?: unknown;
+  rawPayloadReference?: unknown;
 }
 
 export interface DestinationUpdateDraft {

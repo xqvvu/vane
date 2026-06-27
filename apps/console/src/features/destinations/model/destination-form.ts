@@ -3,11 +3,13 @@ import {
   formSeparatedList,
   formString,
   formTrimmedString,
+  JsonObjectSchema,
   nonEmptyObject,
   type JsonObject,
 } from "@vane/core";
 
 export type DestinationFormKind = "generic_webhook" | "feishu" | "slack" | "email";
+export type DestinationTemplateFormMode = "text" | "feishu_card";
 
 export function formDestinationKind(data: FormData): DestinationFormKind {
   return formDestinationKindValue(data.get("kind"));
@@ -29,7 +31,7 @@ export function formDestinationKindValue(
 }
 
 export function destinationConfigFromForm(kind: DestinationFormKind, data: FormData): JsonObject {
-  const messageTemplate = formTrimmedString(data, "messageTemplate");
+  const template = templateFromForm(kind, data);
 
   if (kind === "email") {
     const subjectPrefix = formTrimmedString(data, "subjectPrefix");
@@ -43,7 +45,7 @@ export function destinationConfigFromForm(kind: DestinationFormKind, data: FormD
       ...(replyTo ? { replyTo } : {}),
       ...(subjectPrefix ? { subjectPrefix } : {}),
       ...nonEmptyObject({ headers }),
-      ...(messageTemplate ? { messageTemplate } : {}),
+      ...nonEmptyObject({ template }),
     };
   }
 
@@ -53,14 +55,14 @@ export function destinationConfigFromForm(kind: DestinationFormKind, data: FormD
     return {
       webhookUrl: formTrimmedString(data, "webhookUrl"),
       ...(signSecret ? { signSecret } : {}),
-      ...(messageTemplate ? { messageTemplate } : {}),
+      ...nonEmptyObject({ template }),
     };
   }
 
   if (kind === "slack") {
     return {
       webhookUrl: formTrimmedString(data, "webhookUrl"),
-      ...(messageTemplate ? { messageTemplate } : {}),
+      ...nonEmptyObject({ template }),
     };
   }
 
@@ -70,7 +72,7 @@ export function destinationConfigFromForm(kind: DestinationFormKind, data: FormD
     url: formTrimmedString(data, "url"),
     method: formWebhookMethod(data),
     ...nonEmptyObject({ headers }),
-    ...(messageTemplate ? { messageTemplate } : {}),
+    ...nonEmptyObject({ template }),
   };
 }
 
@@ -78,7 +80,7 @@ export function destinationConfigPatchFromForm(
   kind: DestinationFormKind,
   data: FormData,
 ): JsonObject {
-  const messageTemplate = formTrimmedString(data, "messageTemplate");
+  const template = templateFromForm(kind, data);
   const config: JsonObject = {};
 
   if (kind === "email") {
@@ -147,11 +149,27 @@ export function destinationConfigPatchFromForm(
     }
   }
 
-  if (messageTemplate) {
-    config.messageTemplate = messageTemplate;
+  if (template) {
+    config.template = template;
   }
 
   return config;
+}
+
+function templateFromForm(kind: DestinationFormKind, data: FormData): JsonObject | null {
+  if (kind === "feishu" && templateModeFromForm(data) === "feishu_card") {
+    const card = formTrimmedString(data, "templateCard");
+
+    return card ? { mode: "feishu_card", card: JsonObjectSchema.parse(JSON.parse(card)) } : null;
+  }
+
+  const text = formTrimmedString(data, "templateText");
+
+  return text ? { mode: "text", text } : null;
+}
+
+function templateModeFromForm(data: FormData): DestinationTemplateFormMode {
+  return formString(data, "templateMode") === "feishu_card" ? "feishu_card" : "text";
 }
 
 function formWebhookMethod(data: FormData): "POST" | "PUT" | "PATCH" {

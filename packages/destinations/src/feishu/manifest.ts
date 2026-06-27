@@ -26,9 +26,9 @@ export const feishuManifest = {
     },
     {
       type: "template",
-      path: "messageTemplate",
-      labelKey: "destinations.form.messageTemplate",
-      descriptionKey: "destinations.form.messageTemplateDescription",
+      path: "template",
+      labelKey: "destinations.form.template",
+      descriptionKey: "destinations.form.templateDescription",
     },
   ],
   secretFields: [

@@ -39,7 +39,7 @@ export function destinationSummaryFromRuntime(
 export function destinationMetadataFromRuntime(destination: DestinationRuntimeConfig): JsonObject {
   const config = destination.config;
   const metadata: JsonObject = {
-    messageTemplateConfigured: hasConfiguredString(config, "messageTemplate"),
+    templateConfigured: hasConfiguredObject(config, "template"),
   };
 
   if (destination.kind === "generic_webhook") {
@@ -93,6 +93,12 @@ export function requireDestination(
 
 function hasConfiguredString(config: JsonObject, key: string): boolean {
   return Boolean(configString(config, key));
+}
+
+function hasConfiguredObject(config: JsonObject, key: string): boolean {
+  const value = config[key];
+
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
 function configString(config: JsonObject, key: string): string | null {

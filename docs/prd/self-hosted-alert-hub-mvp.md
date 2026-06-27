@@ -1,6 +1,24 @@
 # PRD: Self-Hosted Alert Hub MVP
 
-Labels: `ready-for-agent`
+Labels: `mvp-baseline-complete`, `post-mvp-planning`
+
+## Status
+
+As of 2026-06-26, the MVP product baseline is considered implemented in the
+repository. The core path is present end to end: dashboard setup/login, Source
+configuration, authenticated webhook intake, provider parsing, immutable Events,
+route matching, asynchronous Delivery jobs, destination preview/send, retry
+history, operational Events/Deliveries views, Settings, TOML portability,
+SQLite migrations, health/readiness endpoints, and Docker runtime shape.
+
+This PRD now acts as the historical source of truth for the MVP scope and the
+architecture constraints that should continue to guide future work. New product
+work should be discussed in a post-MVP PRD before being split into issues.
+
+The MVP baseline being complete does not mean every release-hardening item is
+finished. Remaining release and production-readiness work is tracked in
+`docs/release/mvp-rc-checklist.md`, especially CI/E2E automation, deployment
+documentation, release checklist quality, and selected UI polish.
 
 ## Problem Statement
 
@@ -197,11 +215,28 @@ separate worker service, or SaaS-style tenancy.
 - Treating starter/demo MCP code as product architecture.
 - Provider-specific UI complexity beyond the fields required to configure Sources and Destinations.
 
+## MVP Completion Notes
+
+- The first usable product slice is complete enough to support a new planning
+  cycle. Future work should stop expanding this MVP PRD and instead create
+  narrower post-MVP PRDs.
+- The most important carried-forward product quality remains trust: operators
+  must be able to see what arrived, how it was normalized, why it routed, what
+  was sent, whether it succeeded, and how failures retry.
+- Known post-MVP candidates include destination-aware structured templates,
+  richer Feishu/Slack/Email message formats, route authoring depth, alert
+  suppression/maintenance windows, stronger search/filtering, production
+  deployment hardening, and contributor experience for adapters.
+- Capabilities that were explicitly out of scope here remain out of scope until
+  a new PRD accepts them: SaaS tenancy, billing, incident lifecycle,
+  on-call/escalation policy, distributed queue/runtime requirements, and a
+  stable public management API.
+
 ## Further Notes
 
 - `AGENTS.md` is the lightweight workflow contract for agents. Product scope
   and architecture guidance should live in this PRD or follow-up decision docs,
   not be duplicated there.
-- The product should be implemented incrementally: first establish domain schemas, package boundaries, SQLite migrations, and adapter contracts; then add the webhook intake path, routing engine, delivery worker, and operational UI.
-- The most important product quality is trust: SRE users must be able to see what arrived, how it was normalized, why it routed, what was sent, whether it succeeded, and how failures will retry.
-- The MVP should stay small enough for a private deployment to run comfortably on SQLite while leaving clear extension points for open-source provider and destination contributions.
+- The completed MVP should stay small enough for a private deployment to run
+  comfortably on SQLite while leaving clear extension points for open-source
+  provider and destination contributions.

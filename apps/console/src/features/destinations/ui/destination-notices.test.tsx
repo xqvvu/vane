@@ -45,6 +45,23 @@ describe("destination notices", () => {
                 service: "api",
               },
             },
+            normalizedEvent: {
+              title: "Disk full",
+              labels: {
+                service: "api",
+              },
+            },
+            context: {
+              event: {
+                title: "Disk full",
+              },
+            },
+            rawPayloadReference: {
+              payload: {
+                token: "[REDACTED]",
+              },
+            },
+            diagnostics: [],
           }}
         />
       </VaneIntlProvider>,
@@ -52,6 +69,11 @@ describe("destination notices", () => {
 
     expect(screen.getByText(/"text": "disk full"/)).toBeTruthy();
     expect(screen.getByText(/"service": "api"/)).toBeTruthy();
+    expect(screen.getByText("Payload")).toBeTruthy();
+    expect(screen.getByText("Normalized")).toBeTruthy();
+    expect(screen.getByText("Context")).toBeTruthy();
+    expect(screen.getByText("Raw reference")).toBeTruthy();
+    expect(screen.getByText("Diagnostics")).toBeTruthy();
   });
 
   it("shows destination test response bodies in a toast", () => {

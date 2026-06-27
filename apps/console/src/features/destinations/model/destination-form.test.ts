@@ -15,7 +15,7 @@ describe("destination form helpers", () => {
     data.set("url", "https://relay.example.test/vane");
     data.set("method", "PATCH");
     data.set("headers", "Authorization: Bearer relay-secret\nX-Team: sre\ninvalid");
-    data.set("messageTemplate", "{{event.title}} from {{source.name}}");
+    data.set("templateText", "{{event.title}} from {{source.name}}");
 
     expect(formDestinationKind(data)).toBe("generic_webhook");
     expect(destinationConfigFromForm("generic_webhook", data)).toEqual({
@@ -25,7 +25,10 @@ describe("destination form helpers", () => {
         Authorization: "Bearer relay-secret",
         "X-Team": "sre",
       },
-      messageTemplate: "{{event.title}} from {{source.name}}",
+      template: {
+        mode: "text",
+        text: "{{event.title}} from {{source.name}}",
+      },
     });
   });
 
@@ -39,7 +42,7 @@ describe("destination form helpers", () => {
     data.set("replyTo", "ops@example.test");
     data.set("subjectPrefix", "[Vane]");
     data.set("headers", "Authorization: Bearer gateway-secret\nX-Mailer: Vane");
-    data.set("messageTemplate", "{{event.message}}");
+    data.set("templateText", "{{event.message}}");
 
     expect(formDestinationKind(data)).toBe("email");
     expect(destinationConfigFromForm("email", data)).toEqual({
@@ -52,7 +55,64 @@ describe("destination form helpers", () => {
         Authorization: "Bearer gateway-secret",
         "X-Mailer": "Vane",
       },
-      messageTemplate: "{{event.message}}",
+      template: {
+        mode: "text",
+        text: "{{event.message}}",
+      },
+    });
+  });
+
+  it("maps Feishu card templates into destination config", () => {
+    const data = new FormData();
+
+    data.set("kind", "feishu");
+    data.set("webhookUrl", "https://open.feishu.cn/webhook");
+    data.set("signSecret", "feishu-sign-secret");
+    data.set("templateMode", "feishu_card");
+    data.set(
+      "templateCard",
+      JSON.stringify({
+        header: {
+          title: {
+            tag: "plain_text",
+            content: "[{{event.severity}}] {{event.title}}",
+          },
+        },
+        elements: [
+          {
+            tag: "div",
+            text: {
+              tag: "lark_md",
+              content: "{{event.message}}",
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(destinationConfigFromForm("feishu", data)).toEqual({
+      webhookUrl: "https://open.feishu.cn/webhook",
+      signSecret: "feishu-sign-secret",
+      template: {
+        mode: "feishu_card",
+        card: {
+          header: {
+            title: {
+              tag: "plain_text",
+              content: "[{{event.severity}}] {{event.title}}",
+            },
+          },
+          elements: [
+            {
+              tag: "div",
+              text: {
+                tag: "lark_md",
+                content: "{{event.message}}",
+              },
+            },
+          ],
+        },
+      },
     });
   });
 
@@ -63,11 +123,14 @@ describe("destination form helpers", () => {
     generic.set("url", "");
     generic.set("method", "PATCH");
     generic.set("headers", "");
-    generic.set("messageTemplate", "{{event.title}} from {{destination.name}}");
+    generic.set("templateText", "{{event.title}} from {{destination.name}}");
 
     expect(destinationConfigPatchFromForm("generic_webhook", generic)).toEqual({
       method: "PATCH",
-      messageTemplate: "{{event.title}} from {{destination.name}}",
+      template: {
+        mode: "text",
+        text: "{{event.title}} from {{destination.name}}",
+      },
     });
 
     const email = new FormData();
@@ -80,6 +143,13 @@ describe("destination form helpers", () => {
     expect(destinationConfigPatchFromForm("email", email)).toEqual({
       subjectPrefix: "[Vane]",
     });
+
+    const feishuCardWithoutDraft = new FormData();
+
+    feishuCardWithoutDraft.set("templateMode", "feishu_card");
+    feishuCardWithoutDraft.set("templateCard", "");
+
+    expect(destinationConfigPatchFromForm("feishu", feishuCardWithoutDraft)).toEqual({});
   });
 
   it("falls back unknown destination form kinds to generic webhook", () => {

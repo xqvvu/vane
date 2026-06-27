@@ -191,7 +191,7 @@ describe("delivery worker", () => {
     expect(detail?.renderedPayload).toMatchObject({
       msg_type: "text",
       content: {
-        text: expect.stringContaining("[CRITICAL] Checkout unavailable"),
+        text: expect.stringContaining("[critical] Checkout unavailable"),
       },
     });
 

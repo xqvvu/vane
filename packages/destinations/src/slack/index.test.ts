@@ -106,7 +106,10 @@ describe("slack sender", () => {
         ...input,
         config: {
           webhookUrl: input.config.webhookUrl,
-          messageTemplate: "  {{event.title}} -> {{destination.name}}  ",
+          template: {
+            mode: "text",
+            text: "  {{event.title}} -> {{destination.name}}  ",
+          },
         },
       },
       { fetch: fetcher },

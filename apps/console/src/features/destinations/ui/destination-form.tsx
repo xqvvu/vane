@@ -1,4 +1,4 @@
-import { RiAddLine, RiEditLine, RiEyeLine } from "@remixicon/react";
+import { RiAddLine, RiEditLine, RiEyeLine, RiResetLeftLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
 
@@ -20,9 +20,11 @@ import {
   SelectValue,
 } from "#/components/ui/select.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group.tsx";
 import {
   destinationConfigFromForm,
   destinationConfigPatchFromForm,
+  type DestinationTemplateFormMode,
   type DestinationFormKind,
 } from "#/features/destinations/model/destination-form.ts";
 import type {
@@ -172,6 +174,139 @@ export function DestinationForm({
       description: t("destinations.form.headersDescription"),
     });
 
+  const renderTemplateFields = (kind: DestinationFormKind) => {
+    if (kind !== "feishu") {
+      return renderTextTemplateField(kind);
+    }
+
+    return (
+      <>
+        <form.Field name="templateMode">
+          {(field) => (
+            <UiField>
+              <FieldLabel>{t("destinations.form.templateMode")}</FieldLabel>
+              <ToggleGroup
+                value={[String(field.state.value)]}
+                variant="outline"
+                size="sm"
+                onValueChange={(value) => {
+                  const next = value[0] as DestinationTemplateFormMode | undefined;
+
+                  if (next) {
+                    field.handleChange(next);
+                  }
+                }}
+              >
+                <ToggleGroupItem value="text" aria-label={t("destinations.form.templateModeText")}>
+                  {t("destinations.form.templateModeText")}
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="feishu_card"
+                  aria-label={t("destinations.form.templateModeFeishuCard")}
+                >
+                  {t("destinations.form.templateModeFeishuCard")}
+                </ToggleGroupItem>
+              </ToggleGroup>
+              <FieldDescription>{t("destinations.form.templateModeDescription")}</FieldDescription>
+            </UiField>
+          )}
+        </form.Field>
+        <form.Subscribe selector={(state) => state.values.templateMode}>
+          {(templateMode) =>
+            templateMode === "feishu_card"
+              ? renderFeishuCardTemplateField()
+              : renderTextTemplateField("feishu")
+          }
+        </form.Subscribe>
+        {renderTemplateVariableReference()}
+      </>
+    );
+  };
+
+  const renderTextTemplateField = (kind: DestinationFormKind) =>
+    renderTextareaField({
+      label: t("destinations.form.template"),
+      name: "templateText",
+      id: `message-template-${kind}`,
+      className: "min-h-20 resize-y font-mono text-[11px]",
+      placeholder: "{{event.title}} on {{source.name}}",
+      description: t("destinations.form.templateDescription"),
+    });
+
+  const renderFeishuCardTemplateField = () => (
+    <form.Field name="templateCard">
+      {(field) => (
+        <UiField>
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel htmlFor="feishu-card-template">
+              {t("destinations.form.feishuCardTemplate")}
+            </FieldLabel>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              onClick={() => field.handleChange(defaultFeishuCardTemplate)}
+            >
+              <RiResetLeftLine data-icon="inline-start" aria-hidden />
+              {t("destinations.form.restoreDefaultCard")}
+            </Button>
+          </div>
+          <Textarea
+            id="feishu-card-template"
+            name={field.name}
+            className="min-h-56 resize-y font-mono text-[11px]"
+            placeholder={feishuCardTemplatePlaceholder}
+            value={String(field.state.value)}
+            onBlur={field.handleBlur}
+            onChange={(event) => field.handleChange(event.currentTarget.value)}
+          />
+          <FieldDescription>
+            {t("destinations.form.feishuCardTemplateDescription")}
+          </FieldDescription>
+        </UiField>
+      )}
+    </form.Field>
+  );
+
+  const renderTemplateVariableReference = () => (
+    <form.Subscribe
+      selector={(state) => ({
+        mode: state.values.templateMode,
+        text: state.values.templateText,
+        card: state.values.templateCard,
+      })}
+    >
+      {({ mode: templateMode, text, card }) => (
+        <UiField>
+          <FieldLabel>{t("destinations.form.variables")}</FieldLabel>
+          <div className="flex flex-wrap gap-1">
+            {templateVariablePaths.map((path) => (
+              <Button
+                key={path}
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={() => {
+                  const variable = `{{${path}}}`;
+
+                  if (templateMode === "feishu_card") {
+                    form.setFieldValue("templateCard", appendTemplateVariable(card, variable));
+                    return;
+                  }
+
+                  form.setFieldValue("templateText", appendTemplateVariable(text, variable));
+                }}
+              >
+                {path}
+              </Button>
+            ))}
+          </div>
+          <FieldDescription>{t("destinations.form.variablesDescription")}</FieldDescription>
+        </UiField>
+      )}
+    </form.Subscribe>
+  );
+
   const renderDestinationConfigFields = (kind: DestinationFormKind) => (
     <>
       {kind === "email" ? (
@@ -277,14 +412,7 @@ export function DestinationForm({
             : null}
         </>
       )}
-      {renderTextareaField({
-        label: t("destinations.form.messageTemplate"),
-        name: "messageTemplate",
-        id: `message-template-${kind}`,
-        className: "min-h-20 resize-y font-mono text-[11px]",
-        placeholder: "{{event.title}} on {{source.name}}",
-        description: t("destinations.form.messageTemplateDescription"),
-      })}
+      {renderTemplateFields(kind)}
     </>
   );
 
@@ -432,7 +560,9 @@ export function createDestinationDefaults(): DestinationFormValues {
     webhookUrl: "",
     method: "POST",
     signSecret: "",
-    messageTemplate: "",
+    templateMode: "text",
+    templateText: "",
+    templateCard: defaultFeishuCardTemplate,
   };
 }
 
@@ -451,3 +581,57 @@ function destinationValuesToFormData(values: DestinationFormValues): FormData {
 
   return data;
 }
+
+function appendTemplateVariable(currentValue: string, variable: string): string {
+  return currentValue.trimEnd() ? `${currentValue} ${variable}` : variable;
+}
+
+const templateVariablePaths = [
+  "event.title",
+  "event.message",
+  "event.severity",
+  "event.status",
+  "event.fingerprint",
+  "event.labels.service",
+  "event.labels.environment",
+  "source.name",
+  "destination.name",
+  "vane.eventUrl",
+];
+
+const defaultFeishuCardTemplate = JSON.stringify(
+  {
+    header: {
+      title: {
+        tag: "plain_text",
+        content: "[{{event.severity}}] {{event.title}}",
+      },
+    },
+    elements: [
+      {
+        tag: "div",
+        text: {
+          tag: "lark_md",
+          content:
+            "**Status:** {{event.status}}\n**Source:** {{source.name}}\n**Service:** {{event.labels.service}}\n**Message:** {{event.message}}",
+        },
+      },
+      {
+        tag: "hr",
+      },
+      {
+        tag: "note",
+        elements: [
+          {
+            tag: "plain_text",
+            content: "Fingerprint: {{event.fingerprint}}",
+          },
+        ],
+      },
+    ],
+  },
+  null,
+  2,
+);
+
+const feishuCardTemplatePlaceholder = defaultFeishuCardTemplate;

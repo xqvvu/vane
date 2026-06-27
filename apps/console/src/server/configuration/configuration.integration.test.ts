@@ -204,18 +204,18 @@ describe("configuration service", () => {
         kind: "generic_webhook",
         config: {
           url: "https://example.test/webhook",
-          messageTemplate: "{{event.title.toUpperCase}}",
+          template: { mode: "text", text: "{{event.title.toUpperCase}}" },
         },
       }),
-    ).rejects.toThrow("Message template contains unknown variables");
+    ).rejects.toThrow("Destination template contains unknown variable: event.title.toUpperCase");
     await expect(
       service.updateDestination({
         id: destination.id,
         config: {
-          messageTemplate: "{{process.env.SECRET}}",
+          template: { mode: "text", text: "{{process.env.SECRET}}" },
         },
       }),
-    ).rejects.toThrow("Message template contains unknown variables");
+    ).rejects.toThrow("Destination template contains unknown variable: process.env.SECRET");
 
     await store.close();
   });
@@ -365,13 +365,29 @@ describe("configuration service", () => {
       kind: "generic_webhook",
       config: {
         url: "https://example.test/webhook",
-        messageTemplate: "{{event.title}} from {{source.name}}",
+        template: { mode: "text", text: "{{event.title}} from {{source.name}}" },
       },
     });
 
     const result = await service.previewDestination({ id: destination.id });
 
     expect(result.destination).toEqual(destination);
+    expect(result.sample).toEqual({
+      kind: "built_in",
+      eventId: "preview-event",
+      source: {
+        id: "preview-source",
+        name: "Vane preview",
+        provider: "generic",
+        enabled: true,
+      },
+      receivedAt: null,
+    });
+    expect(result.context.event.title).toBe("Vane destination test");
+    expect(result.context.source.name).toBe("Vane preview");
+    expect(result.normalizedEvent.title).toBe("Vane destination test");
+    expect(result.diagnostics).toEqual([]);
+    expect(result.rawPayloadReference).toBeNull();
     expect(result.renderedPayload).toMatchObject({
       eventId: "preview-event",
       message: "Vane destination test from Vane preview",
@@ -403,6 +419,201 @@ describe("configuration service", () => {
     await store.close();
   });
 
+  it("previews destination templates with historical event samples and redacted raw reference", async () => {
+    const { store, service } = await createService();
+    const source = await service.createSource({
+      name: "SigNoz",
+      provider: "signoz",
+    });
+    const event = await store.intake.recordEvent({
+      id: "event-template-preview",
+      sourceId: source.source.id,
+      idempotencyKey: null,
+      normalized: {
+        title: "High CPU",
+        message: "CPU above threshold",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "signoz:cpu:api",
+        labels: {
+          service: "api",
+          environment: "prod",
+        },
+        occurredAt: "2026-06-09T07:59:00.000Z",
+      },
+      rawPayload: {
+        alertname: "HighCPU",
+        token: "raw-token",
+        nested: {
+          signingSecret: "raw-signing-secret",
+          safe: "visible",
+        },
+      },
+      rawHeaders: {
+        authorization: "Bearer source-token",
+        "x-signoz": "visible-header",
+      },
+    });
+    const destination = await service.createDestination({
+      name: "Ops webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/webhook-secret",
+        template: { mode: "text", text: "{{event.title}} {{event.labels.service}}" },
+      },
+    });
+
+    const result = await service.previewDestination({
+      id: destination.id,
+      sampleEventId: event.id,
+    });
+
+    expect(result.sample).toEqual({
+      kind: "historical_event",
+      eventId: event.id,
+      source: source.source,
+      receivedAt: now,
+    });
+    expect(result.context.event.id).toBe(event.id);
+    expect(result.context.event.labels.service).toBe("api");
+    expect(result.normalizedEvent.title).toBe("High CPU");
+    expect(result.renderedPayload).toMatchObject({
+      eventId: event.id,
+      message: "High CPU api",
+    });
+    expect(result.rawPayloadReference).toEqual({
+      eventId: event.id,
+      payload: {
+        alertname: "HighCPU",
+        token: "[REDACTED]",
+        nested: {
+          signingSecret: "[REDACTED]",
+          safe: "visible",
+        },
+      },
+      headers: {
+        authorization: "[REDACTED]",
+        "x-signoz": "visible-header",
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("raw-token");
+    expect(JSON.stringify(result)).not.toContain("raw-signing-secret");
+    expect(JSON.stringify(result)).not.toContain("source-token");
+    expect(JSON.stringify(result)).not.toContain("https://example.test/webhook-secret");
+
+    await store.close();
+  });
+
+  it("previews Feishu card destination templates without signing fields", async () => {
+    const { store, service } = await createService();
+    const destination = await service.createDestination({
+      name: "Ops Feishu",
+      kind: "feishu",
+      config: {
+        webhookUrl: "https://open.feishu.cn/webhook/secret-url",
+        signSecret: "feishu-sign-secret",
+        template: {
+          mode: "feishu_card",
+          card: {
+            header: {
+              title: {
+                tag: "plain_text",
+                content: "[{{event.severity}}] {{event.title}}",
+              },
+            },
+            elements: [
+              {
+                tag: "div",
+                text: {
+                  tag: "lark_md",
+                  content: "{{event.message}}\nsource={{source.name}}",
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const result = await service.previewDestination({ id: destination.id });
+
+    expect(result.renderedPayload).toEqual({
+      msg_type: "interactive",
+      card: {
+        header: {
+          title: {
+            tag: "plain_text",
+            content: "[info] Vane destination test",
+          },
+        },
+        elements: [
+          {
+            tag: "div",
+            text: {
+              tag: "lark_md",
+              content: "This is a test alert generated from Vane Console.\nsource=Vane preview",
+            },
+          },
+        ],
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("https://open.feishu.cn/webhook/secret-url");
+    expect(JSON.stringify(result)).not.toContain("feishu-sign-secret");
+    expect(result.renderedPayload).not.toHaveProperty("timestamp");
+    expect(result.renderedPayload).not.toHaveProperty("sign");
+
+    await store.close();
+  });
+
+  it("returns template diagnostics when draft preview rendering fails", async () => {
+    const { store, service } = await createService();
+    const result = await service.previewDestinationDraft({
+      name: "Ops Feishu",
+      kind: "feishu",
+      config: {
+        webhookUrl: "https://open.feishu.cn/webhook/secret-url",
+        template: {
+          mode: "feishu_card",
+          card: {
+            elements: [
+              {
+                tag: "div",
+                text: {
+                  tag: "lark_md",
+                  content: "{{raw.secret}}",
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    expect(result.diagnostics).toEqual([
+      {
+        severity: "error",
+        path: "template.card.elements.0.text.content",
+        variable: "raw.secret",
+        message: "Destination template contains unknown variable: raw.secret",
+      },
+    ]);
+    expect(result.renderedPayload).toEqual({
+      templateError: {
+        diagnostics: [
+          {
+            severity: "error",
+            path: "template.card.elements.0.text.content",
+            variable: "raw.secret",
+            message: "Destination template contains unknown variable: raw.secret",
+          },
+        ],
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("https://open.feishu.cn/webhook/secret-url");
+
+    await store.close();
+  });
+
   it("previews draft destination templates before saving config", async () => {
     const { store, service } = await createService();
 
@@ -411,7 +622,7 @@ describe("configuration service", () => {
       kind: "generic_webhook",
       config: {
         url: "https://relay.example.test/draft-secret",
-        messageTemplate: "{{event.title}} from {{source.name}}",
+        template: { mode: "text", text: "{{event.title}} from {{source.name}}" },
       },
     });
 
@@ -443,7 +654,7 @@ describe("configuration service", () => {
           Authorization: "Bearer relay-secret",
           "X-Team": "sre",
         },
-        messageTemplate: "{{event.title}}",
+        template: { mode: "text", text: "{{event.title}}" },
       },
     });
 
@@ -454,7 +665,7 @@ describe("configuration service", () => {
         headers: {
           "X-Team": "platform",
         },
-        messageTemplate: "{{event.title}} from {{destination.name}}",
+        template: { mode: "text", text: "{{event.title}} from {{destination.name}}" },
       },
     });
     const updated = await service.updateDestination({
@@ -464,7 +675,7 @@ describe("configuration service", () => {
         headers: {
           "X-Team": "platform",
         },
-        messageTemplate: "{{event.title}} from {{destination.name}}",
+        template: { mode: "text", text: "{{event.title}} from {{destination.name}}" },
       },
     });
 
@@ -487,7 +698,7 @@ describe("configuration service", () => {
         Authorization: "Bearer relay-secret",
         "X-Team": "platform",
       },
-      messageTemplate: "{{event.title}} from {{destination.name}}",
+      template: { mode: "text", text: "{{event.title}} from {{destination.name}}" },
     });
 
     await store.close();

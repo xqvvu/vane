@@ -142,7 +142,7 @@ describe("source webhook API route", () => {
     await configureSourceRouteAndDestination({
       destinationConfig: {
         url: "https://relay.example.test/alerts",
-        messageTemplate: "{{event.title}} for {{event.labels.service}}",
+        template: { mode: "text", text: "{{event.title}} for {{event.labels.service}}" },
       },
     });
     const calls: Array<{ url: string; init: RequestInit }> = [];

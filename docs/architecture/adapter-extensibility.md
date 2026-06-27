@@ -164,13 +164,13 @@ payload。真实 secret 只在 `send` 内部用于构造网络请求，不能进
 MVP 不让 adapter manifest 控制 rate limit 或 concurrency。Delivery worker 先使用全局
 batch/backoff 策略，per-destination policy 未来单独设计。
 
-## TODO：通知模板扩展
+## Destination 模板扩展
 
-当前 MVP 的 `messageTemplate` 先保持为文本模板：只允许安全、确定性的变量插值，不执行用户提供的
-JavaScript、表达式、SQL、shell 或任意动态代码。这个能力足够覆盖 Feishu 文本消息、Slack 正文、
-Email 文本正文和 generic webhook 的 `message` 字段，但它不是 Destination 模板能力的最终形态。
+`messageTemplate` 已由 Destination config 内联的 `template` 模型替代，不做迁移兼容。模板仍然只
+允许安全、确定性的变量插值，不执行用户提供的 JavaScript、表达式、SQL、shell 或任意动态代码。
 
-后续需要专门设计适配器感知的结构化通知模板，至少覆盖：
+第一阶段实现共享模板模型、渲染器和诊断能力，并覆盖 Feishu `text` 与 `feishu_card`。Slack、
+Email 和 generic webhook 可以先保留文本模式，后续再扩展到平台原生结构化模板：
 
 - Feishu：支持文本消息和交互式卡片，卡片结构需要 adapter 级 schema 校验与预览。
 - Slack：支持普通文本和 Block Kit 风格的结构化消息。
@@ -179,7 +179,6 @@ Email 文本正文和 generic webhook 的 `message` 字段，但它不是 Destin
 
 扩展设计应满足这些约束：
 
-- 兼容现有 `messageTemplate`。已有文本模板继续可用，迁移到结构化模板时必须有明确 fallback。
 - 模板仍然是安全解释执行，不引入用户 JavaScript、远程代码、shell、SQL 或不受控表达式求值。
 - 模板输入仍以 normalized event、Source summary、Destination summary 和安全上下文为主，不暴露
   destination secrets、source token、raw sensitive headers 或未脱敏 raw payload。
@@ -193,10 +192,8 @@ Email 文本正文和 generic webhook 的 `message` 字段，但它不是 Destin
 
 待定问题：
 
-- 模板是继续作为 Destination config 的一部分，还是抽象成可复用的 Template 资源再由多个
-  Destinations 引用。
 - 文本模板、结构化 JSON 模板、平台原生卡片/blocks schema 之间是否共享一套变量语法。
-- 是否需要模板版本号、模板迁移和按 adapter `configVersion` 绑定的兼容策略。
+- 是否需要模板版本号和按 adapter `configVersion` 绑定的兼容策略。
 - 结构化模板校验失败时，Delivery 是失败、回退文本模板，还是在保存配置时就禁止启用。
 
 ## 路由与 Metadata

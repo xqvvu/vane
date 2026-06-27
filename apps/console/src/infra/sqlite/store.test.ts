@@ -636,7 +636,7 @@ describe("sqlite store", () => {
     expect(deliveryDetail?.destination).not.toHaveProperty("config");
     expect(deliveryDetail?.destinationMetadata).toEqual({
       method: "POST",
-      messageTemplateConfigured: false,
+      templateConfigured: false,
       headerNames: ["Authorization", "X-Team"],
     });
     expect(JSON.stringify(deliveryDetail)).not.toContain("https://example.test/webhook");

@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { feishuSender } from "#/feishu/index.ts";
-import { genericWebhookSender } from "#/generic-webhook/index.ts";
-import { MessageTemplateSchema, renderMessageTemplate } from "#/template.ts";
+import {
+  createTemplateContext,
+  renderJsonTemplate,
+  renderTextTemplate,
+  templateDiagnostics,
+} from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
 const input: DestinationSendInput<unknown> = {
@@ -33,52 +37,72 @@ const input: DestinationSendInput<unknown> = {
   config: {},
 };
 
-describe("message templates", () => {
-  it("interpolates allow-listed alert, source, destination, and label fields", () => {
+describe("destination templates", () => {
+  it("interpolates allow-listed event, source, destination, Vane URL, and label fields", () => {
+    const context = createTemplateContext(input, {
+      eventUrl: "https://vane.example.test/events/event-1",
+    });
+
     expect(
-      renderMessageTemplate(
-        input,
-        "{{event.severity}} {{event.title}} service={{event.labels.service}} source={{source.name}}",
+      renderTextTemplate(
+        context,
+        "{{event.severity}} {{event.title}} service={{event.labels.service}} source={{source.name}} url={{vane.eventUrl}}",
       ),
-    ).toBe("critical Checkout API latency high service=checkout source=Grafana prod");
+    ).toEqual({
+      ok: true,
+      value:
+        "critical Checkout API latency high service=checkout source=Grafana prod url=https://vane.example.test/events/event-1",
+      diagnostics: [],
+    });
   });
 
-  it("rejects unknown variables before rendering destination payloads", () => {
-    expect(() =>
-      MessageTemplateSchema.parse("{{event.title.toUpperCase}} {{process.env.SECRET}}"),
-    ).toThrow("Message template contains unknown variables");
-    expect(() =>
-      genericWebhookSender.preview({
-        ...input,
-        config: {
-          url: "https://relay.example.test/vane",
-          method: "POST",
-          headers: {},
-          messageTemplate: "{{event.title.toUpperCase}}",
-        },
-      }),
-    ).toThrow("Message template contains unknown variables");
+  it("rejects unknown variables with path-level diagnostics", () => {
+    expect(templateDiagnostics("{{event.title.toUpperCase}} {{process.env.SECRET}}")).toEqual([
+      {
+        severity: "error",
+        path: "template",
+        variable: "event.title.toUpperCase",
+        message: "Destination template contains unknown variable: event.title.toUpperCase",
+      },
+      {
+        severity: "error",
+        path: "template",
+        variable: "process.env.SECRET",
+        message: "Destination template contains unknown variable: process.env.SECRET",
+      },
+    ]);
   });
 
   it("renders missing allow-listed labels as empty strings", () => {
+    const context = createTemplateContext(input);
+
     expect(
-      renderMessageTemplate(input, "service={{event.labels.service}} pod={{event.labels.pod}}"),
-    ).toBe("service=checkout pod=");
+      renderTextTemplate(context, "service={{event.labels.service}} pod={{event.labels.pod}}"),
+    ).toMatchObject({
+      ok: true,
+      value: "service=checkout pod=",
+    });
   });
 
-  it("renders generic webhook previews with templated messages", async () => {
-    const preview = await genericWebhookSender.preview({
-      ...input,
-      config: {
-        url: "https://relay.example.test/vane",
-        method: "POST",
-        headers: {},
-        messageTemplate: "{{event.title}} -> {{destination.name}}",
-      },
-    });
+  it("recursively renders JSON string fields", () => {
+    const context = createTemplateContext(input);
 
-    expect(preview).toMatchObject({
-      message: "Checkout API latency high -> Ops destination",
+    expect(
+      renderJsonTemplate(context, {
+        header: {
+          title: "{{event.title}}",
+        },
+        elements: [{ text: "service={{event.labels.service}}" }],
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        header: {
+          title: "Checkout API latency high",
+        },
+        elements: [{ text: "service=checkout" }],
+      },
+      diagnostics: [],
     });
   });
 
@@ -92,7 +116,10 @@ describe("message templates", () => {
       config: {
         webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
         signSecret: "secret",
-        messageTemplate: "{{event.title}}",
+        template: {
+          mode: "text",
+          text: "{{event.title}}",
+        },
       },
     });
 

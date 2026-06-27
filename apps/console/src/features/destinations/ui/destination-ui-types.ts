@@ -20,7 +20,9 @@ export type DestinationFormValues = {
   webhookUrl: string;
   method: string;
   signSecret: string;
-  messageTemplate: string;
+  templateMode: "text" | "feishu_card";
+  templateText: string;
+  templateCard: string;
 };
 
 export type DestinationFormSubmitInput = {

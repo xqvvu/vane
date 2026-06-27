@@ -1,3 +1,6 @@
+import type { JsonValue } from "@vane/core";
+import { z } from "zod";
+
 import {
   destinationSendFailed,
   destinationSendSucceeded,
@@ -5,6 +8,7 @@ import {
   retryHintForHttpStatus,
   transportFailureResult,
 } from "#/send-result.ts";
+import { isTemplateValidationError, templateErrorPayload } from "#/template.ts";
 import { defineDestinationAdapter, resolveDestinationTransportContext } from "#/types.ts";
 
 import { feishuManifest } from "./manifest.ts";
@@ -21,10 +25,45 @@ export const feishuAdapter = defineDestinationAdapter({
     return renderFeishuPreviewPayload(input, config);
   },
   async send(input, context) {
-    const config = FeishuConfigSchema.parse(input.config);
+    const parsedConfig = FeishuConfigSchema.safeParse(input.config);
+
+    if (!parsedConfig.success) {
+      return destinationSendFailed({
+        errorKind: "configuration_error",
+        retryHint: "not_retryable",
+        errorMessage: "Feishu destination template configuration is invalid",
+        statusCode: null,
+        responseBody: null,
+        renderedPayload: {
+          templateError: {
+            diagnostics: zodTemplateDiagnostics(parsedConfig.error),
+          },
+        },
+      });
+    }
+
+    const config = parsedConfig.data;
     const { fetch, now } = resolveDestinationTransportContext(context);
-    const renderedPayload = renderFeishuPreviewPayload(input, config);
-    const signedPayload = await renderFeishuWirePayload(input, config, now);
+    let renderedPayload: JsonValue;
+    let signedPayload: JsonValue;
+
+    try {
+      renderedPayload = renderFeishuPreviewPayload(input, config);
+      signedPayload = await renderFeishuWirePayload(input, config, now);
+    } catch (error) {
+      if (isTemplateValidationError(error)) {
+        return destinationSendFailed({
+          errorKind: "configuration_error",
+          retryHint: "not_retryable",
+          errorMessage: error.message,
+          statusCode: null,
+          responseBody: null,
+          renderedPayload: templateErrorPayload(error),
+        });
+      }
+
+      throw error;
+    }
 
     try {
       const response = await fetch(config.webhookUrl, {
@@ -63,3 +102,18 @@ export const feishuAdapter = defineDestinationAdapter({
 });
 
 export const feishuSender = feishuAdapter;
+
+function zodTemplateDiagnostics(error: z.ZodError) {
+  return error.issues.map((issue) => ({
+    severity: "error",
+    path: issue.path.join(".") || null,
+    variable: variableFromTemplateIssue(issue.message),
+    message: issue.message,
+  }));
+}
+
+function variableFromTemplateIssue(message: string): string | null {
+  const match = /^Destination template contains unknown variable: (.+)$/.exec(message);
+
+  return match?.[1] ?? null;
+}

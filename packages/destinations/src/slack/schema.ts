@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { MessageTemplateSchema } from "#/template.ts";
+import { TextOnlyDestinationTemplateSchema } from "#/template.ts";
 
-export const SlackConfigSchema = z.object({
+export const SlackConfigSchema = z.strictObject({
   webhookUrl: z.url(),
-  messageTemplate: MessageTemplateSchema,
+  template: TextOnlyDestinationTemplateSchema.optional(),
 });
 
 export type SlackConfig = z.infer<typeof SlackConfigSchema>;

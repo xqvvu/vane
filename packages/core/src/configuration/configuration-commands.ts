@@ -47,18 +47,21 @@ export const TestDestinationCommandSchema = z.object({
 
 export const PreviewDestinationCommandSchema = z.object({
   id: z.string().min(1),
+  sampleEventId: z.string().min(1).optional(),
 });
 
 export const PreviewDestinationDraftCommandSchema = z.object({
   name: z.string().trim().min(1),
   kind: DestinationKindSchema,
   config: JsonObjectSchema.default({}),
+  sampleEventId: z.string().min(1).optional(),
 });
 
 export const PreviewDestinationUpdateCommandSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).optional(),
   config: JsonObjectSchema.default({}),
+  sampleEventId: z.string().min(1).optional(),
 });
 
 export const ExportConfigurationCommandSchema = z
