@@ -18,7 +18,7 @@
     "**/route-tree.gen.ts": true
   },
 
-  "[javascript][typescript][typescriptreact][json][jsonc][css][markdown]": {
+  "[javascript][typescript][typescriptreact][json][css][markdown]": {
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",
     "editor.defaultFormatter": "oxc.oxc-vscode"
