@@ -13,11 +13,13 @@ import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function CreateDestinationForm({
   showHeader = true,
+  layout = "panel",
   pending,
   onPreview,
   onSubmit,
 }: {
   showHeader?: boolean;
+  layout?: "panel" | "dialog";
   pending: boolean;
   onPreview: (input: CreateDestinationFormInput) => DestinationSubmitResult;
   onSubmit: (input: CreateDestinationFormInput) => DestinationSubmitResult;
@@ -27,6 +29,7 @@ export function CreateDestinationForm({
   const form = (
     <DestinationForm
       mode="create"
+      layout={layout}
       pending={pending}
       defaultValues={createDestinationDefaults()}
       onPreview={onPreview}

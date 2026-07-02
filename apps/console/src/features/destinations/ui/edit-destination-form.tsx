@@ -14,6 +14,7 @@ import { useTranslations } from "#/i18n/use-i18n.ts";
 export function EditDestinationForm({
   showHeader = true,
   framed = true,
+  layout = "panel",
   destination,
   pending,
   onCancel,
@@ -22,6 +23,7 @@ export function EditDestinationForm({
 }: {
   showHeader?: boolean;
   framed?: boolean;
+  layout?: "panel" | "dialog";
   destination: DestinationSummary;
   pending: boolean;
   onCancel: () => void;
@@ -45,6 +47,7 @@ export function EditDestinationForm({
       ) : null}
       <DestinationForm
         mode="edit"
+        layout={layout}
         pending={pending}
         defaultValues={{
           ...createDestinationDefaults(),

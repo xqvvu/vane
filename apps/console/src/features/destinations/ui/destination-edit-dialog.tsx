@@ -43,8 +43,8 @@ export function DestinationEditDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-5xl">
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{t("destinations.form.edit.title")}</DialogTitle>
           <DialogDescription>{t("destinations.form.edit.description")}</DialogDescription>
         </DialogHeader>
@@ -54,6 +54,7 @@ export function DestinationEditDialog({
             key={destination.id}
             showHeader={false}
             framed={false}
+            layout="dialog"
             destination={destination}
             pending={disabled || pending}
             onCancel={() => onOpenChange(false)}

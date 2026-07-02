@@ -56,14 +56,15 @@ export function DestinationAddDialog({
         {t("common.actions.add")}
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-5xl">
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{t("destinations.form.create.title")}</DialogTitle>
           <DialogDescription>{t("destinations.form.create.description")}</DialogDescription>
         </DialogHeader>
 
         <CreateDestinationForm
           showHeader={false}
+          layout="dialog"
           pending={disabled || pending}
           onPreview={onPreview}
           onSubmit={async (data) => {
