@@ -23,14 +23,14 @@ packages/destinations/src/<kind>/
   schema.ts       typed config schema
   manifest.ts     JSON-safe adapter manifest
   payload.ts      preview/wire payload rendering
-  adapter.ts      defineDestinationAdapter wiring and send flow
+  adapter.ts      Adapter.define wiring and send flow
   index.ts        public exports only
 
 packages/providers/src/<provider>/
   schema.ts       typed config schema
   manifest.ts     JSON-safe provider manifest
   parse.ts        provider payload normalization
-  adapter.ts      defineProviderAdapter wiring
+  adapter.ts      Adapter.define wiring
   index.ts        public exports only
 ```
 
@@ -47,8 +47,11 @@ packages/providers/src/<provider>/
 
 ## Adapter 形态
 
-公开 adapter API 使用 `defineProviderAdapter` 和 `defineDestinationAdapter` identity helper，
+公开 adapter API 使用各 package-local `utils.ts` 中的 `Adapter.define` identity helper，
 不使用 abstract class。Adapter 是静态能力描述加纯函数行为，不是有生命周期的服务对象。
+Provider 的 parse input/result 辅助逻辑放在 `ParseInput`、`ParseResult` 这类语义明确的
+工具类里；Destination 的发送结果、transport helper 和模板引擎也放在 package-local helper
+里，避免把行为 helper 混进 `*.types.ts`。
 
 共享 manifest primitives 放在 `@vane/core`：
 
@@ -114,8 +117,9 @@ Adapter runtime 只接收已经解析、已经校验的 typed config。`secretRe
 `signing_secret`、`password`、`api_key`、`endpoint_url`、`header`。该分类用于 env hint、
 安全摘要和 redaction helper，不做自定义 redaction policy DSL。
 
-`configSchema` 是运行时默认值的唯一真相。Manifest 的 `defaultValue` 只是 UI 初始化提示，
-必须由 registry audit 校验与 schema 默认值一致。
+`configSchema` 是运行时默认值的唯一真相。Manifest 的 `defaultValue` 只是 UI 初始化提示；
+新增或调整默认值时，通过 adapter 自测或 catalog 投影测试覆盖，不维护 destination registry
+audit。
 
 持久化的 Source/Destination config 必须始终 schema-valid。UI 可以有本地草稿，但 SQLite
 和 TOML 不保存 invalid draft。
@@ -217,31 +221,27 @@ id、时间戳、完整 URL 和错误堆栈不默认进入 labels。
 新增 adapter 的最低测试契约：
 
 - Adapter 自测。
-- Registry/catalog audit。
+- 默认 registry 注册和 client-safe catalog 投影测试。
 - 只有新增字段类型、form override、secret ref 行为或特殊 preview/test 行为时，才增加 console
   集成测试。
 
-Audit 应覆盖：
+Catalog 投影测试应覆盖默认支持的 kind 列表，以及 client-safe catalog 不含函数、schema、
+secret internals。
 
-- core enum 与 default registry kinds 一致。
-- `configFields` 与 `secretFields` 一致。
-- client-safe catalog 不含函数、schema、secret internals。
-- i18n key、icon id、config version、lifecycle status 合法。
-- manifest default 与 schema default 一致。
-
-Registry 可以暴露 `get`/`list` 供服务端编排和 audit 使用，但业务路径优先依赖 `parse`、`send`、
+Registry 可以暴露 `get`/`list` 供服务端编排使用，但业务路径优先依赖 `parse`、`send`、
 `preview`、`parseConfig`、`toCatalog` 等窄方法。Client-safe catalog projection 由 registry/package
 提供，console service 只做认证和 app-level 包装。
 
-注册阶段校验硬性 manifest 不变量并在代码错误时 throw；audit 方法检查跨 adapter/软规则。测试必须
-强制 audit 通过，生产启动不默认因为 warning 阻塞实例。
+注册阶段校验硬性 manifest 不变量并在代码错误时 throw。Destination registry 不维护通用
+`audit()` 方法；跨 adapter 一致性只通过聚焦的单元测试或集成测试覆盖，生产启动不运行 registry
+检查。
 
 ## 落地顺序
 
 ## 接口草案补充
 
 Core 的 catalog item 用泛型 kind，具体 provider/destination package 再收窄到封闭枚举。字段
-path 使用安全 dot path schema 与 registry audit 校验，不做从 config schema 推导 dot path
+path 使用安全 dot path schema 与字段定义测试约束，不做从 config schema 推导 dot path
 的复杂 TypeScript 类型。
 
 Destination send result 使用 `ok` discriminated union。失败分支必须包含 error kind、retry hint
@@ -255,9 +255,13 @@ Transport context 中的 `fetch` 由 console/container 提供为策略化 wrappe
 user agent、未来 proxy/network policy 和测试 fake。Adapter 使用该 wrapper，不各自实现全局
 timeout 策略。
 
-`defineDestinationAdapter` 从顶层 `configSchema` 推断 typed config。Adapter 对象用
+`Adapter.define` 从顶层 `configSchema` 推断 typed config。Adapter 对象用
 `manifest: { ... }` 承载 JSON-safe 静态描述，`configSchema`、`preview` 和 `send` 放在
 manifest 外。完整 manifest 可包含 `secretFields`，但 client catalog projection 必须移除它。
+
+Provider adapter 同样使用 `Adapter.define`。Standalone parser 入口只用于 adapter 自测和
+package 级便利 API，使用 `ParseInput.fromStandalone` 补全 `SourceSummary`，并通过
+`ParseResult.unwrap` 把结构化 parse result 转换为旧的 throwing convenience API。
 
 Destination `preview` 和 `send` 共享同一个 render input。`preview` 不接收 transport context，
 只返回 safe `JsonValue`；console service 负责包装成 UI DTO。
@@ -265,8 +269,8 @@ Destination `preview` 和 `send` 共享同一个 render input。`preview` 不接
 采用分阶段 tracer bullet：
 
 1. 在 `@vane/core` 建 manifest primitives。
-2. 选择一个 destination adapter 打通 `defineDestinationAdapter`、字段描述、secret 声明、
-   config version、结构化错误、retry hint、transport context 和 registry/catalog audit。
+2. 选择一个 destination adapter 打通 `Adapter.define`、字段描述、secret 声明、
+   config version、结构化错误、retry hint、transport context 和 registry/catalog 投影测试。
 3. 将每个第三方 adapter 迁移为目录模块，并暴露 package 子路径导出。
 4. 增加 console catalog server function。
 5. 迁移剩余 destinations。

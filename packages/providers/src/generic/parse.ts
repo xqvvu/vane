@@ -3,13 +3,10 @@ import type { JsonObject, Labels } from "@vane/core";
 
 import { normalizeSeverity, normalizeStatus } from "#/shared/normalization.ts";
 import { firstString, firstValue, normalizeDate } from "#/shared/object.ts";
-import {
-  providerParseSucceeded,
-  type ProviderParseInput,
-  type ProviderParseResult,
-} from "#/types.ts";
+import type { ProviderParseInput, ProviderParseResult } from "#/types.ts";
+import { ParseResult } from "#/utils.ts";
 
-import type { GenericProviderConfig } from "./schema.ts";
+import type { GenericProviderConfig } from "#/generic/schema.ts";
 
 export function parseGenericProviderResult(
   input: ProviderParseInput<GenericProviderConfig>,
@@ -51,7 +48,7 @@ export function parseGenericProviderResult(
     input.receivedAt,
   );
 
-  return providerParseSucceeded({
+  return ParseResult.ok({
     normalized: NormalizedEventSchema.parse({
       title,
       message,

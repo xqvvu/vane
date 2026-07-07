@@ -19,11 +19,7 @@ import {
 } from "@vane/core";
 import { redactHeaders, redactJsonValue } from "@vane/core";
 import type { DestinationCatalogItem } from "@vane/destinations";
-import {
-  createTemplateContext,
-  isTemplateValidationError,
-  templateErrorPayload,
-} from "@vane/destinations";
+import { DestinationTemplateEngine } from "@vane/destinations";
 import type { TemplateDiagnostic } from "@vane/destinations";
 
 import {
@@ -216,7 +212,7 @@ export class DestinationService {
       config,
     };
 
-    const context = createTemplateContext(input);
+    const context = DestinationTemplateEngine.createRenderContext(input);
 
     if (options.diagnostics && options.diagnostics.length > 0) {
       return {
@@ -241,13 +237,13 @@ export class DestinationService {
         rawPayloadReference: sample.rawPayloadReference,
       };
     } catch (error) {
-      if (!isTemplateValidationError(error)) {
+      if (!DestinationTemplateEngine.isValidationError(error)) {
         throw error;
       }
 
       return {
         destination,
-        renderedPayload: templateErrorPayload(error),
+        renderedPayload: DestinationTemplateEngine.validationErrorToPayload(error),
         sample: sample.metadata,
         context,
         normalizedEvent: sample.normalizedEvent,

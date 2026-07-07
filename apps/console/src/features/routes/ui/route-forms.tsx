@@ -42,12 +42,14 @@ export function CreateRouteForm({
   showHeader = true,
   sources,
   destinations,
+  layout = "panel",
   pending,
   onSubmit,
 }: {
   showHeader?: boolean;
   sources: Configuration["sources"];
   destinations: Configuration["destinations"];
+  layout?: "dialog" | "panel";
   pending: boolean;
   onSubmit: (input: {
     name: string;
@@ -60,6 +62,7 @@ export function CreateRouteForm({
     <RouteForm
       sources={sources}
       destinations={destinations}
+      layout={layout}
       pending={pending}
       defaultValues={{
         name: "",
@@ -168,6 +171,7 @@ type RouteFormValues = {
 function RouteForm({
   sources,
   destinations,
+  layout = "panel",
   pending,
   defaultValues,
   submitLabel,
@@ -178,6 +182,7 @@ function RouteForm({
 }: {
   sources: Configuration["sources"];
   destinations: Configuration["destinations"];
+  layout?: "dialog" | "panel";
   pending: boolean;
   defaultValues: RouteFormValues;
   submitLabel: string;
@@ -187,6 +192,7 @@ function RouteForm({
   onCancel?: () => void;
 }) {
   const t = useTranslations();
+  const isDialogLayout = layout === "dialog";
 
   const sourceItems = [
     { value: null, label: t("routing.form.anySource") },
@@ -220,249 +226,265 @@ function RouteForm({
     },
   });
 
+  const fields = (
+    <FieldGroup className={isDialogLayout ? "gap-3" : "gap-2"}>
+      <form.Field
+        name="name"
+        validators={{
+          onSubmit: ({ value }) =>
+            value.trim().length === 0 ? t("routing.form.validation.nameRequired") : undefined,
+        }}
+      >
+        {(field) => (
+          <UiField data-invalid={field.state.meta.errors.length > 0}>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.nameLabel")}</FieldLabel>
+            <Input
+              id={field.name}
+              name={field.name}
+              placeholder={t("routing.form.namePlaceholder")}
+              value={field.state.value}
+              required
+              aria-invalid={field.state.meta.errors.length > 0}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.currentTarget.value)}
+            />
+            <FieldDescription>{t("routing.form.nameDescription")}</FieldDescription>
+            <FieldError
+              errors={field.state.meta.errors.map((error) => ({
+                message: String(error),
+              }))}
+            />
+          </UiField>
+        )}
+      </form.Field>
+      <form.Field name="rule.sourceId">
+        {(field) => (
+          <UiField data-disabled={sources.length === 0}>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.sourceLabel")}</FieldLabel>
+            <Select
+              id={field.name}
+              name={field.name}
+              items={sourceItems}
+              disabled={sources.length === 0}
+              value={field.state.value || null}
+              onValueChange={(value) => field.handleChange(value ?? "")}
+            >
+              <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                <SelectValue placeholder={t("routing.form.anySource")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value={null}>{t("routing.form.anySource")}</SelectItem>
+                  {sources.map((source) => (
+                    <SelectItem key={source.id} value={source.id}>
+                      {source.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldDescription>{t("routing.form.sourceDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+      <form.Field name="rule.severity">
+        {(field) => (
+          <UiField>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.severityLabel")}</FieldLabel>
+            <Select
+              id={field.name}
+              name={field.name}
+              items={routeSeverityItems}
+              value={field.state.value}
+              onValueChange={(value) =>
+                field.handleChange(value as RouteRuleFormValues["severity"])
+              }
+            >
+              <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="any">{t("routing.form.severityAny")}</SelectItem>
+                  <SelectItem value="critical">{t("common.severity.critical")}</SelectItem>
+                  <SelectItem value="warning">{t("common.severity.warning")}</SelectItem>
+                  <SelectItem value="info">{t("common.severity.info")}</SelectItem>
+                  <SelectItem value="unknown">{t("common.severity.unknown")}</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldDescription>{t("routing.form.severityDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+      <form.Field name="rule.status">
+        {(field) => (
+          <UiField>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.statusLabel")}</FieldLabel>
+            <Select
+              id={field.name}
+              name={field.name}
+              items={routeStatusItems}
+              value={field.state.value}
+              onValueChange={(value) => field.handleChange(value as RouteRuleFormValues["status"])}
+            >
+              <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="any">{t("routing.form.statusAny")}</SelectItem>
+                  <SelectItem value="firing">{t("common.alertStatus.firing")}</SelectItem>
+                  <SelectItem value="resolved">{t("common.alertStatus.resolved")}</SelectItem>
+                  <SelectItem value="unknown">{t("common.alertStatus.unknown")}</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldDescription>{t("routing.form.statusDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_116px_minmax(0,1fr)]">
+        <form.Field name="rule.labelKey">
+          {(field) => (
+            <UiField>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.labelKeyLabel")}</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                placeholder="service"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+              />
+              <FieldDescription>{t("routing.form.labelKeyDescription")}</FieldDescription>
+            </UiField>
+          )}
+        </form.Field>
+        <form.Field name="rule.labelOperator">
+          {(field) => (
+            <UiField>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.operatorLabel")}</FieldLabel>
+              <Select
+                id={field.name}
+                name={field.name}
+                items={labelOperatorItems}
+                value={field.state.value}
+                onValueChange={(value) =>
+                  field.handleChange(value as RouteRuleFormValues["labelOperator"])
+                }
+              >
+                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="equals">{t("routing.form.operatorEquals")}</SelectItem>
+                    <SelectItem value="contains">{t("routing.form.operatorContains")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <FieldDescription>{t("routing.form.operatorDescription")}</FieldDescription>
+            </UiField>
+          )}
+        </form.Field>
+        <form.Field name="rule.labelValue">
+          {(field) => (
+            <UiField>
+              <FieldLabel htmlFor={field.name}>{t("routing.form.labelValueLabel")}</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                placeholder="checkout"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+              />
+              <FieldDescription>{t("routing.form.labelValueDescription")}</FieldDescription>
+            </UiField>
+          )}
+        </form.Field>
+      </div>
+      <form.Field name="rule.titleContains">
+        {(field) => (
+          <UiField>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.titleContainsLabel")}</FieldLabel>
+            <Input
+              id={field.name}
+              name={field.name}
+              placeholder="LatencyHigh"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.currentTarget.value)}
+            />
+            <FieldDescription>{t("routing.form.titleContainsDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+      <form.Field name="rule.messageContains">
+        {(field) => (
+          <UiField>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.messageContainsLabel")}</FieldLabel>
+            <Input
+              id={field.name}
+              name={field.name}
+              placeholder="timeout"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.currentTarget.value)}
+            />
+            <FieldDescription>{t("routing.form.messageContainsDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+      <form.Field name="destinationIds">
+        {(field) => (
+          <UiField data-disabled={destinations.length === 0}>
+            <FieldLabel htmlFor={field.name}>{t("routing.form.destinationsLegend")}</FieldLabel>
+            <DestinationMultiSelect
+              id={field.name}
+              destinations={destinations}
+              selectedIds={field.state.value}
+              disabled={pending || destinations.length === 0}
+              placeholder={t("routing.form.selectDestinationsPlaceholder")}
+              emptyLabel={t("routing.form.createDestinationFirst")}
+              removeLabel={t("routing.form.removeDestination")}
+              selectedCountLabel={(count) => t("routing.form.selectedDestinations", { count })}
+              onBlur={field.handleBlur}
+              onChange={field.handleChange}
+            />
+            <FieldDescription>{t("routing.form.destinationsDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+    </FieldGroup>
+  );
+
   return (
     <form
-      className="flex flex-col gap-2"
+      className={cn("flex flex-col", isDialogLayout ? "min-h-0 flex-1 overflow-hidden" : "gap-2")}
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
         void form.handleSubmit();
       }}
     >
-      <FieldGroup className="gap-2">
-        <form.Field
-          name="name"
-          validators={{
-            onSubmit: ({ value }) =>
-              value.trim().length === 0 ? t("routing.form.validation.nameRequired") : undefined,
-          }}
-        >
-          {(field) => (
-            <UiField data-invalid={field.state.meta.errors.length > 0}>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.nameLabel")}</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                placeholder={t("routing.form.namePlaceholder")}
-                value={field.state.value}
-                required
-                aria-invalid={field.state.meta.errors.length > 0}
-                onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.currentTarget.value)}
-              />
-              <FieldDescription>{t("routing.form.nameDescription")}</FieldDescription>
-              <FieldError
-                errors={field.state.meta.errors.map((error) => ({
-                  message: String(error),
-                }))}
-              />
-            </UiField>
-          )}
-        </form.Field>
-        <form.Field name="rule.sourceId">
-          {(field) => (
-            <UiField data-disabled={sources.length === 0}>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.sourceLabel")}</FieldLabel>
-              <Select
-                id={field.name}
-                name={field.name}
-                items={sourceItems}
-                disabled={sources.length === 0}
-                value={field.state.value || null}
-                onValueChange={(value) => field.handleChange(value ?? "")}
-              >
-                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                  <SelectValue placeholder={t("routing.form.anySource")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value={null}>{t("routing.form.anySource")}</SelectItem>
-                    {sources.map((source) => (
-                      <SelectItem key={source.id} value={source.id}>
-                        {source.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <FieldDescription>{t("routing.form.sourceDescription")}</FieldDescription>
-            </UiField>
-          )}
-        </form.Field>
-        <form.Field name="rule.severity">
-          {(field) => (
-            <UiField>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.severityLabel")}</FieldLabel>
-              <Select
-                id={field.name}
-                name={field.name}
-                items={routeSeverityItems}
-                value={field.state.value}
-                onValueChange={(value) =>
-                  field.handleChange(value as RouteRuleFormValues["severity"])
-                }
-              >
-                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="any">{t("routing.form.severityAny")}</SelectItem>
-                    <SelectItem value="critical">{t("common.severity.critical")}</SelectItem>
-                    <SelectItem value="warning">{t("common.severity.warning")}</SelectItem>
-                    <SelectItem value="info">{t("common.severity.info")}</SelectItem>
-                    <SelectItem value="unknown">{t("common.severity.unknown")}</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <FieldDescription>{t("routing.form.severityDescription")}</FieldDescription>
-            </UiField>
-          )}
-        </form.Field>
-        <form.Field name="rule.status">
-          {(field) => (
-            <UiField>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.statusLabel")}</FieldLabel>
-              <Select
-                id={field.name}
-                name={field.name}
-                items={routeStatusItems}
-                value={field.state.value}
-                onValueChange={(value) =>
-                  field.handleChange(value as RouteRuleFormValues["status"])
-                }
-              >
-                <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="any">{t("routing.form.statusAny")}</SelectItem>
-                    <SelectItem value="firing">{t("common.alertStatus.firing")}</SelectItem>
-                    <SelectItem value="resolved">{t("common.alertStatus.resolved")}</SelectItem>
-                    <SelectItem value="unknown">{t("common.alertStatus.unknown")}</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <FieldDescription>{t("routing.form.statusDescription")}</FieldDescription>
-            </UiField>
-          )}
-        </form.Field>
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_116px_minmax(0,1fr)]">
-          <form.Field name="rule.labelKey">
-            {(field) => (
-              <UiField>
-                <FieldLabel htmlFor={field.name}>{t("routing.form.labelKeyLabel")}</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  placeholder="service"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.currentTarget.value)}
-                />
-                <FieldDescription>{t("routing.form.labelKeyDescription")}</FieldDescription>
-              </UiField>
-            )}
-          </form.Field>
-          <form.Field name="rule.labelOperator">
-            {(field) => (
-              <UiField>
-                <FieldLabel htmlFor={field.name}>{t("routing.form.operatorLabel")}</FieldLabel>
-                <Select
-                  id={field.name}
-                  name={field.name}
-                  items={labelOperatorItems}
-                  value={field.state.value}
-                  onValueChange={(value) =>
-                    field.handleChange(value as RouteRuleFormValues["labelOperator"])
-                  }
-                >
-                  <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="equals">{t("routing.form.operatorEquals")}</SelectItem>
-                      <SelectItem value="contains">{t("routing.form.operatorContains")}</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <FieldDescription>{t("routing.form.operatorDescription")}</FieldDescription>
-              </UiField>
-            )}
-          </form.Field>
-          <form.Field name="rule.labelValue">
-            {(field) => (
-              <UiField>
-                <FieldLabel htmlFor={field.name}>{t("routing.form.labelValueLabel")}</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  placeholder="checkout"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.currentTarget.value)}
-                />
-                <FieldDescription>{t("routing.form.labelValueDescription")}</FieldDescription>
-              </UiField>
-            )}
-          </form.Field>
+      {isDialogLayout ? (
+        <div className="-mx-4 min-h-0 flex-1 overflow-y-auto">
+          <div className="flex min-w-0 flex-col px-4 pb-1">{fields}</div>
         </div>
-        <form.Field name="rule.titleContains">
-          {(field) => (
-            <UiField>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.titleContainsLabel")}</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                placeholder="LatencyHigh"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.currentTarget.value)}
-              />
-              <FieldDescription>{t("routing.form.titleContainsDescription")}</FieldDescription>
-            </UiField>
-          )}
-        </form.Field>
-        <form.Field name="rule.messageContains">
-          {(field) => (
-            <UiField>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.messageContainsLabel")}</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                placeholder="timeout"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.currentTarget.value)}
-              />
-              <FieldDescription>{t("routing.form.messageContainsDescription")}</FieldDescription>
-            </UiField>
-          )}
-        </form.Field>
-        <form.Field name="destinationIds">
-          {(field) => (
-            <UiField data-disabled={destinations.length === 0}>
-              <FieldLabel htmlFor={field.name}>{t("routing.form.destinationsLegend")}</FieldLabel>
-              <DestinationMultiSelect
-                id={field.name}
-                destinations={destinations}
-                selectedIds={field.state.value}
-                disabled={pending || destinations.length === 0}
-                placeholder={t("routing.form.selectDestinationsPlaceholder")}
-                emptyLabel={t("routing.form.createDestinationFirst")}
-                removeLabel={t("routing.form.removeDestination")}
-                selectedCountLabel={(count) => t("routing.form.selectedDestinations", { count })}
-                onBlur={field.handleBlur}
-                onChange={field.handleChange}
-              />
-              <FieldDescription>{t("routing.form.destinationsDescription")}</FieldDescription>
-            </UiField>
-          )}
-        </form.Field>
-      </FieldGroup>
-      <div className={onCancel ? "grid grid-cols-2 gap-2" : undefined}>
+      ) : (
+        fields
+      )}
+      <div
+        className={
+          isDialogLayout
+            ? "border-border bg-popover flex shrink-0 flex-col gap-2 border-t pt-3 sm:flex-row sm:justify-end"
+            : onCancel
+              ? "grid grid-cols-2 gap-2"
+              : undefined
+        }
+      >
         {onCancel ? (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
             {t("routing.form.cancel")}
@@ -472,7 +494,7 @@ function RouteForm({
           type="submit"
           size="sm"
           disabled={pending || destinations.length === 0}
-          className={onCancel ? "" : "w-full"}
+          className={isDialogLayout ? "w-full sm:w-fit" : onCancel ? "" : "w-full"}
         >
           {submitIcon}
           {submitLabel}

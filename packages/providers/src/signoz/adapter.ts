@@ -1,10 +1,10 @@
-import { defineProviderAdapter } from "#/types.ts";
+import { Adapter } from "#/utils.ts";
 
-import { signozProviderManifest } from "./manifest.ts";
-import { parseSignozProviderResult } from "./parse.ts";
-import { SignozProviderConfigSchema } from "./schema.ts";
+import { signozProviderManifest } from "#/signoz/manifest.ts";
+import { parseSignozProviderResult } from "#/signoz/parse.ts";
+import { SignozProviderConfigSchema } from "#/signoz/schema.ts";
 
-export const signozProviderAdapter = defineProviderAdapter({
+export const signozProviderAdapter = Adapter.define({
   manifest: signozProviderManifest,
   configSchema: SignozProviderConfigSchema,
   parse: parseSignozProviderResult,

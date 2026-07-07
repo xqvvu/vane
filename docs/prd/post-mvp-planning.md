@@ -138,7 +138,7 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 - Destination fake transport 测试规范。
 - Adapter contributor guide。
 - 新 adapter scaffold 或 checklist。
-- Registry audit 文档化。
+- 默认注册与 catalog 投影测试文档化。
 
 不做：
 

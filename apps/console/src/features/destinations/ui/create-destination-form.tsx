@@ -7,17 +7,20 @@ import {
 } from "#/features/destinations/ui/destination-form.tsx";
 import type {
   CreateDestinationFormInput,
+  DestinationCatalog,
   DestinationSubmitResult,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function CreateDestinationForm({
+  destinationCatalog,
   showHeader = true,
   layout = "panel",
   pending,
   onPreview,
   onSubmit,
 }: {
+  destinationCatalog: DestinationCatalog;
   showHeader?: boolean;
   layout?: "panel" | "dialog";
   pending: boolean;
@@ -31,6 +34,7 @@ export function CreateDestinationForm({
       mode="create"
       layout={layout}
       pending={pending}
+      destinationCatalog={destinationCatalog}
       defaultValues={createDestinationDefaults()}
       onPreview={onPreview}
       onSubmit={onSubmit}

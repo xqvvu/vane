@@ -1,9 +1,9 @@
 import type { JsonValue } from "@vane/core";
 
-import { createTemplateContext, renderTextTemplateOrThrow } from "#/template.ts";
+import { DestinationTemplateEngine } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
-import type { GenericWebhookConfig } from "./schema.ts";
+import type { GenericWebhookConfig } from "#/generic-webhook/schema.ts";
 
 export function renderGenericWebhookPayload(
   input: DestinationSendInput<GenericWebhookConfig>,
@@ -23,7 +23,10 @@ export function renderGenericWebhookPayload(
     alert: input.normalizedEvent,
     message:
       input.config.template?.mode === "text"
-        ? renderTextTemplateOrThrow(createTemplateContext(input), input.config.template.text)
+        ? DestinationTemplateEngine.renderTextOrThrow(
+            DestinationTemplateEngine.createRenderContext(input),
+            input.config.template.text,
+          )
         : input.normalizedEvent.message,
   };
 }

@@ -3,12 +3,6 @@ import { describe, expect, it } from "vitest";
 import { createDefaultDestinationRegistry } from "#/registry.ts";
 
 describe("destination registry", () => {
-  it("audits the default adapter registry without warnings", () => {
-    const registry = createDefaultDestinationRegistry();
-
-    expect(registry.audit()).toEqual({ warnings: [] });
-  });
-
   it("projects adapters to a client-safe catalog", () => {
     const catalog = createDefaultDestinationRegistry().toCatalog();
 
@@ -30,6 +24,35 @@ describe("destination registry", () => {
         test: true,
         delivery: true,
       },
+    });
+    expect(catalog.find((item) => item.kind === "feishu")).toMatchObject({
+      configFields: [
+        expect.any(Object),
+        expect.any(Object),
+        {
+          type: "template",
+          modes: [
+            {
+              mode: "text",
+              labelKey: "destinations.form.templateModeText",
+            },
+            {
+              mode: "feishu_card",
+              labelKey: "destinations.form.templateModeFeishuCard",
+              help: {
+                labelKey: "destinations.form.feishuCardTemplateHelpLabel",
+                descriptionKey: "destinations.form.feishuCardTemplateHelp",
+                links: [
+                  {
+                    labelKey: "destinations.form.feishuCardJsonDocs",
+                    href: "https://open.feishu.cn/document/feishu-cards/card-json-structure",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
     });
     expect(JSON.stringify(catalog)).not.toContain("secretFields");
     expect(JSON.stringify(catalog)).not.toContain("configSchema");

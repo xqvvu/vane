@@ -5,6 +5,7 @@ import {
   DestinationForm,
 } from "#/features/destinations/ui/destination-form.tsx";
 import type {
+  DestinationCatalog,
   DestinationSubmitResult,
   DestinationSummary,
   EditDestinationFormInput,
@@ -12,6 +13,7 @@ import type {
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function EditDestinationForm({
+  destinationCatalog,
   showHeader = true,
   framed = true,
   layout = "panel",
@@ -21,6 +23,7 @@ export function EditDestinationForm({
   onPreview,
   onSubmit,
 }: {
+  destinationCatalog: DestinationCatalog;
   showHeader?: boolean;
   framed?: boolean;
   layout?: "panel" | "dialog";
@@ -49,6 +52,7 @@ export function EditDestinationForm({
         mode="edit"
         layout={layout}
         pending={pending}
+        destinationCatalog={destinationCatalog}
         defaultValues={{
           ...createDestinationDefaults(),
           name: destination.name,

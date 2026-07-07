@@ -10,14 +10,9 @@ import type {
   ProviderParseInput,
   ProviderParseOutput,
   ProviderParseResult,
-  ProviderParser,
 } from "#/types.ts";
-import {
-  ProviderCatalogItemSchema,
-  ProviderManifestSchema,
-  providerParseFailed,
-  unwrapProviderParseResult,
-} from "#/types.ts";
+import { ProviderCatalogItemSchema, ProviderManifestSchema } from "#/types.ts";
+import { ParseResult } from "#/utils.ts";
 import { uptimeKumaProviderAdapter } from "#/uptime-kuma/index.ts";
 
 export interface ProviderRegistryAuditOptions {
@@ -58,19 +53,16 @@ export class ProviderRegistry {
     try {
       return adapter.parse({ ...input, config });
     } catch (error) {
-      return providerParseFailed({
-        reason: "invalid_payload",
-        message: error instanceof Error ? error.message : String(error),
-        providerMetadata: {
-          provider,
-          parserVersion: adapter.manifest.configVersion,
-        },
+      return ParseResult.invalidPayload({
+        error,
+        provider,
+        parserVersion: adapter.manifest.configVersion,
       });
     }
   }
 
   parseOrThrow(provider: SourceProvider, input: ProviderParseInput<unknown>): ProviderParseOutput {
-    return unwrapProviderParseResult(this.parse(provider, input));
+    return ParseResult.unwrap(this.parse(provider, input));
   }
 
   parseConfig(provider: SourceProvider, config: unknown): unknown {
@@ -78,7 +70,7 @@ export class ProviderRegistry {
   }
 
   toCatalog(): ProviderCatalogItem[] {
-    return this.list().map((adapter) =>
+    return this.list.map((adapter) =>
       ProviderCatalogItemSchema.parse({
         provider: adapter.manifest.provider,
         configVersion: adapter.manifest.configVersion,
@@ -171,7 +163,7 @@ export class ProviderRegistry {
     return { warnings };
   }
 
-  list(): ProviderAdapter[] {
+  get list(): ProviderAdapter[] {
     return [...this.adapters.values()];
   }
 
@@ -189,11 +181,17 @@ export class ProviderRegistry {
 
 export function createDefaultProviderRegistry(): ProviderRegistry {
   const registry = new ProviderRegistry();
-  registry.register(genericProviderAdapter);
-  registry.register(signozProviderAdapter);
-  registry.register(grafanaProviderAdapter);
-  registry.register(uptimeKumaProviderAdapter);
-  registry.register(alertmanagerProviderAdapter);
+
+  (
+    [
+      genericProviderAdapter,
+      signozProviderAdapter,
+      grafanaProviderAdapter,
+      uptimeKumaProviderAdapter,
+      alertmanagerProviderAdapter,
+    ] satisfies ProviderAdapter[]
+  ).forEach((adapter) => registry.register(adapter));
+
   return registry;
 }
 
@@ -203,5 +201,4 @@ export type {
   ProviderParseInput,
   ProviderParseOutput,
   ProviderParseResult,
-  ProviderParser,
 };

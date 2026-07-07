@@ -1,6 +1,15 @@
-import { RiAddLine, RiEditLine, RiEyeLine, RiResetLeftLine } from "@remixicon/react";
+import {
+  RiAddLine,
+  RiEditLine,
+  RiEyeLine,
+  RiQuestionLine,
+  RiResetLeftLine,
+} from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
+
+import type { AdapterConfigHelp, AdapterTemplateConfigField } from "@vane/core";
+import { defaultFeishuCardTemplate as defaultFeishuCardTemplateObject } from "@vane/destinations/feishu/default-card";
 
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -23,6 +32,7 @@ import {
 } from "#/components/ui/select.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip.tsx";
 import {
   destinationConfigFromForm,
   destinationConfigPatchFromForm,
@@ -30,6 +40,7 @@ import {
   type DestinationFormKind,
 } from "#/features/destinations/model/destination-form.ts";
 import type {
+  DestinationCatalog,
   DestinationFormMode,
   DestinationFormSubmitInput,
   DestinationFormValues,
@@ -42,6 +53,7 @@ export function DestinationForm({
   mode,
   layout = "panel",
   pending,
+  destinationCatalog,
   defaultValues,
   onPreview,
   onSubmit,
@@ -50,6 +62,7 @@ export function DestinationForm({
   mode: DestinationFormMode;
   layout?: "panel" | "dialog";
   pending: boolean;
+  destinationCatalog: DestinationCatalog;
   defaultValues: DestinationFormValues;
   onPreview: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
   onSubmit: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
@@ -238,14 +251,54 @@ export function DestinationForm({
       description: t("destinations.form.templateDescription"),
     });
 
+  const renderConfigHelp = (help: AdapterConfigHelp | null) => {
+    if (!help) {
+      return null;
+    }
+
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t(help.labelKey)}
+              className="shrink-0 border-0"
+            />
+          }
+        >
+          <RiQuestionLine data-icon="inline-start" aria-hidden />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-96 items-start text-left" side="top">
+          <span className="flex flex-col gap-1">
+            {help.descriptionKey ? <span>{t(help.descriptionKey)}</span> : null}
+            {help.links?.map((link) => (
+              <span key={link.href} className="font-mono break-all">
+                {link.labelKey ? `${t(link.labelKey)}: ` : null}
+                {link.href}
+              </span>
+            ))}
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
   const renderFeishuCardTemplateField = () => (
     <form.Field name="templateCard">
       {(field) => (
         <UiField>
           <div className="flex items-center justify-between gap-2">
-            <FieldLabel htmlFor="feishu-card-template">
-              {t("destinations.form.feishuCardTemplate")}
-            </FieldLabel>
+            <div className="flex min-w-0 items-center gap-1">
+              <FieldLabel htmlFor="feishu-card-template">
+                {t("destinations.form.feishuCardTemplate")}
+              </FieldLabel>
+              {renderConfigHelp(
+                destinationTemplateModeHelp(destinationCatalog, "feishu", "feishu_card"),
+              )}
+            </div>
             <Button
               type="button"
               variant="outline"
@@ -422,7 +475,12 @@ export function DestinationForm({
 
   return (
     <form
-      className={cn("flex flex-col", isDialogLayout ? "min-h-0 flex-1 overflow-hidden" : "gap-3")}
+      className={cn(
+        "flex flex-col",
+        isDialogLayout
+          ? "min-h-0 max-h-[calc(min(760px,calc(100dvh-2rem))-6rem)] overflow-hidden"
+          : "gap-3",
+      )}
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -431,119 +489,127 @@ export function DestinationForm({
     >
       <div
         className={cn(
-          isDialogLayout
-            ? "-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1 pb-1"
-            : "flex flex-col gap-3",
+          isDialogLayout ? "-mx-4 flex min-h-0 flex-1 overflow-y-auto" : "flex flex-col gap-3",
         )}
       >
-        <FieldSet className="gap-3">
-          {isDialogLayout ? (
-            <FieldLegend variant="label">{t("destinations.form.section.identity")}</FieldLegend>
-          ) : null}
-          <FieldGroup className={cn("gap-3", mode === "edit" ? "md:grid md:grid-cols-2" : "")}>
-            <form.Field
-              name="name"
-              validators={{
-                onSubmit: ({ value }) =>
-                  value.trim().length === 0
-                    ? t("destinations.form.validation.nameRequired")
-                    : undefined,
-              }}
-            >
-              {(field) => (
-                <UiField data-invalid={field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>{t("destinations.form.nameLabel")}</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    placeholder={t("destinations.form.namePlaceholder")}
-                    value={field.state.value}
-                    required
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.currentTarget.value)}
-                  />
-                  <FieldError
-                    errors={field.state.meta.errors.map((error) => ({
-                      message: String(error),
-                    }))}
-                  />
-                  <FieldDescription>{t("destinations.form.nameDescription")}</FieldDescription>
-                </UiField>
-              )}
-            </form.Field>
-            {mode === "create" ? (
-              <form.Field name="kind">
-                {(field) => (
-                  <UiField>
-                    <FieldLabel htmlFor={field.name}>{t("destinations.form.kindLabel")}</FieldLabel>
-                    <Select
-                      id={field.name}
-                      name={field.name}
-                      items={destinationKindItems}
-                      value={field.state.value}
-                      onValueChange={(value) => field.handleChange(value as DestinationFormKind)}
-                    >
-                      <SelectTrigger className="w-full" onBlur={field.handleBlur}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="generic_webhook">
-                            {t("destinations.kinds.generic_webhook")}
-                          </SelectItem>
-                          <SelectItem value="feishu">{t("destinations.kinds.feishu")}</SelectItem>
-                          <SelectItem value="slack">{t("destinations.kinds.slack")}</SelectItem>
-                          <SelectItem value="email">{t("destinations.kinds.email")}</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FieldDescription>{t("destinations.form.kindDescription")}</FieldDescription>
-                  </UiField>
-                )}
-              </form.Field>
-            ) : (
-              <form.Field name="kind">
-                {(field) => (
-                  <UiField>
-                    <FieldLabel htmlFor={field.name}>{t("destinations.form.kindLabel")}</FieldLabel>
-                    <Input id={field.name} value={field.state.value} readOnly aria-readonly />
-                    <FieldDescription>
-                      {t("destinations.form.kindReadonlyDescription")}
-                    </FieldDescription>
-                  </UiField>
-                )}
-              </form.Field>
-            )}
-          </FieldGroup>
-        </FieldSet>
         <div
           className={cn(
-            isDialogLayout
-              ? "grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]"
-              : "flex flex-col gap-3",
+            isDialogLayout ? "flex min-w-0 flex-1 flex-col gap-4 px-4 pb-1" : "flex flex-col gap-3",
           )}
         >
-          <FieldSet className="min-w-0 gap-3">
+          <FieldSet className="gap-3">
             {isDialogLayout ? (
-              <FieldLegend variant="label">{t("destinations.form.section.delivery")}</FieldLegend>
+              <FieldLegend variant="label">{t("destinations.form.section.identity")}</FieldLegend>
             ) : null}
             <FieldGroup className="gap-3">
-              <form.Subscribe selector={(state) => state.values.kind}>
-                {(kind) => renderDestinationConfigFields(kind)}
-              </form.Subscribe>
+              <form.Field
+                name="name"
+                validators={{
+                  onSubmit: ({ value }) =>
+                    value.trim().length === 0
+                      ? t("destinations.form.validation.nameRequired")
+                      : undefined,
+                }}
+              >
+                {(field) => (
+                  <UiField data-invalid={field.state.meta.errors.length > 0}>
+                    <FieldLabel htmlFor={field.name}>{t("destinations.form.nameLabel")}</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      placeholder={t("destinations.form.namePlaceholder")}
+                      required
+                      aria-invalid={field.state.meta.errors.length > 0}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.currentTarget.value)}
+                    />
+                    <FieldError
+                      errors={field.state.meta.errors.map((error) => ({
+                        message: String(error),
+                      }))}
+                    />
+                    <FieldDescription>{t("destinations.form.nameDescription")}</FieldDescription>
+                  </UiField>
+                )}
+              </form.Field>
+              {mode === "create" ? (
+                <form.Field name="kind">
+                  {(field) => (
+                    <UiField>
+                      <FieldLabel htmlFor={field.name}>
+                        {t("destinations.form.kindLabel")}
+                      </FieldLabel>
+                      <Select
+                        id={field.name}
+                        name={field.name}
+                        items={destinationKindItems}
+                        value={field.state.value}
+                        onValueChange={(value) => field.handleChange(value as DestinationFormKind)}
+                      >
+                        <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="generic_webhook">
+                              {t("destinations.kinds.generic_webhook")}
+                            </SelectItem>
+                            <SelectItem value="feishu">{t("destinations.kinds.feishu")}</SelectItem>
+                            <SelectItem value="slack">{t("destinations.kinds.slack")}</SelectItem>
+                            <SelectItem value="email">{t("destinations.kinds.email")}</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <FieldDescription>{t("destinations.form.kindDescription")}</FieldDescription>
+                    </UiField>
+                  )}
+                </form.Field>
+              ) : (
+                <form.Field name="kind">
+                  {(field) => (
+                    <UiField>
+                      <FieldLabel htmlFor={field.name}>
+                        {t("destinations.form.kindLabel")}
+                      </FieldLabel>
+                      <Input id={field.name} value={field.state.value} readOnly aria-readonly />
+                      <FieldDescription>
+                        {t("destinations.form.kindReadonlyDescription")}
+                      </FieldDescription>
+                    </UiField>
+                  )}
+                </form.Field>
+              )}
             </FieldGroup>
           </FieldSet>
-          <FieldSet className="min-w-0 gap-3">
-            {isDialogLayout ? (
-              <FieldLegend variant="label">{t("destinations.form.section.template")}</FieldLegend>
-            ) : null}
-            <FieldGroup className="gap-3">
-              <form.Subscribe selector={(state) => state.values.kind}>
-                {(kind) => renderTemplateFields(kind)}
-              </form.Subscribe>
-            </FieldGroup>
-          </FieldSet>
+          <div
+            className={cn(
+              isDialogLayout
+                ? "grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]"
+                : "flex flex-col gap-3",
+            )}
+          >
+            <FieldSet className="min-w-0 gap-3">
+              {isDialogLayout ? (
+                <FieldLegend variant="label">{t("destinations.form.section.delivery")}</FieldLegend>
+              ) : null}
+              <FieldGroup className="gap-3">
+                <form.Subscribe selector={(state) => state.values.kind}>
+                  {(kind) => renderDestinationConfigFields(kind)}
+                </form.Subscribe>
+              </FieldGroup>
+            </FieldSet>
+            <FieldSet className="min-w-0 gap-3">
+              {isDialogLayout ? (
+                <FieldLegend variant="label">{t("destinations.form.section.template")}</FieldLegend>
+              ) : null}
+              <FieldGroup className="gap-3">
+                <form.Subscribe selector={(state) => state.values.kind}>
+                  {(kind) => renderTemplateFields(kind)}
+                </form.Subscribe>
+              </FieldGroup>
+            </FieldSet>
+          </div>
         </div>
       </div>
       <div
@@ -640,6 +706,33 @@ function appendTemplateVariable(currentValue: string, variable: string): string 
   return currentValue.trimEnd() ? `${currentValue} ${variable}` : variable;
 }
 
+function destinationTemplateModeHelp(
+  catalog: DestinationCatalog,
+  kind: DestinationFormKind,
+  mode: DestinationTemplateFormMode,
+): AdapterConfigHelp | null {
+  const field = catalog
+    .find((item) => item.kind === kind)
+    ?.configFields.find(isTemplateConfigField);
+  const modeDefinition = field?.modes?.find((definition) => definition.mode === mode);
+
+  if (modeDefinition?.help) {
+    return visibleConfigHelp(modeDefinition.help);
+  }
+
+  return visibleConfigHelp(field?.help);
+}
+
+function isTemplateConfigField(
+  field: DestinationCatalog[number]["configFields"][number],
+): field is AdapterTemplateConfigField {
+  return field.type === "template";
+}
+
+function visibleConfigHelp(help: AdapterConfigHelp | undefined): AdapterConfigHelp | null {
+  return help && help.show !== false ? help : null;
+}
+
 const templateVariablePaths = [
   "event.title",
   "event.message",
@@ -653,39 +746,6 @@ const templateVariablePaths = [
   "vane.eventUrl",
 ];
 
-const defaultFeishuCardTemplate = JSON.stringify(
-  {
-    header: {
-      title: {
-        tag: "plain_text",
-        content: "[{{event.severity}}] {{event.title}}",
-      },
-    },
-    elements: [
-      {
-        tag: "div",
-        text: {
-          tag: "lark_md",
-          content:
-            "**Status:** {{event.status}}\n**Source:** {{source.name}}\n**Service:** {{event.labels.service}}\n**Message:** {{event.message}}",
-        },
-      },
-      {
-        tag: "hr",
-      },
-      {
-        tag: "note",
-        elements: [
-          {
-            tag: "plain_text",
-            content: "Fingerprint: {{event.fingerprint}}",
-          },
-        ],
-      },
-    ],
-  },
-  null,
-  2,
-);
+const defaultFeishuCardTemplate = JSON.stringify(defaultFeishuCardTemplateObject, null, 2);
 
 const feishuCardTemplatePlaceholder = defaultFeishuCardTemplate;

@@ -7,10 +7,6 @@ import {
   DestinationKindSchema,
 } from "@vane/core";
 import type {
-  AdapterCatalogBase,
-  AdapterConfigField,
-  AdapterLifecycle,
-  AdapterSecretField,
   DestinationKind,
   DestinationSummary,
   JsonValue,
@@ -70,29 +66,12 @@ export type DestinationSendResult =
       errorMessage: string;
     });
 
-export interface DestinationCapabilities {
-  preview: boolean;
-  test: boolean;
-  delivery: boolean;
-}
-
 export const DestinationCapabilitiesSchema = z.strictObject({
   preview: z.boolean(),
   test: z.boolean(),
   delivery: z.boolean(),
 });
-
-export interface DestinationManifest<Kind extends DestinationKind = DestinationKind> {
-  kind: Kind;
-  configVersion: number;
-  lifecycle: AdapterLifecycle;
-  displayNameKey: string;
-  descriptionKey?: string;
-  iconName?: string;
-  configFields: AdapterConfigField[];
-  secretFields: AdapterSecretField[];
-  capabilities: DestinationCapabilities;
-}
+export type DestinationCapabilities = z.output<typeof DestinationCapabilitiesSchema>;
 
 export const DestinationManifestSchema = z.strictObject({
   kind: DestinationKindSchema,
@@ -105,18 +84,18 @@ export const DestinationManifestSchema = z.strictObject({
   secretFields: z.array(AdapterSecretFieldSchema),
   capabilities: DestinationCapabilitiesSchema,
 });
-
-export interface DestinationCatalogItem<
-  Kind extends DestinationKind = DestinationKind,
-> extends AdapterCatalogBase {
+export type DestinationManifest<Kind extends DestinationKind = DestinationKind> = Omit<
+  z.output<typeof DestinationManifestSchema>,
+  "kind"
+> & {
   kind: Kind;
-  capabilities: DestinationCapabilities;
-}
+};
 
 export const DestinationCatalogItemSchema = AdapterCatalogBaseSchema.extend({
   kind: DestinationKindSchema,
   capabilities: DestinationCapabilitiesSchema,
 });
+export type DestinationCatalogItem = z.output<typeof DestinationCatalogItemSchema>;
 
 export interface DestinationAdapter<
   Kind extends DestinationKind = DestinationKind,
@@ -135,31 +114,7 @@ export type DestinationSender<Config = unknown> = DestinationAdapter<Destination
 
 export type DestinationAdapterDefinition<
   Kind extends DestinationKind,
-  Schema extends z.ZodType<any, any>,
+  Schema extends z.ZodType,
 > = Omit<DestinationAdapter<Kind, z.output<Schema>>, "configSchema"> & {
   configSchema: Schema;
 };
-
-export function defineDestinationAdapter<
-  Kind extends DestinationKind,
-  Schema extends z.ZodType<any, any>,
->(adapter: DestinationAdapterDefinition<Kind, Schema>): DestinationAdapter<Kind, z.output<Schema>> {
-  return adapter as DestinationAdapter<Kind, z.output<Schema>>;
-}
-
-export function resolveDestinationTransportContext(
-  context: DestinationTransportContext = {},
-): Required<DestinationTransportContext> {
-  return {
-    fetch: context.fetch ?? getGlobalFetch(),
-    now: context.now ?? (() => new Date()),
-  };
-}
-
-function getGlobalFetch(): FetchLike {
-  if (!globalThis.fetch) {
-    throw new Error("No fetch implementation is available for destination delivery");
-  }
-
-  return globalThis.fetch;
-}

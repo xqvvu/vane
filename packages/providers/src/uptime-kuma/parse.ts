@@ -11,16 +11,14 @@ import {
   setOptionalLabel,
 } from "#/shared/object.ts";
 import {
-  completeProviderParseInput,
-  providerParseSucceeded,
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderParseResult,
   type ProviderStandaloneParseInput,
-  unwrapProviderParseResult,
 } from "#/types.ts";
+import { ParseInput, ParseResult } from "#/utils.ts";
 
-import type { UptimeKumaProviderConfig } from "./schema.ts";
+import type { UptimeKumaProviderConfig } from "#/uptime-kuma/schema.ts";
 
 export function parseUptimeKumaProviderResult(
   input: ProviderParseInput<UptimeKumaProviderConfig>,
@@ -59,7 +57,7 @@ export function parseUptimeKumaProviderResult(
     monitorUrl ??
     `uptime_kuma:${payloadHash}`;
 
-  return providerParseSucceeded({
+  return ParseResult.ok({
     normalized: NormalizedEventSchema.parse({
       title,
       message,
@@ -82,9 +80,9 @@ export function parseUptimeKumaProviderResult(
 export function parseUptimeKumaProvider(
   input: ProviderStandaloneParseInput<UptimeKumaProviderConfig>,
 ): ProviderParseOutput {
-  return unwrapProviderParseResult(
+  return ParseResult.unwrap(
     parseUptimeKumaProviderResult(
-      completeProviderParseInput("uptime_kuma", input, input.config ?? {}),
+      ParseInput.fromStandalone("uptime_kuma", input, input.config ?? {}),
     ),
   );
 }

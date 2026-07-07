@@ -1,9 +1,9 @@
 import type { JsonValue } from "@vane/core";
 
-import { createTemplateContext, renderTextTemplateOrThrow } from "#/template.ts";
+import { DestinationTemplateEngine } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
-import type { EmailConfig } from "./schema.ts";
+import type { EmailConfig } from "#/email/schema.ts";
 
 export function renderEmailPayload(
   input: DestinationSendInput<EmailConfig>,
@@ -14,7 +14,10 @@ export function renderEmailPayload(
   const subject = `${subjectPrefix}[${event.severity.toUpperCase()} ${event.status}] ${event.title}`;
   const text =
     config.template?.mode === "text"
-      ? renderTextTemplateOrThrow(createTemplateContext(input), config.template.text)
+      ? DestinationTemplateEngine.renderTextOrThrow(
+          DestinationTemplateEngine.createRenderContext(input),
+          config.template.text,
+        )
       : renderEmailText(input);
   return {
     subject,

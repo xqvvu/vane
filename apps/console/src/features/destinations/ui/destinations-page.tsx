@@ -4,7 +4,10 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
+import {
+  configurationQueryOptions,
+  destinationCatalogQueryOptions,
+} from "#/features/configuration/api/configuration.queries.ts";
 import type { DestinationPreviewNotice } from "#/features/configuration/model/configuration-types.ts";
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
 import { DestinationAddDialog } from "#/features/destinations/ui/destination-add-dialog.tsx";
@@ -25,6 +28,7 @@ import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 export function DestinationsPage() {
   const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
+  const { data: destinationCatalog } = useSuspenseQuery(destinationCatalogQueryOptions());
   const {
     invalidateDestinations,
     previewDestination,
@@ -117,7 +121,11 @@ export function DestinationsPage() {
           <DestinationsPageToolbar
             actions={
               <>
-                <DestinationAddDialog disabled={pending} onPreview={previewDraft} />
+                <DestinationAddDialog
+                  destinationCatalog={destinationCatalog}
+                  disabled={pending}
+                  onPreview={previewDraft}
+                />
 
                 <Button
                   type="button"
@@ -185,6 +193,7 @@ export function DestinationsPage() {
           />
 
           <DestinationEditDialog
+            destinationCatalog={destinationCatalog}
             destination={editingDestination}
             open={destinationEditorOpen && editingDestination !== null}
             disabled={pending}

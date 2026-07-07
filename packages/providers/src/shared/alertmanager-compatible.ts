@@ -3,7 +3,7 @@ import type { JsonObject, Labels } from "@vane/core";
 
 import type { ProviderParseInput, ProviderParseOutput } from "#/types.ts";
 
-import { normalizeSeverity, normalizeStatus } from "./normalization.ts";
+import { normalizeSeverity, normalizeStatus } from "#/shared/normalization.ts";
 import {
   firstString,
   firstValue,
@@ -11,7 +11,7 @@ import {
   normalizeStringDate,
   objectValue,
   setOptionalString,
-} from "./object.ts";
+} from "#/shared/object.ts";
 
 export interface AlertmanagerCompatibleParseOptions {
   provider: string;

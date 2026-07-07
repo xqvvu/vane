@@ -1,19 +1,17 @@
 import { parseAlertmanagerCompatibleProvider } from "#/shared/alertmanager-compatible.ts";
 import {
-  completeProviderParseInput,
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderStandaloneParseInput,
-  providerParseSucceeded,
-  unwrapProviderParseResult,
 } from "#/types.ts";
+import { ParseInput, ParseResult } from "#/utils.ts";
 
-import type { AlertmanagerProviderConfig } from "./schema.ts";
+import type { AlertmanagerProviderConfig } from "#/alertmanager/schema.ts";
 
 export function parseAlertmanagerProviderResult(
   input: ProviderParseInput<AlertmanagerProviderConfig>,
 ) {
-  return providerParseSucceeded(
+  return ParseResult.ok(
     parseAlertmanagerCompatibleProvider(input, {
       provider: "alertmanager",
       defaultTitle: "Alertmanager alert",
@@ -24,9 +22,9 @@ export function parseAlertmanagerProviderResult(
 export function parseAlertmanagerProvider(
   input: ProviderStandaloneParseInput<AlertmanagerProviderConfig>,
 ): ProviderParseOutput {
-  return unwrapProviderParseResult(
+  return ParseResult.unwrap(
     parseAlertmanagerProviderResult(
-      completeProviderParseInput("alertmanager", input, input.config ?? {}),
+      ParseInput.fromStandalone("alertmanager", input, input.config ?? {}),
     ),
   );
 }

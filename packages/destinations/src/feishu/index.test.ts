@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createFeishuSign, feishuSender } from "#/feishu/index.ts";
+import {
+  createFeishuSign,
+  defaultFeishuCardTemplate,
+  FeishuConfigSchema,
+  feishuSender,
+} from "#/feishu/index.ts";
 import type { FeishuConfig } from "#/feishu/index.ts";
 import { createDefaultDestinationRegistry } from "#/registry.ts";
 import type { DestinationSendInput, FetchLike } from "#/types.ts";
@@ -41,6 +46,46 @@ const input: DestinationSendInput<FeishuConfig> = {
 };
 
 describe("feishu sender", () => {
+  it("uses a typed Feishu card as the default template", async () => {
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+    });
+
+    expect(config.template).toEqual({
+      mode: "feishu_card",
+      card: defaultFeishuCardTemplate,
+    });
+
+    const preview = await feishuSender.preview({
+      ...input,
+      config,
+    });
+
+    expect(preview).toMatchObject({
+      msg_type: "interactive",
+      card: {
+        schema: "2.0",
+        config: {
+          width_mode: "fill",
+          summary: {
+            content: "[critical] Checkout API latency high",
+          },
+        },
+        header: {
+          template: "red",
+          title: {
+            content: "Checkout API latency high",
+          },
+        },
+      },
+    });
+    expect(JSON.stringify(preview)).toContain("告警摘要");
+    expect(JSON.stringify(preview)).toContain("p95 latency exceeded");
+    expect(JSON.stringify(preview)).toContain("服务");
+    expect(JSON.stringify(preview)).toContain("checkout");
+    expect(JSON.stringify(preview)).not.toContain("secret");
+  });
+
   it("sends signed text messages through an injected transport", async () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
     const fetcher: FetchLike = async (url, init) => {

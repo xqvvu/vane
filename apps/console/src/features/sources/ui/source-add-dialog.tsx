@@ -2,10 +2,10 @@ import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -54,14 +54,15 @@ export function SourcesAddDialog({
         {t("common.actions.add")}
       </DialogTrigger>
 
-      <DialogContent>
-        <DialogHeader>
+      <ConfigurationDialogContent>
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{t("sources.form.create.title")}</DialogTitle>
           <DialogDescription>{t("sources.form.create.description")}</DialogDescription>
         </DialogHeader>
 
         <CreateSourceForm
           showHeader={false}
+          layout="dialog"
           pending={pending}
           onSubmit={async (data) => {
             setPending(true);
@@ -84,7 +85,7 @@ export function SourcesAddDialog({
             }
           }}
         />
-      </DialogContent>
+      </ConfigurationDialogContent>
     </Dialog>
   );
 }

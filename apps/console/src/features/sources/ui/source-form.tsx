@@ -36,6 +36,7 @@ export function SourceForm({
   pending,
   submitLabel,
   submitIcon,
+  bodyFooter,
   onSubmit,
   onCancel,
   layout = "compact",
@@ -44,11 +45,13 @@ export function SourceForm({
   pending: boolean;
   submitLabel: string;
   submitIcon: React.ReactNode;
+  bodyFooter?: React.ReactNode;
   onSubmit: (input: SourceFormSubmitInput) => SourceSubmitResult;
   onCancel?: () => void;
   layout?: SourceFormLayout;
 }) {
   const t = useTranslations();
+  const isDialogLayout = layout === "dialog";
 
   const pendingConfig = React.useRef<SourceFormSubmitInput["config"]>(undefined);
   const providerItems = React.useMemo(
@@ -78,20 +81,9 @@ export function SourceForm({
     },
   });
 
-  return (
-    <form
-      className={layout === "rail" ? "flex flex-col gap-5" : "flex flex-col gap-2"}
-      onSubmit={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const data = new FormData(event.currentTarget);
-        pendingConfig.current = onCancel
-          ? sourceConfigPatchFromForm(data)
-          : sourceConfigFromForm(data);
-        void form.handleSubmit();
-      }}
-    >
-      <FieldGroup className={layout === "rail" ? "gap-5" : "gap-2"}>
+  const fields = (
+    <>
+      <FieldGroup className={layout === "rail" ? "gap-5" : "gap-3"}>
         <form.Field
           name="name"
           validators={{
@@ -121,7 +113,7 @@ export function SourceForm({
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
               />
-              {layout === "compact" ? (
+              {layout !== "rail" ? (
                 <FieldDescription>{t("sources.form.nameDescription")}</FieldDescription>
               ) : null}
               <FieldError
@@ -165,7 +157,7 @@ export function SourceForm({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              {layout === "compact" ? (
+              {layout !== "rail" ? (
                 <FieldDescription>{t("sources.form.providerDescription")}</FieldDescription>
               ) : null}
             </UiField>
@@ -194,7 +186,42 @@ export function SourceForm({
         />
         <FieldDescription>{t("sources.form.signingSecretDescription")}</FieldDescription>
       </UiField>
-      <div className={onCancel ? "grid grid-cols-2 gap-2" : undefined}>
+      {bodyFooter}
+    </>
+  );
+
+  return (
+    <form
+      className={cn(
+        "flex flex-col",
+        isDialogLayout ? "min-h-0 flex-1 overflow-hidden" : layout === "rail" ? "gap-5" : "gap-2",
+      )}
+      onSubmit={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const data = new FormData(event.currentTarget);
+        pendingConfig.current = onCancel
+          ? sourceConfigPatchFromForm(data)
+          : sourceConfigFromForm(data);
+        void form.handleSubmit();
+      }}
+    >
+      {isDialogLayout ? (
+        <div className="-mx-4 min-h-0 flex-1 overflow-y-auto">
+          <div className="flex min-w-0 flex-col gap-3 px-4 pb-1">{fields}</div>
+        </div>
+      ) : (
+        fields
+      )}
+      <div
+        className={
+          isDialogLayout
+            ? "border-border bg-popover flex shrink-0 flex-col gap-2 border-t pt-3 sm:flex-row sm:justify-end"
+            : onCancel
+              ? "grid grid-cols-2 gap-2"
+              : undefined
+        }
+      >
         {onCancel ? (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
             {t("sources.form.cancel")}
@@ -204,7 +231,7 @@ export function SourceForm({
           type="submit"
           size={layout === "rail" ? "lg" : "sm"}
           disabled={pending}
-          className={onCancel ? "" : "w-full font-bold"}
+          className={isDialogLayout ? "w-full sm:w-fit" : onCancel ? "" : "w-full font-bold"}
         >
           {submitIcon}
           {submitLabel}

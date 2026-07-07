@@ -1,9 +1,12 @@
 import type { JsonObject } from "@vane/core";
+import type { DestinationCatalogItem } from "@vane/destinations";
 
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import type { DestinationFormKind } from "#/features/destinations/model/destination-form.ts";
 
 export type DestinationSummary = Configuration["destinations"][number];
+
+export type DestinationCatalog = DestinationCatalogItem[];
 
 export type DestinationFormMode = "create" | "edit";
 

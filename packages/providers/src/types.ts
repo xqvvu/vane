@@ -7,10 +7,6 @@ import {
   SourceProviderSchema,
 } from "@vane/core";
 import type {
-  AdapterCatalogBase,
-  AdapterConfigField,
-  AdapterLifecycle,
-  AdapterSecretField,
   JsonObject,
   JsonValue,
   NormalizedEvent,
@@ -37,27 +33,6 @@ export type ProviderStandaloneParseInput<Config = unknown> = Omit<
   config?: Config;
 };
 
-export function completeProviderParseInput<Provider extends SourceProvider, Config>(
-  provider: Provider,
-  input: ProviderStandaloneParseInput<Config>,
-  config: Config,
-): ProviderParseInput<Config> {
-  return {
-    source: input.source ?? {
-      id: input.sourceId,
-      name: input.sourceName,
-      provider,
-      enabled: true,
-    },
-    sourceId: input.sourceId,
-    sourceName: input.sourceName,
-    receivedAt: input.receivedAt,
-    headers: input.headers,
-    payload: input.payload,
-    config,
-  };
-}
-
 export interface ProviderParseSuccess {
   ok: true;
   normalized: NormalizedEvent;
@@ -82,31 +57,13 @@ export type ProviderParseResult = ProviderParseSuccess | ProviderParseFailure;
 
 export type ProviderParseOutput = Omit<ProviderParseSuccess, "ok">;
 
-export interface ProviderCapabilities {
-  parse: boolean;
-  testPayload: boolean;
-  sourceToken: boolean;
-  additionalSharedSecret: boolean;
-}
-
 export const ProviderCapabilitiesSchema = z.strictObject({
   parse: z.boolean(),
   testPayload: z.boolean(),
   sourceToken: z.boolean(),
   additionalSharedSecret: z.boolean(),
 });
-
-export interface ProviderManifest<Provider extends SourceProvider = SourceProvider> {
-  provider: Provider;
-  configVersion: number;
-  lifecycle: AdapterLifecycle;
-  displayNameKey: string;
-  descriptionKey?: string;
-  iconName?: string;
-  configFields: AdapterConfigField[];
-  secretFields: AdapterSecretField[];
-  capabilities: ProviderCapabilities;
-}
+export type ProviderCapabilities = z.output<typeof ProviderCapabilitiesSchema>;
 
 export const ProviderManifestSchema = z.strictObject({
   provider: SourceProviderSchema,
@@ -119,18 +76,18 @@ export const ProviderManifestSchema = z.strictObject({
   secretFields: z.array(AdapterSecretFieldSchema),
   capabilities: ProviderCapabilitiesSchema,
 });
-
-export interface ProviderCatalogItem<
-  Provider extends SourceProvider = SourceProvider,
-> extends AdapterCatalogBase {
+export type ProviderManifest<Provider extends SourceProvider = SourceProvider> = Omit<
+  z.output<typeof ProviderManifestSchema>,
+  "provider"
+> & {
   provider: Provider;
-  capabilities: ProviderCapabilities;
-}
+};
 
 export const ProviderCatalogItemSchema = AdapterCatalogBaseSchema.extend({
   provider: SourceProviderSchema,
   capabilities: ProviderCapabilitiesSchema,
 });
+export type ProviderCatalogItem = z.output<typeof ProviderCatalogItemSchema>;
 
 export interface ProviderAdapter<
   Provider extends SourceProvider = SourceProvider,
@@ -145,42 +102,7 @@ export type ProviderParser<Config = unknown> = ProviderAdapter<SourceProvider, C
 
 export type ProviderAdapterDefinition<
   Provider extends SourceProvider,
-  Schema extends z.ZodType<any, any>,
+  Schema extends z.ZodType,
 > = Omit<ProviderAdapter<Provider, z.output<Schema>>, "configSchema"> & {
   configSchema: Schema;
 };
-
-export function defineProviderAdapter<
-  Provider extends SourceProvider,
-  Schema extends z.ZodType<any, any>,
->(
-  adapter: ProviderAdapterDefinition<Provider, Schema>,
-): ProviderAdapter<Provider, z.output<Schema>> {
-  return adapter as ProviderAdapter<Provider, z.output<Schema>>;
-}
-
-export function providerParseSucceeded(input: ProviderParseOutput): ProviderParseResult {
-  return {
-    ok: true,
-    ...input,
-  };
-}
-
-export function providerParseFailed(input: Omit<ProviderParseFailure, "ok">): ProviderParseResult {
-  return {
-    ok: false,
-    ...input,
-  };
-}
-
-export function unwrapProviderParseResult(result: ProviderParseResult): ProviderParseOutput {
-  if (result.ok) {
-    return {
-      normalized: result.normalized,
-      providerMetadata: result.providerMetadata,
-      idempotencyKey: result.idempotencyKey,
-    };
-  }
-
-  throw new Error(result.message);
-}

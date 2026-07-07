@@ -1,22 +1,15 @@
 import type { JsonValue } from "@vane/core";
 import { z } from "zod";
 
-import {
-  destinationSendFailed,
-  destinationSendSucceeded,
-  readResponseBody,
-  retryHintForHttpStatus,
-  transportFailureResult,
-} from "#/send-result.ts";
-import { isTemplateValidationError, templateErrorPayload } from "#/template.ts";
-import { defineDestinationAdapter, resolveDestinationTransportContext } from "#/types.ts";
+import { DestinationTemplateEngine } from "#/template.ts";
+import { Adapter, R, Send } from "#/utils.ts";
 
-import { feishuManifest } from "./manifest.ts";
-import { renderFeishuPreviewPayload, renderFeishuWirePayload } from "./payload.ts";
-import { feishuCode, isFeishuSuccess, parseFeishuResult } from "./result.ts";
-import { FeishuConfigSchema } from "./schema.ts";
+import { feishuManifest } from "#/feishu/manifest.ts";
+import { renderFeishuPreviewPayload, renderFeishuWirePayload } from "#/feishu/payload.ts";
+import { feishuCode, isFeishuSuccess, parseFeishuResult } from "#/feishu/result.ts";
+import { FeishuConfigSchema } from "#/feishu/schema.ts";
 
-export const feishuAdapter = defineDestinationAdapter({
+export const feishuAdapter = Adapter.define({
   manifest: feishuManifest,
   configSchema: FeishuConfigSchema,
   preview(input) {
@@ -28,7 +21,7 @@ export const feishuAdapter = defineDestinationAdapter({
     const parsedConfig = FeishuConfigSchema.safeParse(input.config);
 
     if (!parsedConfig.success) {
-      return destinationSendFailed({
+      return R.fail({
         errorKind: "configuration_error",
         retryHint: "not_retryable",
         errorMessage: "Feishu destination template configuration is invalid",
@@ -43,7 +36,7 @@ export const feishuAdapter = defineDestinationAdapter({
     }
 
     const config = parsedConfig.data;
-    const { fetch, now } = resolveDestinationTransportContext(context);
+    const { fetch, now } = Adapter.getTransportContext(context);
     let renderedPayload: JsonValue;
     let signedPayload: JsonValue;
 
@@ -51,14 +44,14 @@ export const feishuAdapter = defineDestinationAdapter({
       renderedPayload = renderFeishuPreviewPayload(input, config);
       signedPayload = await renderFeishuWirePayload(input, config, now);
     } catch (error) {
-      if (isTemplateValidationError(error)) {
-        return destinationSendFailed({
+      if (DestinationTemplateEngine.isValidationError(error)) {
+        return R.fail({
           errorKind: "configuration_error",
           retryHint: "not_retryable",
           errorMessage: error.message,
           statusCode: null,
           responseBody: null,
-          renderedPayload: templateErrorPayload(error),
+          renderedPayload: DestinationTemplateEngine.validationErrorToPayload(error),
         });
       }
 
@@ -66,6 +59,7 @@ export const feishuAdapter = defineDestinationAdapter({
     }
 
     try {
+      console.dir(signedPayload, { depth: null });
       const response = await fetch(config.webhookUrl, {
         method: "POST",
         headers: {
@@ -73,21 +67,21 @@ export const feishuAdapter = defineDestinationAdapter({
         },
         body: JSON.stringify(signedPayload),
       });
-      const responseBody = await readResponseBody(response);
+      const responseBody = await Send.readResponseBody(response);
       const feishuResult = parseFeishuResult(responseBody);
       const feishuOk = feishuResult ? isFeishuSuccess(feishuResult) : response.ok;
 
       if (response.ok && feishuOk) {
-        return destinationSendSucceeded({
+        return R.ok({
           statusCode: response.status,
           responseBody,
           renderedPayload,
         });
       }
 
-      return destinationSendFailed({
+      return R.fail({
         errorKind: response.ok ? "target_rejected" : "http_error",
-        retryHint: response.ok ? "not_retryable" : retryHintForHttpStatus(response.status),
+        retryHint: response.ok ? "not_retryable" : Send.httpStatusToRetryHint(response.status),
         errorMessage: feishuResult
           ? `Feishu returned code ${feishuCode(feishuResult)}`
           : `Feishu webhook returned HTTP ${response.status}`,
@@ -96,7 +90,7 @@ export const feishuAdapter = defineDestinationAdapter({
         renderedPayload,
       });
     } catch (error) {
-      return transportFailureResult({ error, renderedPayload });
+      return Send.transportFailureResult({ error, renderedPayload });
     }
   },
 });

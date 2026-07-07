@@ -11,16 +11,14 @@ import {
   setOptionalString,
 } from "#/shared/object.ts";
 import {
-  completeProviderParseInput,
-  providerParseSucceeded,
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderParseResult,
   type ProviderStandaloneParseInput,
-  unwrapProviderParseResult,
 } from "#/types.ts";
+import { ParseInput, ParseResult } from "#/utils.ts";
 
-import type { GrafanaProviderConfig } from "./schema.ts";
+import type { GrafanaProviderConfig } from "#/grafana/schema.ts";
 
 export function parseGrafanaProviderResult(
   input: ProviderParseInput<GrafanaProviderConfig>,
@@ -68,7 +66,7 @@ export function parseGrafanaProviderResult(
     firstString(payload, ["externalURL", "external_url"]),
   );
 
-  return providerParseSucceeded({
+  return ParseResult.ok({
     normalized: NormalizedEventSchema.parse({
       title,
       message,
@@ -91,8 +89,8 @@ export function parseGrafanaProviderResult(
 export function parseGrafanaProvider(
   input: ProviderStandaloneParseInput<GrafanaProviderConfig>,
 ): ProviderParseOutput {
-  return unwrapProviderParseResult(
-    parseGrafanaProviderResult(completeProviderParseInput("grafana", input, input.config ?? {})),
+  return ParseResult.unwrap(
+    parseGrafanaProviderResult(ParseInput.fromStandalone("grafana", input, input.config ?? {})),
   );
 }
 

@@ -10,6 +10,8 @@
     ".": "./src/index.ts",
     "./email": "./src/email/index.ts",
     "./feishu": "./src/feishu/index.ts",
+    "./feishu/card-types": "./src/feishu/card.types.ts",
+    "./feishu/default-card": "./src/feishu/default-card.ts",
     "./generic-webhook": "./src/generic-webhook/index.ts",
     "./slack": "./src/slack/index.ts",
     "./assets/destination-icons/*": "./assets/destination-icons/*"

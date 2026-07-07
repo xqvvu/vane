@@ -1,17 +1,9 @@
-import {
-  destinationSendFailed,
-  destinationSendSucceeded,
-  readResponseBody,
-  retryHintForHttpStatus,
-  transportFailureResult,
-} from "#/send-result.ts";
-import { defineDestinationAdapter, resolveDestinationTransportContext } from "#/types.ts";
+import { genericWebhookManifest } from "#/generic-webhook/manifest.ts";
+import { renderGenericWebhookPayload } from "#/generic-webhook/payload.ts";
+import { GenericWebhookConfigSchema } from "#/generic-webhook/schema.ts";
+import { Adapter, R, Send } from "#/utils.ts";
 
-import { genericWebhookManifest } from "./manifest.ts";
-import { renderGenericWebhookPayload } from "./payload.ts";
-import { GenericWebhookConfigSchema } from "./schema.ts";
-
-export const genericWebhookAdapter = defineDestinationAdapter({
+export const genericWebhookAdapter = Adapter.define({
   manifest: genericWebhookManifest,
   configSchema: GenericWebhookConfigSchema,
   preview(input) {
@@ -21,7 +13,7 @@ export const genericWebhookAdapter = defineDestinationAdapter({
   },
   async send(input, context) {
     const config = GenericWebhookConfigSchema.parse(input.config);
-    const { fetch } = resolveDestinationTransportContext(context);
+    const { fetch } = Adapter.getTransportContext(context);
     const renderedPayload = renderGenericWebhookPayload({ ...input, config });
 
     try {
@@ -33,26 +25,26 @@ export const genericWebhookAdapter = defineDestinationAdapter({
         },
         body: JSON.stringify(renderedPayload),
       });
-      const responseBody = await readResponseBody(response);
+      const responseBody = await Send.readResponseBody(response);
 
       if (response.ok) {
-        return destinationSendSucceeded({
+        return R.ok({
           statusCode: response.status,
           responseBody,
           renderedPayload,
         });
       }
 
-      return destinationSendFailed({
+      return R.fail({
         errorKind: "http_error",
-        retryHint: retryHintForHttpStatus(response.status),
+        retryHint: Send.httpStatusToRetryHint(response.status),
         errorMessage: `Generic webhook returned HTTP ${response.status}`,
         statusCode: response.status,
         responseBody,
         renderedPayload,
       });
     } catch (error) {
-      return transportFailureResult({ error, renderedPayload });
+      return Send.transportFailureResult({ error, renderedPayload });
     }
   },
 });

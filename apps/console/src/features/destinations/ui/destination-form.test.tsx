@@ -3,11 +3,16 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { createDefaultDestinationRegistry } from "@vane/destinations";
+
 import {
   createDestinationDefaults,
   DestinationForm,
 } from "#/features/destinations/ui/destination-form.tsx";
+import type { DestinationCatalog } from "#/features/destinations/ui/destination-ui-types.ts";
 import { VaneIntlProvider } from "#/i18n/provider.tsx";
+
+const defaultDestinationCatalog = createDefaultDestinationRegistry().toCatalog();
 
 describe("destination form", () => {
   afterEach(() => {
@@ -24,6 +29,25 @@ describe("destination form", () => {
 
     expect(screen.getByLabelText("Feishu card JSON")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Restore default card" })).toBeTruthy();
+  });
+
+  it("shows Feishu card JSON configuration help", () => {
+    renderDestinationForm({ kind: "feishu" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Feishu card" }));
+
+    expect(screen.getByRole("button", { name: "How to configure Feishu card JSON" })).toBeTruthy();
+  });
+
+  it("hides Feishu card JSON configuration help when disabled by manifest", () => {
+    renderDestinationForm(
+      { kind: "feishu" },
+      { destinationCatalog: destinationCatalogWithHiddenFeishuCardHelp() },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Feishu card" }));
+
+    expect(screen.queryByRole("button", { name: "How to configure Feishu card JSON" })).toBeNull();
   });
 
   it("inserts template variables into the active template field", () => {
@@ -59,20 +83,24 @@ describe("destination form", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Restore default card" }));
 
-    expect((screen.getByLabelText("Feishu card JSON") as HTMLTextAreaElement).value).toContain(
-      "[{{event.severity}}] {{event.title}}",
-    );
+    const cardTemplate = (screen.getByLabelText("Feishu card JSON") as HTMLTextAreaElement).value;
+
+    expect(cardTemplate).toContain('"schema": "2.0"');
+    expect(cardTemplate).toContain("告警摘要");
+    expect(cardTemplate).toContain("{{event.labels.service}}");
   });
 });
 
 function renderDestinationForm(
   overrides: Partial<ReturnType<typeof createDestinationDefaults>> = {},
+  options: { destinationCatalog?: DestinationCatalog } = {},
 ) {
   render(
     <VaneIntlProvider locale="en-US">
       <DestinationForm
         mode="create"
         pending={false}
+        destinationCatalog={options.destinationCatalog ?? defaultDestinationCatalog}
         defaultValues={{
           ...createDestinationDefaults(),
           ...overrides,
@@ -81,5 +109,33 @@ function renderDestinationForm(
         onSubmit={vi.fn<() => unknown>()}
       />
     </VaneIntlProvider>,
+  );
+}
+
+function destinationCatalogWithHiddenFeishuCardHelp(): DestinationCatalog {
+  return defaultDestinationCatalog.map((item) =>
+    item.kind === "feishu"
+      ? {
+          ...item,
+          configFields: item.configFields.map((field) =>
+            field.type === "template"
+              ? {
+                  ...field,
+                  modes: field.modes?.map((mode) =>
+                    mode.mode === "feishu_card" && mode.help
+                      ? {
+                          ...mode,
+                          help: {
+                            ...mode.help,
+                            show: false,
+                          },
+                        }
+                      : mode,
+                  ),
+                }
+              : field,
+          ),
+        }
+      : item,
   );
 }

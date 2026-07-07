@@ -2,10 +2,10 @@ import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -15,14 +15,17 @@ import { useDestinationMutations } from "#/features/destinations/api/destination
 import { CreateDestinationForm } from "#/features/destinations/ui/create-destination-form.tsx";
 import type {
   CreateDestinationFormInput,
+  DestinationCatalog,
   DestinationSubmitResult,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function DestinationAddDialog({
+  destinationCatalog,
   disabled = false,
   onPreview,
 }: {
+  destinationCatalog: DestinationCatalog;
   disabled?: boolean;
   onPreview: (input: CreateDestinationFormInput) => DestinationSubmitResult;
 }) {
@@ -56,13 +59,14 @@ export function DestinationAddDialog({
         {t("common.actions.add")}
       </DialogTrigger>
 
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-5xl">
+      <ConfigurationDialogContent>
         <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{t("destinations.form.create.title")}</DialogTitle>
           <DialogDescription>{t("destinations.form.create.description")}</DialogDescription>
         </DialogHeader>
 
         <CreateDestinationForm
+          destinationCatalog={destinationCatalog}
           showHeader={false}
           layout="dialog"
           pending={disabled || pending}
@@ -83,7 +87,7 @@ export function DestinationAddDialog({
             }
           }}
         />
-      </DialogContent>
+      </ConfigurationDialogContent>
     </Dialog>
   );
 }

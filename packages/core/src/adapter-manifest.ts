@@ -58,6 +58,22 @@ export const AdapterConfigSelectOptionSchema = z.strictObject({
   labelKey: z.string().trim().min(1),
 });
 
+export const AdapterConfigHelpLinkSchema = z.strictObject({
+  href: z.url(),
+  labelKey: z.string().trim().min(1).optional(),
+});
+
+export const AdapterConfigHelpSchema = z
+  .strictObject({
+    show: z.boolean().optional(),
+    labelKey: z.string().trim().min(1),
+    descriptionKey: z.string().trim().min(1).optional(),
+    links: z.array(AdapterConfigHelpLinkSchema).min(1).optional(),
+  })
+  .refine((help) => help.show === false || help.descriptionKey || help.links, {
+    message: "Adapter config help must include description or links when shown",
+  });
+
 export const AdapterTextConfigFieldSchema = AdapterConfigFieldBaseSchema.extend({
   type: z.literal("text"),
 });
@@ -78,8 +94,17 @@ export const AdapterPasswordConfigFieldSchema = AdapterConfigFieldBaseSchema.ext
   type: z.literal("password"),
 });
 
+export const AdapterTemplateModeSchema = z.strictObject({
+  mode: z.string().trim().min(1),
+  labelKey: z.string().trim().min(1).optional(),
+  descriptionKey: z.string().trim().min(1).optional(),
+  help: AdapterConfigHelpSchema.optional(),
+});
+
 export const AdapterTemplateConfigFieldSchema = AdapterConfigFieldBaseSchema.extend({
   type: z.literal("template"),
+  modes: z.array(AdapterTemplateModeSchema).min(1).optional(),
+  help: AdapterConfigHelpSchema.optional(),
 });
 
 export const AdapterBooleanConfigFieldSchema = AdapterConfigFieldBaseSchema.extend({
@@ -137,8 +162,18 @@ export type AdapterLifecycle = z.infer<typeof AdapterLifecycleSchema>;
 export type AdapterSecretKind = z.infer<typeof AdapterSecretKindSchema>;
 export type AdapterSecretField = z.infer<typeof AdapterSecretFieldSchema>;
 export type AdapterConfigSelectOption = z.infer<typeof AdapterConfigSelectOptionSchema>;
+export type AdapterConfigHelpLink = z.infer<typeof AdapterConfigHelpLinkSchema>;
+export type AdapterConfigHelp = z.infer<typeof AdapterConfigHelpSchema>;
+export type AdapterTemplateMode = z.infer<typeof AdapterTemplateModeSchema>;
+export type AdapterTemplateConfigField = z.infer<typeof AdapterTemplateConfigFieldSchema>;
 export type AdapterConfigField = z.infer<typeof AdapterConfigFieldSchema>;
 export type AdapterCatalogBase = z.infer<typeof AdapterCatalogBaseSchema>;
+
+export function defineAdapterTemplateConfigField<const Field extends AdapterTemplateConfigField>(
+  field: Field,
+): Field {
+  return field;
+}
 
 export function isSafeAdapterConfigPath(path: string): boolean {
   return path

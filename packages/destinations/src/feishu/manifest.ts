@@ -1,3 +1,5 @@
+import { defineAdapterTemplateConfigField } from "@vane/core";
+
 import type { DestinationManifest } from "#/types.ts";
 
 export const feishuManifest = {
@@ -24,12 +26,32 @@ export const feishuManifest = {
       placeholderKey: "destinations.form.optionalPlaceholder",
       sensitive: true,
     },
-    {
+    defineAdapterTemplateConfigField({
       type: "template",
       path: "template",
       labelKey: "destinations.form.template",
       descriptionKey: "destinations.form.templateDescription",
-    },
+      modes: [
+        {
+          mode: "text",
+          labelKey: "destinations.form.templateModeText",
+        },
+        {
+          mode: "feishu_card",
+          labelKey: "destinations.form.templateModeFeishuCard",
+          help: {
+            labelKey: "destinations.form.feishuCardTemplateHelpLabel",
+            descriptionKey: "destinations.form.feishuCardTemplateHelp",
+            links: [
+              {
+                labelKey: "destinations.form.feishuCardJsonDocs",
+                href: "https://open.feishu.cn/document/feishu-cards/card-json-structure",
+              },
+            ],
+          },
+        },
+      ],
+    }),
   ],
   secretFields: [
     {

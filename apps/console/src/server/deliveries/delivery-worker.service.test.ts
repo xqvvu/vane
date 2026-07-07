@@ -189,11 +189,23 @@ describe("delivery worker", () => {
     });
     expect(calls[0]?.url).toBe("https://open.feishu.cn/open-apis/bot/v2/hook/example");
     expect(detail?.renderedPayload).toMatchObject({
-      msg_type: "text",
-      content: {
-        text: expect.stringContaining("[critical] Checkout unavailable"),
+      msg_type: "interactive",
+      card: {
+        schema: "2.0",
+        config: {
+          summary: {
+            content: "[critical] Checkout unavailable",
+          },
+        },
+        header: {
+          title: {
+            content: "Checkout unavailable",
+          },
+        },
       },
     });
+    expect(JSON.stringify(detail?.renderedPayload)).toContain("checkout returned 503");
+    expect(JSON.stringify(detail?.renderedPayload)).toContain("**服务**\\ncheckout");
 
     await store.close();
   });

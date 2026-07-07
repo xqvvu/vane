@@ -5,3 +5,4 @@ export * from "#/registry.ts";
 export * from "#/signoz/index.ts";
 export * from "#/types.ts";
 export * from "#/uptime-kuma/index.ts";
+export * from "#/utils.ts";

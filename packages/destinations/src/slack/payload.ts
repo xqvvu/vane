@@ -1,15 +1,18 @@
 import type { JsonObject, JsonValue } from "@vane/core";
 
-import { createTemplateContext, renderTextTemplateOrThrow } from "#/template.ts";
+import { DestinationTemplateEngine } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
-import type { SlackConfig } from "./schema.ts";
+import type { SlackConfig } from "#/slack/schema.ts";
 
 export function renderSlackPayload(input: DestinationSendInput<SlackConfig>): JsonValue {
   const event = input.normalizedEvent;
   const message =
     input.config.template?.mode === "text"
-      ? renderTextTemplateOrThrow(createTemplateContext(input), input.config.template.text)
+      ? DestinationTemplateEngine.renderTextOrThrow(
+          DestinationTemplateEngine.createRenderContext(input),
+          input.config.template.text,
+        )
       : event.message;
   const labelText = Object.entries(event.labels)
     .map(([key, value]) => `${key}=${value}`)

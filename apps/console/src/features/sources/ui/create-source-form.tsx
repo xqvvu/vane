@@ -9,17 +9,20 @@ import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function CreateSourceForm({
   showHeader = true,
+  layout = "panel",
   pending,
   onSubmit,
 }: {
   showHeader?: boolean;
+  layout?: "dialog" | "panel";
   pending: boolean;
   onSubmit: (input: CreateSourceFormInput) => SourceSubmitResult;
 }) {
   const t = useTranslations();
+  const isDialogLayout = layout === "dialog";
 
   return (
-    <section>
+    <section className={isDialogLayout ? "flex min-h-0 flex-1 flex-col" : undefined}>
       {showHeader ? (
         <div className="mb-6">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
@@ -39,12 +42,21 @@ export function CreateSourceForm({
         pending={pending}
         submitLabel={t("sources.form.create.submit")}
         submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
-        layout="rail"
+        layout={isDialogLayout ? "dialog" : "rail"}
+        bodyFooter={
+          isDialogLayout ? (
+            <p className="text-muted-foreground text-[11px] leading-relaxed">
+              {t("sources.form.create.afterCreateHint")}
+            </p>
+          ) : null
+        }
         onSubmit={onSubmit}
       />
-      <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
-        {t("sources.form.create.afterCreateHint")}
-      </p>
+      {isDialogLayout ? null : (
+        <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
+          {t("sources.form.create.afterCreateHint")}
+        </p>
+      )}
     </section>
   );
 }

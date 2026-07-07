@@ -1,17 +1,10 @@
-import {
-  destinationSendFailed,
-  destinationSendSucceeded,
-  readResponseBody,
-  retryHintForHttpStatus,
-  transportFailureResult,
-} from "#/send-result.ts";
-import { defineDestinationAdapter, resolveDestinationTransportContext } from "#/types.ts";
+import { Adapter, R, Send } from "#/utils.ts";
 
-import { emailManifest } from "./manifest.ts";
-import { renderEmailPayload, renderEmailRequestPayload } from "./payload.ts";
-import { EmailConfigSchema } from "./schema.ts";
+import { emailManifest } from "#/email/manifest.ts";
+import { renderEmailPayload, renderEmailRequestPayload } from "#/email/payload.ts";
+import { EmailConfigSchema } from "#/email/schema.ts";
 
-export const emailAdapter = defineDestinationAdapter({
+export const emailAdapter = Adapter.define({
   manifest: emailManifest,
   configSchema: EmailConfigSchema,
   preview(input) {
@@ -21,7 +14,7 @@ export const emailAdapter = defineDestinationAdapter({
   },
   async send(input, context) {
     const config = EmailConfigSchema.parse(input.config);
-    const { fetch } = resolveDestinationTransportContext(context);
+    const { fetch } = Adapter.getTransportContext(context);
     const renderedPayload = renderEmailPayload(input, config);
     const requestPayload = renderEmailRequestPayload(input, config);
 
@@ -34,26 +27,22 @@ export const emailAdapter = defineDestinationAdapter({
         },
         body: JSON.stringify(requestPayload),
       });
-      const responseBody = await readResponseBody(response);
+      const responseBody = await Send.readResponseBody(response);
 
       if (response.ok) {
-        return destinationSendSucceeded({
-          statusCode: response.status,
-          responseBody,
-          renderedPayload,
-        });
+        return R.ok({ statusCode: response.status, responseBody, renderedPayload });
       }
 
-      return destinationSendFailed({
+      return R.fail({
         errorKind: "http_error",
-        retryHint: retryHintForHttpStatus(response.status),
+        retryHint: Send.httpStatusToRetryHint(response.status),
         errorMessage: `Email gateway returned HTTP ${response.status}`,
         statusCode: response.status,
         responseBody,
         renderedPayload,
       });
     } catch (error) {
-      return transportFailureResult({ error, renderedPayload });
+      return Send.transportFailureResult({ error, renderedPayload });
     }
   },
 });

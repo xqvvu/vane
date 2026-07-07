@@ -4,7 +4,7 @@ import type { Configuration } from "#/features/configuration/model/configuration
 
 export type SourceSummary = Configuration["sources"][number];
 
-export type SourceFormLayout = "compact" | "rail";
+export type SourceFormLayout = "compact" | "dialog" | "rail";
 
 export type SourceFormValues = {
   name: string;

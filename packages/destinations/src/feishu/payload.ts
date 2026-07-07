@@ -1,48 +1,36 @@
 import type { JsonObject, JsonValue } from "@vane/core";
 
-import {
-  assertValidJsonTemplate,
-  createTemplateContext,
-  renderJsonTemplate,
-  renderTextTemplate,
-  TemplateValidationError,
-} from "#/template.ts";
+import { DestinationTemplateEngine } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
-import type { FeishuConfig } from "./schema.ts";
-import { createFeishuSign } from "./signing.ts";
+import type { FeishuConfig } from "#/feishu/schema.ts";
+import { createFeishuSign } from "#/feishu/signing.ts";
 
 export function renderFeishuPreviewPayload(
   input: DestinationSendInput<FeishuConfig>,
   config: FeishuConfig,
 ): JsonValue {
-  const context = createTemplateContext(input);
+  const context = DestinationTemplateEngine.createRenderContext(input);
 
   if (config.template.mode === "feishu_card") {
-    assertValidJsonTemplate(config.template.card, "template.card");
-
-    const rendered = renderJsonTemplate(context, config.template.card, "template.card");
-
-    if (!rendered.ok) {
-      throw new TemplateValidationError(rendered.diagnostics);
-    }
-
     return {
       msg_type: "interactive",
-      card: rendered.value,
+      card: DestinationTemplateEngine.renderJsonOrThrow(
+        context,
+        config.template.card,
+        "template.card",
+      ),
     };
-  }
-
-  const rendered = renderTextTemplate(context, config.template.text, "template.text");
-
-  if (!rendered.ok) {
-    throw new TemplateValidationError(rendered.diagnostics);
   }
 
   return {
     msg_type: "text",
     content: {
-      text: rendered.value,
+      text: DestinationTemplateEngine.renderTextOrThrow(
+        context,
+        config.template.text,
+        "template.text",
+      ),
     },
   };
 }

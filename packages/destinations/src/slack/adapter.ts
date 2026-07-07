@@ -1,17 +1,10 @@
-import {
-  destinationSendFailed,
-  destinationSendSucceeded,
-  readResponseBody,
-  retryHintForHttpStatus,
-  transportFailureResult,
-} from "#/send-result.ts";
-import { defineDestinationAdapter, resolveDestinationTransportContext } from "#/types.ts";
+import { Adapter, R, Send } from "#/utils.ts";
 
-import { slackManifest } from "./manifest.ts";
-import { renderSlackPayload } from "./payload.ts";
-import { SlackConfigSchema } from "./schema.ts";
+import { slackManifest } from "#/slack/manifest.ts";
+import { renderSlackPayload } from "#/slack/payload.ts";
+import { SlackConfigSchema } from "#/slack/schema.ts";
 
-export const slackAdapter = defineDestinationAdapter({
+export const slackAdapter = Adapter.define({
   manifest: slackManifest,
   configSchema: SlackConfigSchema,
   preview(input) {
@@ -21,7 +14,7 @@ export const slackAdapter = defineDestinationAdapter({
   },
   async send(input, context) {
     const config = SlackConfigSchema.parse(input.config);
-    const { fetch } = resolveDestinationTransportContext(context);
+    const { fetch } = Adapter.getTransportContext(context);
     const renderedPayload = renderSlackPayload({ ...input, config });
 
     try {
@@ -32,20 +25,20 @@ export const slackAdapter = defineDestinationAdapter({
         },
         body: JSON.stringify(renderedPayload),
       });
-      const responseBody = await readResponseBody(response);
+      const responseBody = await Send.readResponseBody(response);
       const slackOk = responseBody.trim().toLocaleLowerCase() === "ok";
 
       if (response.ok && slackOk) {
-        return destinationSendSucceeded({
+        return R.ok({
           statusCode: response.status,
           responseBody,
           renderedPayload,
         });
       }
 
-      return destinationSendFailed({
+      return R.fail({
         errorKind: response.ok ? "target_rejected" : "http_error",
-        retryHint: response.ok ? "not_retryable" : retryHintForHttpStatus(response.status),
+        retryHint: response.ok ? "not_retryable" : Send.httpStatusToRetryHint(response.status),
         errorMessage: response.ok
           ? `Slack webhook returned ${responseBody || "an unexpected response"}`
           : `Slack webhook returned HTTP ${response.status}`,
@@ -54,7 +47,7 @@ export const slackAdapter = defineDestinationAdapter({
         renderedPayload,
       });
     } catch (error) {
-      return transportFailureResult({ error, renderedPayload });
+      return Send.transportFailureResult({ error, renderedPayload });
     }
   },
 });

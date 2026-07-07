@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { feishuSender } from "#/feishu/index.ts";
-import {
-  createTemplateContext,
-  renderJsonTemplate,
-  renderTextTemplate,
-  templateDiagnostics,
-} from "#/template.ts";
+import { DestinationTemplateEngine } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
 const input: DestinationSendInput<unknown> = {
@@ -39,12 +34,12 @@ const input: DestinationSendInput<unknown> = {
 
 describe("destination templates", () => {
   it("interpolates allow-listed event, source, destination, Vane URL, and label fields", () => {
-    const context = createTemplateContext(input, {
+    const context = DestinationTemplateEngine.createRenderContext(input, {
       eventUrl: "https://vane.example.test/events/event-1",
     });
 
     expect(
-      renderTextTemplate(
+      DestinationTemplateEngine.renderText(
         context,
         "{{event.severity}} {{event.title}} service={{event.labels.service}} source={{source.name}} url={{vane.eventUrl}}",
       ),
@@ -57,7 +52,11 @@ describe("destination templates", () => {
   });
 
   it("rejects unknown variables with path-level diagnostics", () => {
-    expect(templateDiagnostics("{{event.title.toUpperCase}} {{process.env.SECRET}}")).toEqual([
+    expect(
+      DestinationTemplateEngine.diagnoseTemplateValue(
+        "{{event.title.toUpperCase}} {{process.env.SECRET}}",
+      ),
+    ).toEqual([
       {
         severity: "error",
         path: "template",
@@ -74,10 +73,13 @@ describe("destination templates", () => {
   });
 
   it("renders missing allow-listed labels as empty strings", () => {
-    const context = createTemplateContext(input);
+    const context = DestinationTemplateEngine.createRenderContext(input);
 
     expect(
-      renderTextTemplate(context, "service={{event.labels.service}} pod={{event.labels.pod}}"),
+      DestinationTemplateEngine.renderText(
+        context,
+        "service={{event.labels.service}} pod={{event.labels.pod}}",
+      ),
     ).toMatchObject({
       ok: true,
       value: "service=checkout pod=",
@@ -85,10 +87,10 @@ describe("destination templates", () => {
   });
 
   it("recursively renders JSON string fields", () => {
-    const context = createTemplateContext(input);
+    const context = DestinationTemplateEngine.createRenderContext(input);
 
     expect(
-      renderJsonTemplate(context, {
+      DestinationTemplateEngine.renderJson(context, {
         header: {
           title: "{{event.title}}",
         },

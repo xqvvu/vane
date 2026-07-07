@@ -1,10 +1,10 @@
-import { defineProviderAdapter } from "#/types.ts";
+import { Adapter } from "#/utils.ts";
 
-import { grafanaProviderManifest } from "./manifest.ts";
-import { parseGrafanaProviderResult } from "./parse.ts";
-import { GrafanaProviderConfigSchema } from "./schema.ts";
+import { grafanaProviderManifest } from "#/grafana/manifest.ts";
+import { parseGrafanaProviderResult } from "#/grafana/parse.ts";
+import { GrafanaProviderConfigSchema } from "#/grafana/schema.ts";
 
-export const grafanaProviderAdapter = defineProviderAdapter({
+export const grafanaProviderAdapter = Adapter.define({
   manifest: grafanaProviderManifest,
   configSchema: GrafanaProviderConfigSchema,
   parse: parseGrafanaProviderResult,

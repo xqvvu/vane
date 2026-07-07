@@ -1,15 +1,11 @@
 import * as React from "react";
 import { toast } from "sonner";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "#/components/ui/dialog.tsx";
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "#/components/ui/dialog.tsx";
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
 import type {
+  DestinationCatalog,
   DestinationSubmitResult,
   DestinationSummary,
   EditDestinationFormInput,
@@ -18,12 +14,14 @@ import { EditDestinationForm } from "#/features/destinations/ui/edit-destination
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function DestinationEditDialog({
+  destinationCatalog,
   destination,
   open,
   disabled = false,
   onOpenChange,
   onPreview,
 }: {
+  destinationCatalog: DestinationCatalog;
   destination: DestinationSummary | null;
   open: boolean;
   disabled?: boolean;
@@ -43,7 +41,7 @@ export function DestinationEditDialog({
         }
       }}
     >
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-5xl">
+      <ConfigurationDialogContent>
         <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{t("destinations.form.edit.title")}</DialogTitle>
           <DialogDescription>{t("destinations.form.edit.description")}</DialogDescription>
@@ -51,6 +49,7 @@ export function DestinationEditDialog({
 
         {destination ? (
           <EditDestinationForm
+            destinationCatalog={destinationCatalog}
             key={destination.id}
             showHeader={false}
             framed={false}
@@ -76,7 +75,7 @@ export function DestinationEditDialog({
             }}
           />
         ) : null}
-      </DialogContent>
+      </ConfigurationDialogContent>
     </Dialog>
   );
 }

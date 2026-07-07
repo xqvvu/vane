@@ -1,10 +1,10 @@
 import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
 
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -59,8 +59,8 @@ export function RouteAddDialog({
         {t("common.actions.add")}
       </DialogTrigger>
 
-      <DialogContent className="max-h-[min(720px,calc(100dvh-2rem))] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
+      <ConfigurationDialogContent>
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{t("routing.form.create.title")}</DialogTitle>
           <DialogDescription>{t("routing.form.create.description")}</DialogDescription>
         </DialogHeader>
@@ -69,13 +69,14 @@ export function RouteAddDialog({
           showHeader={false}
           sources={sources}
           destinations={destinations}
+          layout="dialog"
           pending={disabled || pending}
           onSubmit={(input) => {
             onSubmit(input);
             setOpen(false);
           }}
         />
-      </DialogContent>
+      </ConfigurationDialogContent>
     </Dialog>
   );
 }

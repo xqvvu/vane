@@ -35,7 +35,7 @@ export function parseDestinationConfig(
   kind: DestinationKind,
   config: JsonObject,
 ): JsonObject {
-  return JsonObjectSchema.parse(destinations.parseConfig(kind, config));
+  return JsonObjectSchema.parse(destinations.parse(kind, config));
 }
 
 export async function requireExistingSourceIds(

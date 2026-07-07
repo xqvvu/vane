@@ -8,22 +8,44 @@ import type { DestinationSendInput } from "#/types.ts";
 const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
 const LABEL_PATH_PATTERN = /^event\.labels\.([a-zA-Z0-9_.-]+)$/;
 
-const AllowedTemplatePaths = new Set([
-  "event.id",
-  "event.title",
-  "event.message",
-  "event.severity",
-  "event.status",
-  "event.fingerprint",
-  "event.occurredAt",
-  "source.id",
-  "source.name",
-  "source.provider",
-  "destination.id",
-  "destination.name",
-  "destination.kind",
-  "vane.eventUrl",
-]);
+type TemplateStaticPath =
+  | "event.id"
+  | "event.title"
+  | "event.message"
+  | "event.severity"
+  | "event.status"
+  | "event.fingerprint"
+  | "event.occurredAt"
+  | "source.id"
+  | "source.name"
+  | "source.provider"
+  | "destination.id"
+  | "destination.name"
+  | "destination.kind"
+  | "vane.eventUrl";
+
+type TemplateStaticPathResolver = (context: TemplateContext) => string;
+
+const TemplateStaticPathResolvers = {
+  "event.id": (context) => context.event.id,
+  "event.title": (context) => context.event.title,
+  "event.message": (context) => context.event.message,
+  "event.severity": (context) => context.event.severity,
+  "event.status": (context) => context.event.status,
+  "event.fingerprint": (context) => context.event.fingerprint,
+  "event.occurredAt": (context) => context.event.occurredAt,
+  "source.id": (context) => context.source.id,
+  "source.name": (context) => context.source.name,
+  "source.provider": (context) => context.source.provider,
+  "destination.id": (context) => context.destination.id,
+  "destination.name": (context) => context.destination.name,
+  "destination.kind": (context) => context.destination.kind,
+  "vane.eventUrl": (context) => context.vane.eventUrl,
+} satisfies Record<TemplateStaticPath, TemplateStaticPathResolver>;
+
+const AllowedTemplatePaths: ReadonlySet<TemplateStaticPath> = new Set(
+  Object.keys(TemplateStaticPathResolvers) as TemplateStaticPath[],
+);
 
 export const TextDestinationTemplateSchema = z
   .strictObject({
@@ -31,7 +53,10 @@ export const TextDestinationTemplateSchema = z
     text: z.string().trim().min(1).max(4000),
   })
   .superRefine((template, context) => {
-    for (const diagnostic of diagnosticsForTemplateString(template.text, "template.text")) {
+    for (const diagnostic of DestinationTemplateEngine.diagnoseTextTemplate(
+      template.text,
+      "template.text",
+    )) {
       context.addIssue({
         code: "custom",
         path: ["text"],
@@ -46,7 +71,10 @@ export const FeishuCardDestinationTemplateSchema = z
     card: JsonObjectSchema,
   })
   .superRefine((template, context) => {
-    for (const diagnostic of diagnosticsForJsonTemplate(template.card, "template.card")) {
+    for (const diagnostic of DestinationTemplateEngine.diagnoseJsonTemplate(
+      template.card,
+      "template.card",
+    )) {
       context.addIssue({
         code: "custom",
         path: diagnostic.path?.replace(/^template\./, "").split(".") ?? ["card"],
@@ -116,124 +144,147 @@ export class TemplateValidationError extends Error {
   }
 }
 
-export function createTemplateContext(
-  input: DestinationSendInput<unknown>,
-  options: { eventUrl?: string } = {},
-): TemplateContext {
-  return {
-    event: {
-      id: input.eventId,
-      title: input.normalizedEvent.title,
-      message: input.normalizedEvent.message,
-      severity: input.normalizedEvent.severity,
-      status: input.normalizedEvent.status,
-      fingerprint: input.normalizedEvent.fingerprint,
-      occurredAt: input.normalizedEvent.occurredAt,
-      labels: input.normalizedEvent.labels,
-    },
-    source: templateSource(input.source),
-    destination: templateDestination(input.destination),
-    vane: {
-      eventUrl: options.eventUrl ?? "",
-    },
-  };
-}
-
-export function renderTextTemplate(
-  context: TemplateContext,
-  template: string,
-  path = "text",
-): RenderTemplateResult<string> {
-  const diagnostics = diagnosticsForTemplateString(template, path);
-
-  if (diagnostics.length > 0) {
+export class DestinationTemplateEngine {
+  static createRenderContext(
+    input: DestinationSendInput<unknown>,
+    options: { eventUrl?: string } = {},
+  ): TemplateContext {
     return {
-      ok: false,
-      value: "",
-      diagnostics,
+      event: {
+        id: input.eventId,
+        title: input.normalizedEvent.title,
+        message: input.normalizedEvent.message,
+        severity: input.normalizedEvent.severity,
+        status: input.normalizedEvent.status,
+        fingerprint: input.normalizedEvent.fingerprint,
+        occurredAt: input.normalizedEvent.occurredAt,
+        labels: input.normalizedEvent.labels,
+      },
+      source: templateSource(input.source),
+      destination: templateDestination(input.destination),
+      vane: {
+        eventUrl: options.eventUrl ?? "",
+      },
     };
   }
 
-  return {
-    ok: true,
-    value: interpolateTemplateString(context, template),
-    diagnostics: [],
-  };
-}
+  static diagnoseTemplateValue(
+    template: JsonValue | string,
+    path = "template",
+  ): TemplateDiagnostic[] {
+    return typeof template === "string"
+      ? this.diagnoseTextTemplate(template, path)
+      : this.diagnoseJsonTemplate(template, path);
+  }
 
-export function renderJsonTemplate(
-  context: TemplateContext,
-  template: JsonValue,
-  path = "template",
-): RenderTemplateResult<JsonValue> {
-  const diagnostics = diagnosticsForJsonTemplate(template, path);
+  static diagnoseTextTemplate(template: string, path = "text"): TemplateDiagnostic[] {
+    return diagnosticsForTemplateString(template, path);
+  }
 
-  if (diagnostics.length > 0) {
+  static diagnoseJsonTemplate(template: JsonValue, path = "template"): TemplateDiagnostic[] {
+    return diagnosticsForJsonTemplate(template, path);
+  }
+
+  static renderText(
+    context: TemplateContext,
+    template: string,
+    path = "text",
+  ): RenderTemplateResult<string> {
+    const diagnostics = this.diagnoseTextTemplate(template, path);
+
+    if (diagnostics.length > 0) {
+      return {
+        ok: false,
+        value: "",
+        diagnostics,
+      };
+    }
+
     return {
-      ok: false,
-      value: null,
-      diagnostics,
+      ok: true,
+      value: interpolateTemplateString(context, template),
+      diagnostics: [],
     };
   }
 
-  return {
-    ok: true,
-    value: interpolateJsonTemplate(context, template),
-    diagnostics: [],
-  };
-}
+  static renderJson(
+    context: TemplateContext,
+    template: JsonValue,
+    path = "template",
+  ): RenderTemplateResult<JsonValue> {
+    const diagnostics = this.diagnoseJsonTemplate(template, path);
 
-export function assertValidTextTemplate(template: string, path = "text"): void {
-  const diagnostics = diagnosticsForTemplateString(template, path);
+    if (diagnostics.length > 0) {
+      return {
+        ok: false,
+        value: null,
+        diagnostics,
+      };
+    }
 
-  if (diagnostics.length > 0) {
-    throw new TemplateValidationError(diagnostics);
-  }
-}
-
-export function renderTextTemplateOrThrow(
-  context: TemplateContext,
-  template: string,
-  path = "text",
-): string {
-  const rendered = renderTextTemplate(context, template, path);
-
-  if (!rendered.ok) {
-    throw new TemplateValidationError(rendered.diagnostics);
+    return {
+      ok: true,
+      value: interpolateJsonTemplate(context, template),
+      diagnostics: [],
+    };
   }
 
-  return rendered.value;
-}
+  static renderTextOrThrow(context: TemplateContext, template: string, path = "text"): string {
+    const rendered = this.renderText(context, template, path);
 
-export function assertValidJsonTemplate(template: JsonValue, path = "template"): void {
-  const diagnostics = diagnosticsForJsonTemplate(template, path);
+    if (!rendered.ok) {
+      throw new TemplateValidationError(rendered.diagnostics);
+    }
 
-  if (diagnostics.length > 0) {
-    throw new TemplateValidationError(diagnostics);
+    return rendered.value;
   }
-}
 
-export function templateDiagnostics(template: JsonValue | string, path = "template") {
-  return typeof template === "string"
-    ? diagnosticsForTemplateString(template, path)
-    : diagnosticsForJsonTemplate(template, path);
-}
+  static renderJsonOrThrow(
+    context: TemplateContext,
+    template: JsonValue,
+    path = "template",
+  ): JsonValue {
+    const rendered = this.renderJson(context, template, path);
 
-export function isTemplateValidationError(error: unknown): error is TemplateValidationError {
-  return error instanceof TemplateValidationError;
-}
+    if (!rendered.ok) {
+      throw new TemplateValidationError(rendered.diagnostics);
+    }
 
-export function templateErrorPayload(error: TemplateValidationError): JsonObject {
-  return {
-    templateError: {
-      diagnostics: error.diagnostics.map((diagnostic) => ({
-        severity: diagnostic.severity,
-        path: diagnostic.path ?? null,
-        variable: diagnostic.variable ?? null,
-        message: diagnostic.message,
-      })),
-    },
-  };
+    return rendered.value;
+  }
+
+  static assertTextTemplateIsValid(template: string, path = "text"): void {
+    const diagnostics = this.diagnoseTextTemplate(template, path);
+
+    if (diagnostics.length > 0) {
+      throw new TemplateValidationError(diagnostics);
+    }
+  }
+
+  static assertJsonTemplateIsValid(template: JsonValue, path = "template"): void {
+    const diagnostics = this.diagnoseJsonTemplate(template, path);
+
+    if (diagnostics.length > 0) {
+      throw new TemplateValidationError(diagnostics);
+    }
+  }
+
+  static isValidationError(error: unknown): error is TemplateValidationError {
+    return error instanceof TemplateValidationError;
+  }
+
+  static validationErrorToPayload(error: TemplateValidationError): JsonObject {
+    return {
+      templateError: {
+        diagnostics: error.diagnostics.map((diagnostic) => ({
+          severity: diagnostic.severity,
+          path: diagnostic.path ?? null,
+          variable: diagnostic.variable ?? null,
+          message: diagnostic.message,
+        })),
+      },
+    };
+  }
 }
 
 function diagnosticsForJsonTemplate(value: JsonValue, path: string): TemplateDiagnostic[] {
@@ -291,60 +342,8 @@ function interpolateTemplateString(context: TemplateContext, template: string): 
 }
 
 function templateValue(context: TemplateContext, path: string): string {
-  if (path === "event.id") {
-    return context.event.id;
-  }
-
-  if (path === "event.title") {
-    return context.event.title;
-  }
-
-  if (path === "event.message") {
-    return context.event.message;
-  }
-
-  if (path === "event.severity") {
-    return context.event.severity;
-  }
-
-  if (path === "event.status") {
-    return context.event.status;
-  }
-
-  if (path === "event.fingerprint") {
-    return context.event.fingerprint;
-  }
-
-  if (path === "event.occurredAt") {
-    return context.event.occurredAt;
-  }
-
-  if (path === "source.id") {
-    return context.source.id;
-  }
-
-  if (path === "source.name") {
-    return context.source.name;
-  }
-
-  if (path === "source.provider") {
-    return context.source.provider;
-  }
-
-  if (path === "destination.id") {
-    return context.destination.id;
-  }
-
-  if (path === "destination.name") {
-    return context.destination.name;
-  }
-
-  if (path === "destination.kind") {
-    return context.destination.kind;
-  }
-
-  if (path === "vane.eventUrl") {
-    return context.vane.eventUrl;
+  if (isTemplateStaticPath(path)) {
+    return TemplateStaticPathResolvers[path](context);
   }
 
   const labelMatch = LABEL_PATH_PATTERN.exec(path);
@@ -357,7 +356,11 @@ function templateValue(context: TemplateContext, path: string): string {
 }
 
 function isAllowedTemplatePath(path: string): boolean {
-  return AllowedTemplatePaths.has(path) || LABEL_PATH_PATTERN.test(path);
+  return isTemplateStaticPath(path) || LABEL_PATH_PATTERN.test(path);
+}
+
+function isTemplateStaticPath(path: string): path is TemplateStaticPath {
+  return AllowedTemplatePaths.has(path as TemplateStaticPath);
 }
 
 function isJsonObject(value: JsonValue): value is JsonObject {
