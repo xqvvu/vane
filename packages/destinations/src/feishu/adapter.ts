@@ -59,7 +59,6 @@ export const feishuAdapter = Adapter.define({
     }
 
     try {
-      console.dir(signedPayload, { depth: null });
       const response = await fetch(config.webhookUrl, {
         method: "POST",
         headers: {
