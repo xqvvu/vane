@@ -69,7 +69,9 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
           />
           <EventsTable
             events={operations.events.items}
-            nextCursor={operations.events.nextCursor}
+            page={operations.events.page}
+            pageSize={operations.events.pageSize}
+            total={operations.events.total}
             pending={pending}
             onInspect={(eventId) =>
               void navigate({
@@ -79,8 +81,7 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
                 },
               })
             }
-            onOlder={(cursor) => onSearchChange({ eventCursor: cursor })}
-            onLatest={() => onSearchChange({ eventCursor: "" })}
+            onPageChange={(eventPage) => onSearchChange({ eventPage })}
           />
         </>
       }

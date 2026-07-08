@@ -27,8 +27,7 @@ export interface OperationsPanelProps {
   onInspectEvent: (eventId: string) => void;
   onInspectDelivery: (deliveryId: string) => void;
   onRetryDelivery: (deliveryId: string) => void;
-  onOlderEvents: (cursor: string) => void;
-  onLatestEvents: () => void;
+  onEventPageChange: (page: number) => void;
   onOlderDeliveries: (cursor: string) => void;
   onLatestDeliveries: () => void;
 }
@@ -45,8 +44,7 @@ export function OperationsPanel({
   onInspectEvent,
   onInspectDelivery,
   onRetryDelivery,
-  onOlderEvents,
-  onLatestEvents,
+  onEventPageChange,
   onOlderDeliveries,
   onLatestDeliveries,
 }: OperationsPanelProps) {
@@ -72,11 +70,12 @@ export function OperationsPanel({
       <div className="mt-3 grid gap-4 xl:grid-cols-2">
         <EventsTable
           events={operations.events.items}
-          nextCursor={operations.events.nextCursor}
+          page={operations.events.page}
+          pageSize={operations.events.pageSize}
+          total={operations.events.total}
           pending={pending}
           onInspect={onInspectEvent}
-          onOlder={onOlderEvents}
-          onLatest={onLatestEvents}
+          onPageChange={onEventPageChange}
         />
         <DeliveriesTable
           deliveries={operations.deliveries.items}

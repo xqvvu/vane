@@ -29,6 +29,7 @@ export function operationsQueryOptions(filters: OperationFilterData) {
       listOperationsFn({
         data: {
           limit: 20,
+          eventPage: normalizedFilters.eventPage ?? 1,
           ...normalizedFilters,
         },
       }),
@@ -67,7 +68,7 @@ function normalizeOperationFilters(filters: OperationFilterData): OperationFilte
     ...(filters.destinationId ? { destinationId: filters.destinationId } : {}),
     ...(filters.deliveryState ? { deliveryState: filters.deliveryState } : {}),
     ...(filters.q?.trim() ? { q: filters.q.trim() } : {}),
-    ...(filters.eventCursor ? { eventCursor: filters.eventCursor } : {}),
+    ...(filters.eventPage && filters.eventPage > 1 ? { eventPage: filters.eventPage } : {}),
     ...(filters.deliveryCursor ? { deliveryCursor: filters.deliveryCursor } : {}),
   };
 }

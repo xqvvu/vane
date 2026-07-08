@@ -13,8 +13,15 @@ export interface Page<T> {
   nextCursor: string | null;
 }
 
+export interface NumberedPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface Operations {
-  events: Page<EventListItem>;
+  events: NumberedPage<EventListItem>;
   deliveries: Page<DeliveryListItem>;
 }
 

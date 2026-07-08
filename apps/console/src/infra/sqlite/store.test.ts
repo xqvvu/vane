@@ -673,10 +673,10 @@ describe("sqlite store", () => {
     expect((await store.history.listDeliveries({ state: "failed" })).items[0]?.lastError).toBe(
       "destination unavailable token=[REDACTED]",
     );
-    const eventFirstPage = await store.history.listEvents({ limit: 1 });
+    const eventFirstPage = await store.history.listEvents({ limit: 1, page: 1 });
     const eventSecondPage = await store.history.listEvents({
       limit: 1,
-      cursor: eventFirstPage.nextCursor ?? undefined,
+      page: 2,
     });
     const deliveryFirstPage = await store.history.listDeliveries({ limit: 1 });
     const deliverySecondPage = await store.history.listDeliveries({
@@ -684,9 +684,17 @@ describe("sqlite store", () => {
       cursor: deliveryFirstPage.nextCursor ?? undefined,
     });
 
-    expect(eventFirstPage.nextCursor).toBeTruthy();
+    expect(eventFirstPage).toMatchObject({
+      total: 2,
+      page: 1,
+      pageSize: 1,
+    });
     expect(eventSecondPage.items.map((event) => event.id)).toEqual([criticalEvent.id]);
-    expect(eventSecondPage.nextCursor).toBeNull();
+    expect(eventSecondPage).toMatchObject({
+      total: 2,
+      page: 2,
+      pageSize: 1,
+    });
     expect(deliveryFirstPage.nextCursor).toBeTruthy();
     expect(deliverySecondPage.items).toHaveLength(1);
     expect(deliverySecondPage.items[0]?.id).not.toBe(deliveryFirstPage.items[0]?.id);

@@ -3,6 +3,7 @@ import type {
   DeliveryState,
   EventDetail,
   EventListItem,
+  NumberedPage,
   NormalizedEvent,
 } from "@vane/core";
 import type { Page } from "@vane/core";
@@ -10,7 +11,7 @@ import type { Page } from "@vane/core";
 export type { DeliveryListItem, EventDetail, EventDetailDelivery, EventListItem } from "@vane/core";
 
 export interface HistoryRepository {
-  listEvents(query?: EventListQuery): Promise<Page<EventListItem>>;
+  listEvents(query?: EventListQuery): Promise<NumberedPage<EventListItem>>;
   getEventDetail(eventId: string): Promise<EventDetail | null>;
   listDeliveries(query?: DeliveryListQuery): Promise<Page<DeliveryListItem>>;
 }
@@ -20,7 +21,7 @@ export interface EventListQuery {
   severity?: NormalizedEvent["severity"];
   status?: NormalizedEvent["status"];
   q?: string;
-  cursor?: string;
+  page?: number;
   limit?: number;
 }
 

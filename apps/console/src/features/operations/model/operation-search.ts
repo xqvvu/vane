@@ -20,7 +20,7 @@ export const DashboardOperationSearchSchema = z.object({
     .catch("")
     .optional(),
   q: z.string().catch("").optional(),
-  eventCursor: z.string().catch("").optional(),
+  eventPage: z.coerce.number().int().min(1).catch(1).optional(),
   deliveryCursor: z.string().catch("").optional(),
 });
 
@@ -31,7 +31,7 @@ export interface DashboardOperationSearch {
   destinationId?: string;
   deliveryState?: DeliveryState | "";
   q?: string;
-  eventCursor?: string;
+  eventPage?: number;
   deliveryCursor?: string;
 }
 
@@ -42,7 +42,7 @@ export type OperationFilterData = {
   destinationId?: string;
   deliveryState?: DeliveryState;
   q?: string;
-  eventCursor?: string;
+  eventPage?: number;
   deliveryCursor?: string;
 };
 
@@ -55,8 +55,11 @@ export function pruneSearch(search: DashboardOperationSearch): DashboardOperatio
     {
       ...search,
       q: search.q?.trim(),
+      eventPage: search.eventPage && search.eventPage > 1 ? search.eventPage : undefined,
     },
-    (value) => typeof value === "string" && value.length > 0,
+    (value) =>
+      (typeof value === "string" && value.length > 0) ||
+      (typeof value === "number" && Number.isFinite(value)),
   ) as DashboardOperationSearch;
 }
 
@@ -77,6 +80,6 @@ export function mergeOperationSearch(
   return pruneSearch({
     ...search,
     ...next,
-    ...(filterChanged ? { eventCursor: "", deliveryCursor: "" } : {}),
+    ...(filterChanged ? { eventPage: 1, deliveryCursor: "" } : {}),
   });
 }

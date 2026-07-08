@@ -6,6 +6,7 @@ export type {
   EventDetailDelivery,
   EventListItem,
   IsoDateTimeString,
+  NumberedPage,
   Operations,
   Page,
   WorkerHealthSnapshot,

@@ -1,8 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
-import { HistoryPagination } from "#/components/common/history-pagination.tsx";
 import { OperationsTable } from "#/components/common/operations-table.tsx";
+import { TablePagination } from "#/components/common/table-pagination.tsx";
 import { EventActions } from "#/features/events/ui/event-actions.tsx";
 import { EventDeliveryCountsCell } from "#/features/events/ui/event-delivery-counts-cell.tsx";
 import { EventStateCell } from "#/features/events/ui/event-state-cell.tsx";
@@ -19,21 +19,26 @@ import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export function EventsTable({
   events,
-  nextCursor,
+  page,
+  pageSize,
+  total,
   pending,
   onInspect,
-  onOlder,
-  onLatest,
+  onPageChange,
 }: {
   events: Operations["events"]["items"];
-  nextCursor: string | null;
+  page: number;
+  pageSize: number;
+  total: number;
   pending: boolean;
   onInspect: (eventId: string) => void;
-  onOlder: (cursor: string) => void;
-  onLatest: () => void;
+  onPageChange: (page: number) => void;
 }) {
   const t = useTranslations();
   const data = React.useMemo(() => events, [events]);
+  const normalizedPageSize = Math.max(pageSize, 1);
+  const pageCount = Math.max(Math.ceil(total / normalizedPageSize), 1);
+  const pageIndex = Math.min(Math.max(page - 1, 0), pageCount - 1);
   const columns = React.useMemo<Array<ColumnDef<Operations["events"]["items"][number]>>>(
     () => [
       {
@@ -101,15 +106,17 @@ export function EventsTable({
         nextLabel={t("events.table.next")}
       />
 
-      <HistoryPagination
-        latestLabel={t("operations.history.latest")}
-        olderLabel={t("operations.history.older")}
-        showLatestLabel={t("operations.history.showLatest")}
-        showOlderLabel={t("operations.history.showOlder")}
-        hasOlder={nextCursor !== null}
-        pending={pending}
-        onOlder={nextCursor ? () => onOlder(nextCursor) : undefined}
-        onLatest={onLatest}
+      <TablePagination
+        rangeLabel={total > 0 ? t("events.table.range", { total }) : t("events.table.emptyRange")}
+        pageLabel={t("events.table.page", {
+          page: pageIndex + 1,
+          pageCount,
+        })}
+        previousLabel={t("events.table.previous")}
+        nextLabel={t("events.table.next")}
+        pageIndex={pageIndex}
+        pageCount={pageCount}
+        onPageIndexChange={(nextPageIndex) => onPageChange(nextPageIndex + 1)}
       />
     </section>
   );

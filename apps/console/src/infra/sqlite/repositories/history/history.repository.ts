@@ -1,6 +1,6 @@
 import { sql } from "kysely";
 
-import type { DeliveryListItem, EventDetail, EventListItem } from "@vane/core";
+import type { DeliveryListItem, EventDetail, EventListItem, NumberedPage } from "@vane/core";
 import { evaluateRouteMatch } from "@vane/core";
 import type { Page } from "@vane/core";
 
@@ -34,8 +34,12 @@ export class SqliteHistoryRepository implements HistoryRepository {
     _deliveries: SqliteDeliveryRepository,
   ) {}
 
-  async listEvents(query: EventListQuery = {}): Promise<Page<EventListItem>> {
-    const limit = query.limit ?? 50;
+  async listEvents(query: EventListQuery = {}): Promise<NumberedPage<EventListItem>> {
+    const pageSize = Math.max(query.limit ?? 50, 1);
+    const total = await this.countEvents(query);
+    const pageCount = Math.max(Math.ceil(total / pageSize), 1);
+    const page = Math.min(Math.max(query.page ?? 1, 1), pageCount);
+    const offset = (page - 1) * pageSize;
     let builder = this.context.db
       .selectFrom("events")
       .innerJoin("sources", "sources.id", "events.source_id")
@@ -65,7 +69,8 @@ export class SqliteHistoryRepository implements HistoryRepository {
       .groupBy("events.id")
       .orderBy("events.received_at", "desc")
       .orderBy("events.id", "desc")
-      .limit(limit + 1);
+      .limit(pageSize)
+      .offset(offset);
 
     if (query.sourceId) {
       builder = builder.where("events.source_id", "=", query.sourceId);
@@ -87,26 +92,10 @@ export class SqliteHistoryRepository implements HistoryRepository {
       );
     }
 
-    if (query.cursor) {
-      const cursor = decodeHistoryCursor(query.cursor);
-
-      if (cursor.id) {
-        builder = builder.where((eb) =>
-          eb.or([
-            eb("events.received_at", "<", cursor.time),
-            eb.and([eb("events.received_at", "=", cursor.time), eb("events.id", "<", cursor.id)]),
-          ]),
-        );
-      } else {
-        builder = builder.where("events.received_at", "<", cursor.time);
-      }
-    }
-
     const rows = await builder.execute();
-    const pageRows = rows.slice(0, limit);
 
     return {
-      items: pageRows.map((row) => ({
+      items: rows.map((row) => ({
         id: row.id,
         sourceId: row.source_id,
         sourceName: row.source_name,
@@ -122,10 +111,9 @@ export class SqliteHistoryRepository implements HistoryRepository {
           failed: row.failed_count ?? 0,
         },
       })),
-      nextCursor:
-        rows.length > limit && pageRows.at(-1)
-          ? encodeHistoryCursor(pageRows.at(-1)!.received_at, pageRows.at(-1)!.id)
-          : null,
+      total,
+      page,
+      pageSize,
     };
   }
 
@@ -251,5 +239,33 @@ export class SqliteHistoryRepository implements HistoryRepository {
           ? encodeHistoryCursor(pageRows.at(-1)!.updated_at, pageRows.at(-1)!.id)
           : null,
     };
+  }
+
+  private async countEvents(query: EventListQuery): Promise<number> {
+    let builder = this.context.db.selectFrom("events").select(sql<number>`COUNT(*)`.as("total"));
+
+    if (query.sourceId) {
+      builder = builder.where("events.source_id", "=", query.sourceId);
+    }
+
+    if (query.severity) {
+      builder = builder.where("events.severity", "=", query.severity);
+    }
+
+    if (query.status) {
+      builder = builder.where("events.status", "=", query.status);
+    }
+
+    if (query.q) {
+      const q = `%${query.q}%`;
+
+      builder = builder.where((eb) =>
+        eb.or([eb("events.title", "like", q), eb("events.message", "like", q)]),
+      );
+    }
+
+    const row = await builder.executeTakeFirst();
+
+    return row?.total ?? 0;
   }
 }

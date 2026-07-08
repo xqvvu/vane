@@ -14,7 +14,7 @@ const ListOperationsInputSchema = z
     destinationId: z.string().min(1).optional(),
     deliveryState: DeliveryStateSchema.optional(),
     q: z.string().trim().min(1).max(120).optional(),
-    eventCursor: z.string().min(1).optional(),
+    eventPage: z.number().int().min(1).default(1),
     deliveryCursor: z.string().min(1).optional(),
   })
   .optional();
@@ -42,7 +42,7 @@ export const listOperationsFn = createServerFn({ method: "GET" })
         severity: data?.severity,
         status: data?.status,
         q: data?.q,
-        cursor: data?.eventCursor,
+        page: data?.eventPage ?? 1,
       }),
       store.history.listDeliveries({
         limit,
