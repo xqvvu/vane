@@ -6,7 +6,7 @@ import type { FeishuCardV2 } from "#/feishu/card.types.ts";
 const defaultFeishuCardTemplateDefinition = {
   schema: "2.0",
   config: {
-    width_mode: "fill",
+    width_mode: "compact",
     enable_forward: true,
     summary: {
       content: "[{{event.severity}}] {{event.title}}",
