@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { DeliveryJob, DeliveryState } from "#/delivery/delivery.ts";
 import type { DestinationSummary } from "#/destination/destination.ts";
 import type { EventRecord } from "#/event/event.ts";
@@ -34,6 +36,7 @@ export interface EventListItem {
   title: string;
   fingerprint: string;
   receivedAt: IsoDateTimeString;
+  routeMatchCount: number;
   deliveryCounts: Record<DeliveryState, number>;
 }
 
@@ -103,4 +106,31 @@ export interface WorkerHealthSnapshot {
   lastFinishedAt: IsoDateTimeString | null;
   lastError: string | null;
   lastRun: Omit<WorkerRunNotice, "health" | "runnerHealth"> | null;
+}
+
+export const ReplayEventCommandSchema = z.object({
+  eventId: z.string().min(1),
+});
+export type ReplayEventCommand = z.infer<typeof ReplayEventCommandSchema>;
+
+export interface EventReplayTarget {
+  routeId: string;
+  routeName: string;
+  destinationId: string;
+  deliveryId: string | null;
+  alreadyExists: boolean;
+}
+
+export interface EventReplayPreview {
+  eventId: string;
+  routeMatches: RouteMatchResult[];
+  targets: EventReplayTarget[];
+  matchedRouteCount: number;
+  newDeliveryCount: number;
+  existingDeliveryCount: number;
+}
+
+export interface EventReplayResult extends EventReplayPreview {
+  createdDeliveryIds: string[];
+  skippedExistingCount: number;
 }

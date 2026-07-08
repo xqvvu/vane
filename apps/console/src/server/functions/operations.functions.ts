@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { AlertSeveritySchema, AlertStatusSchema, DeliveryStateSchema } from "@vane/core";
+import {
+  AlertSeveritySchema,
+  AlertStatusSchema,
+  DeliveryStateSchema,
+  ReplayEventCommandSchema,
+} from "@vane/core";
 
 import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware.ts";
 
@@ -84,6 +89,20 @@ export const retryDeliveryFn = createServerFn({ method: "POST" })
       deliveryId: data.id,
     });
   });
+
+export const previewEventReplayFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(ReplayEventCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createEventReplayService()).previewEventReplay(data),
+  );
+
+export const replayEventFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(ReplayEventCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createEventReplayService()).replayEvent(data),
+  );
 
 export const runDeliveryWorkerFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])

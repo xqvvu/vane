@@ -21,6 +21,7 @@ import type {
   EnqueueDeliveriesInput,
   EnqueueDeliveriesResult,
   DedupedDelivery,
+  ExistingDeliveryTarget,
   MarkDeliveryFailedInput,
   MarkDeliverySucceededInput,
   ReclaimStaleRunningDeliveriesInput,
@@ -61,14 +62,25 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
       const repository = this.withContext(context);
       const created: DeliveryJob[] = [];
       const deduped: DedupedDelivery[] = [];
+      const skippedExisting: ExistingDeliveryTarget[] = [];
       const now = input.now ?? this.context.now();
       const maxAttempts = input.maxAttempts ?? 3;
+      const existingTargets = input.skipExistingForEvent
+        ? await listExistingTargetsForEvent(context, input.event.id)
+        : new Map<string, ExistingDeliveryTarget>();
 
       await pruneDedupeKeys(context.db, input.dedupeWindowStartsAt);
 
       for (const match of input.matches) {
         for (const destinationId of match.destinationIds) {
-          if (input.event.idempotencyKey) {
+          const existingTarget = existingTargets.get(deliveryTargetKey(match.routeId, destinationId));
+
+          if (existingTarget) {
+            skippedExisting.push(existingTarget);
+            continue;
+          }
+
+          if (input.dedupeByIdempotency !== false && input.event.idempotencyKey) {
             const dedupe = await reserveDedupeKey(context.db, {
               source_id: input.event.sourceId,
               idempotency_key: input.event.idempotencyKey,
@@ -114,7 +126,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
         }
       }
 
-      return { created, deduped };
+      return { created, deduped, skippedExisting };
     });
   }
 
@@ -409,4 +421,35 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
 
     return new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
   }
+}
+
+async function listExistingTargetsForEvent(
+  context: SqliteRepositoryContext,
+  eventId: string,
+): Promise<Map<string, ExistingDeliveryTarget>> {
+  const rows = await context.db
+    .selectFrom("deliveries")
+    .select(["id", "event_id", "route_id", "destination_id", "state"])
+    .where("event_id", "=", eventId)
+    .where("route_id", "is not", null)
+    .execute();
+
+  return new Map(
+    rows
+      .filter((row): row is typeof row & { route_id: string } => row.route_id !== null)
+      .map((row) => [
+        deliveryTargetKey(row.route_id, row.destination_id),
+        {
+          deliveryId: row.id,
+          eventId: row.event_id,
+          routeId: row.route_id,
+          destinationId: row.destination_id,
+          state: row.state,
+        },
+      ]),
+  );
+}
+
+function deliveryTargetKey(routeId: string, destinationId: string): string {
+  return `${routeId}\u0000${destinationId}`;
 }

@@ -24,6 +24,8 @@ import { DestinationService } from "#/server/destinations/destination.service.ts
 import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types.ts";
 import { WebhookIntakeService } from "#/server/intake/intake.service.ts";
 import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types.ts";
+import { EventReplayService } from "#/server/operations/event-replay.service.ts";
+import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types.ts";
 import { RouteService } from "#/server/routes/route.service.ts";
 import type { DashboardSession } from "#/server/runtime/dashboard-session.ts";
 import {
@@ -64,6 +66,9 @@ export interface ApplicationContainer {
   createDeliveryWorker(
     options?: Partial<Omit<DeliveryWorkerOptions, "store" | "destinations">>,
   ): Promise<DeliveryWorker>;
+  createEventReplayService(
+    options?: Partial<Omit<EventReplayServiceOptions, "store">>,
+  ): Promise<EventReplayService>;
   ensureDeliveryWorkerRunner(): Promise<DeliveryWorkerRunner>;
   getBetterAuthDatabase(): Promise<VaneSqliteKysely>;
   hasRegisteredUsers(): Promise<boolean>;
@@ -202,6 +207,13 @@ export function createApplicationContainer(
         destinations: container.getDestinationRegistry(),
         staleRunningTimeoutMs: workerStaleRunningMs,
         ...workerOptions,
+      });
+    },
+
+    async createEventReplayService(serviceOptions = {}) {
+      return new EventReplayService({
+        store: await container.getSqliteStore(),
+        ...serviceOptions,
       });
     },
 

@@ -1,7 +1,7 @@
 import { sql } from "kysely";
 
 import type { DeliveryListItem, EventDetail, EventListItem, NumberedPage } from "@vane/core";
-import { evaluateRouteMatch } from "@vane/core";
+import { decodeSchemaJson, evaluateRouteMatch, RouteMatchResultsSchema } from "@vane/core";
 import type { Page } from "@vane/core";
 
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
@@ -52,6 +52,7 @@ export class SqliteHistoryRepository implements HistoryRepository {
         "events.status as status",
         "events.title as title",
         "events.fingerprint as fingerprint",
+        "events.route_matches_json as route_matches_json",
         "events.received_at as received_at",
         sql<number>`SUM(CASE WHEN deliveries.state = 'pending' THEN 1 ELSE 0 END)`.as(
           "pending_count",
@@ -104,6 +105,7 @@ export class SqliteHistoryRepository implements HistoryRepository {
         title: row.title,
         fingerprint: row.fingerprint,
         receivedAt: row.received_at,
+        routeMatchCount: countMatchedRoutes(row.route_matches_json),
         deliveryCounts: {
           pending: row.pending_count ?? 0,
           running: row.running_count ?? 0,
@@ -268,4 +270,13 @@ export class SqliteHistoryRepository implements HistoryRepository {
 
     return row?.total ?? 0;
   }
+}
+
+function countMatchedRoutes(routeMatchesJson: string | null): number {
+  if (routeMatchesJson === null) {
+    return 0;
+  }
+
+  return decodeSchemaJson(RouteMatchResultsSchema, routeMatchesJson).filter((match) => match.matched)
+    .length;
 }

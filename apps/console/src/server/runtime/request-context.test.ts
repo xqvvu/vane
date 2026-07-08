@@ -145,6 +145,9 @@ function createFakeContainer(): ApplicationContainer {
     createDeliveryWorker: async () => {
       throw new Error("Delivery worker is not used by request context tests");
     },
+    createEventReplayService: async () => {
+      throw new Error("Event replay service is not used by request context tests");
+    },
     ensureDeliveryWorkerRunner: async () => ({
       runNow: async () => null,
       getHealth: () => ({

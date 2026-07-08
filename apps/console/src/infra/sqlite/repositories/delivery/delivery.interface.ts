@@ -73,11 +73,14 @@ export interface EnqueueDeliveriesInput {
   dedupeWindowStartsAt: IsoDateTimeString;
   now?: IsoDateTimeString;
   maxAttempts?: number;
+  dedupeByIdempotency?: boolean;
+  skipExistingForEvent?: boolean;
 }
 
 export interface EnqueueDeliveriesResult {
   created: DeliveryJob[];
   deduped: DedupedDelivery[];
+  skippedExisting: ExistingDeliveryTarget[];
 }
 
 export interface DedupedDelivery {
@@ -86,6 +89,14 @@ export interface DedupedDelivery {
   routeId: string;
   destinationId: string;
   firstEventId: string;
+}
+
+export interface ExistingDeliveryTarget {
+  deliveryId: string;
+  eventId: string;
+  routeId: string;
+  destinationId: string;
+  state: DeliveryJob["state"];
 }
 
 export interface ClaimDeliveriesInput {

@@ -525,6 +525,9 @@ function createTestContainer(): ApplicationContainer {
     createDeliveryWorker: async () => {
       throw new Error("Delivery worker is not used by webhook route handler tests");
     },
+    createEventReplayService: async () => {
+      throw new Error("Event replay service is not used by webhook route handler tests");
+    },
     ensureDeliveryWorkerRunner: async () => ({
       runNow: async () => null,
       getHealth: () => ({
