@@ -5,6 +5,7 @@ import {
   getDeliveryDetailFn,
   getEventDetailFn,
   listOperationsFn,
+  previewEventReplayFn,
 } from "#/server/functions/operations.functions.ts";
 
 export const operationsQueryKeys = {
@@ -12,6 +13,12 @@ export const operationsQueryKeys = {
   list: (filters: OperationFilterData) =>
     [...operationsQueryKeys.all, "list", normalizeOperationFilters(filters)] as const,
   eventDetail: (eventId: string) => [...operationsQueryKeys.all, "events", "detail", eventId],
+  eventReplayPreview: (eventId: string) => [
+    ...operationsQueryKeys.all,
+    "events",
+    "replay-preview",
+    eventId,
+  ],
   deliveryDetail: (deliveryId: string) => [
     ...operationsQueryKeys.all,
     "deliveries",
@@ -43,6 +50,18 @@ export function eventDetailQueryOptions(eventId: string) {
       getEventDetailFn({
         data: {
           id: eventId,
+        },
+      }),
+  });
+}
+
+export function eventReplayPreviewQueryOptions(eventId: string) {
+  return queryOptions({
+    queryKey: operationsQueryKeys.eventReplayPreview(eventId),
+    queryFn: () =>
+      previewEventReplayFn({
+        data: {
+          eventId,
         },
       }),
   });

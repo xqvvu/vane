@@ -39,6 +39,35 @@ describe("events table", () => {
 
     expect(onPageChange).toHaveBeenCalledWith(3);
   });
+
+  it("shows unmatched routing state for events without matched routes or deliveries", () => {
+    render(
+      <VaneIntlProvider locale="en-US">
+        <EventsTable
+          events={[
+            {
+              ...eventFixture("event-1"),
+              routeMatchCount: 0,
+              deliveryCounts: {
+                pending: 0,
+                running: 0,
+                succeeded: 0,
+                failed: 0,
+              },
+            },
+          ]}
+          page={1}
+          pageSize={20}
+          total={1}
+          pending={false}
+          onInspect={vi.fn<(eventId: string) => void>()}
+          onPageChange={vi.fn<(page: number) => void>()}
+        />
+      </VaneIntlProvider>,
+    );
+
+    expect(screen.getByText("No route matched")).toBeTruthy();
+  });
 });
 
 function eventFixture(id: string): Operations["events"]["items"][number] {

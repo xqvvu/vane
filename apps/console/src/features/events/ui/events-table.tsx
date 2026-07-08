@@ -69,7 +69,12 @@ export function EventsTable({
       {
         id: "deliveries",
         header: t("events.table.headers.deliveries"),
-        cell: ({ row }) => <EventDeliveryCountsCell counts={row.original.deliveryCounts} />,
+        cell: ({ row }) => (
+          <EventDeliveryCountsCell
+            counts={row.original.deliveryCounts}
+            routeMatchCount={row.original.routeMatchCount}
+          />
+        ),
       },
       {
         id: "received",

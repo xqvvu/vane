@@ -4,8 +4,25 @@ import { useTranslations } from "#/i18n/use-i18n.ts";
 
 type EventDeliveryCounts = Operations["events"]["items"][number]["deliveryCounts"];
 
-export function EventDeliveryCountsCell({ counts }: { counts: EventDeliveryCounts }) {
+export function EventDeliveryCountsCell({
+  counts,
+  routeMatchCount,
+}: {
+  counts: EventDeliveryCounts;
+  routeMatchCount: number;
+}) {
+  const t = useTranslations();
   const total = counts.pending + counts.running + counts.succeeded + counts.failed;
+
+  if (total === 0 && routeMatchCount === 0) {
+    return (
+      <div className="flex justify-center">
+        <Badge variant="outline" title={t("events.table.unmatchedRoutesTitle")}>
+          {t("events.table.unmatchedRoutes")}
+        </Badge>
+      </div>
+    );
+  }
 
   if (total === 0) {
     return (
