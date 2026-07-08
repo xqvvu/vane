@@ -1,12 +1,21 @@
 import {
+  evaluateRouteMatch,
   findMatchingRoutes,
+  PreviewRouteReplayCommandSchema,
+  ReplayRouteEventsCommandSchema,
   ReplayEventCommandSchema,
   type EventRecord,
   type EventReplayPreview,
   type EventReplayResult,
   type EventReplayTarget,
+  type PreviewRouteReplayCommand,
   type ReplayEventCommand,
+  type ReplayRouteEventsCommand,
+  type RouteDefinition,
   type RouteMatchResult,
+  type RouteReplayCandidate,
+  type RouteReplayPreview,
+  type RouteReplayResult,
 } from "@vane/core";
 
 import type { EnqueueDeliveriesResult } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
@@ -71,6 +80,90 @@ export class EventReplayService {
     });
   }
 
+  async previewRouteReplay(
+    command: PreviewRouteReplayCommand,
+  ): Promise<RouteReplayPreview | null> {
+    const input = PreviewRouteReplayCommandSchema.parse(command);
+    const route = await this.store.routes.get(input.routeId);
+
+    if (!route) {
+      return null;
+    }
+
+    return this.buildRoutePreview(this.store, route, input.limit);
+  }
+
+  async replayRouteEvents(
+    command: ReplayRouteEventsCommand,
+  ): Promise<RouteReplayResult | null> {
+    const input = ReplayRouteEventsCommandSchema.parse(command);
+
+    return this.store.transaction(async (tx) => {
+      const route = await tx.routes.get(input.routeId);
+
+      if (!route) {
+        return null;
+      }
+
+      if (!route.enabled) {
+        return {
+          routeId: route.id,
+          routeName: route.name,
+          enabled: false,
+          eventCount: 0,
+          createdDeliveryIds: [],
+          skippedExistingCount: 0,
+        };
+      }
+
+      const now = this.now();
+      const createdDeliveryIds: string[] = [];
+      let skippedExistingCount = 0;
+      let eventCount = 0;
+
+      for (const eventId of input.eventIds) {
+        const event = await tx.intake.get(eventId);
+
+        if (!event) {
+          continue;
+        }
+
+        const match = evaluateRouteMatch(route, {
+          sourceId: event.sourceId,
+          event: event.normalized,
+        });
+
+        if (!match.matched) {
+          continue;
+        }
+
+        eventCount += 1;
+        const enqueue = await tx.deliveries.enqueueForEvent({
+          event,
+          matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+          dedupeWindowStartsAt: new Date(
+            new Date(now).valueOf() - this.dedupeWindowMs,
+          ).toISOString(),
+          now,
+          dedupeByIdempotency: false,
+          skipExistingForEvent: true,
+        });
+
+        createdDeliveryIds.push(...enqueue.created.map((delivery) => delivery.id));
+        skippedExistingCount += enqueue.skippedExisting.length;
+      }
+
+      return {
+        routeId: route.id,
+        routeName: route.name,
+        enabled: true,
+        eventCount,
+        createdDeliveryIds,
+        skippedExistingCount,
+      };
+    });
+  }
+
   private async currentRouteMatches(
     store: Pick<SqliteStoreUnitOfWork, "routes">,
     event: EventRecord,
@@ -97,6 +190,57 @@ export class EventReplayService {
       matchedRouteCount: routeMatches.length,
       newDeliveryCount: targets.length - existingDeliveryCount,
       existingDeliveryCount,
+    };
+  }
+
+  private async buildRoutePreview(
+    store: Pick<SqliteStoreUnitOfWork, "history" | "intake" | "sources">,
+    route: RouteDefinition,
+    limit: number,
+  ): Promise<RouteReplayPreview> {
+    const events = route.enabled ? await store.intake.listRecent({ limit }) : [];
+    const candidates: RouteReplayCandidate[] = [];
+    let matchedEventCount = 0;
+
+    for (const event of events) {
+      const match = evaluateRouteMatch(route, {
+        sourceId: event.sourceId,
+        event: event.normalized,
+      });
+
+      if (!match.matched) {
+        continue;
+      }
+
+      matchedEventCount += 1;
+
+      const preview = await this.buildPreview(store, event, [match], null);
+
+      if (preview.newDeliveryCount === 0) {
+        continue;
+      }
+
+      candidates.push({
+        event: await routeReplayEventSummary(store, event),
+        targets: preview.targets,
+        newDeliveryCount: preview.newDeliveryCount,
+        existingDeliveryCount: preview.existingDeliveryCount,
+      });
+    }
+
+    return {
+      routeId: route.id,
+      routeName: route.name,
+      enabled: route.enabled,
+      limit,
+      scannedEventCount: events.length,
+      matchedEventCount,
+      candidates,
+      newDeliveryCount: candidates.reduce((total, candidate) => total + candidate.newDeliveryCount, 0),
+      existingDeliveryCount: candidates.reduce(
+        (total, candidate) => total + candidate.existingDeliveryCount,
+        0,
+      ),
     };
   }
 
@@ -157,4 +301,22 @@ async function listExistingTargetsFromHistory(
         delivery.id,
       ]) ?? [],
   );
+}
+
+async function routeReplayEventSummary(
+  store: Pick<SqliteStoreUnitOfWork, "sources">,
+  event: EventRecord,
+) {
+  const source = await store.sources.get(event.sourceId);
+
+  return {
+    id: event.id,
+    sourceId: event.sourceId,
+    sourceName: source?.name ?? event.sourceId,
+    severity: event.normalized.severity,
+    status: event.normalized.status,
+    title: event.normalized.title,
+    fingerprint: event.normalized.fingerprint,
+    receivedAt: event.receivedAt,
+  };
 }

@@ -5,7 +5,9 @@ import {
   AlertSeveritySchema,
   AlertStatusSchema,
   DeliveryStateSchema,
+  PreviewRouteReplayCommandSchema,
   ReplayEventCommandSchema,
+  ReplayRouteEventsCommandSchema,
 } from "@vane/core";
 
 import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware.ts";
@@ -102,6 +104,20 @@ export const replayEventFn = createServerFn({ method: "POST" })
   .validator(ReplayEventCommandSchema)
   .handler(async ({ data, context }) =>
     (await context.dashboardRequest.container.createEventReplayService()).replayEvent(data),
+  );
+
+export const previewRouteReplayFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(PreviewRouteReplayCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createEventReplayService()).previewRouteReplay(data),
+  );
+
+export const replayRouteEventsFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(ReplayRouteEventsCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createEventReplayService()).replayRouteEvents(data),
   );
 
 export const runDeliveryWorkerFn = createServerFn({ method: "POST" })

@@ -9,6 +9,7 @@ import { configurationQueryOptions } from "#/features/configuration/api/configur
 import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
 import { RouteAddDialog } from "#/features/routes/ui/route-add-dialog.tsx";
+import { RouteReplayPrompt } from "#/features/routes/ui/route-replay-prompt.tsx";
 import { RoutesSection } from "#/features/routes/ui/routes-section.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
@@ -18,6 +19,7 @@ export function RoutesPage() {
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { createRoute, deleteRoute, invalidateRoutes, updateRoute } = useRouteMutations();
   const [editingRouteId, setEditingRouteId] = React.useState<string | null>(null);
+  const [replayRouteId, setReplayRouteId] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingRoute = editingRouteId
     ? (configuration.routes.find((route) => route.id === editingRouteId) ?? null)
@@ -53,6 +55,12 @@ export function RoutesPage() {
     }
   }
 
+  function maybeOpenRouteReplay(route: Configuration["routes"][number] | null): void {
+    if (route?.enabled) {
+      setReplayRouteId(route.id);
+    }
+  }
+
   return (
     <DashboardContentLayout
       main={
@@ -62,7 +70,9 @@ export function RoutesPage() {
             sources={configuration.sources}
             destinations={configuration.destinations}
             onCreate={(input) =>
-              void submitAction("create-route", () => createRoute({ data: input }))
+              void submitAction("create-route", () => createRoute({ data: input })).then(
+                maybeOpenRouteReplay,
+              )
             }
             onRefresh={() => void refreshConfiguration()}
           />
@@ -74,6 +84,7 @@ export function RoutesPage() {
             pending={pending}
             onEdit={setEditingRouteId}
             onCancelEdit={() => setEditingRouteId(null)}
+            onPreviewReplay={(route) => setReplayRouteId(route.id)}
             onToggle={(route) =>
               void submitAction(`toggle-route-${route.id}`, () =>
                 updateRoute({
@@ -82,7 +93,7 @@ export function RoutesPage() {
                     enabled: !route.enabled,
                   },
                 }),
-              )
+              ).then(maybeOpenRouteReplay)
             }
             onDelete={(route) =>
               void submitAction(`delete-route-${route.id}`, () =>
@@ -98,9 +109,10 @@ export function RoutesPage() {
                 const result = await updateRoute({ data: input });
                 setEditingRouteId(null);
                 return result;
-              })
+              }).then(maybeOpenRouteReplay)
             }
           />
+          <RouteReplayPrompt routeId={replayRouteId} onClose={() => setReplayRouteId(null)} />
         </>
       }
     />

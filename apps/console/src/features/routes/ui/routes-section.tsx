@@ -1,4 +1,10 @@
-import { RiDeleteBinLine, RiEditLine, RiRouteLine, RiShutDownLine } from "@remixicon/react";
+import {
+  RiDeleteBinLine,
+  RiEditLine,
+  RiRefreshLine,
+  RiRouteLine,
+  RiShutDownLine,
+} from "@remixicon/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
@@ -42,6 +48,7 @@ export interface RoutesSectionProps {
   pending: boolean;
   onEdit: (routeId: string) => void;
   onCancelEdit: () => void;
+  onPreviewReplay: (route: RouteSummary) => void;
   onToggle: (route: RouteSummary) => void;
   onDelete: (route: RouteSummary) => void;
   onSubmitEdit: (input: {
@@ -60,6 +67,7 @@ export function RoutesSection({
   pending,
   onEdit,
   onCancelEdit,
+  onPreviewReplay,
   onToggle,
   onDelete,
   onSubmitEdit,
@@ -101,13 +109,14 @@ export function RoutesSection({
             route={row.original}
             pending={pending}
             onEdit={onEdit}
+            onPreviewReplay={onPreviewReplay}
             onToggle={onToggle}
             onDelete={onDelete}
           />
         ),
       },
     ],
-    [destinations, onDelete, onEdit, onToggle, pending, sources, t],
+    [destinations, onDelete, onEdit, onPreviewReplay, onToggle, pending, sources, t],
   );
 
   return (
@@ -147,18 +156,21 @@ function RouteActions({
   route,
   pending,
   onEdit,
+  onPreviewReplay,
   onToggle,
   onDelete,
 }: {
   route: RouteSummary;
   pending: boolean;
   onEdit: (routeId: string) => void;
+  onPreviewReplay: (route: RouteSummary) => void;
   onToggle: (route: RouteSummary) => void;
   onDelete: (route: RouteSummary) => void;
 }) {
   const t = useTranslations();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const editLabel = t("routing.table.actions.edit");
+  const replayLabel = t("routing.table.actions.replayPreview");
   const toggleLabel = route.enabled
     ? t("routing.table.actions.disableTitle")
     : t("routing.table.actions.enableTitle");
@@ -176,6 +188,18 @@ function RouteActions({
           onClick={() => onEdit(route.id)}
         >
           <RiEditLine data-icon="inline-start" aria-hidden />
+        </Button>
+      </IconTooltip>
+      <IconTooltip label={replayLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={pending}
+          aria-label={replayLabel}
+          onClick={() => onPreviewReplay(route)}
+        >
+          <RiRefreshLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={toggleLabel}>

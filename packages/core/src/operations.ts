@@ -113,6 +113,18 @@ export const ReplayEventCommandSchema = z.object({
 });
 export type ReplayEventCommand = z.infer<typeof ReplayEventCommandSchema>;
 
+export const PreviewRouteReplayCommandSchema = z.object({
+  routeId: z.string().min(1),
+  limit: z.number().int().min(1).max(100).default(20),
+});
+export type PreviewRouteReplayCommand = z.infer<typeof PreviewRouteReplayCommandSchema>;
+
+export const ReplayRouteEventsCommandSchema = z.object({
+  routeId: z.string().min(1),
+  eventIds: z.array(z.string().min(1)).min(1).max(100),
+});
+export type ReplayRouteEventsCommand = z.infer<typeof ReplayRouteEventsCommandSchema>;
+
 export interface EventReplayTarget {
   routeId: string;
   routeName: string;
@@ -131,6 +143,45 @@ export interface EventReplayPreview {
 }
 
 export interface EventReplayResult extends EventReplayPreview {
+  createdDeliveryIds: string[];
+  skippedExistingCount: number;
+}
+
+export interface RouteReplayEventSummary {
+  id: string;
+  sourceId: string;
+  sourceName: string;
+  severity: NormalizedEvent["severity"];
+  status: NormalizedEvent["status"];
+  title: string;
+  fingerprint: string;
+  receivedAt: IsoDateTimeString;
+}
+
+export interface RouteReplayCandidate {
+  event: RouteReplayEventSummary;
+  targets: EventReplayTarget[];
+  newDeliveryCount: number;
+  existingDeliveryCount: number;
+}
+
+export interface RouteReplayPreview {
+  routeId: string;
+  routeName: string;
+  enabled: boolean;
+  limit: number;
+  scannedEventCount: number;
+  matchedEventCount: number;
+  candidates: RouteReplayCandidate[];
+  newDeliveryCount: number;
+  existingDeliveryCount: number;
+}
+
+export interface RouteReplayResult {
+  routeId: string;
+  routeName: string;
+  enabled: boolean;
+  eventCount: number;
   createdDeliveryIds: string[];
   skippedExistingCount: number;
 }

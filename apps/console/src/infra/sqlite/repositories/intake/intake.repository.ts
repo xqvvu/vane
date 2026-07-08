@@ -15,6 +15,7 @@ import {
 } from "#/infra/sqlite/repositories/intake/intake.helpers.ts";
 import type {
   IntakeRepository,
+  ListRecentEventsInput,
   PruneRawPayloadsInput,
   RecordEventInput,
 } from "#/infra/sqlite/repositories/intake/intake.interface.ts";
@@ -69,6 +70,19 @@ export class SqliteIntakeRepository implements IntakeRepository {
       .executeTakeFirst();
 
     return row ? eventFromRow(row) : null;
+  }
+
+  async listRecent(input: ListRecentEventsInput = {}): Promise<EventRecord[]> {
+    const limit = Math.max(input.limit ?? 20, 1);
+    const rows = await this.context.db
+      .selectFrom("events")
+      .selectAll()
+      .orderBy("received_at", "desc")
+      .orderBy("id", "desc")
+      .limit(limit)
+      .execute();
+
+    return rows.map((row) => eventFromRow(row));
   }
 
   async pruneRawPayloads(input: PruneRawPayloadsInput): Promise<number> {

@@ -105,4 +105,100 @@ describe("event replay service", () => {
 
     await store.close();
   });
+
+  it("previews and replays recent events for a route without automatic delivery creation", async () => {
+    const store = await createStore();
+    const service = new EventReplayService({ store, now: () => now });
+
+    await store.sources.create({
+      id: "source-1",
+      name: "Generic source",
+      provider: "generic",
+      tokenHash: "token-hash",
+    });
+    await store.destinations.create({
+      id: "destination-1",
+      name: "Ops webhook",
+      kind: "generic_webhook",
+    });
+    const matchingEvent = await store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: "request-1",
+      normalized: {
+        title: "Checkout unavailable",
+        message: "checkout returned 503",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "checkout:unavailable",
+        labels: { service: "checkout" },
+        occurredAt: now,
+      },
+      rawPayload: {},
+      routeMatches: [],
+    });
+    const missedEvent = await store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: "request-2",
+      normalized: {
+        title: "Billing warning",
+        message: "billing latency high",
+        severity: "warning",
+        status: "firing",
+        fingerprint: "billing:latency",
+        labels: { service: "billing" },
+        occurredAt: now,
+      },
+      rawPayload: {},
+      routeMatches: [],
+    });
+
+    await store.routes.create({
+      id: "route-1",
+      name: "Critical checkout",
+      rule: {
+        severities: ["critical"],
+        labels: [{ key: "service", operator: "equals", value: "checkout" }],
+      },
+      destinationIds: ["destination-1"],
+    });
+
+    await expect(service.previewRouteReplay({ routeId: "route-1", limit: 20 })).resolves.toMatchObject(
+      {
+        routeId: "route-1",
+        routeName: "Critical checkout",
+        enabled: true,
+        scannedEventCount: 2,
+        matchedEventCount: 1,
+        newDeliveryCount: 1,
+        candidates: [
+          {
+            event: {
+              id: matchingEvent.id,
+              sourceName: "Generic source",
+              title: "Checkout unavailable",
+            },
+            newDeliveryCount: 1,
+          },
+        ],
+      },
+    );
+
+    const replay = await service.replayRouteEvents({
+      routeId: "route-1",
+      eventIds: [matchingEvent.id, missedEvent.id],
+    });
+
+    expect(replay?.createdDeliveryIds).toEqual(["delivery-3"]);
+    expect(replay?.eventCount).toBe(1);
+
+    await expect(service.previewRouteReplay({ routeId: "route-1", limit: 20 })).resolves.toMatchObject(
+      {
+        matchedEventCount: 1,
+        newDeliveryCount: 0,
+        candidates: [],
+      },
+    );
+
+    await store.close();
+  });
 });

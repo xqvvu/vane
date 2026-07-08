@@ -6,6 +6,7 @@ import {
   getEventDetailFn,
   listOperationsFn,
   previewEventReplayFn,
+  previewRouteReplayFn,
 } from "#/server/functions/operations.functions.ts";
 
 export const operationsQueryKeys = {
@@ -18,6 +19,12 @@ export const operationsQueryKeys = {
     "events",
     "replay-preview",
     eventId,
+  ],
+  routeReplayPreview: (routeId: string) => [
+    ...operationsQueryKeys.all,
+    "routes",
+    "replay-preview",
+    routeId,
   ],
   deliveryDetail: (deliveryId: string) => [
     ...operationsQueryKeys.all,
@@ -62,6 +69,19 @@ export function eventReplayPreviewQueryOptions(eventId: string) {
       previewEventReplayFn({
         data: {
           eventId,
+        },
+      }),
+  });
+}
+
+export function routeReplayPreviewQueryOptions(routeId: string) {
+  return queryOptions({
+    queryKey: operationsQueryKeys.routeReplayPreview(routeId),
+    queryFn: () =>
+      previewRouteReplayFn({
+        data: {
+          routeId,
+          limit: 20,
         },
       }),
   });

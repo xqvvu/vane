@@ -32,6 +32,7 @@ export interface EventRow {
 export interface IntakeRepository {
   recordEvent(input: RecordEventInput): Promise<EventRecord>;
   get(id: string): Promise<EventRecord | null>;
+  listRecent(input?: ListRecentEventsInput): Promise<EventRecord[]>;
   pruneRawPayloads(input: PruneRawPayloadsInput): Promise<number>;
 }
 
@@ -50,4 +51,8 @@ export interface RecordEventInput {
 
 export interface PruneRawPayloadsInput {
   before: IsoDateTimeString;
+}
+
+export interface ListRecentEventsInput {
+  limit?: number;
 }
