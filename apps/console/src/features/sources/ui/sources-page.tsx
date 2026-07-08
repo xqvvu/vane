@@ -21,7 +21,7 @@ import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 export function SourcesPage() {
   const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
-  const { invalidateSources, rotateSourceToken, updateSource } = useSourceMutations();
+  const { deleteSource, invalidateSources, rotateSourceToken, updateSource } = useSourceMutations();
   const [tokenNotice, setTokenNotice] = React.useState<SourceTokenNotice | null>(null);
   const [editingSourceId, setEditingSourceId] = React.useState<string | null>(null);
   const [sourceEditorOpen, setSourceEditorOpen] = React.useState(false);
@@ -121,6 +121,15 @@ export function SourcesPage() {
                 });
                 return result;
               })
+            }
+            onDelete={(source) =>
+              void submitAction(`delete-source-${source.id}`, () =>
+                deleteSource({
+                  data: {
+                    id: source.id,
+                  },
+                }),
+              )
             }
           />
 

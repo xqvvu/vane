@@ -34,6 +34,7 @@ describe("sources section table", () => {
           onEdit={vi.fn<SourceEditHandler>()}
           onToggle={vi.fn<SourceActionHandler>()}
           onRotateToken={vi.fn<SourceActionHandler>()}
+          onDelete={vi.fn<SourceActionHandler>()}
         />
       </VaneIntlProvider>,
     );
@@ -67,6 +68,7 @@ describe("sources section table", () => {
           onEdit={vi.fn<SourceEditHandler>()}
           onToggle={vi.fn<SourceActionHandler>()}
           onRotateToken={vi.fn<SourceActionHandler>()}
+          onDelete={vi.fn<SourceActionHandler>()}
         />
       </VaneIntlProvider>,
     );

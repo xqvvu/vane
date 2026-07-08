@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { configurationQueryKeys } from "#/features/configuration/api/configuration.queries.ts";
 import {
   createDestinationFn,
+  deleteDestinationFn,
   previewDestinationDraftFn,
   previewDestinationFn,
   previewDestinationUpdateFn,
@@ -14,6 +15,7 @@ import {
 export function useDestinationMutations() {
   const queryClient = useQueryClient();
   const createDestination = useServerFn(createDestinationFn);
+  const deleteDestination = useServerFn(deleteDestinationFn);
   const previewDestination = useServerFn(previewDestinationFn);
   const previewDestinationDraft = useServerFn(previewDestinationDraftFn);
   const previewDestinationUpdate = useServerFn(previewDestinationUpdateFn);
@@ -22,6 +24,7 @@ export function useDestinationMutations() {
 
   return {
     createDestination,
+    deleteDestination,
     previewDestination,
     previewDestinationDraft,
     previewDestinationUpdate,

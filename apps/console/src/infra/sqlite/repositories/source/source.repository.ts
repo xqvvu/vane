@@ -102,4 +102,10 @@ export class SqliteSourceRepository implements SourceRepository {
   setEnabled(id: string, enabled: boolean): Promise<SourceSummary> {
     return this.update(id, { enabled });
   }
+
+  async delete(id: string): Promise<void> {
+    requireSource(await this.get(id));
+
+    await this.context.db.deleteFrom("sources").where("id", "=", id).execute();
+  }
 }

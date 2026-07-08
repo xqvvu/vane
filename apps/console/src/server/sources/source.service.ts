@@ -1,8 +1,10 @@
 import {
   CreateSourceCommandSchema,
+  DeleteSourceCommandSchema,
   RotateSourceTokenCommandSchema,
   UpdateSourceCommandSchema,
   type CreateSourceCommand,
+  type DeleteSourceCommand,
   type RotateSourceTokenCommand,
   type SourceSummary,
   type UpdateSourceCommand,
@@ -65,5 +67,16 @@ export class SourceService {
     });
 
     return { source, token };
+  }
+
+  async deleteSource(command: DeleteSourceCommand): Promise<{ id: string }> {
+    const input = DeleteSourceCommandSchema.parse(command);
+
+    await this.store.transaction(async (tx) => {
+      await tx.sources.delete(input.id);
+      await tx.routes.removeSourceReference(input.id);
+    });
+
+    return { id: input.id };
   }
 }

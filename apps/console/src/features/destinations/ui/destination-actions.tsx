@@ -1,7 +1,25 @@
-import { RiEditLine, RiEyeLine, RiPlayLine, RiShutDownLine } from "@remixicon/react";
+import {
+  RiDeleteBinLine,
+  RiEditLine,
+  RiEyeLine,
+  RiPlayLine,
+  RiShutDownLine,
+} from "@remixicon/react";
+import * as React from "react";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "#/components/ui/alert-dialog.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
@@ -13,6 +31,7 @@ export function DestinationActions({
   onPreview,
   onEdit,
   onToggle,
+  onDelete,
 }: {
   destination: DestinationSummary;
   pending: boolean;
@@ -20,8 +39,10 @@ export function DestinationActions({
   onPreview: (destination: DestinationSummary) => void;
   onEdit: (destinationId: string) => void;
   onToggle: (destination: DestinationSummary) => void;
+  onDelete: (destination: DestinationSummary) => void;
 }) {
   const t = useTranslations();
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const testLabel = t("destinations.table.actions.testTitle", { name: destination.name });
   const previewLabel = t("destinations.table.actions.previewTitle", {
     name: destination.name,
@@ -30,6 +51,7 @@ export function DestinationActions({
   const toggleLabel = destination.enabled
     ? t("destinations.table.actions.disableTitle")
     : t("destinations.table.actions.enableTitle");
+  const deleteLabel = t("destinations.table.actions.deleteTitle", { name: destination.name });
 
   return (
     <div className="flex justify-center gap-1">
@@ -82,6 +104,55 @@ export function DestinationActions({
           <RiShutDownLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!pending) {
+            setDeleteDialogOpen(open);
+          }
+        }}
+      >
+        <IconTooltip label={deleteLabel}>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon-xs"
+                disabled={pending}
+                aria-label={deleteLabel}
+              />
+            }
+          >
+            <RiDeleteBinLine data-icon="inline-start" aria-hidden />
+          </AlertDialogTrigger>
+        </IconTooltip>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("destinations.delete.confirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("destinations.delete.confirmDescription", {
+                destinationName: destination.name,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>
+              {t("destinations.delete.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                onDelete(destination);
+              }}
+            >
+              {t("destinations.delete.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

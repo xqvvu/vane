@@ -10,6 +10,7 @@ import {
 } from "#/infra/sqlite/repositories/route/route.helpers.ts";
 import type {
   CreateRouteInput,
+  RouteReferenceCleanupResult,
   RouteRepository,
   UpdateRouteInput,
 } from "#/infra/sqlite/repositories/route/route.interface.ts";
@@ -99,5 +100,66 @@ export class SqliteRouteRepository implements RouteRepository {
 
   setEnabled(id: string, enabled: boolean): Promise<RouteDefinition> {
     return this.update(id, { enabled });
+  }
+
+  async removeSourceReference(sourceId: string): Promise<RouteReferenceCleanupResult> {
+    const routes = await this.list();
+    let updated = 0;
+    let deleted = 0;
+
+    for (const route of routes) {
+      if (!route.rule.sourceIds.includes(sourceId)) {
+        continue;
+      }
+
+      const sourceIds = route.rule.sourceIds.filter((id) => id !== sourceId);
+
+      if (sourceIds.length === 0) {
+        await this.delete(route.id);
+        deleted += 1;
+        continue;
+      }
+
+      await this.update(route.id, {
+        rule: {
+          ...route.rule,
+          sourceIds,
+        },
+      });
+      updated += 1;
+    }
+
+    return { updated, deleted };
+  }
+
+  async removeDestinationReference(destinationId: string): Promise<RouteReferenceCleanupResult> {
+    const routes = await this.list();
+    let updated = 0;
+    let deleted = 0;
+
+    for (const route of routes) {
+      if (!route.destinationIds.includes(destinationId)) {
+        continue;
+      }
+
+      const destinationIds = route.destinationIds.filter((id) => id !== destinationId);
+
+      if (destinationIds.length === 0) {
+        await this.delete(route.id);
+        deleted += 1;
+        continue;
+      }
+
+      await this.update(route.id, { destinationIds });
+      updated += 1;
+    }
+
+    return { updated, deleted };
+  }
+
+  async delete(id: string): Promise<void> {
+    requireRoute(await this.get(id));
+
+    await this.context.db.deleteFrom("routes").where("id", "=", id).execute();
   }
 }

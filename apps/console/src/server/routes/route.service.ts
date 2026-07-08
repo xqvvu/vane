@@ -1,7 +1,9 @@
 import {
   CreateRouteCommandSchema,
+  DeleteRouteCommandSchema,
   UpdateRouteCommandSchema,
   type CreateRouteCommand,
+  type DeleteRouteCommand,
   type RouteDefinition,
   type UpdateRouteCommand,
 } from "@vane/core";
@@ -50,5 +52,13 @@ export class RouteService {
       rule: input.rule,
       destinationIds: input.destinationIds,
     });
+  }
+
+  async deleteRoute(command: DeleteRouteCommand): Promise<{ id: string }> {
+    const input = DeleteRouteCommandSchema.parse(command);
+
+    await this.store.routes.delete(input.id);
+
+    return { id: input.id };
   }
 }

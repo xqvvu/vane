@@ -325,6 +325,110 @@ describe("sqlite store", () => {
     await store.close();
   });
 
+  it("cascades dependent delivery records when configuration rows are deleted", async () => {
+    let nextId = 0;
+    const store = await openSqliteStore({
+      databasePath: ":memory:",
+      now: () => now,
+      ids: {
+        event: () => `event-${++nextId}`,
+        delivery: () => `delivery-${++nextId}`,
+        attempt: () => `attempt-${++nextId}`,
+      },
+    });
+
+    await store.sources.create({
+      id: "source-1",
+      name: "Grafana",
+      provider: "grafana",
+      tokenHash: "token-hash",
+    });
+    await store.destinations.create({
+      id: "destination-1",
+      name: "Ops webhook",
+      kind: "generic_webhook",
+    });
+    const route = await store.routes.create({
+      id: "route-1",
+      name: "All alerts",
+      destinationIds: ["destination-1"],
+    });
+    const firstEvent = await store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: "request-1",
+      normalized: {
+        title: "CPU high",
+        message: "CPU is above threshold",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "cpu:api",
+        labels: {},
+        occurredAt: now,
+      },
+      rawPayload: {},
+    });
+    const firstDelivery = (
+      await store.deliveries.enqueueForEvent({
+        event: firstEvent,
+        matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      })
+    ).created[0]!;
+
+    await store.deliveries.claimNext({ limit: 1 });
+    await store.routes.delete(route.id);
+
+    expect(await store.intake.get(firstEvent.id)).not.toBeNull();
+    expect(await store.deliveries.get(firstDelivery.id)).toBeNull();
+
+    await store.destinations.create({
+      id: "destination-2",
+      name: "Audit webhook",
+      kind: "generic_webhook",
+    });
+    const secondRoute = await store.routes.create({
+      id: "route-2",
+      name: "Audit alerts",
+      destinationIds: ["destination-2"],
+    });
+    const secondEvent = await store.intake.recordEvent({
+      sourceId: "source-1",
+      idempotencyKey: "request-2",
+      normalized: {
+        title: "Memory high",
+        message: "Memory is above threshold",
+        severity: "warning",
+        status: "firing",
+        fingerprint: "memory:api",
+        labels: {},
+        occurredAt: now,
+      },
+      rawPayload: {},
+    });
+    const secondDelivery = (
+      await store.deliveries.enqueueForEvent({
+        event: secondEvent,
+        matches: [{ routeId: secondRoute.id, destinationIds: secondRoute.destinationIds }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      })
+    ).created[0]!;
+
+    await store.destinations.delete("destination-2");
+
+    expect(await store.intake.get(secondEvent.id)).not.toBeNull();
+    expect(await store.deliveries.get(secondDelivery.id)).toBeNull();
+    expect(await store.routes.get(secondRoute.id)).not.toBeNull();
+
+    await store.sources.delete("source-1");
+
+    expect(await store.sources.get("source-1")).toBeNull();
+    expect(await store.intake.get(firstEvent.id)).toBeNull();
+    expect(await store.intake.get(secondEvent.id)).toBeNull();
+    expect((await store.history.listEvents()).items).toEqual([]);
+
+    await store.close();
+  });
+
   it("manual retry only accepts failed deliveries and schedules an exhausted job for one more attempt", async () => {
     let nextId = 0;
     const store = await openSqliteStore({

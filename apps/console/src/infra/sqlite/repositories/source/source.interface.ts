@@ -22,6 +22,7 @@ export interface SourceRepository {
   create(input: CreateSourceInput): Promise<SourceSummary>;
   update(id: string, input: UpdateSourceInput): Promise<SourceSummary>;
   setEnabled(id: string, enabled: boolean): Promise<SourceSummary>;
+  delete(id: string): Promise<void>;
 }
 
 export interface SourceRuntimeConfig extends SourceSummary {

@@ -20,6 +20,14 @@ export interface RouteRepository {
   create(input: CreateRouteInput): Promise<RouteDefinition>;
   update(id: string, input: UpdateRouteInput): Promise<RouteDefinition>;
   setEnabled(id: string, enabled: boolean): Promise<RouteDefinition>;
+  removeSourceReference(sourceId: string): Promise<RouteReferenceCleanupResult>;
+  removeDestinationReference(destinationId: string): Promise<RouteReferenceCleanupResult>;
+  delete(id: string): Promise<void>;
+}
+
+export interface RouteReferenceCleanupResult {
+  updated: number;
+  deleted: number;
 }
 
 export interface CreateRouteInput {

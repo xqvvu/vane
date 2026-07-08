@@ -42,7 +42,9 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
   await db.schema
     .createTable("events")
     .addColumn("id", "text", (column) => column.primaryKey())
-    .addColumn("source_id", "text", (column) => column.notNull().references("sources.id"))
+    .addColumn("source_id", "text", (column) =>
+      column.notNull().references("sources.id").onDelete("cascade"),
+    )
     .addColumn("idempotency_key", "text")
     .addColumn("fingerprint", "text", (column) => column.notNull())
     .addColumn("severity", "text", (column) => column.notNull())
@@ -88,9 +90,13 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
   await db.schema
     .createTable("deliveries")
     .addColumn("id", "text", (column) => column.primaryKey())
-    .addColumn("event_id", "text", (column) => column.notNull().references("events.id"))
-    .addColumn("destination_id", "text", (column) => column.notNull().references("destinations.id"))
-    .addColumn("route_id", "text", (column) => column.references("routes.id"))
+    .addColumn("event_id", "text", (column) =>
+      column.notNull().references("events.id").onDelete("cascade"),
+    )
+    .addColumn("destination_id", "text", (column) =>
+      column.notNull().references("destinations.id").onDelete("cascade"),
+    )
+    .addColumn("route_id", "text", (column) => column.references("routes.id").onDelete("cascade"))
     .addColumn("state", "text", (column) => column.notNull())
     .addColumn("attempt_count", "integer", (column) => column.notNull().defaultTo(0))
     .addColumn("max_attempts", "integer", (column) => column.notNull().defaultTo(3))
@@ -111,7 +117,9 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
   await db.schema
     .createTable("delivery_attempts")
     .addColumn("id", "text", (column) => column.primaryKey())
-    .addColumn("delivery_id", "text", (column) => column.notNull().references("deliveries.id"))
+    .addColumn("delivery_id", "text", (column) =>
+      column.notNull().references("deliveries.id").onDelete("cascade"),
+    )
     .addColumn("attempt_number", "integer", (column) => column.notNull())
     .addColumn("state", "text", (column) => column.notNull())
     .addColumn("response_status", "integer")
@@ -132,11 +140,19 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
 
   await db.schema
     .createTable("delivery_dedupe_keys")
-    .addColumn("source_id", "text", (column) => column.notNull().references("sources.id"))
+    .addColumn("source_id", "text", (column) =>
+      column.notNull().references("sources.id").onDelete("cascade"),
+    )
     .addColumn("idempotency_key", "text", (column) => column.notNull())
-    .addColumn("route_id", "text", (column) => column.notNull().references("routes.id"))
-    .addColumn("destination_id", "text", (column) => column.notNull().references("destinations.id"))
-    .addColumn("first_event_id", "text", (column) => column.notNull().references("events.id"))
+    .addColumn("route_id", "text", (column) =>
+      column.notNull().references("routes.id").onDelete("cascade"),
+    )
+    .addColumn("destination_id", "text", (column) =>
+      column.notNull().references("destinations.id").onDelete("cascade"),
+    )
+    .addColumn("first_event_id", "text", (column) =>
+      column.notNull().references("events.id").onDelete("cascade"),
+    )
     .addColumn("created_at", "text", (column) => column.notNull())
     .addPrimaryKeyConstraint("delivery_dedupe_keys_primary_key", [
       "source_id",

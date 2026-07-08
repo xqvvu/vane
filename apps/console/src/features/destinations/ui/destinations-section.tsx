@@ -20,6 +20,7 @@ export interface DestinationsSectionProps {
   onPreview: (destination: DestinationSummary) => void;
   onEdit: (destinationId: string) => void;
   onToggle: (destination: DestinationSummary) => void;
+  onDelete: (destination: DestinationSummary) => void;
 }
 
 export function DestinationsSection({
@@ -30,6 +31,7 @@ export function DestinationsSection({
   onPreview,
   onEdit,
   onToggle,
+  onDelete,
 }: DestinationsSectionProps) {
   const t = useTranslations();
   const data = React.useMemo(() => destinations, [destinations]);
@@ -65,11 +67,12 @@ export function DestinationsSection({
             onPreview={onPreview}
             onEdit={onEdit}
             onToggle={onToggle}
+            onDelete={onDelete}
           />
         ),
       },
     ],
-    [onEdit, onPreview, onTest, onToggle, pending, routes, t],
+    [onDelete, onEdit, onPreview, onTest, onToggle, pending, routes, t],
   );
 
   return (

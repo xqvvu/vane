@@ -1,4 +1,4 @@
-import { RiEditLine, RiRouteLine, RiShutDownLine } from "@remixicon/react";
+import { RiDeleteBinLine, RiEditLine, RiRouteLine, RiShutDownLine } from "@remixicon/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
@@ -6,6 +6,17 @@ import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { OperationsTable } from "#/components/common/operations-table.tsx";
 import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "#/components/ui/alert-dialog.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -32,6 +43,7 @@ export interface RoutesSectionProps {
   onEdit: (routeId: string) => void;
   onCancelEdit: () => void;
   onToggle: (route: RouteSummary) => void;
+  onDelete: (route: RouteSummary) => void;
   onSubmitEdit: (input: {
     id: string;
     name: string;
@@ -49,6 +61,7 @@ export function RoutesSection({
   onEdit,
   onCancelEdit,
   onToggle,
+  onDelete,
   onSubmitEdit,
 }: RoutesSectionProps) {
   const t = useTranslations();
@@ -89,11 +102,12 @@ export function RoutesSection({
             pending={pending}
             onEdit={onEdit}
             onToggle={onToggle}
+            onDelete={onDelete}
           />
         ),
       },
     ],
-    [destinations, onEdit, onToggle, pending, sources, t],
+    [destinations, onDelete, onEdit, onToggle, pending, sources, t],
   );
 
   return (
@@ -134,17 +148,21 @@ function RouteActions({
   pending,
   onEdit,
   onToggle,
+  onDelete,
 }: {
   route: RouteSummary;
   pending: boolean;
   onEdit: (routeId: string) => void;
   onToggle: (route: RouteSummary) => void;
+  onDelete: (route: RouteSummary) => void;
 }) {
   const t = useTranslations();
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const editLabel = t("routing.table.actions.edit");
   const toggleLabel = route.enabled
     ? t("routing.table.actions.disableTitle")
     : t("routing.table.actions.enableTitle");
+  const deleteLabel = t("routing.table.actions.deleteTitle", { routeName: route.name });
 
   return (
     <div className="flex justify-center gap-1">
@@ -173,6 +191,51 @@ function RouteActions({
           <RiShutDownLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!pending) {
+            setDeleteDialogOpen(open);
+          }
+        }}
+      >
+        <IconTooltip label={deleteLabel}>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon-xs"
+                disabled={pending}
+                aria-label={deleteLabel}
+              />
+            }
+          >
+            <RiDeleteBinLine data-icon="inline-start" aria-hidden />
+          </AlertDialogTrigger>
+        </IconTooltip>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("routing.delete.confirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("routing.delete.confirmDescription", { routeName: route.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>{t("routing.delete.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                onDelete(route);
+              }}
+            >
+              {t("routing.delete.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -317,13 +380,13 @@ function routesColumnClassName(columnId: string): string | null {
     case "name":
       return "w-[24%]";
     case "rule":
-      return "w-[34%]";
+      return "w-[31%]";
     case "destinations":
-      return "w-[20%]";
+      return "w-[19%]";
     case "state":
       return "w-[10%]";
     case "actions":
-      return "w-[12%]";
+      return "w-[16%]";
     default:
       return null;
   }

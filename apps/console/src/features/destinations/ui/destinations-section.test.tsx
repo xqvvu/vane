@@ -32,6 +32,7 @@ describe("destinations section table", () => {
           onPreview={vi.fn<DestinationActionHandler>()}
           onEdit={vi.fn<DestinationEditHandler>()}
           onToggle={vi.fn<DestinationActionHandler>()}
+          onDelete={vi.fn<DestinationActionHandler>()}
         />
       </VaneIntlProvider>,
     );
@@ -64,6 +65,7 @@ describe("destinations section table", () => {
           onPreview={vi.fn<DestinationActionHandler>()}
           onEdit={vi.fn<DestinationEditHandler>()}
           onToggle={vi.fn<DestinationActionHandler>()}
+          onDelete={vi.fn<DestinationActionHandler>()}
         />
       </VaneIntlProvider>,
     );
@@ -87,6 +89,7 @@ describe("destinations section table", () => {
           onPreview={vi.fn<DestinationActionHandler>()}
           onEdit={vi.fn<DestinationEditHandler>()}
           onToggle={vi.fn<DestinationActionHandler>()}
+          onDelete={vi.fn<DestinationActionHandler>()}
         />
       </VaneIntlProvider>,
     );
@@ -112,6 +115,7 @@ describe("destinations section table", () => {
           onPreview={vi.fn<DestinationActionHandler>()}
           onEdit={vi.fn<DestinationEditHandler>()}
           onToggle={vi.fn<DestinationActionHandler>()}
+          onDelete={vi.fn<DestinationActionHandler>()}
         />
       </VaneIntlProvider>,
     );
@@ -132,6 +136,7 @@ describe("destinations section table", () => {
     const onPreview = vi.fn<DestinationActionHandler>();
     const onEdit = vi.fn<DestinationEditHandler>();
     const onToggle = vi.fn<DestinationActionHandler>();
+    const onDelete = vi.fn<DestinationActionHandler>();
     const destination = destinationFixture(2);
 
     render(
@@ -144,6 +149,7 @@ describe("destinations section table", () => {
           onPreview={onPreview}
           onEdit={onEdit}
           onToggle={onToggle}
+          onDelete={onDelete}
         />
       </VaneIntlProvider>,
     );

@@ -4,6 +4,9 @@ import {
   CreateDestinationCommandSchema,
   CreateRouteCommandSchema,
   CreateSourceCommandSchema,
+  DeleteDestinationCommandSchema,
+  DeleteRouteCommandSchema,
+  DeleteSourceCommandSchema,
   ExportConfigurationCommandSchema,
   ImportConfigurationCommandSchema,
   PreviewDestinationDraftCommandSchema,
@@ -80,6 +83,13 @@ export const rotateSourceTokenFn = createServerFn({ method: "POST" })
     (await context.dashboardRequest.container.createSourceService()).rotateSourceToken(data),
   );
 
+export const deleteSourceFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(DeleteSourceCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createSourceService()).deleteSource(data),
+  );
+
 export const createDestinationFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(CreateDestinationCommandSchema)
@@ -92,6 +102,13 @@ export const updateDestinationFn = createServerFn({ method: "POST" })
   .validator(UpdateDestinationCommandSchema)
   .handler(async ({ data, context }) =>
     (await context.dashboardRequest.container.createDestinationService()).updateDestination(data),
+  );
+
+export const deleteDestinationFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(DeleteDestinationCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createDestinationService()).deleteDestination(data),
   );
 
 export const testDestinationFn = createServerFn({ method: "POST" })
@@ -138,6 +155,13 @@ export const updateRouteFn = createServerFn({ method: "POST" })
   .validator(UpdateRouteCommandSchema)
   .handler(async ({ data, context }) =>
     (await context.dashboardRequest.container.createRouteService()).updateRoute(data),
+  );
+
+export const deleteRouteFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(DeleteRouteCommandSchema)
+  .handler(async ({ data, context }) =>
+    (await context.dashboardRequest.container.createRouteService()).deleteRoute(data),
   );
 
 export const updateAppSettingsFn = createServerFn({ method: "POST" })

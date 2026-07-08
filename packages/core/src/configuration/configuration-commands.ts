@@ -24,6 +24,10 @@ export const RotateSourceTokenCommandSchema = z.object({
   id: z.string().min(1),
 });
 
+export const DeleteSourceCommandSchema = z.object({
+  id: z.string().min(1),
+});
+
 export const CreateDestinationCommandSchema = z.object({
   name: z.string().trim().min(1),
   kind: DestinationKindSchema,
@@ -64,6 +68,10 @@ export const PreviewDestinationUpdateCommandSchema = z.object({
   sampleEventId: z.string().min(1).optional(),
 });
 
+export const DeleteDestinationCommandSchema = z.object({
+  id: z.string().min(1),
+});
+
 export const ExportConfigurationCommandSchema = z
   .object({
     includeSecrets: z.literal(false).optional(),
@@ -93,17 +101,24 @@ export const UpdateRouteCommandSchema = z.object({
   destinationIds: RouteDefinitionSchema.shape.destinationIds.optional(),
 });
 
+export const DeleteRouteCommandSchema = z.object({
+  id: z.string().min(1),
+});
+
 export type CreateSourceCommand = z.input<typeof CreateSourceCommandSchema>;
 export type UpdateSourceCommand = z.input<typeof UpdateSourceCommandSchema>;
 export type RotateSourceTokenCommand = z.input<typeof RotateSourceTokenCommandSchema>;
+export type DeleteSourceCommand = z.input<typeof DeleteSourceCommandSchema>;
 export type CreateDestinationCommand = z.input<typeof CreateDestinationCommandSchema>;
 export type UpdateDestinationCommand = z.input<typeof UpdateDestinationCommandSchema>;
 export type TestDestinationCommand = z.input<typeof TestDestinationCommandSchema>;
 export type PreviewDestinationCommand = z.input<typeof PreviewDestinationCommandSchema>;
 export type PreviewDestinationDraftCommand = z.input<typeof PreviewDestinationDraftCommandSchema>;
 export type PreviewDestinationUpdateCommand = z.input<typeof PreviewDestinationUpdateCommandSchema>;
+export type DeleteDestinationCommand = z.input<typeof DeleteDestinationCommandSchema>;
 export type ExportConfigurationCommand = z.input<typeof ExportConfigurationCommandSchema>;
 export type ImportConfigurationCommand = z.input<typeof ImportConfigurationCommandSchema>;
 export type UpdateAppSettingsCommand = z.input<typeof UpdateAppSettingsCommandSchema>;
 export type CreateRouteCommand = z.input<typeof CreateRouteCommandSchema>;
 export type UpdateRouteCommand = z.input<typeof UpdateRouteCommandSchema>;
+export type DeleteRouteCommand = z.input<typeof DeleteRouteCommandSchema>;

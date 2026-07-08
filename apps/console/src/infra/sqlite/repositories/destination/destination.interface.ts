@@ -21,6 +21,7 @@ export interface DestinationRepository {
   create(input: CreateDestinationInput): Promise<DestinationSummary>;
   update(id: string, input: UpdateDestinationInput): Promise<DestinationSummary>;
   setEnabled(id: string, enabled: boolean): Promise<DestinationSummary>;
+  delete(id: string): Promise<void>;
 }
 
 export interface DestinationRuntimeConfig extends DestinationSummary {

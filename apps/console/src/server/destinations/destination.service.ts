@@ -2,12 +2,14 @@ import { z } from "zod";
 
 import {
   CreateDestinationCommandSchema,
+  DeleteDestinationCommandSchema,
   PreviewDestinationDraftCommandSchema,
   PreviewDestinationCommandSchema,
   PreviewDestinationUpdateCommandSchema,
   TestDestinationCommandSchema,
   UpdateDestinationCommandSchema,
   type CreateDestinationCommand,
+  type DeleteDestinationCommand,
   type DestinationSummary,
   type JsonObject,
   type PreviewDestinationDraftCommand,
@@ -78,6 +80,17 @@ export class DestinationService {
       config: config && kind ? parseDestinationConfig(this.destinations, kind, config) : config,
       secretRefs: input.secretRefs,
     });
+  }
+
+  async deleteDestination(command: DeleteDestinationCommand): Promise<{ id: string }> {
+    const input = DeleteDestinationCommandSchema.parse(command);
+
+    await this.store.transaction(async (tx) => {
+      await tx.destinations.delete(input.id);
+      await tx.routes.removeDestinationReference(input.id);
+    });
+
+    return { id: input.id };
   }
 
   async testDestination(command: TestDestinationCommand): Promise<DestinationTestResult> {

@@ -48,14 +48,17 @@ function createConfigurationServices(
     createSource: sources.createSource.bind(sources),
     updateSource: sources.updateSource.bind(sources),
     rotateSourceToken: sources.rotateSourceToken.bind(sources),
+    deleteSource: sources.deleteSource.bind(sources),
     createDestination: destinationService.createDestination.bind(destinationService),
     updateDestination: destinationService.updateDestination.bind(destinationService),
+    deleteDestination: destinationService.deleteDestination.bind(destinationService),
     testDestination: destinationService.testDestination.bind(destinationService),
     previewDestination: destinationService.previewDestination.bind(destinationService),
     previewDestinationDraft: destinationService.previewDestinationDraft.bind(destinationService),
     previewDestinationUpdate: destinationService.previewDestinationUpdate.bind(destinationService),
     createRoute: routes.createRoute.bind(routes),
     updateRoute: routes.updateRoute.bind(routes),
+    deleteRoute: routes.deleteRoute.bind(routes),
     updateAppSettings: appSettings.updateAppSettings.bind(appSettings),
     listConfiguration: portability.listConfiguration.bind(portability),
     exportToml: portability.exportToml.bind(portability),
@@ -1390,6 +1393,96 @@ describe("configuration service", () => {
       }),
     ).rejects.toThrow("Route destination IDs must be unique");
     expect(await store.routes.list()).toEqual([]);
+
+    await store.close();
+  });
+
+  it("deletes source references without widening route matching", async () => {
+    const { store, service } = await createService();
+    const grafana = await service.createSource({
+      name: "Grafana prod",
+      provider: "grafana",
+    });
+    const signoz = await service.createSource({
+      name: "SigNoz prod",
+      provider: "signoz",
+    });
+    const destination = await service.createDestination({
+      name: "Ops webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/webhook",
+      },
+    });
+    const directRoute = await service.createRoute({
+      name: "Grafana only",
+      rule: {
+        sourceIds: [grafana.source.id],
+      },
+      destinationIds: [destination.id],
+    });
+    const sharedRoute = await service.createRoute({
+      name: "Grafana and SigNoz",
+      rule: {
+        sourceIds: [grafana.source.id, signoz.source.id],
+      },
+      destinationIds: [destination.id],
+    });
+    const catchAllRoute = await service.createRoute({
+      name: "Catch all",
+      destinationIds: [destination.id],
+    });
+
+    await service.deleteSource({ id: grafana.source.id });
+
+    expect(await store.sources.get(grafana.source.id)).toBeNull();
+    expect(await store.routes.get(directRoute.id)).toBeNull();
+    expect(await store.routes.get(sharedRoute.id)).toMatchObject({
+      rule: expect.objectContaining({
+        sourceIds: [signoz.source.id],
+      }),
+    });
+    expect(await store.routes.get(catchAllRoute.id)).toMatchObject({
+      rule: expect.objectContaining({
+        sourceIds: [],
+      }),
+    });
+
+    await store.close();
+  });
+
+  it("deletes destination references and drops routes with no remaining targets", async () => {
+    const { store, service } = await createService();
+    const primary = await service.createDestination({
+      name: "Primary webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/primary",
+      },
+    });
+    const audit = await service.createDestination({
+      name: "Audit webhook",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/audit",
+      },
+    });
+    const directRoute = await service.createRoute({
+      name: "Primary only",
+      destinationIds: [primary.id],
+    });
+    const sharedRoute = await service.createRoute({
+      name: "Primary and audit",
+      destinationIds: [primary.id, audit.id],
+    });
+
+    await service.deleteDestination({ id: primary.id });
+
+    expect(await store.destinations.get(primary.id)).toBeNull();
+    expect(await store.routes.get(directRoute.id)).toBeNull();
+    expect(await store.routes.get(sharedRoute.id)).toMatchObject({
+      destinationIds: [audit.id],
+    });
 
     await store.close();
   });

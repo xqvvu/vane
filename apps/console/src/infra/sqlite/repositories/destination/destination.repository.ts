@@ -96,4 +96,10 @@ export class SqliteDestinationRepository implements DestinationRepository {
   setEnabled(id: string, enabled: boolean): Promise<DestinationSummary> {
     return this.update(id, { enabled });
   }
+
+  async delete(id: string): Promise<void> {
+    requireDestination(await this.get(id));
+
+    await this.context.db.deleteFrom("destinations").where("id", "=", id).execute();
+  }
 }

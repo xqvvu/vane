@@ -30,6 +30,7 @@ export function DestinationsPage() {
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
   const { data: destinationCatalog } = useSuspenseQuery(destinationCatalogQueryOptions());
   const {
+    deleteDestination,
     invalidateDestinations,
     previewDestination,
     previewDestinationDraft,
@@ -186,6 +187,15 @@ export function DestinationsPage() {
                   data: {
                     id: destination.id,
                     enabled: !destination.enabled,
+                  },
+                }),
+              )
+            }
+            onDelete={(destination) =>
+              void submitAction(`delete-destination-${destination.id}`, () =>
+                deleteDestination({
+                  data: {
+                    id: destination.id,
                   },
                 }),
               )

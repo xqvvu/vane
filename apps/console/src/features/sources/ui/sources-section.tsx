@@ -20,6 +20,7 @@ export interface SourcesSectionProps {
   onEdit: (sourceId: string) => void;
   onToggle: (source: SourceSummary) => void;
   onRotateToken: (source: SourceSummary) => void;
+  onDelete: (source: SourceSummary) => void;
 }
 
 export function SourcesSection({
@@ -29,6 +30,7 @@ export function SourcesSection({
   onEdit,
   onToggle,
   onRotateToken,
+  onDelete,
 }: SourcesSectionProps) {
   const t = useTranslations();
   const data = React.useMemo(() => sources, [sources]);
@@ -66,11 +68,12 @@ export function SourcesSection({
             onEdit={onEdit}
             onToggle={onToggle}
             onRotateToken={onRotateToken}
+            onDelete={onDelete}
           />
         ),
       },
     ],
-    [onEdit, onRotateToken, onToggle, pending, routes, t],
+    [onDelete, onEdit, onRotateToken, onToggle, pending, routes, t],
   );
 
   return (
@@ -94,15 +97,15 @@ export function SourcesSection({
 function sourcesColumnClassName(columnId: string): string | null {
   switch (columnId) {
     case "source":
-      return "w-[30%]";
+      return "w-[29%]";
     case "webhook":
-      return "w-[30%]";
+      return "w-[29%]";
     case "routes":
       return "w-[13%]";
     case "status":
       return "w-[11%]";
     case "actions":
-      return "w-[16%]";
+      return "w-[18%]";
     default:
       return null;
   }

@@ -16,7 +16,7 @@ import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 export function RoutesPage() {
   const t = useTranslations();
   const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
-  const { createRoute, invalidateRoutes, updateRoute } = useRouteMutations();
+  const { createRoute, deleteRoute, invalidateRoutes, updateRoute } = useRouteMutations();
   const [editingRouteId, setEditingRouteId] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingRoute = editingRouteId
@@ -80,6 +80,15 @@ export function RoutesPage() {
                   data: {
                     id: route.id,
                     enabled: !route.enabled,
+                  },
+                }),
+              )
+            }
+            onDelete={(route) =>
+              void submitAction(`delete-route-${route.id}`, () =>
+                deleteRoute({
+                  data: {
+                    id: route.id,
                   },
                 }),
               )

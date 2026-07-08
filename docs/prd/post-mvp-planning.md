@@ -28,6 +28,18 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 5. 模板、路由和规则仍然禁止执行用户提供的 JavaScript、shell、SQL 或动态代码。
 6. Secret、raw sensitive payload、token hash、destination secret 不进入客户端 query data、route data、TOML 默认导出或普通日志。
 
+## 当前内测配置删除策略
+
+在公开发布前，Vane 的本地 SQLite 数据仍视为可重建的内测数据。告警源、路由和通知目标的 UI
+删除操作采用硬删除语义：
+
+- 删除告警源会删除该告警源、它接收到的 Events、相关 Deliveries / attempts / dedupe keys，并清理引用它的路由规则。
+- 删除通知目标会删除该通知目标、相关 Deliveries / attempts / dedupe keys，并清理引用它的路由目标。
+- 删除路由会删除该路由和相关 Deliveries / attempts / dedupe keys，但保留来源 Events。
+- 如果删除引用会让路由语义变宽，例如把只匹配某告警源的规则变成 catch-all，则直接删除该路由，而不是静默放宽匹配范围。
+
+第一次公开 release 前需要重新评估该策略：如果历史数据开始具备审计价值，应切换到“有历史则归档”或软删除模型，并补充对应迁移和文档。
+
 ## 候选方向
 
 ### 1. Destination 结构化模板引擎
