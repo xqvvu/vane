@@ -20,7 +20,12 @@ export class SqliteSourceRepository implements SourceRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
   async list(): Promise<SourceSummary[]> {
-    const rows = await this.context.db.selectFrom("sources").selectAll().orderBy("name").execute();
+    const rows = await this.context.db
+      .selectFrom("sources")
+      .selectAll()
+      .orderBy("created_at", "desc")
+      .orderBy("id", "desc")
+      .execute();
 
     return rows.map((row) => sourceSummaryFromRow(row));
   }
@@ -30,7 +35,8 @@ export class SqliteSourceRepository implements SourceRepository {
       .selectFrom("sources")
       .selectAll()
       .where("enabled", "=", 1)
-      .orderBy("name")
+      .orderBy("created_at", "desc")
+      .orderBy("id", "desc")
       .execute();
 
     return rows.map((row) => sourceSummaryFromRow(row));

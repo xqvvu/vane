@@ -23,7 +23,8 @@ export class SqliteDestinationRepository implements DestinationRepository {
     const rows = await this.context.db
       .selectFrom("destinations")
       .selectAll()
-      .orderBy("name")
+      .orderBy("created_at", "desc")
+      .orderBy("id", "desc")
       .execute();
 
     return rows.map((row) => destinationSummaryFromRow(row));
@@ -34,7 +35,8 @@ export class SqliteDestinationRepository implements DestinationRepository {
       .selectFrom("destinations")
       .selectAll()
       .where("enabled", "=", 1)
-      .orderBy("name")
+      .orderBy("created_at", "desc")
+      .orderBy("id", "desc")
       .execute();
 
     return rows.map((row) => destinationSummaryFromRow(row));

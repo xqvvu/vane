@@ -76,6 +76,136 @@ describe("sqlite store", () => {
     await store.close();
   });
 
+  it("orders configuration and delivery lists by newest created first", async () => {
+    let currentNow = "2026-06-07T00:00:00.000Z";
+    let nextEventId = 0;
+    let nextDeliveryId = 0;
+    const store = await openSqliteStore({
+      databasePath: ":memory:",
+      now: () => currentNow,
+      ids: {
+        event: () => `event-${++nextEventId}`,
+        delivery: () => `delivery-${++nextDeliveryId}`,
+      },
+    });
+
+    await store.sources.create({
+      id: "source-old",
+      name: "A old source",
+      provider: "grafana",
+      tokenHash: "old-source-token-hash",
+      createdAt: "2026-06-07T00:00:00.000Z",
+    });
+    await store.sources.create({
+      id: "source-new",
+      name: "Z new source",
+      provider: "signoz",
+      tokenHash: "new-source-token-hash",
+      createdAt: "2026-06-07T00:01:00.000Z",
+    });
+    await store.destinations.create({
+      id: "destination-old",
+      name: "A old destination",
+      kind: "generic_webhook",
+      createdAt: "2026-06-07T00:00:00.000Z",
+    });
+    await store.destinations.create({
+      id: "destination-new",
+      name: "Z new destination",
+      kind: "generic_webhook",
+      createdAt: "2026-06-07T00:01:00.000Z",
+    });
+    await store.routes.create({
+      id: "route-old",
+      name: "A old route",
+      destinationIds: ["destination-old"],
+      createdAt: "2026-06-07T00:00:00.000Z",
+    });
+    await store.routes.create({
+      id: "route-new",
+      name: "Z new route",
+      destinationIds: ["destination-new"],
+      createdAt: "2026-06-07T00:01:00.000Z",
+    });
+
+    currentNow = "2026-06-07T00:02:00.000Z";
+    const oldEvent = await store.intake.recordEvent({
+      sourceId: "source-old",
+      idempotencyKey: "request-old",
+      normalized: {
+        title: "Old alert",
+        message: "Old alert message",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "old:alert",
+        labels: {},
+        occurredAt: currentNow,
+      },
+      rawPayload: {},
+    });
+    const oldDelivery = (
+      await store.deliveries.enqueueForEvent({
+        event: oldEvent,
+        matches: [{ routeId: "route-old", destinationIds: ["destination-old"] }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      })
+    ).created[0]!;
+
+    currentNow = "2026-06-07T00:03:00.000Z";
+    const newEvent = await store.intake.recordEvent({
+      sourceId: "source-new",
+      idempotencyKey: "request-new",
+      normalized: {
+        title: "New alert",
+        message: "New alert message",
+        severity: "warning",
+        status: "firing",
+        fingerprint: "new:alert",
+        labels: {},
+        occurredAt: currentNow,
+      },
+      rawPayload: {},
+    });
+    const newDelivery = (
+      await store.deliveries.enqueueForEvent({
+        event: newEvent,
+        matches: [{ routeId: "route-new", destinationIds: ["destination-new"] }],
+        dedupeWindowStartsAt: "2026-06-06T23:55:00.000Z",
+      })
+    ).created[0]!;
+
+    expect((await store.sources.list()).map((source) => source.id)).toEqual([
+      "source-new",
+      "source-old",
+    ]);
+    expect((await store.sources.listEnabled()).map((source) => source.id)).toEqual([
+      "source-new",
+      "source-old",
+    ]);
+    expect((await store.destinations.list()).map((destination) => destination.id)).toEqual([
+      "destination-new",
+      "destination-old",
+    ]);
+    expect((await store.destinations.listEnabled()).map((destination) => destination.id)).toEqual([
+      "destination-new",
+      "destination-old",
+    ]);
+    expect((await store.routes.list()).map((route) => route.id)).toEqual([
+      "route-new",
+      "route-old",
+    ]);
+    expect((await store.routes.listEnabled()).map((route) => route.id)).toEqual([
+      "route-new",
+      "route-old",
+    ]);
+    expect((await store.history.listDeliveries()).items.map((delivery) => delivery.id)).toEqual([
+      newDelivery.id,
+      oldDelivery.id,
+    ]);
+
+    await store.close();
+  });
+
   it("records duplicate events while deduping deliveries for the same idempotency key", async () => {
     let nextId = 0;
     const store = await openSqliteStore({
@@ -723,16 +853,16 @@ describe("sqlite store", () => {
     expect(JSON.stringify(eventDetail?.deliveries)).not.toContain("Bearer destination-secret");
     expect(eventDetail?.routeMatches).toMatchObject([
       {
-        routeId: "route-1",
-        routeName: "Critical route",
-        matched: true,
-        destinationIds: ["destination-1"],
-      },
-      {
         routeId: "route-2",
         routeName: "Uptime audit",
         matched: false,
         destinationIds: ["destination-2"],
+      },
+      {
+        routeId: "route-1",
+        routeName: "Critical route",
+        matched: true,
+        destinationIds: ["destination-1"],
       },
     ]);
     expect(

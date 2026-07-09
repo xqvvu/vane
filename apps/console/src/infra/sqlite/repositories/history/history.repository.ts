@@ -168,9 +168,10 @@ export class SqliteHistoryRepository implements HistoryRepository {
         "deliveries.attempt_count as attempt_count",
         "deliveries.next_attempt_at as next_attempt_at",
         "deliveries.last_error as last_error",
+        "deliveries.created_at as created_at",
         "deliveries.updated_at as updated_at",
       ])
-      .orderBy("deliveries.updated_at", "desc")
+      .orderBy("deliveries.created_at", "desc")
       .orderBy("deliveries.id", "desc")
       .limit(limit + 1);
 
@@ -208,15 +209,15 @@ export class SqliteHistoryRepository implements HistoryRepository {
       if (cursor.id) {
         builder = builder.where((eb) =>
           eb.or([
-            eb("deliveries.updated_at", "<", cursor.time),
+            eb("deliveries.created_at", "<", cursor.time),
             eb.and([
-              eb("deliveries.updated_at", "=", cursor.time),
+              eb("deliveries.created_at", "=", cursor.time),
               eb("deliveries.id", "<", cursor.id),
             ]),
           ]),
         );
       } else {
-        builder = builder.where("deliveries.updated_at", "<", cursor.time);
+        builder = builder.where("deliveries.created_at", "<", cursor.time);
       }
     }
 
@@ -238,7 +239,7 @@ export class SqliteHistoryRepository implements HistoryRepository {
       })),
       nextCursor:
         rows.length > limit && pageRows.at(-1)
-          ? encodeHistoryCursor(pageRows.at(-1)!.updated_at, pageRows.at(-1)!.id)
+          ? encodeHistoryCursor(pageRows.at(-1)!.created_at, pageRows.at(-1)!.id)
           : null,
     };
   }

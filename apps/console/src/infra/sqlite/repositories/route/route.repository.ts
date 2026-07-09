@@ -19,7 +19,12 @@ export class SqliteRouteRepository implements RouteRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
   async list(): Promise<RouteDefinition[]> {
-    const rows = await this.context.db.selectFrom("routes").selectAll().orderBy("name").execute();
+    const rows = await this.context.db
+      .selectFrom("routes")
+      .selectAll()
+      .orderBy("created_at", "desc")
+      .orderBy("id", "desc")
+      .execute();
 
     return rows.map((row) => routeFromRow(row));
   }
@@ -29,7 +34,8 @@ export class SqliteRouteRepository implements RouteRepository {
       .selectFrom("routes")
       .selectAll()
       .where("enabled", "=", 1)
-      .orderBy("name")
+      .orderBy("created_at", "desc")
+      .orderBy("id", "desc")
       .execute();
 
     return rows.map((row) => routeFromRow(row));
