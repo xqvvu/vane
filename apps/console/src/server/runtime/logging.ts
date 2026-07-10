@@ -16,19 +16,19 @@ import { withVaneLogRedaction } from "#/server/runtime/log-safety.ts";
 
 type VaneLogFormat = "json" | "text";
 
-let configuring: Promise<void> | undefined;
+let configured: Promise<void> | undefined;
 
 export async function logger(): Promise<void> {
   if (getConfig() !== null) {
     return;
   }
 
-  configuring ??= configureLogging();
+  configured ??= configureLogging();
 
   try {
-    await configuring;
+    await configured;
   } finally {
-    configuring = undefined;
+    configured = undefined;
   }
 }
 
