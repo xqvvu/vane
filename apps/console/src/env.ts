@@ -19,6 +19,10 @@ export const env = createEnv({
     BETTER_AUTH_TRUSTED_ORIGINS: delimitedListSchema.optional(),
     SERVER_URL: z.url().optional(),
     VANE_DATABASE_PATH: z.string().min(1).optional(),
+    VANE_LOG_FORMAT: z.enum(["auto", "json", "text"]).default("auto"),
+    VANE_LOG_LEVEL: z
+      .enum(["trace", "debug", "info", "warning", "error", "fatal", "off"])
+      .default("info"),
     VANE_MAX_WEBHOOK_BYTES: z.coerce
       .number<number>()
       .int()

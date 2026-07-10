@@ -1,5 +1,8 @@
+import { getLogger } from "@logtape/logtape";
+
 import { redactText } from "@vane/core";
 import type {
+  DestinationErrorKind,
   DestinationRetryHint,
   DestinationSendContext,
   DestinationRegistry,
@@ -9,6 +12,9 @@ import type {
   ClaimedDelivery,
   DeliveryRepository,
 } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
+import { safeErrorProperties } from "#/server/runtime/log-safety.ts";
+
+const deliveryLogger = getLogger(["vane", "delivery"]);
 
 export interface DeliveryExecutionStore {
   readonly deliveries: Pick<DeliveryRepository, "markSucceeded" | "markFailed">;
@@ -67,6 +73,17 @@ export class DeliveryExecution {
           finishedAt: now,
         });
 
+        deliveryLogger.info("Delivery {deliveryId} succeeded via {destinationKind}", {
+          deliveryId: delivery.job.id,
+          attemptId: delivery.attempt.id,
+          attemptNumber: delivery.attempt.attemptNumber,
+          eventId: delivery.event.id,
+          sourceId: delivery.source.id,
+          destinationId: delivery.destination.id,
+          destinationKind: delivery.destination.kind,
+          responseStatus: sendResult.statusCode,
+        });
+
         return "succeeded";
       }
 
@@ -74,12 +91,17 @@ export class DeliveryExecution {
         error: sendResult.errorMessage,
         responseStatus: sendResult.statusCode ?? undefined,
         responseBody: redactOptionalText(sendResult.responseBody),
+        errorKind: sendResult.errorKind,
         retryHint: sendResult.retryHint,
         finishedAt: now,
       });
     } catch (error) {
+      const safeError = safeErrorProperties(error);
+
       return await this.markFailed(delivery, {
-        error: redactText(error instanceof Error ? error.message : String(error)),
+        error: safeError.errorMessage,
+        errorKind: "unknown_error",
+        errorName: safeError.errorName,
         finishedAt: now,
       });
     }
@@ -89,6 +111,8 @@ export class DeliveryExecution {
     delivery: ClaimedDelivery,
     input: {
       error: string;
+      errorKind: DestinationErrorKind;
+      errorName?: string;
       retryHint?: DestinationRetryHint;
       responseStatus?: number;
       responseBody?: string;
@@ -105,8 +129,25 @@ export class DeliveryExecution {
       responseBody: redactOptionalText(input.responseBody),
       finishedAt: input.finishedAt,
     });
+    const outcome = updated.state === "pending" ? "retrying" : "failed";
 
-    return updated.state === "pending" ? "retrying" : "failed";
+    deliveryLogger.warn("Delivery {deliveryId} is {outcome} via {destinationKind}", {
+      deliveryId: delivery.job.id,
+      attemptId: delivery.attempt.id,
+      attemptNumber: delivery.attempt.attemptNumber,
+      eventId: delivery.event.id,
+      sourceId: delivery.source.id,
+      destinationId: delivery.destination.id,
+      destinationKind: delivery.destination.kind,
+      outcome,
+      errorKind: input.errorKind,
+      ...(input.errorName ? { errorName: input.errorName } : {}),
+      errorMessage: redactText(input.error),
+      retryHint: input.retryHint ?? "retryable",
+      responseStatus: input.responseStatus ?? null,
+    });
+
+    return outcome;
   }
 
   private nextRetryAt(

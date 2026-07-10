@@ -75,8 +75,9 @@ workflow、compose smoke automation、正式发布 checklist、生产部署/备�
 
 ### 运行时策略
 
-raw payload retention 已可配置并在 intake 路径执行清理；delivery history retention、dedupe cleanup 成本上限、
-更完整的结构化 runtime logs 和可观测性仍应在发布或 post-MVP 中继续设计。
+raw payload retention 已可配置并在 intake 路径执行清理；服务端已有 LogTape 结构化日志、request ID
+关联、JSON Lines 生产输出与 secret-safe 测试。delivery history retention、dedupe cleanup 成本上限和
+外部 observability sink 仍应在发布或 post-MVP 中继续设计。
 
 ### Fixtures 与贡献体验
 
@@ -89,7 +90,7 @@ provider/destination。
 
 - [ ] 增加 root/workspace CI workflow，至少运行 fmt-check、lint、test、console build。
 - [ ] 增加关键浏览器 E2E workflow：setup/login、创建 Source、复制 webhook URL、创建/测试 Destination、
-  创建 Route、发送 webhook、查看 Event/Delivery、过滤历史、失败 retry。
+      创建 Route、发送 webhook、查看 Event/Delivery、过滤历史、失败 retry。
 - [ ] 增加 Docker build/compose smoke automation。
 - [x] 增加 health endpoint 与 readiness endpoint。
 - [x] Dockerfile 提供 runtime image、数据卷和 container healthcheck。
@@ -124,7 +125,7 @@ provider/destination。
 - [ ] 增加 delivery history retention 或明确不自动清理 delivery history 的产品理由。
 - [ ] 将 raw payload pruning / dedupe cleanup 从 intake hot path 中移出或限制成本。
 - [ ] 评估 Delivery detail 所需的历史快照字段，避免配置重命名破坏历史解释。
-- [ ] 增加 secret-safe logging 测试或边界测试。
+- [x] 增加 secret-safe logging 测试或边界测试。
 
 ### E. Fixtures 与贡献体验
 

@@ -18,25 +18,34 @@
 
 ## 2. 当前目录分类
 
-| 文件内容 | 位置 | import protection |
-| --- | --- | --- |
-| 共享 schema、command type、DTO、route rule、operation projection | `packages/core/src/<module>/` | 不加；必须 env-neutral |
-| feature query/mutation/form/search/view model | `apps/console/src/features/*/{api,model}` | 不加；不得导入 `#/server/*` implementation 或 `#/infra/*` |
-| route file、loader、layout、薄页面入口 | `apps/console/src/routes/*` | 不加；loader 通过 feature queryOptions 取数 |
-| server function RPC 定义 | `apps/console/src/server/functions/*.functions.ts` | 通常不加 |
-| server function middleware | `apps/console/src/middlewares/*.middleware.ts` | 通常不加；server callback 内可调用 runtime |
-| per-capability service | `apps/console/src/server/<capability>/*.service.ts` | 仅当自身直接触碰 env-specific API 时才加 |
-| service option/result 类型 | `apps/console/src/server/<capability>/*.service.types.ts` | 不加；必须保持 env-neutral 或只 import type |
-| application container | `apps/console/src/server/runtime/container.ts` | 加；直接 import Better Auth、env、SQLite |
-| request context | `apps/console/src/server/runtime/request-context.ts` | 当前不加；直接使用 TanStack server headers 和 container accessor，只能从 server path 调用 |
-| dashboard session/auth 错误类型 | `apps/console/src/server/runtime/dashboard-session.ts` | 不加；纯后端类型/错误 |
-| SQLite connection/migration/context | `apps/console/src/infra/sqlite/{connection,migrate,context}.ts` | 直接触碰 driver/Node API 的模块加 |
-| SQLite Kysely schema types | `apps/console/src/infra/sqlite/schema.ts` | 不加；纯类型 |
-| SQLite repository/store/codecs/errors/types | `apps/console/src/infra/sqlite/**` | 默认不加；但前端仍不得导入 `#/infra/*` |
-| Better Auth server config / owner bootstrap | `apps/console/src/lib/*auth*.ts` | 直接触碰 Better Auth/env/secret/server plugin 时加 |
-| browser-only implementation | `*.client.ts(x)` 或 `client-only` | 直接使用浏览器 API 时加 |
+| 文件内容                                                         | 位置                                                            | import protection                                                                         |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 共享 schema、command type、DTO、route rule、operation projection | `packages/core/src/<module>/`                                   | 不加；必须 env-neutral                                                                    |
+| feature query/mutation/form/search/view model                    | `apps/console/src/features/*/{api,model}`                       | 不加；不得导入 `#/server/*` implementation 或 `#/infra/*`                                 |
+| route file、loader、layout、薄页面入口                           | `apps/console/src/routes/*`                                     | 不加；loader 通过 feature queryOptions 取数                                               |
+| server function RPC 定义                                         | `apps/console/src/server/functions/*.functions.ts`              | 通常不加                                                                                  |
+| server function middleware                                       | `apps/console/src/middlewares/*.middleware.ts`                  | 通常不加；server callback 内可调用 runtime                                                |
+| Start 全局配置                                                   | `apps/console/src/start.ts`                                     | 不加；保持 isomorphic，只组合 request middleware 与 CSRF middleware                       |
+| server entry                                                     | `apps/console/src/server.ts`                                    | server entry；可初始化 server-only Logging Runtime                                        |
+| per-capability service                                           | `apps/console/src/server/<capability>/*.service.ts`             | 仅当自身直接触碰 env-specific API 时才加                                                  |
+| service option/result 类型                                       | `apps/console/src/server/<capability>/*.service.types.ts`       | 不加；必须保持 env-neutral 或只 import type                                               |
+| application container                                            | `apps/console/src/server/runtime/container.ts`                  | 加；直接 import Better Auth、env、SQLite                                                  |
+| request context                                                  | `apps/console/src/server/runtime/request-context.ts`            | 当前不加；直接使用 TanStack server headers 和 container accessor，只能从 server path 调用 |
+| dashboard session/auth 错误类型                                  | `apps/console/src/server/runtime/dashboard-session.ts`          | 不加；纯后端类型/错误                                                                     |
+| LogTape 配置                                                     | `apps/console/src/server/runtime/logging.ts`                    | 加；直接使用 `node:async_hooks`、env 和进程级 sink 配置                                   |
+| 日志安全投影                                                     | `apps/console/src/server/runtime/log-safety.ts`                 | 不加；env-neutral，可由 request middleware 的 server callback 使用                        |
+| SQLite connection/migration/context                              | `apps/console/src/infra/sqlite/{connection,migrate,context}.ts` | 直接触碰 driver/Node API 的模块加                                                         |
+| SQLite Kysely schema types                                       | `apps/console/src/infra/sqlite/schema.ts`                       | 不加；纯类型                                                                              |
+| SQLite repository/store/codecs/errors/types                      | `apps/console/src/infra/sqlite/**`                              | 默认不加；但前端仍不得导入 `#/infra/*`                                                    |
+| Better Auth server config / owner bootstrap                      | `apps/console/src/lib/*auth*.ts`                                | 直接触碰 Better Auth/env/secret/server plugin 时加                                        |
+| browser-only implementation                                      | `*.client.ts(x)` 或 `client-only`                               | 直接使用浏览器 API 时加                                                                   |
 
 判断标准：shared by default，server/client only by direct dependency。如果只是因为同文件混了共享 schema/type 和 server implementation 才需要 marker，应拆文件，把共享部分移到 `@vane/core` 或 feature `model/*`。
+
+`start.ts` 会进入 TanStack Start 的全局配置类型链，不能静态 import `logging.ts` 或
+`node:async_hooks`。LogTape 的进程级 `configure()` 只能从 `server.ts` 调用；request middleware 使用
+LogTape 的 environment-neutral logger/context 接口，运行时由 server entry 提供
+`AsyncLocalStorage`。
 
 ---
 

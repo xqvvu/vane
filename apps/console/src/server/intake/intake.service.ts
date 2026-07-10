@@ -1,6 +1,8 @@
 import "@tanstack/react-start/server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 
+import { getLogger } from "@logtape/logtape";
+
 import {
   createStableHash,
   evaluateRouteMatch,
@@ -22,6 +24,8 @@ import type {
   WebhookIntakeFailureReason,
   WebhookIntakeServiceOptions,
 } from "#/server/intake/intake.service.types.ts";
+
+const intakeLogger = getLogger(["vane", "intake"]);
 
 export class WebhookIntakeError extends Error {
   readonly eventId: string | null;
@@ -55,14 +59,17 @@ export class WebhookIntakeService {
     const source = await this.store.sources.get(input.sourceId);
 
     if (!source) {
+      logIntakeRejected(input.sourceId, "source_not_found");
       throw new WebhookIntakeError("source_not_found", `Source not found: ${input.sourceId}`);
     }
 
     if (!source.enabled) {
+      logIntakeRejected(input.sourceId, "source_disabled", source.provider);
       throw new WebhookIntakeError("source_disabled", `Source is disabled: ${input.sourceId}`);
     }
 
     if (!verifyWebhookAuthentication({ token: input.token, headers: input.headers, source })) {
+      logIntakeRejected(input.sourceId, "invalid_token", source.provider);
       throw new WebhookIntakeError("invalid_token", "Invalid source token");
     }
 
@@ -93,7 +100,7 @@ export class WebhookIntakeService {
       },
     );
 
-    return this.store.transaction(async (tx) => {
+    const accepted: AcceptedWebhook = await this.store.transaction(async (tx) => {
       const settings = await tx.settings.get();
       const event = await tx.intake.recordEvent({
         sourceId: source.id,
@@ -128,6 +135,20 @@ export class WebhookIntakeService {
         matchedRoutes,
       };
     });
+
+    intakeLogger.info(
+      "Webhook accepted as event {eventId} with {createdDeliveryCount} deliveries",
+      {
+        sourceId: source.id,
+        provider: source.provider,
+        eventId: accepted.eventId,
+        matchedRouteCount: accepted.matchedRoutes.length,
+        createdDeliveryCount: accepted.createdDeliveryIds.length,
+        dedupedDeliveryCount: accepted.dedupedDeliveryCount,
+      },
+    );
+
+    return accepted;
   }
 
   private recordParserFailureEvent(input: ParserFailureRecordInput): Promise<string> {
@@ -235,6 +256,15 @@ export class WebhookIntakeService {
 
   private async raiseProviderParseFailure(input: ParserFailureRecordInput): Promise<never> {
     const eventId = await this.recordParserFailureEvent(input);
+    const parseFailure = isProviderParseFailure(input.error) ? input.error : null;
+
+    intakeLogger.warn("Webhook payload rejected by {provider} parser", {
+      sourceId: input.sourceId,
+      provider: input.sourceProvider,
+      eventId,
+      failureReason: parseFailure?.reason ?? "unexpected_parser_error",
+      errorName: input.error instanceof Error ? input.error.name : "ProviderParseFailure",
+    });
 
     throw new WebhookIntakeError(
       "provider_parse_failed",
@@ -245,6 +275,18 @@ export class WebhookIntakeService {
       },
     );
   }
+}
+
+function logIntakeRejected(
+  sourceId: string,
+  reason: Exclude<WebhookIntakeFailureReason, "provider_parse_failed">,
+  provider?: string,
+): void {
+  intakeLogger.warn("Webhook intake rejected for source {sourceId}: {reason}", {
+    sourceId,
+    reason,
+    ...(provider ? { provider } : {}),
+  });
 }
 
 export function hashSourceToken(token: string): string {

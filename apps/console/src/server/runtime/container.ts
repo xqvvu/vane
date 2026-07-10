@@ -1,4 +1,5 @@
 import "@tanstack/react-start/server-only";
+import { getLogger } from "@logtape/logtape";
 import { betterAuth } from "better-auth";
 
 import { createDefaultDestinationRegistry, type DestinationRegistry } from "@vane/destinations";
@@ -33,8 +34,11 @@ import {
   type DeliveryWorkerRunner,
   type DeliveryWorkerRunnerOptions,
 } from "#/server/runtime/delivery-worker-runner.ts";
+import { safeErrorProperties } from "#/server/runtime/log-safety.ts";
 import { SourceService } from "#/server/sources/source.service.ts";
 import type { SourceServiceOptions } from "#/server/sources/source.service.types.ts";
+
+const deliveryWorkerLogger = getLogger(["vane", "worker", "delivery"]);
 
 export interface VaneAuth {
   handler(request: Request): Promise<Response>;
@@ -135,11 +139,7 @@ export function createApplicationContainer(
   const workerBatchSize = options.workerBatchSize ?? env.VANE_WORKER_BATCH_SIZE;
   const workerStaleRunningMs = options.workerStaleRunningMs ?? env.VANE_WORKER_STALE_RUNNING_MS;
   const onWorkerRunComplete = options.onWorkerRunComplete ?? logWorkerRunComplete;
-  const onWorkerError =
-    options.onWorkerError ??
-    ((error) => {
-      console.error("Vane delivery worker failed", error);
-    });
+  const onWorkerError = options.onWorkerError ?? logWorkerError;
 
   const container: ApplicationContainer = {
     async getSqliteStore() {
@@ -341,7 +341,7 @@ function logWorkerRunComplete(result: DeliveryWorkerRunResult): void {
     return;
   }
 
-  console.info("Vane delivery worker completed", {
+  const properties = {
     claimed: result.claimed,
     reclaimed: result.reclaimed,
     succeeded: result.succeeded,
@@ -349,7 +349,23 @@ function logWorkerRunComplete(result: DeliveryWorkerRunResult): void {
     retrying: result.retrying,
     startedAt: result.startedAt,
     finishedAt: result.finishedAt,
-  });
+  };
+
+  if (result.failed > 0) {
+    deliveryWorkerLogger.warn(
+      "Delivery worker completed with {failed} failed and {retrying} retrying",
+      properties,
+    );
+  } else {
+    deliveryWorkerLogger.info(
+      "Delivery worker completed with {succeeded} succeeded and {retrying} retrying",
+      properties,
+    );
+  }
+}
+
+function logWorkerError(error: unknown): void {
+  deliveryWorkerLogger.error("Delivery worker run failed", safeErrorProperties(error));
 }
 
 async function createDefaultBetterAuthDatabase(): Promise<VaneSqliteKysely> {
