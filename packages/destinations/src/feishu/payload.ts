@@ -19,6 +19,7 @@ export function renderFeishuPreviewPayload(
         context,
         config.template.card,
         "template.card",
+        config.template.bindings,
       ),
     };
   }
@@ -30,6 +31,7 @@ export function renderFeishuPreviewPayload(
         context,
         config.template.text,
         "template.text",
+        config.template.bindings,
       ),
     },
   };

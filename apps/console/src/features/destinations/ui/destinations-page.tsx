@@ -1,15 +1,15 @@
-import { RiRefreshLine } from "@remixicon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import * as React from "react";
+import { Refresh } from "reicon-react";
 import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
-import {
-  configurationQueryOptions,
-  destinationCatalogQueryOptions,
-} from "#/features/configuration/api/configuration.queries.ts";
-import type { DestinationPreviewNotice } from "#/features/configuration/model/configuration-types.ts";
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
+import {
+  destinationCatalogQueryOptions,
+  destinationsQueryOptions,
+} from "#/features/destinations/api/destination.queries.ts";
+import type { DestinationPreviewNotice } from "#/features/destinations/model/destination-types.ts";
 import { DestinationAddDialog } from "#/features/destinations/ui/destination-add-dialog.tsx";
 import { DestinationEditDialog } from "#/features/destinations/ui/destination-edit-dialog.tsx";
 import {
@@ -17,18 +17,21 @@ import {
   showDestinationTestToast,
 } from "#/features/destinations/ui/destination-notices.tsx";
 import type {
-  CreateDestinationFormInput,
-  EditDestinationFormInput,
+  PreviewDestinationFormInput,
+  PreviewEditDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { DestinationsPageToolbar } from "#/features/destinations/ui/destinations-page-toolbar.tsx";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section.tsx";
+import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export function DestinationsPage() {
   const t = useTranslations();
-  const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
-  const { data: destinationCatalog } = useSuspenseQuery(destinationCatalogQueryOptions());
+  const [{ data: destinations }, { data: routes }, { data: destinationCatalog }] =
+    useSuspenseQueries({
+      queries: [destinationsQueryOptions(), routesQueryOptions(), destinationCatalogQueryOptions()],
+    });
   const {
     deleteDestination,
     invalidateDestinations,
@@ -45,8 +48,7 @@ export function DestinationsPage() {
   const [destinationEditorOpen, setDestinationEditorOpen] = React.useState(false);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingDestination = editingDestinationId
-    ? (configuration.destinations.find((destination) => destination.id === editingDestinationId) ??
-      null)
+    ? (destinations.find((destination) => destination.id === editingDestinationId) ?? null)
     : null;
   const pending = pendingAction !== null;
 
@@ -91,7 +93,7 @@ export function DestinationsPage() {
     return runAction(action, fn, { refresh: true });
   }
 
-  function previewDraft(input: CreateDestinationFormInput) {
+  function previewDraft(input: PreviewDestinationFormInput) {
     return runAction("preview-destination-draft", async () => {
       const result = await previewDestinationDraft({ data: input });
       setDestinationPreviewNotice(result);
@@ -100,13 +102,14 @@ export function DestinationsPage() {
     });
   }
 
-  function previewEdit(input: EditDestinationFormInput) {
+  function previewEdit(input: PreviewEditDestinationFormInput) {
     return runAction(`preview-destination-update-${input.id}`, async () => {
       const result = await previewDestinationUpdate({
         data: {
           id: input.id,
           name: input.name,
           config: input.config,
+          sampleStatus: input.sampleStatus,
         },
       });
       setDestinationPreviewNotice(result);
@@ -137,7 +140,7 @@ export function DestinationsPage() {
                   title={t("destinations.page.refreshTitle")}
                   className="w-fit"
                 >
-                  <RiRefreshLine data-icon="inline-start" aria-hidden />
+                  <Refresh data-icon="inline-start" aria-hidden />
                   {t("common.actions.refresh")}
                 </Button>
               </>
@@ -151,8 +154,8 @@ export function DestinationsPage() {
             }}
           />
           <DestinationsSection
-            destinations={configuration.destinations}
-            routes={configuration.routes}
+            destinations={destinations}
+            routes={routes}
             pending={pending}
             onTest={(destination) =>
               void runAction(`test-destination-${destination.id}`, async () => {

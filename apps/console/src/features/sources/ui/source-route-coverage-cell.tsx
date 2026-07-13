@@ -1,4 +1,4 @@
-import { RiRouteLine } from "@remixicon/react";
+import { Route } from "reicon-react";
 
 import { Badge } from "#/components/ui/badge.tsx";
 import type { SourceRouteCoverage } from "#/features/sources/model/source-route-coverage.ts";
@@ -15,7 +15,7 @@ export function SourceRouteCoverageCell({ coverage }: { coverage: SourceRouteCov
         className="max-w-full font-mono text-[11px]"
         title={title}
       >
-        <RiRouteLine data-icon="inline-start" aria-hidden />
+        <Route data-icon="inline-start" aria-hidden />
         {coverage.enabledRouteCount > 0
           ? t("sources.table.routes.covered", {
               count: coverage.enabledRouteCount,

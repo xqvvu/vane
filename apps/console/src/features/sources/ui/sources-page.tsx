@@ -1,11 +1,12 @@
-import { RiRefreshLine } from "@remixicon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import * as React from "react";
+import { Refresh } from "reicon-react";
 import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
+import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
 import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
 import { sourceWebhookPath } from "#/features/sources/model/source-webhook.ts";
 import { SourcesAddDialog } from "#/features/sources/ui/source-add-dialog.tsx";
 import { SourcesEditDialog } from "#/features/sources/ui/source-edit-dialog.tsx";
@@ -20,14 +21,16 @@ import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export function SourcesPage() {
   const t = useTranslations();
-  const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
+  const [{ data: sources }, { data: routes }] = useSuspenseQueries({
+    queries: [sourcesQueryOptions(), routesQueryOptions()],
+  });
   const { deleteSource, invalidateSources, rotateSourceToken, updateSource } = useSourceMutations();
   const [tokenNotice, setTokenNotice] = React.useState<SourceTokenNotice | null>(null);
   const [editingSourceId, setEditingSourceId] = React.useState<string | null>(null);
   const [sourceEditorOpen, setSourceEditorOpen] = React.useState(false);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingSource = editingSourceId
-    ? (configuration.sources.find((source) => source.id === editingSourceId) ?? null)
+    ? (sources.find((source) => source.id === editingSourceId) ?? null)
     : null;
   const pending = pendingAction !== null;
 
@@ -78,7 +81,7 @@ export function SourcesPage() {
                   title={t("sources.page.refreshTitle")}
                   className="w-fit"
                 >
-                  <RiRefreshLine data-icon="inline-start" aria-hidden />
+                  <Refresh data-icon="inline-start" aria-hidden />
                   {t("common.actions.refresh")}
                 </Button>
               </>
@@ -90,8 +93,8 @@ export function SourcesPage() {
           ) : null}
 
           <SourcesSection
-            sources={configuration.sources}
-            routes={configuration.routes}
+            sources={sources}
+            routes={routes}
             pending={pending}
             onEdit={(sourceId) => {
               setEditingSourceId(sourceId);

@@ -1,8 +1,8 @@
 import "@tanstack/react-start/client-only";
-import { RiUserAddLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { UserAdd } from "reicon-react";
 import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
@@ -199,7 +199,7 @@ export function SetupFormClient({ redirectTo }: SetupFormProps) {
               {({ canSubmit, isSubmitting }) => (
                 <UiField>
                   <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                    <RiUserAddLine data-icon="inline-start" aria-hidden />
+                    <UserAdd data-icon="inline-start" aria-hidden />
                     {isSubmitting ? t("auth.setup.submitting") : t("auth.setup.submit")}
                   </Button>
                 </UiField>

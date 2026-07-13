@@ -19,7 +19,7 @@ apps/console/src/
   server/
     functions/          # TanStack Start server functions
     runtime/            # container, request-context, dashboard-session, worker runner
-    configuration/      # app settings + TOML portability services
+    configuration/      # app settings + config portability services
     sources/            # source.service.ts + source.service.types.ts
     destinations/       # destination.service.ts + destination.service.types.ts
     routes/             # route.service.ts + route.service.types.ts
@@ -52,7 +52,7 @@ apps/console/src/
 
 ## 已完成的迁移
 
-1. 拆分早期聚合配置服务：Source、Destination、Route、AppSettings、TOML portability 分别落到
+1. 拆分早期聚合配置服务：Source、Destination、Route、AppSettings、配置 portability 分别落到
    `SourceService`、`DestinationService`、`RouteService`、`AppSettingsService`、
    `ConfigPortabilityService`。
 2. 消除 dashboard auth / request context 的类型与实现循环：dashboard session 类型和 auth error

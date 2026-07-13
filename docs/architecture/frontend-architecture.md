@@ -83,7 +83,7 @@ apps/console/src/
   server/
     functions/                # *.functions.ts controller 入口
     runtime/                  # container、request context、dashboard session 类型
-    configuration/            # *.service.ts/*.service.types.ts + TOML portability
+    configuration/            # *.service.ts/*.service.types.ts + config portability
     sources/                  # source.service.ts, source.service.types.ts
     destinations/             # destination.service.ts, destination.service.types.ts
     routes/                   # route.service.ts, route.service.types.ts
@@ -224,7 +224,8 @@ import protection 的模块。相关文件：
   client/server 边界适配）。
 - `server/runtime`：application container、request context、dashboard session/auth 类型、
   delivery worker runner 等跨能力运行时基础设施。
-- `server/configuration`：Source/Destination/Route/Settings 配置管理与 TOML portability。各能力
+- `server/configuration`：Source/Destination/Route/Settings 配置管理、TOML import/export 与 JSON
+  import/export。各能力
   各有 `*.service.ts` / `*.service.types.ts`（`source.service.ts` 等），没有聚合门面——container
   直接按能力暴露 `createSourceService`/`createDestinationService`/… 工厂。
 - `server/sources`、`server/destinations`、`server/routes`：各能力的服务端 `*.service.ts` /
@@ -272,11 +273,16 @@ server-only infra 模块。
 
 - 每个 feature 维护自己的 query key factory，key 必须是数组、可序列化，并包含影响结果的
   filters、pagination、id 等变量。
+- Sources、Destinations、Routes、Settings 等配置能力分别维护列表或详情 query，不使用一份全量
+  configuration snapshot 作为所有页面的共享缓存。跨能力页面在 route loader 中并行预取所需
+  query，并在 feature page 内组合只读投影；不要为组合方便重新引入聚合 service 或聚合 query。
 - 列表与详情拆成不同 query key，例如 `["events", "list", filters]` 与
   `["events", "detail", eventId]`。
 - route loader 使用 feature `queryOptions` 保持 SSR/预取/客户端 hook 同源。
 - mutation 成功后由 feature mutation 做定向 invalidation，不在 route 文件里散落
   `router.invalidate()` 作为主要刷新机制。
+- 删除告警源或投递目标会清理路由引用，因此对应 mutation 同时失效自身列表与 Routes；配置
+  import 会改写 Settings、Sources、Destinations 与 Routes，因此 portability 工作流失效四类 query。
 - 非缓存型一次性动作，例如复制文本、打开详情面板本地状态，可以留在组件本地；改变服务端状态
   的动作必须走 mutation/server function。
 
@@ -312,7 +318,7 @@ dashboard route 的 `beforeLoad` 可以存在，但它只是 UX guard：提前�
 ## 5. 敏感数据投影规则
 
 以下内容永远不能进入 client DTO、route loader data、TanStack Query data、route context、
-client component props、TOML 默认导出或浏览器日志：
+client component props、TOML/JSON 默认导出或浏览器日志：
 
 - Source token 原文。
 - `tokenHash`。
@@ -380,7 +386,8 @@ Dashboard mega-route 拆分已经完成：`routes/index.tsx` 现在只负责把�
    `components/common`；业务列、业务 badge、route coverage、provider/destination kind、delivery
    state 仍留在 feature。
 4. Server state 统一通过 feature query/mutation 文件访问 server functions；route loader 只用同一组
-   `queryOptions` 预取，不直接 import store、container 或 service。
+   `queryOptions` 并行预取，不直接 import store、container 或 service。配置页面按能力组合
+   Settings、Sources、Destinations 与 Routes query，不恢复全量 configuration snapshot。
 5. 每次新增 client-visible DTO 或 detail/debug 展示，都同步检查 secret-safe projection：Source token、
    token hash、Destination secret、raw sensitive config 和未脱敏 raw payload/header 不进入 query data。
 

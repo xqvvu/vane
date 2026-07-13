@@ -1,6 +1,6 @@
-import { RiArrowLeftLine, RiErrorWarningLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { ArrowLeft, AlertTriangle } from "reicon-react";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
@@ -26,7 +26,7 @@ export function DeliveryDetailPage({ deliveryId }: { deliveryId: string }) {
             </section>
           ) : (
             <Alert variant="destructive">
-              <RiErrorWarningLine aria-hidden />
+              <AlertTriangle aria-hidden />
               <AlertTitle>{t("deliveries.detail.notFoundTitle")}</AlertTitle>
               <AlertDescription>{t("deliveries.detail.notFoundDescription")}</AlertDescription>
             </Alert>
@@ -50,7 +50,7 @@ function DeliveryDetailPageToolbar({ deliveryId }: { deliveryId: string }) {
           to="/deliveries"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit")}
         >
-          <RiArrowLeftLine data-icon="inline-start" aria-hidden />
+          <ArrowLeft data-icon="inline-start" aria-hidden />
           {t("deliveries.detail.back")}
         </Link>
       }

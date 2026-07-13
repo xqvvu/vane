@@ -42,7 +42,7 @@ packages/providers/src/<provider>/
 
 - 贡献者容易理解和编写。
 - 接口足够小，但能表达配置、secret、安全摘要、错误分类和 UI catalog。
-- `apps/console` 仍然拥有存储、认证、secret refs、TOML、路由、投递重试和 UI 渲染。
+- `apps/console` 仍然拥有存储、认证、secret refs、配置导入导出、路由、投递重试和 UI 渲染。
 - adapter package 不依赖 React、TanStack Form、SQLite、Better Auth、env 或 app container。
 
 ## Adapter 形态
@@ -75,8 +75,9 @@ Provider 和 destination 只共享 manifest primitives，不合并成一个万�
 
 ## Manifest 与 Console Catalog
 
-Adapter manifest 是 TypeScript 对象，不是 YAML/TOML。它和 Zod schema、parse/send 函数、
-测试同源维护。TOML 只作为 Vane 用户配置的导入导出格式。
+Adapter manifest 是 TypeScript 对象，不是 YAML/TOML/JSON 配置文件。它和 Zod schema、
+parse/send 函数、测试同源维护。TOML 与 JSON 使用同一份 Vane 用户配置快照和 schema；TOML
+仍是首选 config-as-code 格式。
 
 每个 adapter 必须显式声明 lifecycle status 和 `configVersion`。Lifecycle 不默认 stable；
 `configVersion` 从 `1` 开始，只描述该 adapter config 的形状演进。
@@ -99,7 +100,7 @@ Catalog capabilities 使用 provider/destination 各自的封闭结构，不使�
 ## 配置与 Secret
 
 Adapter runtime 只接收已经解析、已经校验的 typed config。`secretRefs`、env refs、TOML
-解析、缺失 secret 报错和未来 secret store 都属于 `apps/console` 配置边界。
+解析、TOML/JSON 导入导出、缺失 secret 报错和未来 secret store 都属于 `apps/console` 配置边界。
 
 配置字段使用安全 dot path，不支持数组下标、通配符或表达式。数组和 map 通过
 `string-list`、`key-value` 等字段类型表达。
@@ -122,7 +123,7 @@ Adapter runtime 只接收已经解析、已经校验的 typed config。`secretRe
 audit。
 
 持久化的 Source/Destination config 必须始终 schema-valid。UI 可以有本地草稿，但 SQLite
-和 TOML 不保存 invalid draft。
+和可移植配置导入不保存 invalid draft。
 
 长期目标是 config 更新采用完整 replacement。Secret 更新使用三态意图：
 
@@ -190,7 +191,7 @@ Email 和 generic webhook 可以先保留文本模式，后续再扩展到平台
   真实 wire payload 可以由 adapter 在 `send` 内部追加签名、鉴权字段或平台特定 envelope。
 - Adapter manifest/catalog 需要表达模板能力，例如支持的模式、字段、默认模板、预览能力和是否需要
   console UI override。
-- TOML import/export 需要能表示结构化模板，并保持 secret 与模板内容的边界清晰。
+- TOML/JSON import/export 需要能表示结构化模板，并保持 secret 与模板内容的边界清晰。
 - UI 应为不同 destination 展示对应的模板编辑体验，例如飞书卡片 JSON/表单预览、Slack blocks
   预览、Email HTML 预览；复杂交互留在 `features/destinations` 的 adapter-specific override 中。
 

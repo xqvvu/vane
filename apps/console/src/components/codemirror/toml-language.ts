@@ -4,7 +4,6 @@ import {
   LRLanguage,
   continuedIndent,
   delimitedIndent,
-  foldGutter,
   foldInside,
   foldNodeProp,
   indentNodeProp,
@@ -12,18 +11,7 @@ import {
 import { styleTags, tags } from "@lezer/highlight";
 import { parser } from "lezer-toml";
 
-function createFoldMarker(open: boolean): HTMLElement {
-  const marker = document.createElement("span");
-
-  marker.className = "cm-toml-fold-marker";
-  marker.setAttribute("aria-hidden", "true");
-  marker.dataset.state = open ? "open" : "closed";
-  marker.innerHTML = open
-    ? '<svg viewBox="0 0 12 12" focusable="false"><path d="M3 4.5 6 7.5 9 4.5" /></svg>'
-    : '<svg viewBox="0 0 12 12" focusable="false"><path d="M4.5 3 7.5 6 4.5 9" /></svg>';
-
-  return marker;
-}
+import { codeFoldGutter } from "#/components/codemirror/code-fold-gutter.ts";
 
 function defineTomlLanguage(): LRLanguage {
   const comments = ["Comment"];
@@ -84,9 +72,5 @@ function defineTomlLanguage(): LRLanguage {
 export function toml() {
   const tomlLanguage = defineTomlLanguage();
 
-  return new LanguageSupport(tomlLanguage, [
-    foldGutter({
-      markerDOM: createFoldMarker,
-    }),
-  ]);
+  return new LanguageSupport(tomlLanguage, [codeFoldGutter()]);
 }

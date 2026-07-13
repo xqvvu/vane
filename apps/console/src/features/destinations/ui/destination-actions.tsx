@@ -1,11 +1,5 @@
-import {
-  RiDeleteBinLine,
-  RiEditLine,
-  RiEyeLine,
-  RiPlayLine,
-  RiShutDownLine,
-} from "@remixicon/react";
 import * as React from "react";
+import { Trash, Edit2, Eye, Play, Power } from "reicon-react";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
@@ -64,7 +58,7 @@ export function DestinationActions({
           aria-label={testLabel}
           onClick={() => onTest(destination)}
         >
-          <RiPlayLine data-icon="inline-start" aria-hidden />
+          <Play data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={previewLabel}>
@@ -76,7 +70,7 @@ export function DestinationActions({
           aria-label={previewLabel}
           onClick={() => onPreview(destination)}
         >
-          <RiEyeLine data-icon="inline-start" aria-hidden />
+          <Eye data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={editLabel}>
@@ -88,7 +82,7 @@ export function DestinationActions({
           aria-label={editLabel}
           onClick={() => onEdit(destination.id)}
         >
-          <RiEditLine data-icon="inline-start" aria-hidden />
+          <Edit2 data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={toggleLabel}>
@@ -101,7 +95,7 @@ export function DestinationActions({
           className={powerActionButtonClassName(destination.enabled)}
           onClick={() => onToggle(destination)}
         >
-          <RiShutDownLine data-icon="inline-start" aria-hidden />
+          <Power data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <AlertDialog
@@ -124,7 +118,7 @@ export function DestinationActions({
               />
             }
           >
-            <RiDeleteBinLine data-icon="inline-start" aria-hidden />
+            <Trash data-icon="inline-start" aria-hidden />
           </AlertDialogTrigger>
         </IconTooltip>
         <AlertDialogContent size="sm">

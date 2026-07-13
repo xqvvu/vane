@@ -1,6 +1,6 @@
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import type { RouteDefinition } from "@vane/core";
 
-type RouteSummary = Configuration["routes"][number];
+type RouteSummary = RouteDefinition;
 
 export interface DestinationRouteCoverage {
   enabledRouteCount: number;
@@ -10,7 +10,7 @@ export interface DestinationRouteCoverage {
 
 export function destinationRouteCoverage(
   destinationId: string,
-  routes: Configuration["routes"],
+  routes: RouteDefinition[],
 ): DestinationRouteCoverage {
   const referencingRoutes = routes.filter((route) =>
     routeReferencesDestination(route, destinationId),

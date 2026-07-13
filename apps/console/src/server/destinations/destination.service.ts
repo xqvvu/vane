@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
   CreateDestinationCommandSchema,
   DeleteDestinationCommandSchema,
+  GetDestinationTemplateDraftCommandSchema,
+  JsonObjectSchema,
   PreviewDestinationDraftCommandSchema,
   PreviewDestinationCommandSchema,
   PreviewDestinationUpdateCommandSchema,
@@ -10,6 +12,7 @@ import {
   UpdateDestinationCommandSchema,
   type CreateDestinationCommand,
   type DeleteDestinationCommand,
+  type GetDestinationTemplateDraftCommand,
   type DestinationSummary,
   type JsonObject,
   type PreviewDestinationDraftCommand,
@@ -34,6 +37,7 @@ import type {
   DestinationPreviewResult,
   DestinationPreviewSample,
   DestinationServiceOptions,
+  DestinationTemplateDraft,
   DestinationTestResult,
 } from "#/server/destinations/destination.service.types.ts";
 
@@ -50,6 +54,10 @@ export class DestinationService {
 
   listDestinationCatalog(): DestinationCatalogItem[] {
     return this.destinations.toCatalog();
+  }
+
+  async listDestinations(): Promise<DestinationSummary[]> {
+    return this.store.destinations.list();
   }
 
   async createDestination(command: CreateDestinationCommand): Promise<DestinationSummary> {
@@ -91,6 +99,26 @@ export class DestinationService {
     });
 
     return { id: input.id };
+  }
+
+  async getDestinationTemplateDraft(
+    command: GetDestinationTemplateDraftCommand,
+  ): Promise<DestinationTemplateDraft> {
+    const input = GetDestinationTemplateDraftCommandSchema.parse(command);
+    const destination = await this.store.destinations.get(input.id);
+
+    if (!destination) {
+      throw new Error(`Destination not found: ${input.id}`);
+    }
+
+    const config = parseDestinationConfig(this.destinations, destination.kind, destination.config);
+    const parsedTemplate = JsonObjectSchema.safeParse(config.template);
+
+    return {
+      destinationId: destination.id,
+      kind: destination.kind,
+      template: parsedTemplate.success ? parsedTemplate.data : null,
+    };
   }
 
   async testDestination(command: TestDestinationCommand): Promise<DestinationTestResult> {
@@ -150,7 +178,9 @@ export class DestinationService {
       enabled: destination.enabled,
     };
 
-    return this.previewDestinationConfig(summary, destination.config, input.sampleEventId);
+    return this.previewDestinationConfig(summary, destination.config, input.sampleEventId, {
+      sampleStatus: input.sampleStatus,
+    });
   }
 
   async previewDestinationDraft(
@@ -170,12 +200,15 @@ export class DestinationService {
     if (templateDiagnostics) {
       return this.previewDestinationConfig(destination, input.config, input.sampleEventId, {
         diagnostics: templateDiagnostics,
+        sampleStatus: input.sampleStatus,
       });
     }
 
     const config = parseDestinationConfig(this.destinations, input.kind, input.config);
 
-    return this.previewDestinationConfig(destination, config, input.sampleEventId);
+    return this.previewDestinationConfig(destination, config, input.sampleEventId, {
+      sampleStatus: input.sampleStatus,
+    });
   }
 
   async previewDestinationUpdate(
@@ -202,21 +235,27 @@ export class DestinationService {
     if (templateDiagnostics) {
       return this.previewDestinationConfig(destination, mergedConfig, input.sampleEventId, {
         diagnostics: templateDiagnostics,
+        sampleStatus: input.sampleStatus,
       });
     }
 
     const config = parseDestinationConfig(this.destinations, current.kind, mergedConfig);
 
-    return this.previewDestinationConfig(destination, config, input.sampleEventId);
+    return this.previewDestinationConfig(destination, config, input.sampleEventId, {
+      sampleStatus: input.sampleStatus,
+    });
   }
 
   private async previewDestinationConfig(
     destination: DestinationSummary,
     config: JsonObject,
     sampleEventId?: string,
-    options: { diagnostics?: TemplateDiagnostic[] } = {},
+    options: {
+      diagnostics?: TemplateDiagnostic[];
+      sampleStatus?: "firing" | "resolved" | "unknown";
+    } = {},
   ): Promise<DestinationPreviewResult> {
-    const sample = await this.resolvePreviewSample(sampleEventId);
+    const sample = await this.resolvePreviewSample(sampleEventId, options.sampleStatus);
     const input = {
       eventId: sample.metadata.eventId,
       source: sample.metadata.source,
@@ -226,15 +265,16 @@ export class DestinationService {
     };
 
     const context = DestinationTemplateEngine.createRenderContext(input);
+    const diagnostics = options.diagnostics ?? DestinationTemplateEngine.diagnoseConfig(config);
 
-    if (options.diagnostics && options.diagnostics.length > 0) {
+    if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
       return {
         destination,
-        renderedPayload: templateDiagnosticsPayload(options.diagnostics),
+        renderedPayload: templateDiagnosticsPayload(diagnostics),
         sample: sample.metadata,
         context,
         normalizedEvent: sample.normalizedEvent,
-        diagnostics: options.diagnostics,
+        diagnostics,
         rawPayloadReference: sample.rawPayloadReference,
       };
     }
@@ -246,7 +286,7 @@ export class DestinationService {
         sample: sample.metadata,
         context,
         normalizedEvent: sample.normalizedEvent,
-        diagnostics: [],
+        diagnostics,
         rawPayloadReference: sample.rawPayloadReference,
       };
     } catch (error) {
@@ -266,7 +306,10 @@ export class DestinationService {
     }
   }
 
-  private async resolvePreviewSample(sampleEventId?: string) {
+  private async resolvePreviewSample(
+    sampleEventId?: string,
+    sampleStatus?: "firing" | "resolved" | "unknown",
+  ) {
     if (!sampleEventId) {
       const source: SourceSummary = {
         id: "preview-source",
@@ -281,9 +324,13 @@ export class DestinationService {
         receivedAt: null,
       };
 
+      const normalizedEvent = createTestNormalizedEvent();
+
       return {
         metadata,
-        normalizedEvent: createTestNormalizedEvent(),
+        normalizedEvent: sampleStatus
+          ? { ...normalizedEvent, status: sampleStatus }
+          : normalizedEvent,
         rawPayloadReference: null,
       };
     }
@@ -335,9 +382,7 @@ function isTemplateZodError(error: unknown): error is z.ZodError {
   return (
     error instanceof z.ZodError &&
     error.issues.length > 0 &&
-    error.issues.every((issue) =>
-      issue.message.startsWith("Destination template contains unknown variable: "),
-    )
+    error.issues.every((issue) => issue.path[0] === "template")
   );
 }
 

@@ -1,8 +1,9 @@
-import { RiCheckboxCircleLine, RiKey2Line } from "@remixicon/react";
+import { CheckCircle, Key2 } from "reicon-react";
+
+import type { ImportConfigurationResult } from "@vane/core";
 
 import { CopyableCodeLine } from "#/components/common/copyable-code-line.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import type { ImportConfigurationResult } from "#/features/configuration/model/configuration-types.ts";
 import {
   sourceWebhookPath,
   sourceWebhookUrlFromPath,
@@ -14,7 +15,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
 
   return (
     <Alert>
-      <RiCheckboxCircleLine aria-hidden />
+      <CheckCircle aria-hidden />
       <AlertTitle>{t("configuration.importNotice.title")}</AlertTitle>
       <AlertDescription>
         {notice.generatedSourceTokens.length === 0
@@ -29,7 +30,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
             return (
               <div key={source.sourceId} className="border-border grid gap-1 border p-2">
                 <div className="flex items-center gap-2 font-medium">
-                  <RiKey2Line className="size-3.5" aria-hidden />
+                  <Key2 className="size-3.5" aria-hidden />
                   {source.sourceName}
                 </div>
                 <div className="text-muted-foreground">

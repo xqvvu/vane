@@ -1,5 +1,5 @@
-import { RiArrowLeftSLine, RiArrowRightSLine, RiMoreLine } from "@remixicon/react";
 import * as React from "react";
+import { ChevronLeft, ChevronRight, MoreH } from "reicon-react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { cn } from "#/lib/utils.ts";
@@ -66,7 +66,7 @@ function PaginationPrevious({
       className={cn("pl-1.5!", className)}
       {...props}
     >
-      <RiArrowLeftSLine data-icon="inline-start" />
+      <ChevronLeft data-icon="inline-start" />
       <span className="hidden sm:block">{text}</span>
     </PaginationLink>
   );
@@ -85,7 +85,7 @@ function PaginationNext({
       {...props}
     >
       <span className="hidden sm:block">{text}</span>
-      <RiArrowRightSLine data-icon="inline-end" />
+      <ChevronRight data-icon="inline-end" />
     </PaginationLink>
   );
 }
@@ -101,7 +101,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span"
       )}
       {...props}
     >
-      <RiMoreLine />
+      <MoreH />
       <span className="sr-only">More pages</span>
     </span>
   );

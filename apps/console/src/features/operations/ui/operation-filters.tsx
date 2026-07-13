@@ -1,3 +1,5 @@
+import type { DestinationSummary, SourceSummary } from "@vane/core";
+
 import { Field as UiField, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import {
@@ -8,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
@@ -20,7 +21,10 @@ export function OperationFilters({
   onChange,
   layout = "grid",
 }: {
-  configuration: Configuration;
+  configuration: {
+    sources: SourceSummary[];
+    destinations: DestinationSummary[];
+  };
   search: DashboardOperationSearch;
   pending: boolean;
   onChange: (next: Partial<DashboardOperationSearch>) => void;

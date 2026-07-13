@@ -8,7 +8,7 @@ Use this checklist after each Stitch generation and before implementing UI in
 - The screen looks like a self-hosted operations console, not a marketing page.
 - The first viewport is immediately useful for SRE work.
 - The page language uses Vane domain terms: Sources, Routes, Destinations,
-  Events, Deliveries, Retry, History, TOML.
+  Events, Deliveries, Retry, History, TOML, JSON.
 - There are no SaaS tenancy, billing, org invitation, incident lifecycle,
   escalation policy, or on-call schedule concepts.
 
@@ -37,7 +37,7 @@ Use this checklist after each Stitch generation and before implementing UI in
 - Source tokens are hidden except for intentional one-time token notices.
 - Destination secrets and webhook URLs are redacted.
 - Raw headers and payloads are redacted in ordinary UI.
-- TOML export defaults to secrets omitted.
+- TOML/JSON export defaults to secrets omitted.
 - Secret-touching actions are explicit and reviewable.
 
 ## Implementation Fit

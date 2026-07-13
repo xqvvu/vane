@@ -1,28 +1,33 @@
-import { RiRefreshLine } from "@remixicon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import * as React from "react";
+import { Refresh } from "reicon-react";
 import { toast } from "sonner";
+
+import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Button } from "#/components/ui/button.tsx";
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
 import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
+import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
 import { RouteAddDialog } from "#/features/routes/ui/route-add-dialog.tsx";
 import { RouteReplayPrompt } from "#/features/routes/ui/route-replay-prompt.tsx";
 import { RoutesSection } from "#/features/routes/ui/routes-section.tsx";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export function RoutesPage() {
   const t = useTranslations();
-  const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
+  const [{ data: routes }, { data: sources }, { data: destinations }] = useSuspenseQueries({
+    queries: [routesQueryOptions(), sourcesQueryOptions(), destinationsQueryOptions()],
+  });
   const { createRoute, deleteRoute, invalidateRoutes, updateRoute } = useRouteMutations();
   const [editingRouteId, setEditingRouteId] = React.useState<string | null>(null);
   const [replayRouteId, setReplayRouteId] = React.useState<string | null>(null);
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const editingRoute = editingRouteId
-    ? (configuration.routes.find((route) => route.id === editingRouteId) ?? null)
+    ? (routes.find((route) => route.id === editingRouteId) ?? null)
     : null;
   const pending = pendingAction !== null;
 
@@ -55,7 +60,7 @@ export function RoutesPage() {
     }
   }
 
-  function maybeOpenRouteReplay(route: Configuration["routes"][number] | null): void {
+  function maybeOpenRouteReplay(route: RouteDefinition | null): void {
     if (route?.enabled) {
       setReplayRouteId(route.id);
     }
@@ -67,8 +72,8 @@ export function RoutesPage() {
         <>
           <RoutesPageToolbar
             pending={pending}
-            sources={configuration.sources}
-            destinations={configuration.destinations}
+            sources={sources}
+            destinations={destinations}
             onCreate={(input) =>
               void submitAction("create-route", () => createRoute({ data: input })).then(
                 maybeOpenRouteReplay,
@@ -77,9 +82,9 @@ export function RoutesPage() {
             onRefresh={() => void refreshConfiguration()}
           />
           <RoutesSection
-            routes={configuration.routes}
-            sources={configuration.sources}
-            destinations={configuration.destinations}
+            routes={routes}
+            sources={sources}
+            destinations={destinations}
             editingRoute={editingRoute}
             pending={pending}
             onEdit={setEditingRouteId}
@@ -127,11 +132,11 @@ function RoutesPageToolbar({
   onRefresh,
 }: {
   pending: boolean;
-  sources: Configuration["sources"];
-  destinations: Configuration["destinations"];
+  sources: SourceSummary[];
+  destinations: DestinationSummary[];
   onCreate: (input: {
     name: string;
-    rule: Configuration["routes"][number]["rule"];
+    rule: RouteDefinition["rule"];
     destinationIds: string[];
   }) => void;
   onRefresh: () => void;
@@ -158,7 +163,7 @@ function RoutesPageToolbar({
             title={t("routing.page.refreshTitle")}
             className="w-fit"
           >
-            <RiRefreshLine data-icon="inline-start" aria-hidden />
+            <Refresh data-icon="inline-start" aria-hidden />
             {t("common.actions.refresh")}
           </Button>
         </>

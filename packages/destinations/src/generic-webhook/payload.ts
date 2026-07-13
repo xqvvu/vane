@@ -26,6 +26,8 @@ export function renderGenericWebhookPayload(
         ? DestinationTemplateEngine.renderTextOrThrow(
             DestinationTemplateEngine.createRenderContext(input),
             input.config.template.text,
+            "template.text",
+            input.config.template.bindings,
           )
         : input.normalizedEvent.message,
   };

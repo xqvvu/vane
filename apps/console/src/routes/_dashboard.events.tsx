@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
 import { EventsPage } from "#/features/events/ui/events-page.tsx";
 import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
 import {
@@ -8,6 +8,8 @@ import {
   mergeOperationSearch,
   operationFiltersFromSearch,
 } from "#/features/operations/model/operation-search.ts";
+import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export const Route = createFileRoute("/_dashboard/events")({
@@ -17,7 +19,9 @@ export const Route = createFileRoute("/_dashboard/events")({
     const filters = operationFiltersFromSearch(search);
 
     await Promise.all([
-      context.queryClient.ensureQueryData(configurationQueryOptions()),
+      context.queryClient.ensureQueryData(sourcesQueryOptions()),
+      context.queryClient.ensureQueryData(destinationsQueryOptions()),
+      context.queryClient.ensureQueryData(routesQueryOptions()),
       context.queryClient.ensureQueryData(operationsQueryOptions(filters)),
     ]);
 

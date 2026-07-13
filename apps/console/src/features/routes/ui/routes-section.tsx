@@ -1,12 +1,8 @@
-import {
-  RiDeleteBinLine,
-  RiEditLine,
-  RiRefreshLine,
-  RiRouteLine,
-  RiShutDownLine,
-} from "@remixicon/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
+import { Trash, Edit2, Refresh, Route, Power } from "reicon-react";
+
+import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
@@ -33,17 +29,15 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "#/components/ui/empty.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { EditRouteForm } from "#/features/routes/ui/route-forms.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
-type RouteSummary = Configuration["routes"][number];
-type DestinationSummary = Configuration["destinations"][number];
+type RouteSummary = RouteDefinition;
 
 export interface RoutesSectionProps {
-  routes: Configuration["routes"];
-  sources: Configuration["sources"];
-  destinations: Configuration["destinations"];
+  routes: RouteDefinition[];
+  sources: SourceSummary[];
+  destinations: DestinationSummary[];
   editingRoute: RouteSummary | null;
   pending: boolean;
   onEdit: (routeId: string) => void;
@@ -187,7 +181,7 @@ function RouteActions({
           aria-label={editLabel}
           onClick={() => onEdit(route.id)}
         >
-          <RiEditLine data-icon="inline-start" aria-hidden />
+          <Edit2 data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={replayLabel}>
@@ -199,7 +193,7 @@ function RouteActions({
           aria-label={replayLabel}
           onClick={() => onPreviewReplay(route)}
         >
-          <RiRefreshLine data-icon="inline-start" aria-hidden />
+          <Refresh data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={toggleLabel}>
@@ -212,7 +206,7 @@ function RouteActions({
           className={powerActionButtonClassName(route.enabled)}
           onClick={() => onToggle(route)}
         >
-          <RiShutDownLine data-icon="inline-start" aria-hidden />
+          <Power data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <AlertDialog
@@ -235,7 +229,7 @@ function RouteActions({
               />
             }
           >
-            <RiDeleteBinLine data-icon="inline-start" aria-hidden />
+            <Trash data-icon="inline-start" aria-hidden />
           </AlertDialogTrigger>
         </IconTooltip>
         <AlertDialogContent size="sm">
@@ -277,13 +271,7 @@ function RouteIdentityCell({ route }: { route: RouteSummary }) {
   );
 }
 
-function RouteRuleCell({
-  route,
-  sources,
-}: {
-  route: RouteSummary;
-  sources: Configuration["sources"];
-}) {
+function RouteRuleCell({ route, sources }: { route: RouteSummary; sources: SourceSummary[] }) {
   const t = useTranslations();
   const chips = routeRuleChips(route.rule, sources, t);
 
@@ -333,7 +321,7 @@ function RoutesEmptyState({ hasDestinations }: { hasDestinations: boolean }) {
     <Empty className="border-none p-4">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <RiRouteLine aria-hidden />
+          <Route aria-hidden />
         </EmptyMedia>
         <EmptyTitle>{t("routing.table.empty.title")}</EmptyTitle>
         <EmptyDescription>{t("routing.table.empty.description")}</EmptyDescription>
@@ -349,7 +337,7 @@ function RoutesEmptyState({ hasDestinations }: { hasDestinations: boolean }) {
 
 function routeRuleChips(
   rule: RouteSummary["rule"],
-  sources: Configuration["sources"],
+  sources: SourceSummary[],
   t: ReturnType<typeof useTranslations>,
 ): string[] {
   return [
@@ -395,7 +383,7 @@ function describeRuleForUi(
   return parts.length > 0 ? parts.join(" · ") : t("routing.table.allEvents");
 }
 
-function sourceNameForId(sourceId: string, sources: Configuration["sources"]): string {
+function sourceNameForId(sourceId: string, sources: SourceSummary[]): string {
   return sources.find((source) => source.id === sourceId)?.name ?? sourceId.slice(0, 10);
 }
 

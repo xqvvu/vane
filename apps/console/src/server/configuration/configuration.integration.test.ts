@@ -21,74 +21,59 @@ async function createStore() {
   });
 }
 
-/**
- * Composes the per-domain configuration services over a single store. The
- * tests below exercise sources, destinations, routes, settings, and TOML
- * portability together, so the harness wires them into one object instead of
- * repeating the same construction in every case.
- */
-function createConfigurationServices(
+function createTestContexts(
   store: Awaited<ReturnType<typeof createStore>>,
   destinationSendContext?: DestinationSendContext,
 ) {
-  const destinations = createDefaultDestinationRegistry();
+  const destinationRegistry = createDefaultDestinationRegistry();
   const generateSourceToken = () => "vane_src_test_token";
 
   const sources = new SourceService({ store, generateSourceToken });
-  const destinationService = new DestinationService({
+  const destinations = new DestinationService({
     store,
-    destinations,
+    destinations: destinationRegistry,
     destinationSendContext,
   });
   const routes = new RouteService({ store });
-  const appSettings = new AppSettingsService({ store });
-  const portability = new ConfigPortabilityService({ store, destinations, generateSourceToken });
+  const settings = new AppSettingsService({ store });
+  const portability = new ConfigPortabilityService({
+    store,
+    destinations: destinationRegistry,
+    generateSourceToken,
+  });
 
   return {
-    createSource: sources.createSource.bind(sources),
-    updateSource: sources.updateSource.bind(sources),
-    rotateSourceToken: sources.rotateSourceToken.bind(sources),
-    deleteSource: sources.deleteSource.bind(sources),
-    createDestination: destinationService.createDestination.bind(destinationService),
-    updateDestination: destinationService.updateDestination.bind(destinationService),
-    deleteDestination: destinationService.deleteDestination.bind(destinationService),
-    testDestination: destinationService.testDestination.bind(destinationService),
-    previewDestination: destinationService.previewDestination.bind(destinationService),
-    previewDestinationDraft: destinationService.previewDestinationDraft.bind(destinationService),
-    previewDestinationUpdate: destinationService.previewDestinationUpdate.bind(destinationService),
-    createRoute: routes.createRoute.bind(routes),
-    updateRoute: routes.updateRoute.bind(routes),
-    deleteRoute: routes.deleteRoute.bind(routes),
-    updateAppSettings: appSettings.updateAppSettings.bind(appSettings),
-    listConfiguration: portability.listConfiguration.bind(portability),
-    exportToml: portability.exportToml.bind(portability),
-    importToml: portability.importToml.bind(portability),
+    sources,
+    destinations,
+    routes,
+    settings,
+    portability,
   };
 }
 
-async function createService(store?: Awaited<ReturnType<typeof createStore>>) {
+async function createTestContext(store?: Awaited<ReturnType<typeof createStore>>) {
   store ??= await createStore();
 
   return {
     store,
-    service: createConfigurationServices(store),
+    services: createTestContexts(store),
   };
 }
 
-async function createServiceWithDestinationFetch(fetch: DestinationSendContext["fetch"]) {
+async function createTestContextWithDestinationFetch(fetch: DestinationSendContext["fetch"]) {
   const store = await createStore();
 
   return {
     store,
-    service: createConfigurationServices(store, { fetch }),
+    services: createTestContexts(store, { fetch }),
   };
 }
 
-describe("configuration service", () => {
+describe("configuration capabilities", () => {
   it("creates sources with one-time plaintext tokens and persisted token hashes", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    const created = await service.createSource({
+    const created = await services.sources.createSource({
       name: "Generic source",
       provider: "generic",
       config: {
@@ -110,13 +95,13 @@ describe("configuration service", () => {
   });
 
   it("rotates source tokens without returning the hash", async () => {
-    const { store, service } = await createService();
-    const created = await service.createSource({
+    const { store, services } = await createTestContext();
+    const created = await services.sources.createSource({
       name: "Generic source",
       provider: "generic",
     });
 
-    const rotated = await service.rotateSourceToken({ id: created.source.id });
+    const rotated = await services.sources.rotateSourceToken({ id: created.source.id });
 
     expect(rotated.token).toBe("vane_src_test_token");
     expect((await store.sources.get(created.source.id))?.tokenHash).toBe(
@@ -127,8 +112,8 @@ describe("configuration service", () => {
   });
 
   it("updates source metadata without exposing or changing the token hash", async () => {
-    const { store, service } = await createService();
-    const created = await service.createSource({
+    const { store, services } = await createTestContext();
+    const created = await services.sources.createSource({
       name: "Generic source",
       provider: "generic",
       config: {
@@ -138,7 +123,7 @@ describe("configuration service", () => {
     });
     const before = await store.sources.get(created.source.id);
 
-    const updated = await service.updateSource({
+    const updated = await services.sources.updateSource({
       id: created.source.id,
       name: "Grafana prod",
       provider: "grafana",
@@ -164,9 +149,9 @@ describe("configuration service", () => {
   });
 
   it("validates destination config through the registered destination sender", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -193,7 +178,7 @@ describe("configuration service", () => {
     });
 
     await expect(
-      service.createDestination({
+      services.destinations.createDestination({
         name: "Broken webhook",
         kind: "generic_webhook",
         config: {
@@ -202,7 +187,7 @@ describe("configuration service", () => {
       }),
     ).rejects.toThrow("Invalid URL");
     await expect(
-      service.createDestination({
+      services.destinations.createDestination({
         name: "Broken template webhook",
         kind: "generic_webhook",
         config: {
@@ -212,7 +197,7 @@ describe("configuration service", () => {
       }),
     ).rejects.toThrow("Destination template contains unknown variable: event.title.toUpperCase");
     await expect(
-      service.updateDestination({
+      services.destinations.updateDestination({
         id: destination.id,
         config: {
           template: { mode: "text", text: "{{process.env.SECRET}}" },
@@ -224,9 +209,9 @@ describe("configuration service", () => {
   });
 
   it("validates email destination config through the registered destination sender", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Email SRE",
       kind: "email",
       config: {
@@ -259,7 +244,7 @@ describe("configuration service", () => {
     });
 
     await expect(
-      service.createDestination({
+      services.destinations.createDestination({
         name: "Broken email",
         kind: "email",
         config: {
@@ -274,15 +259,15 @@ describe("configuration service", () => {
   });
 
   it("lists configuration without source token hashes or destination secrets", async () => {
-    const { store, service } = await createService();
-    const source = await service.createSource({
+    const { store, services } = await createTestContext();
+    const source = await services.sources.createSource({
       name: "Grafana prod",
       provider: "grafana",
       config: {
         team: "sre",
       },
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Slack SRE",
       kind: "slack",
       config: {
@@ -293,9 +278,10 @@ describe("configuration service", () => {
       },
     });
 
-    const snapshot = await service.listConfiguration();
+    const sources = await services.sources.listSources();
+    const destinations = await services.destinations.listDestinations();
 
-    expect(snapshot.sources).toEqual([
+    expect(sources).toEqual([
       {
         id: source.source.id,
         name: "Grafana prod",
@@ -303,7 +289,7 @@ describe("configuration service", () => {
         enabled: true,
       },
     ]);
-    expect(snapshot.destinations).toEqual([
+    expect(destinations).toEqual([
       {
         id: destination.id,
         name: "Slack SRE",
@@ -311,17 +297,122 @@ describe("configuration service", () => {
         enabled: true,
       },
     ]);
-    expect(JSON.stringify(snapshot)).not.toContain("vane_src_test_token");
-    expect(JSON.stringify(snapshot)).not.toContain(hashSourceToken("vane_src_test_token"));
-    expect(JSON.stringify(snapshot)).not.toContain("https://hooks.slack.com/services/secret");
-    expect(JSON.stringify(snapshot)).not.toContain("SLACK_WEBHOOK_URL");
+    const listedConfiguration = JSON.stringify({ sources, destinations });
+    expect(listedConfiguration).not.toContain("vane_src_test_token");
+    expect(listedConfiguration).not.toContain(hashSourceToken("vane_src_test_token"));
+    expect(listedConfiguration).not.toContain("https://hooks.slack.com/services/secret");
+    expect(listedConfiguration).not.toContain("SLACK_WEBHOOK_URL");
+
+    await store.close();
+  });
+
+  it("returns an authenticated template draft without destination secrets", async () => {
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
+      name: "Feishu SRE",
+      kind: "feishu",
+      config: {
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/private-token",
+        signSecret: "private-signing-secret",
+      },
+    });
+
+    const draft = await services.destinations.getDestinationTemplateDraft({
+      id: destination.id,
+    });
+
+    expect(draft).toMatchObject({
+      destinationId: destination.id,
+      kind: "feishu",
+      template: {
+        mode: "feishu_card",
+        bindings: {
+          statusColor: {
+            select: "event.status",
+            cases: {
+              firing: "red",
+              resolved: "green",
+              unknown: "grey",
+            },
+            fallback: "grey",
+          },
+        },
+      },
+    });
+    expect(JSON.stringify(draft)).not.toContain("private-token");
+    expect(JSON.stringify(draft)).not.toContain("private-signing-secret");
+
+    await store.close();
+  });
+
+  it("previews resolved Feishu cards with resolved bindings", async () => {
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
+      name: "Feishu SRE",
+      kind: "feishu",
+      config: {
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+      },
+    });
+
+    const result = await services.destinations.previewDestination({
+      id: destination.id,
+      sampleStatus: "resolved",
+    });
+
+    expect(result.normalizedEvent.status).toBe("resolved");
+    expect(result.context.bindings).toEqual({ statusColor: "green" });
+    expect(result.renderedPayload).toMatchObject({
+      msg_type: "interactive",
+      card: {
+        header: {
+          template: "green",
+        },
+      },
+    });
+
+    await store.close();
+  });
+
+  it("returns unused binding warnings without blocking preview rendering", async () => {
+    const { store, services } = await createTestContext();
+    const result = await services.destinations.previewDestinationDraft({
+      name: "Webhook draft",
+      kind: "generic_webhook",
+      config: {
+        url: "https://example.test/webhook",
+        template: {
+          mode: "text",
+          text: "{{event.title}}",
+          bindings: {
+            unusedColor: {
+              select: "event.status",
+              cases: { firing: "red" },
+              fallback: "grey",
+            },
+          },
+        },
+      },
+    });
+
+    expect(result.renderedPayload).toMatchObject({
+      message: "Vane destination test",
+    });
+    expect(result.diagnostics).toEqual([
+      {
+        severity: "warning",
+        path: "template.bindings.unusedColor",
+        variable: "bindings.unusedColor",
+        message: "Destination template binding is not referenced: unusedColor",
+      },
+    ]);
 
     await store.close();
   });
 
   it("tests destinations through registered senders without returning rendered payloads", async () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
-    const { store, service } = await createServiceWithDestinationFetch(async (url, init) => {
+    const { store, services } = await createTestContextWithDestinationFetch(async (url, init) => {
       calls.push({ url, init });
       return {
         ok: true,
@@ -329,7 +420,7 @@ describe("configuration service", () => {
         text: async () => "accepted token=downstream-token password: downstream-password",
       };
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -337,7 +428,7 @@ describe("configuration service", () => {
       },
     });
 
-    const result = await service.testDestination({ id: destination.id });
+    const result = await services.destinations.testDestination({ id: destination.id });
 
     expect(result).toEqual({
       destination,
@@ -362,8 +453,8 @@ describe("configuration service", () => {
   });
 
   it("previews destination templates without sending or returning config", async () => {
-    const { store, service } = await createService();
-    const destination = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -372,7 +463,7 @@ describe("configuration service", () => {
       },
     });
 
-    const result = await service.previewDestination({ id: destination.id });
+    const result = await services.destinations.previewDestination({ id: destination.id });
 
     expect(result.destination).toEqual(destination);
     expect(result.sample).toEqual({
@@ -398,7 +489,7 @@ describe("configuration service", () => {
     expect(result).not.toHaveProperty("config");
     expect(JSON.stringify(result)).not.toContain("https://example.test/webhook");
 
-    const emailDestination = await service.createDestination({
+    const emailDestination = await services.destinations.createDestination({
       name: "Email SRE",
       kind: "email",
       config: {
@@ -408,7 +499,9 @@ describe("configuration service", () => {
         replyTo: "ops@example.test",
       },
     });
-    const emailPreview = await service.previewDestination({ id: emailDestination.id });
+    const emailPreview = await services.destinations.previewDestination({
+      id: emailDestination.id,
+    });
 
     expect(emailPreview.renderedPayload).toMatchObject({
       subject: "[INFO firing] Vane destination test",
@@ -423,8 +516,8 @@ describe("configuration service", () => {
   });
 
   it("previews destination templates with historical event samples and redacted raw reference", async () => {
-    const { store, service } = await createService();
-    const source = await service.createSource({
+    const { store, services } = await createTestContext();
+    const source = await services.sources.createSource({
       name: "SigNoz",
       provider: "signoz",
     });
@@ -457,7 +550,7 @@ describe("configuration service", () => {
         "x-signoz": "visible-header",
       },
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -466,7 +559,7 @@ describe("configuration service", () => {
       },
     });
 
-    const result = await service.previewDestination({
+    const result = await services.destinations.previewDestination({
       id: destination.id,
       sampleEventId: event.id,
     });
@@ -508,8 +601,8 @@ describe("configuration service", () => {
   });
 
   it("previews Feishu card destination templates without signing fields", async () => {
-    const { store, service } = await createService();
-    const destination = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
       name: "Ops Feishu",
       kind: "feishu",
       config: {
@@ -538,7 +631,7 @@ describe("configuration service", () => {
       },
     });
 
-    const result = await service.previewDestination({ id: destination.id });
+    const result = await services.destinations.previewDestination({ id: destination.id });
 
     expect(result.renderedPayload).toEqual({
       msg_type: "interactive",
@@ -569,8 +662,8 @@ describe("configuration service", () => {
   });
 
   it("returns template diagnostics when draft preview rendering fails", async () => {
-    const { store, service } = await createService();
-    const result = await service.previewDestinationDraft({
+    const { store, services } = await createTestContext();
+    const result = await services.destinations.previewDestinationDraft({
       name: "Ops Feishu",
       kind: "feishu",
       config: {
@@ -618,9 +711,9 @@ describe("configuration service", () => {
   });
 
   it("previews draft destination templates before saving config", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    const result = await service.previewDestinationDraft({
+    const result = await services.destinations.previewDestinationDraft({
       name: "Unsaved webhook",
       kind: "generic_webhook",
       config: {
@@ -638,7 +731,7 @@ describe("configuration service", () => {
     expect(result.renderedPayload).toMatchObject({
       message: "Vane destination test from Vane preview",
     });
-    expect((await service.listConfiguration()).destinations).toEqual([]);
+    expect(await services.destinations.listDestinations()).toEqual([]);
     expect(result).not.toHaveProperty("config");
     expect(JSON.stringify(result)).not.toContain("https://relay.example.test/draft-secret");
 
@@ -646,8 +739,8 @@ describe("configuration service", () => {
   });
 
   it("updates destination metadata and template patches without clearing server-side secrets", async () => {
-    const { store, service } = await createService();
-    const destination = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -661,7 +754,7 @@ describe("configuration service", () => {
       },
     });
 
-    const preview = await service.previewDestinationUpdate({
+    const preview = await services.destinations.previewDestinationUpdate({
       id: destination.id,
       name: "Renamed webhook",
       config: {
@@ -671,7 +764,7 @@ describe("configuration service", () => {
         template: { mode: "text", text: "{{event.title}} from {{destination.name}}" },
       },
     });
-    const updated = await service.updateDestination({
+    const updated = await services.destinations.updateDestination({
       id: destination.id,
       name: "Renamed webhook",
       config: {
@@ -708,8 +801,8 @@ describe("configuration service", () => {
   });
 
   it("rejects destination kind changes that do not provide compatible config", async () => {
-    const { store, service } = await createService();
-    const destination = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -718,7 +811,7 @@ describe("configuration service", () => {
     });
 
     await expect(
-      service.updateDestination({
+      services.destinations.updateDestination({
         id: destination.id,
         kind: "slack",
       }),
@@ -735,37 +828,37 @@ describe("configuration service", () => {
   });
 
   it("updates app settings through the configuration service", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    expect((await service.listConfiguration()).settings.rawPayloadRetentionDays).toBe(30);
+    expect((await services.settings.getAppSettings()).rawPayloadRetentionDays).toBe(30);
 
-    const settings = await service.updateAppSettings({
+    const settings = await services.settings.updateAppSettings({
       rawPayloadRetentionDays: 7,
     });
 
     expect(settings.rawPayloadRetentionDays).toBe(7);
-    expect((await service.listConfiguration()).settings.rawPayloadRetentionDays).toBe(7);
+    expect((await services.settings.getAppSettings()).rawPayloadRetentionDays).toBe(7);
 
     await store.close();
   });
 
   it("exports portable TOML without plaintext destination secrets by default", async () => {
-    const { store, service } = await createService();
-    const source = await service.createSource({
+    const { store, services } = await createTestContext();
+    const source = await services.sources.createSource({
       name: "Grafana prod",
       provider: "grafana",
       config: {
         team: "sre",
       },
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Slack SRE",
       kind: "slack",
       config: {
         webhookUrl: "https://hooks.slack.com/services/secret",
       },
     });
-    await service.createRoute({
+    await services.routes.createRoute({
       name: "Critical route",
       rule: {
         sourceIds: [source.source.id],
@@ -774,7 +867,7 @@ describe("configuration service", () => {
       destinationIds: [destination.id],
     });
 
-    const toml = await service.exportToml({
+    const toml = await services.portability.exportToml({
       now: () => now,
     });
 
@@ -798,16 +891,91 @@ describe("configuration service", () => {
     await store.close();
   });
 
+  it("exports portable JSON without plaintext secrets by default", async () => {
+    const { store, services } = await createTestContext();
+    const source = await services.sources.createSource({
+      name: "Signed upstream",
+      provider: "generic",
+      config: {
+        signingSecret: "source-signing-secret",
+        team: "sre",
+      },
+    });
+    const destination = await services.destinations.createDestination({
+      name: "Slack SRE",
+      kind: "slack",
+      config: {
+        webhookUrl: "https://hooks.slack.com/services/secret",
+      },
+    });
+    await services.routes.createRoute({
+      name: "Critical route",
+      rule: {
+        sourceIds: [source.source.id],
+        severities: ["critical"],
+      },
+      destinationIds: [destination.id],
+    });
+
+    const json = await services.portability.exportJson({
+      now: () => now,
+    });
+
+    expect(json.endsWith("\n")).toBe(true);
+    expect(json).not.toContain("source-signing-secret");
+    expect(json).not.toContain("https://hooks.slack.com/services/secret");
+    expect(json).not.toContain("vane_src_test_token");
+    expect(json).not.toContain(hashSourceToken("vane_src_test_token"));
+    expect(JSON.parse(json)).toMatchObject({
+      settings: {
+        schema_version: "vane.config.v1",
+        exported_at: now,
+        include_secrets: false,
+        raw_payload_retention_days: 30,
+      },
+      sources: [
+        {
+          id: source.source.id,
+          config: { team: "sre" },
+          secret_refs: {
+            signingSecret: {
+              env: expect.stringContaining("VANE_SOURCE_"),
+            },
+          },
+        },
+      ],
+      destinations: [
+        {
+          id: destination.id,
+          config: {},
+          secret_refs: {
+            webhookUrl: {
+              env: expect.stringContaining("VANE_DEST_"),
+            },
+          },
+        },
+      ],
+      routes: [
+        {
+          name: "Critical route",
+          destination_ids: [destination.id],
+        },
+      ],
+    });
+
+    await store.close();
+  });
+
   it("round-trips sources, routes, destinations, and settings through TOML", async () => {
-    const first = await createService();
-    const source = await first.service.createSource({
+    const first = await createTestContext();
+    const source = await first.services.sources.createSource({
       name: "Grafana prod",
       provider: "grafana",
       config: {
         team: "sre",
       },
     });
-    const destination = await first.service.createDestination({
+    const destination = await first.services.destinations.createDestination({
       name: "Slack SRE",
       kind: "slack",
       config: {
@@ -819,7 +987,7 @@ describe("configuration service", () => {
         },
       },
     });
-    await first.service.createRoute({
+    await first.services.routes.createRoute({
       name: "Critical route",
       rule: {
         sourceIds: [source.source.id],
@@ -828,13 +996,172 @@ describe("configuration service", () => {
       },
       destinationIds: [destination.id],
     });
-    await first.service.updateAppSettings({ rawPayloadRetentionDays: 7 });
+    await first.services.settings.updateAppSettings({ rawPayloadRetentionDays: 7 });
 
-    const toml = await first.service.exportToml({
+    const toml = await first.services.portability.exportToml({
       now: () => now,
     });
-    const second = await createService();
-    const result = await second.service.importToml(toml, {
+    const second = await createTestContext();
+    const result = await second.services.portability.importToml(toml, {
+      env: {
+        SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/imported",
+      },
+    });
+
+    expect(result.generatedSourceTokens).toEqual([
+      {
+        sourceId: source.source.id,
+        sourceName: "Grafana prod",
+        token: "vane_src_test_token",
+      },
+    ]);
+    expect(await second.store.settings.get()).toEqual({
+      rawPayloadRetentionDays: 7,
+    });
+    expect(await second.store.sources.get(source.source.id)).toMatchObject({
+      name: "Grafana prod",
+      provider: "grafana",
+      config: {
+        team: "sre",
+      },
+    });
+    expect(await second.store.destinations.get(destination.id)).toMatchObject({
+      name: "Slack SRE",
+      kind: "slack",
+      config: {
+        webhookUrl: "https://hooks.slack.com/services/imported",
+      },
+      secretRefs: {
+        webhookUrl: {
+          env: "SLACK_WEBHOOK_URL",
+        },
+      },
+    });
+    expect(await second.store.routes.list()).toEqual([
+      expect.objectContaining({
+        name: "Critical route",
+        rule: expect.objectContaining({
+          sourceIds: [source.source.id],
+          severities: ["critical"],
+          labels: [{ key: "service", operator: "equals", value: "api" }],
+        }),
+        destinationIds: [destination.id],
+      }),
+    ]);
+
+    await first.store.close();
+    await second.store.close();
+  });
+
+  it("round-trips Feishu dynamic template bindings through TOML", async () => {
+    const first = await createTestContext();
+    const destination = await first.services.destinations.createDestination({
+      name: "Feishu SRE",
+      kind: "feishu",
+      config: {
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/private",
+        template: {
+          mode: "feishu_card",
+          bindings: {
+            statusColor: {
+              select: "event.status",
+              cases: {
+                firing: "orange",
+                resolved: "green",
+                unknown: "grey",
+              },
+              fallback: "grey",
+            },
+          },
+          card: {
+            header: {
+              template: "{{bindings.statusColor}}",
+            },
+          },
+        },
+      },
+      secretRefs: {
+        webhookUrl: {
+          env: "FEISHU_WEBHOOK_URL",
+        },
+      },
+    });
+    const toml = await first.services.portability.exportToml({ now: () => now });
+    const second = await createTestContext();
+
+    await second.services.portability.importToml(toml, {
+      env: {
+        FEISHU_WEBHOOK_URL: "https://open.feishu.cn/open-apis/bot/v2/hook/imported",
+      },
+    });
+
+    expect(await second.store.destinations.get(destination.id)).toMatchObject({
+      kind: "feishu",
+      config: {
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/imported",
+        template: {
+          mode: "feishu_card",
+          bindings: {
+            statusColor: {
+              select: "event.status",
+              cases: {
+                firing: "orange",
+                resolved: "green",
+                unknown: "grey",
+              },
+              fallback: "grey",
+            },
+          },
+          card: {
+            header: {
+              template: "{{bindings.statusColor}}",
+            },
+          },
+        },
+      },
+    });
+
+    await first.store.close();
+    await second.store.close();
+  });
+
+  it("round-trips sources, routes, destinations, and settings through JSON", async () => {
+    const first = await createTestContext();
+    const source = await first.services.sources.createSource({
+      name: "Grafana prod",
+      provider: "grafana",
+      config: {
+        team: "sre",
+      },
+    });
+    const destination = await first.services.destinations.createDestination({
+      name: "Slack SRE",
+      kind: "slack",
+      config: {
+        webhookUrl: "https://hooks.slack.com/services/secret",
+      },
+      secretRefs: {
+        webhookUrl: {
+          env: "SLACK_WEBHOOK_URL",
+        },
+      },
+    });
+    await first.services.routes.createRoute({
+      name: "Critical route",
+      rule: {
+        sourceIds: [source.source.id],
+        severities: ["critical"],
+        labels: [{ key: "service", operator: "equals", value: "api" }],
+      },
+      destinationIds: [destination.id],
+    });
+    await first.services.settings.updateAppSettings({ rawPayloadRetentionDays: 7 });
+
+    const json = await first.services.portability.exportJson({
+      now: () => now,
+    });
+    const second = await createTestContext();
+    const result = await second.services.portability.importJson(json, {
       env: {
         SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/imported",
       },
@@ -886,9 +1213,9 @@ describe("configuration service", () => {
   });
 
   it("rejects plaintext destination secret exports", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    await service.createDestination({
+    await services.destinations.createDestination({
       name: "Slack SRE",
       kind: "slack",
       config: {
@@ -897,7 +1224,13 @@ describe("configuration service", () => {
     });
 
     await expect(
-      service.exportToml({
+      services.portability.exportToml({
+        includeSecrets: true,
+        now: () => now,
+      }),
+    ).rejects.toThrow("Plaintext secret export is not supported");
+    await expect(
+      services.portability.exportJson({
         includeSecrets: true,
         now: () => now,
       }),
@@ -907,9 +1240,9 @@ describe("configuration service", () => {
   });
 
   it("exports nested destination header secrets as environment references", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    await service.createDestination({
+    await services.destinations.createDestination({
       name: "Relay with auth",
       kind: "generic_webhook",
       config: {
@@ -921,7 +1254,7 @@ describe("configuration service", () => {
       },
     });
 
-    const toml = await service.exportToml({
+    const toml = await services.portability.exportToml({
       now: () => now,
     });
 
@@ -935,9 +1268,9 @@ describe("configuration service", () => {
   });
 
   it("exports source config and Feishu signing secrets without plaintext secret values", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    await service.createSource({
+    await services.sources.createSource({
       name: "Signed upstream",
       provider: "generic",
       config: {
@@ -945,7 +1278,7 @@ describe("configuration service", () => {
         team: "sre",
       },
     });
-    await service.createDestination({
+    await services.destinations.createDestination({
       name: "Feishu SRE",
       kind: "feishu",
       config: {
@@ -954,7 +1287,7 @@ describe("configuration service", () => {
       },
     });
 
-    const toml = await service.exportToml({
+    const toml = await services.portability.exportToml({
       now: () => now,
     });
 
@@ -971,7 +1304,7 @@ describe("configuration service", () => {
   });
 
   it("imports portable TOML and resolves destination secret references from env", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1006,7 +1339,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    const result = await service.importToml(toml, {
+    const result = await services.portability.importToml(toml, {
       env: {
         SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/imported",
       },
@@ -1050,7 +1383,7 @@ describe("configuration service", () => {
   });
 
   it("imports portable TOML and resolves source secret references from env", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1072,7 +1405,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await service.importToml(toml, {
+    await services.portability.importToml(toml, {
       env: {
         SOURCE_SIGNING_SECRET: "provider-shared-secret",
       },
@@ -1091,7 +1424,7 @@ describe("configuration service", () => {
   });
 
   it("imports nested destination header secret references from env", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1116,7 +1449,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await service.importToml(toml, {
+    await services.portability.importToml(toml, {
       env: {
         RELAY_URL: "https://relay.example.test/vane",
         RELAY_AUTH: "Bearer relay-secret",
@@ -1148,7 +1481,7 @@ describe("configuration service", () => {
   });
 
   it("rejects imported destination configs that fail adapter validation before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1172,7 +1505,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow("Invalid URL");
+    await expect(services.portability.importToml(toml)).rejects.toThrow("Invalid URL");
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
     expect(await store.sources.list()).toEqual([]);
     expect(await store.destinations.list()).toEqual([]);
@@ -1181,7 +1514,7 @@ describe("configuration service", () => {
   });
 
   it("rejects imported routes without destinations before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1200,7 +1533,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow("Too small");
+    await expect(services.portability.importToml(toml)).rejects.toThrow("Too small");
     expect(await store.routes.list()).toEqual([]);
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
 
@@ -1208,7 +1541,7 @@ describe("configuration service", () => {
   });
 
   it("rejects portable TOML that claims to include plaintext secrets", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1218,16 +1551,18 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow("Invalid input");
+    await expect(services.portability.importToml(toml)).rejects.toThrow("Invalid input");
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
 
     await store.close();
   });
 
   it("rejects invalid TOML before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
 
-    await expect(service.importToml("[settings")).rejects.toThrow("Invalid TOML document");
+    await expect(services.portability.importToml("[settings")).rejects.toThrow(
+      "Invalid TOML document",
+    );
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
     expect(await store.sources.list()).toEqual([]);
 
@@ -1235,7 +1570,7 @@ describe("configuration service", () => {
   });
 
   it("rejects unknown TOML keys before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1245,14 +1580,14 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow("Unrecognized key");
+    await expect(services.portability.importToml(toml)).rejects.toThrow("Unrecognized key");
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
 
     await store.close();
   });
 
   it("rejects unknown providers and destination kinds before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const unknownProviderToml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1280,8 +1615,12 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(unknownProviderToml)).rejects.toThrow("Invalid option");
-    await expect(service.importToml(unknownDestinationToml)).rejects.toThrow("Invalid option");
+    await expect(services.portability.importToml(unknownProviderToml)).rejects.toThrow(
+      "Invalid option",
+    );
+    await expect(services.portability.importToml(unknownDestinationToml)).rejects.toThrow(
+      "Invalid option",
+    );
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
     expect(await store.sources.list()).toEqual([]);
     expect(await store.destinations.list()).toEqual([]);
@@ -1290,7 +1629,7 @@ describe("configuration service", () => {
   });
 
   it("rejects missing environment variables for secret references before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1308,7 +1647,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml, { env: {} })).rejects.toThrow(
+    await expect(services.portability.importToml(toml, { env: {} })).rejects.toThrow(
       "Missing environment variable for destination secret: SLACK_WEBHOOK_URL",
     );
     expect(await store.destinations.list()).toEqual([]);
@@ -1318,7 +1657,7 @@ describe("configuration service", () => {
   });
 
   it("rejects missing source secret environment variables before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1336,7 +1675,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml, { env: {} })).rejects.toThrow(
+    await expect(services.portability.importToml(toml, { env: {} })).rejects.toThrow(
       "Missing environment variable for source secret: SOURCE_SIGNING_SECRET",
     );
     expect(await store.sources.list()).toEqual([]);
@@ -1346,27 +1685,27 @@ describe("configuration service", () => {
   });
 
   it("rejects route configuration that references unknown destinations", async () => {
-    const { store, service } = await createService();
-    const destination = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
         url: "https://example.test/webhook",
       },
     });
-    const route = await service.createRoute({
+    const route = await services.routes.createRoute({
       name: "Known destination route",
       destinationIds: [destination.id],
     });
 
     await expect(
-      service.createRoute({
+      services.routes.createRoute({
         name: "Broken route",
         destinationIds: ["destination-missing"],
       }),
     ).rejects.toThrow("Unknown destination IDs: destination-missing");
     await expect(
-      service.updateRoute({
+      services.routes.updateRoute({
         id: route.id,
         destinationIds: [destination.id, "destination-missing"],
       }),
@@ -1377,8 +1716,8 @@ describe("configuration service", () => {
   });
 
   it("rejects route configuration with duplicate destinations", async () => {
-    const { store, service } = await createService();
-    const destination = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
@@ -1387,7 +1726,7 @@ describe("configuration service", () => {
     });
 
     await expect(
-      service.createRoute({
+      services.routes.createRoute({
         name: "Duplicate destination route",
         destinationIds: [destination.id, destination.id],
       }),
@@ -1398,42 +1737,42 @@ describe("configuration service", () => {
   });
 
   it("deletes source references without widening route matching", async () => {
-    const { store, service } = await createService();
-    const grafana = await service.createSource({
+    const { store, services } = await createTestContext();
+    const grafana = await services.sources.createSource({
       name: "Grafana prod",
       provider: "grafana",
     });
-    const signoz = await service.createSource({
+    const signoz = await services.sources.createSource({
       name: "SigNoz prod",
       provider: "signoz",
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
         url: "https://example.test/webhook",
       },
     });
-    const directRoute = await service.createRoute({
+    const directRoute = await services.routes.createRoute({
       name: "Grafana only",
       rule: {
         sourceIds: [grafana.source.id],
       },
       destinationIds: [destination.id],
     });
-    const sharedRoute = await service.createRoute({
+    const sharedRoute = await services.routes.createRoute({
       name: "Grafana and SigNoz",
       rule: {
         sourceIds: [grafana.source.id, signoz.source.id],
       },
       destinationIds: [destination.id],
     });
-    const catchAllRoute = await service.createRoute({
+    const catchAllRoute = await services.routes.createRoute({
       name: "Catch all",
       destinationIds: [destination.id],
     });
 
-    await service.deleteSource({ id: grafana.source.id });
+    await services.sources.deleteSource({ id: grafana.source.id });
 
     expect(await store.sources.get(grafana.source.id)).toBeNull();
     expect(await store.routes.get(directRoute.id)).toBeNull();
@@ -1452,31 +1791,31 @@ describe("configuration service", () => {
   });
 
   it("deletes destination references and drops routes with no remaining targets", async () => {
-    const { store, service } = await createService();
-    const primary = await service.createDestination({
+    const { store, services } = await createTestContext();
+    const primary = await services.destinations.createDestination({
       name: "Primary webhook",
       kind: "generic_webhook",
       config: {
         url: "https://example.test/primary",
       },
     });
-    const audit = await service.createDestination({
+    const audit = await services.destinations.createDestination({
       name: "Audit webhook",
       kind: "generic_webhook",
       config: {
         url: "https://example.test/audit",
       },
     });
-    const directRoute = await service.createRoute({
+    const directRoute = await services.routes.createRoute({
       name: "Primary only",
       destinationIds: [primary.id],
     });
-    const sharedRoute = await service.createRoute({
+    const sharedRoute = await services.routes.createRoute({
       name: "Primary and audit",
       destinationIds: [primary.id, audit.id],
     });
 
-    await service.deleteDestination({ id: primary.id });
+    await services.destinations.deleteDestination({ id: primary.id });
 
     expect(await store.destinations.get(primary.id)).toBeNull();
     expect(await store.routes.get(directRoute.id)).toBeNull();
@@ -1488,19 +1827,19 @@ describe("configuration service", () => {
   });
 
   it("rejects route configuration that references unknown sources", async () => {
-    const { store, service } = await createService();
-    const source = await service.createSource({
+    const { store, services } = await createTestContext();
+    const source = await services.sources.createSource({
       name: "Grafana prod",
       provider: "grafana",
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
         url: "https://example.test/webhook",
       },
     });
-    const route = await service.createRoute({
+    const route = await services.routes.createRoute({
       name: "Known source route",
       rule: {
         sourceIds: [source.source.id],
@@ -1509,7 +1848,7 @@ describe("configuration service", () => {
     });
 
     await expect(
-      service.createRoute({
+      services.routes.createRoute({
         name: "Broken route",
         rule: {
           sourceIds: ["source-missing"],
@@ -1518,7 +1857,7 @@ describe("configuration service", () => {
       }),
     ).rejects.toThrow("Unknown source IDs: source-missing");
     await expect(
-      service.updateRoute({
+      services.routes.updateRoute({
         id: route.id,
         rule: {
           sourceIds: [source.source.id, "source-missing"],
@@ -1531,7 +1870,7 @@ describe("configuration service", () => {
   });
 
   it("rejects imported routes with unknown destinations before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1550,7 +1889,7 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow(
+    await expect(services.portability.importToml(toml)).rejects.toThrow(
       "Unknown destination IDs: destination-missing",
     );
     expect(await store.routes.list()).toEqual([]);
@@ -1560,7 +1899,7 @@ describe("configuration service", () => {
   });
 
   it("rejects imported routes with unknown sources before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1588,7 +1927,9 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow("Unknown source IDs: source-missing");
+    await expect(services.portability.importToml(toml)).rejects.toThrow(
+      "Unknown source IDs: source-missing",
+    );
     expect(await store.destinations.list()).toEqual([]);
     expect(await store.routes.list()).toEqual([]);
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
@@ -1597,7 +1938,7 @@ describe("configuration service", () => {
   });
 
   it("rejects imported routes with duplicate destinations before changing stored configuration", async () => {
-    const { store, service } = await createService();
+    const { store, services } = await createTestContext();
     const toml = [
       "[settings]",
       'schema_version = "vane.config.v1"',
@@ -1625,7 +1966,9 @@ describe("configuration service", () => {
       "",
     ].join("\n");
 
-    await expect(service.importToml(toml)).rejects.toThrow("Route destination IDs must be unique");
+    await expect(services.portability.importToml(toml)).rejects.toThrow(
+      "Route destination IDs must be unique",
+    );
     expect(await store.destinations.list()).toEqual([]);
     expect(await store.routes.list()).toEqual([]);
     expect((await store.settings.get()).rawPayloadRetentionDays).toBe(30);
@@ -1634,19 +1977,19 @@ describe("configuration service", () => {
   });
 
   it("creates and updates routes through route schemas", async () => {
-    const { store, service } = await createService();
-    const source = await service.createSource({
+    const { store, services } = await createTestContext();
+    const source = await services.sources.createSource({
       name: "Grafana prod",
       provider: "grafana",
     });
-    const destination = await service.createDestination({
+    const destination = await services.destinations.createDestination({
       name: "Ops webhook",
       kind: "generic_webhook",
       config: {
         url: "https://example.test/webhook",
       },
     });
-    const auditDestination = await service.createDestination({
+    const auditDestination = await services.destinations.createDestination({
       name: "Audit email",
       kind: "email",
       config: {
@@ -1656,7 +1999,7 @@ describe("configuration service", () => {
       },
     });
 
-    const route = await service.createRoute({
+    const route = await services.routes.createRoute({
       name: "Critical alerts",
       rule: {
         sourceIds: [source.source.id],
@@ -1668,7 +2011,7 @@ describe("configuration service", () => {
       },
       destinationIds: [destination.id, auditDestination.id],
     });
-    const updated = await service.updateRoute({
+    const updated = await services.routes.updateRoute({
       id: route.id,
       enabled: false,
       rule: {
@@ -1690,7 +2033,7 @@ describe("configuration service", () => {
     expect(updated.rule).toMatchObject({
       statuses: ["resolved"],
     });
-    expect((await service.listConfiguration()).routes).toHaveLength(1);
+    expect(await services.routes.listRoutes()).toHaveLength(1);
 
     await store.close();
   });

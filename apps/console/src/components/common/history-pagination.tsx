@@ -1,4 +1,4 @@
-import { RiArrowRightLine, RiRefreshLine } from "@remixicon/react";
+import { ArrowRight, Refresh } from "reicon-react";
 
 import { Button } from "#/components/ui/button.tsx";
 
@@ -33,7 +33,7 @@ export function HistoryPagination({
         onClick={onLatest}
         title={showLatestLabel}
       >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
+        <Refresh data-icon="inline-start" aria-hidden />
         {latestLabel}
       </Button>
       <Button
@@ -45,7 +45,7 @@ export function HistoryPagination({
         title={showOlderLabel}
       >
         {olderLabel}
-        <RiArrowRightLine data-icon="inline-end" aria-hidden />
+        <ArrowRight data-icon="inline-end" aria-hidden />
       </Button>
     </div>
   );

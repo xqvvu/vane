@@ -1,8 +1,9 @@
-import { RiPlayLine, RiTimeLine } from "@remixicon/react";
+import { Play, Clock } from "reicon-react";
+
+import type { DestinationSummary, SourceSummary } from "@vane/core";
 
 import { ContentPanel } from "#/components/common/content-panel.tsx";
 import { Button } from "#/components/ui/button.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
 import { EventsTable } from "#/features/events/ui/events-table.tsx";
 import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
@@ -16,7 +17,10 @@ import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export interface OperationsPanelProps {
-  configuration: Configuration;
+  configuration: {
+    sources: SourceSummary[];
+    destinations: DestinationSummary[];
+  };
   operations: Operations;
   search: DashboardOperationSearch;
   eventDetail: EventDetail | null;
@@ -53,10 +57,10 @@ export function OperationsPanel({
   return (
     <ContentPanel
       title={t("operations.title")}
-      icon={<RiTimeLine className="size-4" aria-hidden />}
+      icon={<Clock className="size-4" aria-hidden />}
       action={
         <Button variant="outline" size="sm" disabled={pending} onClick={onRunWorker}>
-          <RiPlayLine aria-hidden />
+          <Play aria-hidden />
           {t("common.actions.runWorker")}
         </Button>
       }

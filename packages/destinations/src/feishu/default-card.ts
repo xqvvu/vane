@@ -13,7 +13,7 @@ const defaultFeishuCardTemplateDefinition = {
     },
   },
   header: {
-    template: "red",
+    template: "{{bindings.statusColor}}",
     title: {
       tag: "plain_text",
       content: "{{event.title}}",
@@ -37,7 +37,7 @@ const defaultFeishuCardTemplateDefinition = {
           tag: "plain_text",
           content: "{{event.status}}",
         },
-        color: "orange",
+        color: "{{bindings.statusColor}}",
       },
     ],
   },

@@ -1,5 +1,9 @@
-import { RiEditLine } from "@remixicon/react";
+import { Edit2 } from "reicon-react";
 
+import type { JsonObject } from "@vane/core";
+
+import { Skeleton } from "#/components/ui/skeleton.tsx";
+import { destinationTemplateFormStateFromDraft } from "#/features/destinations/model/destination-form.ts";
 import {
   createDestinationDefaults,
   DestinationForm,
@@ -9,6 +13,7 @@ import type {
   DestinationSubmitResult,
   DestinationSummary,
   EditDestinationFormInput,
+  PreviewEditDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
@@ -18,6 +23,7 @@ export function EditDestinationForm({
   framed = true,
   layout = "panel",
   destination,
+  templateDraft,
   pending,
   onCancel,
   onPreview,
@@ -28,9 +34,10 @@ export function EditDestinationForm({
   framed?: boolean;
   layout?: "panel" | "dialog";
   destination: DestinationSummary;
+  templateDraft: JsonObject | null;
   pending: boolean;
   onCancel: () => void;
-  onPreview: (input: EditDestinationFormInput) => DestinationSubmitResult;
+  onPreview: (input: PreviewEditDestinationFormInput) => DestinationSubmitResult;
   onSubmit: (input: EditDestinationFormInput) => DestinationSubmitResult;
 }) {
   const t = useTranslations();
@@ -40,7 +47,7 @@ export function EditDestinationForm({
       {showHeader ? (
         <div className="mb-3">
           <h3 className="flex items-center gap-2 text-xs font-semibold">
-            <RiEditLine aria-hidden />
+            <Edit2 aria-hidden />
             {t("destinations.form.edit.title")}
           </h3>
           <p className="text-muted-foreground mt-1 text-xs">
@@ -55,6 +62,7 @@ export function EditDestinationForm({
         destinationCatalog={destinationCatalog}
         defaultValues={{
           ...createDestinationDefaults(),
+          ...destinationTemplateFormStateFromDraft(templateDraft),
           name: destination.name,
           kind: destination.kind,
           method: "",
@@ -76,3 +84,19 @@ export function EditDestinationForm({
     </section>
   );
 }
+
+EditDestinationForm.Skeleton = function EditDestinationFormSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-hidden>
+      <Skeleton className="h-14 w-full" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-72 w-full" />
+        <Skeleton className="h-72 w-full" />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-8 w-24" />
+      </div>
+    </div>
+  );
+};

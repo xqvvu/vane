@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.t
 import type {
   DestinationPreviewNotice,
   DestinationTestNotice,
-} from "#/features/configuration/model/configuration-types.ts";
+} from "#/features/destinations/model/destination-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 type TranslationFn = ReturnType<typeof useTranslations>;

@@ -1024,8 +1024,6 @@ export type FeishuTextSize =
  * };
  * ```
  */
-let _payloadV1;
-
 /**
  * @example
  * ```ts
@@ -1074,4 +1072,3 @@ let _payloadV1;
  * };
  * ```
  */
-let _payloadV2;

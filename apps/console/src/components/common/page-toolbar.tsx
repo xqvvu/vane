@@ -4,7 +4,7 @@ import { Badge } from "#/components/ui/badge.tsx";
 import { cn } from "#/lib/utils.ts";
 
 export interface PageToolbarProps {
-  description: ReactNode;
+  description?: ReactNode;
   actions?: ReactNode;
   badge?: ReactNode;
   tabs?: ReactNode;
@@ -44,7 +44,7 @@ export function PageToolbar({
           </div>
         ) : null}
 
-        <p className="text-muted-foreground text-sm">{description}</p>
+        {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}
 
         {tabs ? <div className="min-w-0">{tabs}</div> : null}
       </div>

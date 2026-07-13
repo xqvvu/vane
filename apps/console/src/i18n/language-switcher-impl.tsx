@@ -1,5 +1,5 @@
 import "@tanstack/react-start/client-only";
-import { RiGlobalLine } from "@remixicon/react";
+import { Globe } from "reicon-react";
 
 import { DropdownMenuGroup, DropdownMenuLabel } from "#/components/ui/dropdown-menu.tsx";
 import {
@@ -37,7 +37,7 @@ export function LanguageSelectClient() {
       }}
     >
       <SelectTrigger size="sm" aria-label={t("locale.label")} className="bg-background">
-        <RiGlobalLine data-icon="inline-start" aria-hidden />
+        <Globe data-icon="inline-start" aria-hidden />
         <SelectValue />
       </SelectTrigger>
       <SelectContent align="end">

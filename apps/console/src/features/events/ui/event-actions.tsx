@@ -1,4 +1,4 @@
-import { RiEyeLine } from "@remixicon/react";
+import { Eye } from "reicon-react";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -27,7 +27,7 @@ export function EventActions({
           aria-label={inspectLabel}
           onClick={() => onInspect(eventId)}
         >
-          <RiEyeLine data-icon="inline-start" aria-hidden />
+          <Eye data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
     </div>

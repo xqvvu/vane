@@ -21,6 +21,10 @@ export class RouteService {
     this.store = options.store;
   }
 
+  async listRoutes(): Promise<RouteDefinition[]> {
+    return this.store.routes.list();
+  }
+
   async createRoute(command: CreateRouteCommand): Promise<RouteDefinition> {
     const input = CreateRouteCommandSchema.parse(command);
 

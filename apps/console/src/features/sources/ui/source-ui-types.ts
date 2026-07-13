@@ -1,8 +1,6 @@
-import type { JsonObject } from "@vane/core";
+import type { JsonObject, SourceSummary } from "@vane/core";
 
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
-
-export type SourceSummary = Configuration["sources"][number];
+export type { SourceSummary };
 
 export type SourceFormLayout = "compact" | "dialog" | "rail";
 

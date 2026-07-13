@@ -373,9 +373,11 @@ Use shadcn for shared UI primitives and app composition.
 - Use `npx shadcn@latest info` or `info --json` to inspect local config
   before adding registry items or applying examples.
 - Follow the current config: `style` is `base-lyra`, `baseColor` is `neutral`,
-  `iconLibrary` is `remixicon`, menu color is `default`, menu accent is
-  `subtle`, Tailwind CSS entry is `src/styles.css`, and aliases come from
-  `components.json`.
+  menu color is `default`, menu accent is `subtle`, Tailwind CSS entry is
+  `src/styles.css`, and aliases come from `components.json`. The shadcn-only
+  `iconLibrary` value remains `remixicon` because its schema does not support
+  Reicon; replace registry-generated icon imports with `reicon-react` before
+  completing the change.
 - Use configured aliases, especially `#/components/ui` for primitives and
   `#/lib/utils` for utilities.
 - Prefer existing primitives and registry items over custom markup. Common
@@ -391,8 +393,8 @@ Use shadcn for shared UI primitives and app composition.
 - Compose primitives with required accessibility parts: titles for
   dialogs/sheets/drawers, grouped menu/select/command items, `AvatarFallback`,
   semantic labels, invalid states, and disabled states.
-- Use Remix Icon components for action icons unless a nearby local component
-  already establishes another convention.
+- Use Reicon components from `reicon-react` for action icons unless a nearby
+  local component already establishes another convention.
 - Use semantic tokens and variants before custom colors or typography classes.
   Keep raw Tailwind color overrides rare and justified.
 - For frontend changes that materially affect UI behavior or layout, verify in

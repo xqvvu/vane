@@ -170,9 +170,11 @@ Destinations:
 
 Settings:
 
-- Show retention and worker settings, TOML import/export, config portability, and
+- Show retention settings, TOML/JSON import/export, config portability, and
   operational summary.
-- TOML export should default to secrets omitted.
+- TOML/JSON export should default to secrets omitted.
+- TOML and JSON editors should share the same CodeMirror geometry, theme,
+  folding treatment, editable behavior, and reviewable import confirmation.
 - Import results should be summarized with counts and warnings.
 
 ## 9. Interaction Rules

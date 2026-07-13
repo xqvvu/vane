@@ -1,4 +1,4 @@
-import { RiInboxArchiveLine } from "@remixicon/react";
+import { InboxArchive } from "reicon-react";
 
 import {
   Empty,
@@ -16,7 +16,7 @@ export function DeliveriesEmptyState() {
     <Empty className="border-none p-4">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <RiInboxArchiveLine aria-hidden />
+          <InboxArchive aria-hidden />
         </EmptyMedia>
         <EmptyTitle>{t("deliveries.table.empty")}</EmptyTitle>
         <EmptyDescription>{t("deliveries.table.order")}</EmptyDescription>

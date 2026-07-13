@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { configurationQueryKeys } from "#/features/configuration/api/configuration.queries.ts";
+import { routeQueryKeys } from "#/features/routes/api/route.queries.ts";
 import {
   createRouteFn,
   deleteRouteFn,
@@ -20,7 +20,7 @@ export function useRouteMutations() {
     updateRoute,
     invalidateRoutes: () =>
       queryClient.invalidateQueries({
-        queryKey: configurationQueryKeys.all,
+        queryKey: routeQueryKeys.all,
       }),
   };
 }

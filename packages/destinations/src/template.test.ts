@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { feishuSender } from "#/feishu/index.ts";
-import { DestinationTemplateEngine } from "#/template.ts";
+import {
+  DestinationTemplateEngine,
+  DestinationTemplateSchema,
+  type TemplateBindings,
+} from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
 const input: DestinationSendInput<unknown> = {
@@ -106,6 +110,123 @@ describe("destination templates", () => {
       },
       diagnostics: [],
     });
+  });
+
+  it("resolves bindings from each allowed scalar selector", () => {
+    const bindings = {
+      status: {
+        select: "event.status",
+        cases: { firing: "status-firing" },
+        fallback: "status-fallback",
+      },
+      severity: {
+        select: "event.severity",
+        cases: { critical: "severity-critical" },
+        fallback: "severity-fallback",
+      },
+      provider: {
+        select: "source.provider",
+        cases: { grafana: "provider-grafana" },
+        fallback: "provider-fallback",
+      },
+      destination: {
+        select: "destination.kind",
+        cases: { generic_webhook: "destination-webhook" },
+        fallback: "destination-fallback",
+      },
+    } satisfies TemplateBindings;
+    const context = DestinationTemplateEngine.createRenderContext(input, { bindings });
+
+    expect(
+      DestinationTemplateEngine.renderText(
+        context,
+        "{{bindings.status}} {{bindings.severity}} {{bindings.provider}} {{bindings.destination}}",
+        "template.text",
+        bindings,
+      ),
+    ).toEqual({
+      ok: true,
+      value: "status-firing severity-critical provider-grafana destination-webhook",
+      diagnostics: [],
+    });
+  });
+
+  it("uses a required fallback and does not recursively render binding values", () => {
+    const bindings = {
+      statusText: {
+        select: "event.status",
+        cases: { resolved: "recovered" },
+        fallback: "{{event.title}}",
+      },
+    } satisfies TemplateBindings;
+    const context = DestinationTemplateEngine.createRenderContext(input, { bindings });
+
+    expect(
+      DestinationTemplateEngine.renderText(
+        context,
+        "value={{bindings.statusText}}",
+        "template.text",
+        bindings,
+      ),
+    ).toEqual({
+      ok: true,
+      value: "value={{event.title}}",
+      diagnostics: [],
+    });
+  });
+
+  it("reports unknown and unused bindings without blocking warning-only rendering", () => {
+    const bindings = {
+      unusedColor: {
+        select: "event.status",
+        cases: { firing: "red" },
+        fallback: "grey",
+      },
+    } satisfies TemplateBindings;
+    const context = DestinationTemplateEngine.createRenderContext(input, { bindings });
+
+    expect(
+      DestinationTemplateEngine.renderText(context, "{{event.title}}", "template.text", bindings),
+    ).toEqual({
+      ok: true,
+      value: "Checkout API latency high",
+      diagnostics: [
+        {
+          severity: "warning",
+          path: "template.bindings.unusedColor",
+          variable: "bindings.unusedColor",
+          message: "Destination template binding is not referenced: unusedColor",
+        },
+      ],
+    });
+
+    expect(
+      DestinationTemplateEngine.diagnoseTextTemplate(
+        "{{bindings.missing}}",
+        "template.text",
+        bindings,
+      ),
+    ).toContainEqual({
+      severity: "error",
+      path: "template.text",
+      variable: "bindings.missing",
+      message: "Destination template contains unknown variable: bindings.missing",
+    });
+  });
+
+  it("validates binding names, selectors, fallbacks, and output types", () => {
+    expect(() =>
+      DestinationTemplateSchema.parse({
+        mode: "text",
+        text: "{{bindings.statusColor}}",
+        bindings: {
+          "invalid.name": {
+            select: "event.labels.team",
+            cases: { firing: { color: "red" } },
+          },
+        },
+      }),
+    ).toThrow();
   });
 
   it("omits Feishu signing fields from previews", async () => {

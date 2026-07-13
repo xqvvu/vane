@@ -73,7 +73,9 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
 
       for (const match of input.matches) {
         for (const destinationId of match.destinationIds) {
-          const existingTarget = existingTargets.get(deliveryTargetKey(match.routeId, destinationId));
+          const existingTarget = existingTargets.get(
+            deliveryTargetKey(match.routeId, destinationId),
+          );
 
           if (existingTarget) {
             skippedExisting.push(existingTarget);

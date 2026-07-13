@@ -1,10 +1,10 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
 import { EventsPageToolbar } from "#/features/events/ui/events-page-toolbar.tsx";
 import { EventsTable } from "#/features/events/ui/events-table.tsx";
 import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
@@ -14,6 +14,8 @@ import type {
   OperationFilterData,
 } from "#/features/operations/model/operation-search.ts";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
+import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
@@ -27,8 +29,11 @@ export interface EventsPageProps {
 export function EventsPage({ search, filters, onSearchChange }: EventsPageProps) {
   const t = useTranslations();
   const navigate = useNavigate();
-  const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
+  const [{ data: sources }, { data: destinations }, { data: routes }] = useSuspenseQueries({
+    queries: [sourcesQueryOptions(), destinationsQueryOptions(), routesQueryOptions()],
+  });
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
+  const operationConfiguration = { sources, destinations };
   const { invalidateOperations } = useOperationMutations();
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const pending = pendingAction !== null;
@@ -88,13 +93,18 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
       sidebar={
         <DashboardSidebar variant="split">
           <OperationFilters
-            configuration={configuration}
+            configuration={operationConfiguration}
             search={search}
             pending={pending}
             onChange={onSearchChange}
             layout="rail"
           />
-          <OperationalSummary configuration={configuration} layout="rail" />
+          <OperationalSummary
+            sources={sources}
+            destinations={destinations}
+            routes={routes}
+            layout="rail"
+          />
         </DashboardSidebar>
       }
     />

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createDefaultDestinationRegistry } from "@vane/destinations";
@@ -9,7 +9,10 @@ import {
   createDestinationDefaults,
   DestinationForm,
 } from "#/features/destinations/ui/destination-form.tsx";
-import type { DestinationCatalog } from "#/features/destinations/ui/destination-ui-types.ts";
+import type {
+  DestinationCatalog,
+  DestinationFormPreviewInput,
+} from "#/features/destinations/ui/destination-ui-types.ts";
 import { VaneIntlProvider } from "#/i18n/provider.tsx";
 
 const defaultDestinationCatalog = createDefaultDestinationRegistry().toCatalog();
@@ -88,12 +91,78 @@ describe("destination form", () => {
     expect(cardTemplate).toContain('"schema": "2.0"');
     expect(cardTemplate).toContain("告警摘要");
     expect(cardTemplate).toContain("{{event.labels.service}}");
+    expect(cardTemplate).toContain("{{bindings.statusColor}}");
+  });
+
+  it("applies dynamic status colors to a saved fixed-color card", () => {
+    renderDestinationForm({
+      kind: "feishu",
+      templateMode: "feishu_card",
+      templateColorEnabled: false,
+      templateBindings: "{}",
+      templateCard: JSON.stringify({
+        header: {
+          template: "red",
+          text_tag_list: [
+            {
+              text: { content: "{{event.status}}" },
+              color: "orange",
+            },
+          ],
+        },
+      }),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply dynamic status colors" }));
+
+    const cardTemplate = (screen.getByLabelText("Feishu card JSON") as HTMLTextAreaElement).value;
+
+    expect(cardTemplate).toContain('"template": "{{bindings.statusColor}}"');
+    expect(cardTemplate).toContain('"color": "{{bindings.statusColor}}"');
+    expect(screen.getByText("Dynamic card color")).toBeTruthy();
+  });
+
+  it("previews the selected resolved status", async () => {
+    const onPreview = vi.fn<(input: DestinationFormPreviewInput) => unknown>();
+
+    renderDestinationForm(
+      {
+        name: "Feishu SRE",
+        kind: "feishu",
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+        templateMode: "feishu_card",
+      },
+      { onPreview },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Resolved" }));
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+
+    await waitFor(() => {
+      expect(onPreview).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sampleStatus: "resolved",
+          config: expect.objectContaining({
+            template: expect.objectContaining({
+              bindings: expect.objectContaining({
+                statusColor: expect.objectContaining({
+                  select: "event.status",
+                }),
+              }),
+            }),
+          }),
+        }),
+      );
+    });
   });
 });
 
 function renderDestinationForm(
   overrides: Partial<ReturnType<typeof createDestinationDefaults>> = {},
-  options: { destinationCatalog?: DestinationCatalog } = {},
+  options: {
+    destinationCatalog?: DestinationCatalog;
+    onPreview?: (input: DestinationFormPreviewInput) => unknown;
+  } = {},
 ) {
   render(
     <VaneIntlProvider locale="en-US">
@@ -105,7 +174,7 @@ function renderDestinationForm(
           ...createDestinationDefaults(),
           ...overrides,
         }}
-        onPreview={vi.fn<() => unknown>()}
+        onPreview={options.onPreview ?? vi.fn<() => unknown>()}
         onSubmit={vi.fn<() => unknown>()}
       />
     </VaneIntlProvider>,

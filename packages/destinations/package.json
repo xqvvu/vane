@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./email": "./src/email/index.ts",
     "./feishu": "./src/feishu/index.ts",
+    "./feishu/appearance": "./src/feishu/appearance.ts",
     "./feishu/card-types": "./src/feishu/card.types.ts",
     "./feishu/default-card": "./src/feishu/default-card.ts",
     "./generic-webhook": "./src/generic-webhook/index.ts",

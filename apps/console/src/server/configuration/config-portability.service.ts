@@ -2,24 +2,25 @@ import "@tanstack/react-start/server-only";
 import {
   ExportConfigurationCommandSchema,
   ImportConfigurationCommandSchema,
+  ImportConfigurationJsonCommandSchema,
   type ExportConfigurationCommand,
+  type ImportConfigurationResult,
   type ImportConfigurationCommand,
+  type ImportConfigurationJsonCommand,
 } from "@vane/core";
-import type { ProviderCatalogItem } from "@vane/providers";
 
-import type {
-  ConfigPortabilityServiceOptions,
-  ConfigurationSnapshot,
-} from "#/server/configuration/config-portability.service.types.ts";
+import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types.ts";
 import {
   createPortableConfiguration,
+  parsePortableConfigurationJson,
   parsePortableConfigurationToml,
   resolveDestinationSecretRefs,
   resolveSourceSecretRefs,
+  serializePortableConfigurationJson,
   serializePortableConfigurationToml,
   type ExportConfigurationOptions,
-  type ImportedConfigurationResult,
   type ImportConfigurationOptions,
+  type PortableConfiguration,
 } from "#/server/configuration/config-portability.ts";
 import {
   generateSourceToken as defaultGenerateSourceToken,
@@ -31,31 +32,42 @@ import { hashSourceToken } from "#/server/intake/intake.service.ts";
 
 export class ConfigPortabilityService {
   private readonly store: ConfigPortabilityServiceOptions["store"];
-  private readonly providers: ConfigPortabilityServiceOptions["providers"];
   private readonly destinations: ConfigPortabilityServiceOptions["destinations"];
   private readonly generateSourceToken: () => string;
 
   constructor(options: ConfigPortabilityServiceOptions) {
     this.store = options.store;
-    this.providers = options.providers;
     this.destinations = options.destinations;
     this.generateSourceToken = options.generateSourceToken ?? defaultGenerateSourceToken;
   }
 
-  async listConfiguration(): Promise<ConfigurationSnapshot> {
-    return {
-      settings: await this.store.settings.get(),
-      sources: await this.store.sources.list(),
-      destinations: await this.store.destinations.list(),
-      routes: await this.store.routes.list(),
-    };
-  }
-
-  listProviderCatalog(): ProviderCatalogItem[] {
-    return this.providers?.toCatalog() ?? [];
-  }
-
   async exportToml(options: ExportConfigurationOptions = {}): Promise<string> {
+    return serializePortableConfigurationToml(await this.createPortableConfiguration(options));
+  }
+
+  async exportJson(options: ExportConfigurationOptions = {}): Promise<string> {
+    return serializePortableConfigurationJson(await this.createPortableConfiguration(options));
+  }
+
+  async exportTomlFromCommand(command: ExportConfigurationCommand = {}): Promise<string> {
+    const input = ExportConfigurationCommandSchema.parse(command) ?? {};
+
+    return this.exportToml({
+      includeSecrets: input.includeSecrets ?? false,
+    });
+  }
+
+  async exportJsonFromCommand(command: ExportConfigurationCommand = {}): Promise<string> {
+    const input = ExportConfigurationCommandSchema.parse(command) ?? {};
+
+    return this.exportJson({
+      includeSecrets: input.includeSecrets ?? false,
+    });
+  }
+
+  private async createPortableConfiguration(
+    options: ExportConfigurationOptions,
+  ): Promise<PortableConfiguration> {
     const sourceSummaries = await this.store.sources.list();
     const sources = (
       await Promise.all(sourceSummaries.map((source) => this.store.sources.get(source.id)))
@@ -68,30 +80,20 @@ export class ConfigPortabilityService {
     ).filter((destination): destination is NonNullable<typeof destination> => destination !== null);
     const routes = await this.store.routes.list();
 
-    return serializePortableConfigurationToml(
-      createPortableConfiguration(
-        {
-          sources,
-          destinations,
-          routes,
-          settings: await this.store.settings.get(),
-        },
-        options,
-      ),
+    return createPortableConfiguration(
+      {
+        sources,
+        destinations,
+        routes,
+        settings: await this.store.settings.get(),
+      },
+      options,
     );
-  }
-
-  async exportTomlFromCommand(command: ExportConfigurationCommand = {}): Promise<string> {
-    const input = ExportConfigurationCommandSchema.parse(command) ?? {};
-
-    return this.exportToml({
-      includeSecrets: input.includeSecrets ?? false,
-    });
   }
 
   async importTomlFromCommand(
     command: ImportConfigurationCommand,
-  ): Promise<ImportedConfigurationResult> {
+  ): Promise<ImportConfigurationResult> {
     const input = ImportConfigurationCommandSchema.parse(command);
 
     return this.importToml(input.toml, {
@@ -99,12 +101,35 @@ export class ConfigPortabilityService {
     });
   }
 
+  async importJsonFromCommand(
+    command: ImportConfigurationJsonCommand,
+  ): Promise<ImportConfigurationResult> {
+    const input = ImportConfigurationJsonCommandSchema.parse(command);
+
+    return this.importJson(input.json, {
+      env: process.env,
+    });
+  }
+
+  async importJson(
+    json: string,
+    options: ImportConfigurationOptions = {},
+  ): Promise<ImportConfigurationResult> {
+    return this.importPortableConfiguration(parsePortableConfigurationJson(json), options);
+  }
+
   async importToml(
     toml: string,
     options: ImportConfigurationOptions = {},
-  ): Promise<ImportedConfigurationResult> {
-    const portable = parsePortableConfigurationToml(toml);
-    const generatedSourceTokens: ImportedConfigurationResult["generatedSourceTokens"] = [];
+  ): Promise<ImportConfigurationResult> {
+    return this.importPortableConfiguration(parsePortableConfigurationToml(toml), options);
+  }
+
+  private async importPortableConfiguration(
+    portable: PortableConfiguration,
+    options: ImportConfigurationOptions,
+  ): Promise<ImportConfigurationResult> {
+    const generatedSourceTokens: ImportConfigurationResult["generatedSourceTokens"] = [];
 
     await this.store.transaction(async (tx) => {
       await tx.settings.update({

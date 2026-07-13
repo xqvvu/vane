@@ -7,9 +7,27 @@ import {
   nonEmptyObject,
   type JsonObject,
 } from "@vane/core";
+import {
+  TemplateBindingsSchema,
+  type TemplateBindingSelector,
+  type TemplateBindings,
+} from "@vane/destinations";
+import { defaultFeishuCardBindings } from "@vane/destinations/feishu/appearance";
 
 export type DestinationFormKind = "generic_webhook" | "feishu" | "slack" | "email";
 export type DestinationTemplateFormMode = "text" | "feishu_card";
+
+export interface DestinationTemplateFormState {
+  templateMode: DestinationTemplateFormMode;
+  templateText: string;
+  templateCard: string;
+  templateBindings: string;
+  templateColorEnabled: boolean;
+  templateColorSelector: TemplateBindingSelector;
+  templateColorCases: Record<string, string>;
+  templateColorFallback: string;
+  templatePreviewStatus: "firing" | "resolved" | "unknown";
+}
 
 export function formDestinationKind(data: FormData): DestinationFormKind {
   return formDestinationKindValue(data.get("kind"));
@@ -157,15 +175,29 @@ export function destinationConfigPatchFromForm(
 }
 
 function templateFromForm(kind: DestinationFormKind, data: FormData): JsonObject | null {
+  const bindings = templateBindingsFromForm(data);
+
   if (kind === "feishu" && templateModeFromForm(data) === "feishu_card") {
     const card = formTrimmedString(data, "templateCard");
 
-    return card ? { mode: "feishu_card", card: JsonObjectSchema.parse(JSON.parse(card)) } : null;
+    return card
+      ? {
+          mode: "feishu_card",
+          card: JsonObjectSchema.parse(JSON.parse(card)),
+          ...nonEmptyObject({ bindings }),
+        }
+      : null;
   }
 
   const text = formTrimmedString(data, "templateText");
 
-  return text ? { mode: "text", text } : null;
+  return text ? { mode: "text", text, ...nonEmptyObject({ bindings }) } : null;
+}
+
+function templateBindingsFromForm(data: FormData): JsonObject {
+  const value = formTrimmedString(data, "templateBindings");
+
+  return value ? JsonObjectSchema.parse(JSON.parse(value)) : {};
 }
 
 function templateModeFromForm(data: FormData): DestinationTemplateFormMode {
@@ -176,4 +208,129 @@ function formWebhookMethod(data: FormData): "POST" | "PUT" | "PATCH" {
   const method = formString(data, "method").toUpperCase();
 
   return method === "PUT" || method === "PATCH" ? method : "POST";
+}
+
+export function createDefaultDestinationTemplateFormState(): DestinationTemplateFormState {
+  const statusColor = defaultFeishuCardBindings.statusColor;
+
+  return {
+    templateMode: "text",
+    templateText: "",
+    templateCard: "",
+    templateBindings: "{}",
+    templateColorEnabled: true,
+    templateColorSelector: statusColor.select,
+    templateColorCases: { ...statusColor.cases },
+    templateColorFallback: statusColor.fallback,
+    templatePreviewStatus: "firing",
+  };
+}
+
+export function destinationTemplateFormStateFromDraft(
+  template: JsonObject | null,
+): DestinationTemplateFormState {
+  const defaults = createDefaultDestinationTemplateFormState();
+
+  if (!template) {
+    return defaults;
+  }
+
+  const parsedBindings = TemplateBindingsSchema.safeParse(template.bindings);
+  const bindings = parsedBindings.success ? parsedBindings.data : {};
+  const statusColor = bindings.statusColor;
+  const card = JsonObjectSchema.safeParse(template.card);
+
+  return {
+    ...defaults,
+    templateMode: template.mode === "feishu_card" ? "feishu_card" : "text",
+    templateText: typeof template.text === "string" ? template.text : "",
+    templateCard: card.success ? JSON.stringify(card.data, null, 2) : "",
+    templateBindings: JSON.stringify(bindings),
+    templateColorEnabled: Boolean(statusColor),
+    templateColorSelector: statusColor?.select ?? defaults.templateColorSelector,
+    templateColorCases: statusColor ? { ...statusColor.cases } : defaults.templateColorCases,
+    templateColorFallback: statusColor?.fallback ?? defaults.templateColorFallback,
+  };
+}
+
+export function templateBindingsJsonFromFormState(
+  state: Pick<
+    DestinationTemplateFormState,
+    | "templateBindings"
+    | "templateColorEnabled"
+    | "templateColorSelector"
+    | "templateColorCases"
+    | "templateColorFallback"
+  >,
+): string {
+  const parsed = TemplateBindingsSchema.safeParse(parseJson(state.templateBindings));
+  const bindings: TemplateBindings = parsed.success ? { ...parsed.data } : {};
+
+  if (state.templateColorEnabled) {
+    bindings.statusColor = {
+      select: state.templateColorSelector,
+      cases: { ...state.templateColorCases },
+      fallback: state.templateColorFallback,
+    };
+  } else {
+    delete bindings.statusColor;
+  }
+
+  return JSON.stringify(bindings);
+}
+
+export function canApplyDynamicStatusColor(cardText: string): boolean {
+  const card = parseJsonObject(cardText);
+  const header = card ? jsonRecord(card.header) : null;
+
+  return Boolean(header && header.template !== "{{bindings.statusColor}}");
+}
+
+export function applyDynamicStatusColor(cardText: string): string {
+  const card = parseJsonObject(cardText);
+
+  if (!card) {
+    return cardText;
+  }
+
+  const header = jsonRecord(card.header);
+
+  if (!header) {
+    return cardText;
+  }
+
+  header.template = "{{bindings.statusColor}}";
+
+  if (Array.isArray(header.text_tag_list)) {
+    for (const item of header.text_tag_list) {
+      const tag = jsonRecord(item);
+      const text = jsonRecord(tag?.text);
+
+      if (tag && text?.content === "{{event.status}}") {
+        tag.color = "{{bindings.statusColor}}";
+      }
+    }
+  }
+
+  return JSON.stringify(card, null, 2);
+}
+
+function parseJsonObject(value: string): JsonObject | null {
+  const parsed = JsonObjectSchema.safeParse(parseJson(value));
+
+  return parsed.success ? parsed.data : null;
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function jsonRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }

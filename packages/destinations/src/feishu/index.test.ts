@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createFeishuSign,
+  defaultFeishuCardBindings,
   defaultFeishuCardTemplate,
   FeishuConfigSchema,
   feishuSender,
@@ -54,6 +55,7 @@ describe("feishu sender", () => {
     expect(config.template).toEqual({
       mode: "feishu_card",
       card: defaultFeishuCardTemplate,
+      bindings: defaultFeishuCardBindings,
     });
 
     const preview = await feishuSender.preview({
@@ -66,7 +68,7 @@ describe("feishu sender", () => {
       card: {
         schema: "2.0",
         config: {
-          width_mode: "fill",
+          width_mode: "compact",
           summary: {
             content: "[critical] Checkout API latency high",
           },
@@ -84,6 +86,62 @@ describe("feishu sender", () => {
     expect(JSON.stringify(preview)).toContain("服务");
     expect(JSON.stringify(preview)).toContain("checkout");
     expect(JSON.stringify(preview)).not.toContain("secret");
+  });
+
+  it.each([
+    ["firing", "red"],
+    ["resolved", "green"],
+    ["unknown", "grey"],
+  ] as const)("renders the default %s card with a %s header", async (status, color) => {
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+    });
+    const preview = await feishuSender.preview({
+      ...input,
+      normalizedEvent: {
+        ...input.normalizedEvent,
+        status,
+      },
+      config,
+    });
+
+    expect(preview).toMatchObject({
+      msg_type: "interactive",
+      card: {
+        header: {
+          template: color,
+          text_tag_list: [
+            expect.anything(),
+            {
+              color,
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  it("rejects unsupported values used by Feishu color bindings", () => {
+    expect(() =>
+      FeishuConfigSchema.parse({
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+        template: {
+          mode: "feishu_card",
+          bindings: {
+            statusColor: {
+              select: "event.status",
+              cases: { firing: "chartreuse" },
+              fallback: "grey",
+            },
+          },
+          card: {
+            header: {
+              template: "{{bindings.statusColor}}",
+            },
+          },
+        },
+      }),
+    ).toThrow(/unsupported color: chartreuse/);
   });
 
   it("sends signed text messages through an injected transport", async () => {

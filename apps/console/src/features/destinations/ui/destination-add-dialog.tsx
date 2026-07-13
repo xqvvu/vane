@@ -1,5 +1,5 @@
-import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
+import { Add2 } from "reicon-react";
 import { toast } from "sonner";
 
 import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
@@ -14,9 +14,9 @@ import {
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
 import { CreateDestinationForm } from "#/features/destinations/ui/create-destination-form.tsx";
 import type {
-  CreateDestinationFormInput,
   DestinationCatalog,
   DestinationSubmitResult,
+  PreviewDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
@@ -27,7 +27,7 @@ export function DestinationAddDialog({
 }: {
   destinationCatalog: DestinationCatalog;
   disabled?: boolean;
-  onPreview: (input: CreateDestinationFormInput) => DestinationSubmitResult;
+  onPreview: (input: PreviewDestinationFormInput) => DestinationSubmitResult;
 }) {
   const t = useTranslations();
   const [open, setOpen] = React.useState(false);
@@ -55,7 +55,7 @@ export function DestinationAddDialog({
           />
         }
       >
-        <RiAddLine data-icon="inline-start" aria-hidden />
+        <Add2 data-icon="inline-start" aria-hidden />
         {t("common.actions.add")}
       </DialogTrigger>
 

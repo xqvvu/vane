@@ -1,12 +1,6 @@
-import {
-  RiAddLine,
-  RiEditLine,
-  RiEyeLine,
-  RiQuestionLine,
-  RiResetLeftLine,
-} from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
+import { Add2, Edit2, Eye, HelpCircle, Undo } from "reicon-react";
 
 import type { AdapterConfigHelp, AdapterTemplateConfigField } from "@vane/core";
 import { defaultFeishuCardTemplate as defaultFeishuCardTemplateObject } from "@vane/destinations/feishu/default-card";
@@ -36,16 +30,22 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip
 import {
   destinationConfigFromForm,
   destinationConfigPatchFromForm,
+  applyDynamicStatusColor,
+  canApplyDynamicStatusColor,
+  createDefaultDestinationTemplateFormState,
+  templateBindingsJsonFromFormState,
   type DestinationTemplateFormMode,
   type DestinationFormKind,
 } from "#/features/destinations/model/destination-form.ts";
 import type {
   DestinationCatalog,
   DestinationFormMode,
+  DestinationFormPreviewInput,
   DestinationFormSubmitInput,
   DestinationFormValues,
   DestinationSubmitResult,
 } from "#/features/destinations/ui/destination-ui-types.ts";
+import { FeishuDynamicPropertiesField } from "#/features/destinations/ui/feishu-dynamic-properties-field.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { cn } from "#/lib/utils.ts";
 
@@ -64,7 +64,7 @@ export function DestinationForm({
   pending: boolean;
   destinationCatalog: DestinationCatalog;
   defaultValues: DestinationFormValues;
-  onPreview: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
+  onPreview: (input: DestinationFormPreviewInput) => DestinationSubmitResult;
   onSubmit: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
   onCancel?: () => void;
 }) {
@@ -91,7 +91,7 @@ export function DestinationForm({
     onSubmit: async ({ value }) => {
       const selectedKind = value.kind;
       const data = destinationValuesToFormData(value);
-      const input = {
+      const input: DestinationFormSubmitInput = {
         name: value.name,
         kind: selectedKind,
         config:
@@ -100,7 +100,9 @@ export function DestinationForm({
             : destinationConfigPatchFromForm(selectedKind, data),
       };
       const result =
-        submitIntent.current === "preview" ? await onPreview(input) : await onSubmit(input);
+        submitIntent.current === "preview"
+          ? await onPreview({ ...input, sampleStatus: value.templatePreviewStatus })
+          : await onSubmit(input);
 
       if (mode === "create" && submitIntent.current === "submit" && result !== false) {
         form.reset();
@@ -135,7 +137,7 @@ export function DestinationForm({
             type={type}
             placeholder={placeholder}
             required={required}
-            value={String(field.state.value)}
+            value={field.state.value as string}
             onBlur={field.handleBlur}
             onChange={(event) => field.handleChange(event.currentTarget.value)}
           />
@@ -172,7 +174,7 @@ export function DestinationForm({
             className={className}
             placeholder={placeholder}
             required={required}
-            value={String(field.state.value)}
+            value={field.state.value as string}
             onBlur={field.handleBlur}
             onChange={(event) => field.handleChange(event.currentTarget.value)}
           />
@@ -236,6 +238,50 @@ export function DestinationForm({
               : renderTextTemplateField("feishu")
           }
         </form.Subscribe>
+        <form.Subscribe
+          selector={(state) => ({
+            mode: state.values.templateMode,
+            card: state.values.templateCard,
+            enabled: state.values.templateColorEnabled,
+            selector: state.values.templateColorSelector,
+            cases: state.values.templateColorCases,
+            fallback: state.values.templateColorFallback,
+            previewStatus: state.values.templatePreviewStatus,
+          })}
+        >
+          {({ mode: templateMode, card, enabled, selector, cases, fallback, previewStatus }) =>
+            templateMode === "feishu_card" ? (
+              <FeishuDynamicPropertiesField
+                enabled={enabled}
+                canApply={canApplyDynamicStatusColor(card)}
+                selector={selector}
+                cases={cases}
+                fallback={fallback}
+                previewStatus={previewStatus}
+                onApply={() => {
+                  form.setFieldValue("templateCard", applyDynamicStatusColor(card));
+                  form.setFieldValue("templateColorEnabled", true);
+                }}
+                onSelectorChange={(nextSelector, nextCases) => {
+                  form.setFieldValue("templateColorSelector", nextSelector);
+                  form.setFieldValue("templateColorCases", nextCases);
+                }}
+                onCaseChange={(caseName, color) => {
+                  form.setFieldValue("templateColorCases", {
+                    ...cases,
+                    [caseName]: color,
+                  });
+                }}
+                onFallbackChange={(color) => {
+                  form.setFieldValue("templateColorFallback", color);
+                }}
+                onPreviewStatusChange={(status) => {
+                  form.setFieldValue("templatePreviewStatus", status);
+                }}
+              />
+            ) : null
+          }
+        </form.Subscribe>
         {renderTemplateVariableReference()}
       </>
     );
@@ -269,7 +315,7 @@ export function DestinationForm({
             />
           }
         >
-          <RiQuestionLine data-icon="inline-start" aria-hidden />
+          <HelpCircle data-icon="inline-start" aria-hidden />
         </TooltipTrigger>
         <TooltipContent className="max-w-96 items-start text-left" side="top">
           <span className="flex flex-col gap-1">
@@ -303,9 +349,18 @@ export function DestinationForm({
               type="button"
               variant="outline"
               size="xs"
-              onClick={() => field.handleChange(defaultFeishuCardTemplate)}
+              onClick={() => {
+                const defaults = createDefaultDestinationTemplateFormState();
+
+                field.handleChange(defaultFeishuCardTemplate);
+                form.setFieldValue("templateBindings", defaults.templateBindings);
+                form.setFieldValue("templateColorEnabled", defaults.templateColorEnabled);
+                form.setFieldValue("templateColorSelector", defaults.templateColorSelector);
+                form.setFieldValue("templateColorCases", defaults.templateColorCases);
+                form.setFieldValue("templateColorFallback", defaults.templateColorFallback);
+              }}
             >
-              <RiResetLeftLine data-icon="inline-start" aria-hidden />
+              <Undo data-icon="inline-start" aria-hidden />
               {t("destinations.form.restoreDefaultCard")}
             </Button>
           </div>
@@ -640,7 +695,7 @@ export function DestinationForm({
             submitIntent.current = "preview";
           }}
         >
-          <RiEyeLine data-icon="inline-start" aria-hidden />
+          <Eye data-icon="inline-start" aria-hidden />
           {t("destinations.form.preview")}
         </Button>
         <Button
@@ -653,9 +708,9 @@ export function DestinationForm({
           }}
         >
           {mode === "create" ? (
-            <RiAddLine data-icon="inline-start" aria-hidden />
+            <Add2 data-icon="inline-start" aria-hidden />
           ) : (
-            <RiEditLine data-icon="inline-start" aria-hidden />
+            <Edit2 data-icon="inline-start" aria-hidden />
           )}
           {mode === "create"
             ? t("destinations.form.create.submit")
@@ -667,7 +722,10 @@ export function DestinationForm({
 }
 
 export function createDestinationDefaults(): DestinationFormValues {
+  const templateDefaults = createDefaultDestinationTemplateFormState();
+
   return {
+    ...templateDefaults,
     name: "",
     kind: "generic_webhook",
     endpointUrl: "",
@@ -680,8 +738,6 @@ export function createDestinationDefaults(): DestinationFormValues {
     webhookUrl: "",
     method: "POST",
     signSecret: "",
-    templateMode: "text",
-    templateText: "",
     templateCard: defaultFeishuCardTemplate,
   };
 }
@@ -696,8 +752,15 @@ function destinationValuesToFormData(values: DestinationFormValues): FormData {
   const data = new FormData();
 
   for (const [key, value] of Object.entries(values)) {
-    data.set(key, value);
+    data.set(key, typeof value === "string" ? value : JSON.stringify(value));
   }
+
+  data.set(
+    "templateBindings",
+    values.kind === "feishu" && values.templateMode === "feishu_card"
+      ? templateBindingsJsonFromFormState(values)
+      : values.templateBindings,
+  );
 
   return data;
 }

@@ -31,6 +31,10 @@ export class SourceService {
     this.generateSourceToken = options.generateSourceToken ?? defaultGenerateSourceToken;
   }
 
+  async listSources(): Promise<SourceSummary[]> {
+    return this.store.sources.list();
+  }
+
   async createSource(command: CreateSourceCommand): Promise<CreatedSource> {
     const input = CreateSourceCommandSchema.parse(command);
     const token = this.generateSourceToken();

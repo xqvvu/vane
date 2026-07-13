@@ -1,11 +1,11 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DeliveriesPageToolbar } from "#/features/deliveries/ui/deliveries-page-toolbar.tsx";
 import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
 import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
 import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
 import type {
@@ -14,6 +14,7 @@ import type {
 } from "#/features/operations/model/operation-search.ts";
 import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
 import { showWorkerRunToast } from "#/features/operations/ui/worker-notice-panel.tsx";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
@@ -27,8 +28,11 @@ export interface DeliveriesPageProps {
 export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPageProps) {
   const t = useTranslations();
   const navigate = useNavigate();
-  const { data: configuration } = useSuspenseQuery(configurationQueryOptions());
+  const [{ data: sources }, { data: destinations }] = useSuspenseQueries({
+    queries: [sourcesQueryOptions(), destinationsQueryOptions()],
+  });
   const { data: operations } = useSuspenseQuery(operationsQueryOptions(filters));
+  const operationConfiguration = { sources, destinations };
   const { invalidateOperations, retryDelivery, runDeliveryWorker } = useOperationMutations();
   const [pendingAction, setPendingAction] = React.useState<string | null>(null);
   const pending = pendingAction !== null;
@@ -113,7 +117,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
       sidebar={
         <DashboardSidebar variant="split">
           <OperationFilters
-            configuration={configuration}
+            configuration={operationConfiguration}
             search={search}
             pending={pending}
             onChange={onSearchChange}

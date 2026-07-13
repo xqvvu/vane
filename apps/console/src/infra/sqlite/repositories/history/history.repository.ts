@@ -278,6 +278,7 @@ function countMatchedRoutes(routeMatchesJson: string | null): number {
     return 0;
   }
 
-  return decodeSchemaJson(RouteMatchResultsSchema, routeMatchesJson).filter((match) => match.matched)
-    .length;
+  return decodeSchemaJson(RouteMatchResultsSchema, routeMatchesJson).filter(
+    (match) => match.matched,
+  ).length;
 }

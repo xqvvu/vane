@@ -1,6 +1,6 @@
-import { RiRefreshLine } from "@remixicon/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
+import { Refresh } from "reicon-react";
 import { toast } from "sonner";
 
 import type { EventReplayPreview } from "@vane/core";
@@ -100,16 +100,10 @@ export function EventReplayAction({
     >
       <AlertDialogTrigger
         render={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={disabled}
-            className="w-fit"
-          />
+          <Button type="button" variant="outline" size="sm" disabled={disabled} className="w-fit" />
         }
       >
-        <RiRefreshLine data-icon="inline-start" aria-hidden />
+        <Refresh data-icon="inline-start" aria-hidden />
         {t("events.replay.action")}
       </AlertDialogTrigger>
       <AlertDialogContent>

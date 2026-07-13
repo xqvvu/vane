@@ -80,9 +80,7 @@ export class EventReplayService {
     });
   }
 
-  async previewRouteReplay(
-    command: PreviewRouteReplayCommand,
-  ): Promise<RouteReplayPreview | null> {
+  async previewRouteReplay(command: PreviewRouteReplayCommand): Promise<RouteReplayPreview | null> {
     const input = PreviewRouteReplayCommandSchema.parse(command);
     const route = await this.store.routes.get(input.routeId);
 
@@ -93,9 +91,7 @@ export class EventReplayService {
     return this.buildRoutePreview(this.store, route, input.limit);
   }
 
-  async replayRouteEvents(
-    command: ReplayRouteEventsCommand,
-  ): Promise<RouteReplayResult | null> {
+  async replayRouteEvents(command: ReplayRouteEventsCommand): Promise<RouteReplayResult | null> {
     const input = ReplayRouteEventsCommandSchema.parse(command);
 
     return this.store.transaction(async (tx) => {
@@ -236,7 +232,10 @@ export class EventReplayService {
       scannedEventCount: events.length,
       matchedEventCount,
       candidates,
-      newDeliveryCount: candidates.reduce((total, candidate) => total + candidate.newDeliveryCount, 0),
+      newDeliveryCount: candidates.reduce(
+        (total, candidate) => total + candidate.newDeliveryCount,
+        0,
+      ),
       existingDeliveryCount: candidates.reduce(
         (total, candidate) => total + candidate.existingDeliveryCount,
         0,

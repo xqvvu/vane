@@ -106,7 +106,7 @@ Feature 的 `api/*.queries.ts` / `api/*.mutations.ts` 可以导入 `#/server/fun
 
 跨 client/server 的 command schema、input validator、DTO 和投影类型放在 `@vane/core`：
 
-- `packages/core/src/configuration/configuration-commands.ts`：Source/Destination/Route/Settings/TOML import/export command schema。
+- `packages/core/src/configuration/configuration-commands.ts`：Source/Destination/Route/Settings、TOML/JSON import/export command schema。
 - `packages/core/src/operations/operations.ts`：Events/Deliveries list/detail DTO、worker health/run result projection。
 - 既有 Source、Destination、Route、Delivery、Event schema 分别放在 `packages/core/src/<module>/`。
 

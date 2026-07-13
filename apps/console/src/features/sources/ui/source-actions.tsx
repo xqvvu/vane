@@ -1,5 +1,5 @@
-import { RiDeleteBinLine, RiEditLine, RiKey2Line, RiShutDownLine } from "@remixicon/react";
 import * as React from "react";
+import { Trash, Edit2, Key2, Power } from "reicon-react";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
@@ -54,7 +54,7 @@ export function SourceActions({
           aria-label={editLabel}
           onClick={() => onEdit(source.id)}
         >
-          <RiEditLine data-icon="inline-start" aria-hidden />
+          <Edit2 data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <AlertDialog
@@ -77,7 +77,7 @@ export function SourceActions({
               />
             }
           >
-            <RiKey2Line data-icon="inline-start" aria-hidden />
+            <Key2 data-icon="inline-start" aria-hidden />
           </AlertDialogTrigger>
         </IconTooltip>
         <AlertDialogContent size="sm">
@@ -112,7 +112,7 @@ export function SourceActions({
           className={powerActionButtonClassName(source.enabled)}
           onClick={() => onToggle(source)}
         >
-          <RiShutDownLine data-icon="inline-start" aria-hidden />
+          <Power data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <AlertDialog
@@ -135,7 +135,7 @@ export function SourceActions({
               />
             }
           >
-            <RiDeleteBinLine data-icon="inline-start" aria-hidden />
+            <Trash data-icon="inline-start" aria-hidden />
           </AlertDialogTrigger>
         </IconTooltip>
         <AlertDialogContent size="sm">

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { DestinationKindSchema } from "#/destination/destination.ts";
+import { AlertStatusSchema } from "#/event/normalized-event.ts";
 import { JsonObjectSchema } from "#/json.ts";
 import { RouteDefinitionSchema } from "#/route/route.ts";
 import { SourceProviderSchema } from "#/source/source.ts";
@@ -49,9 +50,14 @@ export const TestDestinationCommandSchema = z.object({
   id: z.string().min(1),
 });
 
+export const GetDestinationTemplateDraftCommandSchema = z.object({
+  id: z.string().min(1),
+});
+
 export const PreviewDestinationCommandSchema = z.object({
   id: z.string().min(1),
   sampleEventId: z.string().min(1).optional(),
+  sampleStatus: AlertStatusSchema.optional(),
 });
 
 export const PreviewDestinationDraftCommandSchema = z.object({
@@ -59,6 +65,7 @@ export const PreviewDestinationDraftCommandSchema = z.object({
   kind: DestinationKindSchema,
   config: JsonObjectSchema.default({}),
   sampleEventId: z.string().min(1).optional(),
+  sampleStatus: AlertStatusSchema.optional(),
 });
 
 export const PreviewDestinationUpdateCommandSchema = z.object({
@@ -66,6 +73,7 @@ export const PreviewDestinationUpdateCommandSchema = z.object({
   name: z.string().trim().min(1).optional(),
   config: JsonObjectSchema.default({}),
   sampleEventId: z.string().min(1).optional(),
+  sampleStatus: AlertStatusSchema.optional(),
 });
 
 export const DeleteDestinationCommandSchema = z.object({
@@ -80,6 +88,10 @@ export const ExportConfigurationCommandSchema = z
 
 export const ImportConfigurationCommandSchema = z.object({
   toml: z.string().min(1),
+});
+
+export const ImportConfigurationJsonCommandSchema = z.object({
+  json: z.string().min(1),
 });
 
 export const UpdateAppSettingsCommandSchema = z.object({
@@ -112,12 +124,16 @@ export type DeleteSourceCommand = z.input<typeof DeleteSourceCommandSchema>;
 export type CreateDestinationCommand = z.input<typeof CreateDestinationCommandSchema>;
 export type UpdateDestinationCommand = z.input<typeof UpdateDestinationCommandSchema>;
 export type TestDestinationCommand = z.input<typeof TestDestinationCommandSchema>;
+export type GetDestinationTemplateDraftCommand = z.input<
+  typeof GetDestinationTemplateDraftCommandSchema
+>;
 export type PreviewDestinationCommand = z.input<typeof PreviewDestinationCommandSchema>;
 export type PreviewDestinationDraftCommand = z.input<typeof PreviewDestinationDraftCommandSchema>;
 export type PreviewDestinationUpdateCommand = z.input<typeof PreviewDestinationUpdateCommandSchema>;
 export type DeleteDestinationCommand = z.input<typeof DeleteDestinationCommandSchema>;
 export type ExportConfigurationCommand = z.input<typeof ExportConfigurationCommandSchema>;
 export type ImportConfigurationCommand = z.input<typeof ImportConfigurationCommandSchema>;
+export type ImportConfigurationJsonCommand = z.input<typeof ImportConfigurationJsonCommandSchema>;
 export type UpdateAppSettingsCommand = z.input<typeof UpdateAppSettingsCommandSchema>;
 export type CreateRouteCommand = z.input<typeof CreateRouteCommandSchema>;
 export type UpdateRouteCommand = z.input<typeof UpdateRouteCommandSchema>;

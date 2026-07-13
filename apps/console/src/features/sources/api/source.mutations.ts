@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { configurationQueryKeys } from "#/features/configuration/api/configuration.queries.ts";
+import { routeQueryKeys } from "#/features/routes/api/route.queries.ts";
+import { sourceQueryKeys } from "#/features/sources/api/source.queries.ts";
 import {
   createSourceFn,
   deleteSourceFn,
@@ -22,8 +23,9 @@ export function useSourceMutations() {
     updateSource,
     rotateSourceToken,
     invalidateSources: () =>
-      queryClient.invalidateQueries({
-        queryKey: configurationQueryKeys.all,
-      }),
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sourceQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: routeQueryKeys.all }),
+      ]),
   };
 }

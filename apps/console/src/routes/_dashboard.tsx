@@ -3,7 +3,6 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
 import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
 import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
@@ -20,8 +19,6 @@ export const Route = createFileRoute("/_dashboard")({
         } as never,
       });
     }
-
-    await context.queryClient.ensureQueryData(configurationQueryOptions());
   },
   component: DashboardRouteLayout,
   errorComponent: DashboardRouteError,

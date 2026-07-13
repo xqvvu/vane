@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import type { RouteDefinition } from "@vane/core";
+
 import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage.ts";
 
-type RouteSummary = Configuration["routes"][number];
+type RouteSummary = RouteDefinition;
 
 describe("destination route coverage", () => {
   it("counts enabled routes separately from disabled references", () => {

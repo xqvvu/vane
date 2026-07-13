@@ -1,4 +1,10 @@
-import type { DestinationSummary, JsonValue, NormalizedEvent, SourceSummary } from "@vane/core";
+import type {
+  DestinationSummary,
+  DestinationTemplateDraftResult,
+  JsonValue,
+  NormalizedEvent,
+  SourceSummary,
+} from "@vane/core";
 import type {
   DestinationRegistry,
   DestinationSendContext,
@@ -21,6 +27,8 @@ export interface DestinationTestResult {
   responseBody: string | null;
   error: string | null;
 }
+
+export type DestinationTemplateDraft = DestinationTemplateDraftResult;
 
 export interface DestinationPreviewResult {
   destination: DestinationSummary;

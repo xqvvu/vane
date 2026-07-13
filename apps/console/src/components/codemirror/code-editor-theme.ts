@@ -2,7 +2,7 @@ import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { EditorView } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
 
-const tomlEditorViewTheme = EditorView.theme({
+const codeEditorViewTheme = EditorView.theme({
   "&": {
     backgroundColor: "var(--background)",
     color: "var(--foreground)",
@@ -54,7 +54,7 @@ const tomlEditorViewTheme = EditorView.theme({
     minWidth: "1.4rem",
     padding: "0",
   },
-  ".cm-toml-fold-marker": {
+  ".cm-code-fold-marker": {
     alignItems: "center",
     color: "currentColor",
     display: "inline-flex",
@@ -63,13 +63,13 @@ const tomlEditorViewTheme = EditorView.theme({
     lineHeight: "1",
     width: "12px",
   },
-  ".cm-foldGutter .cm-gutterElement:not(.cm-activeLineGutter) .cm-toml-fold-marker": {
+  ".cm-foldGutter .cm-gutterElement:not(.cm-activeLineGutter) .cm-code-fold-marker": {
     color: "var(--muted-foreground)",
   },
-  ".cm-foldGutter .cm-gutterElement.cm-activeLineGutter .cm-toml-fold-marker": {
+  ".cm-foldGutter .cm-gutterElement.cm-activeLineGutter .cm-code-fold-marker": {
     color: "var(--foreground)",
   },
-  ".cm-toml-fold-marker svg": {
+  ".cm-code-fold-marker svg": {
     display: "block",
     fill: "none",
     height: "12px",
@@ -126,7 +126,7 @@ const tomlEditorViewTheme = EditorView.theme({
   },
 });
 
-const tomlHighlightStyle = HighlightStyle.define([
+const codeHighlightStyle = HighlightStyle.define([
   {
     tag: tags.heading,
     color: "var(--cm-toml-heading)",
@@ -169,4 +169,4 @@ const tomlHighlightStyle = HighlightStyle.define([
   },
 ]);
 
-export const tomlEditorTheme = [tomlEditorViewTheme, syntaxHighlighting(tomlHighlightStyle)];
+export const codeEditorTheme = [codeEditorViewTheme, syntaxHighlighting(codeHighlightStyle)];

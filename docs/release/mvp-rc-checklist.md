@@ -8,7 +8,7 @@ gate。产品范围仍以 `docs/prd/self-hosted-alert-hub-mvp.md` 为准；架�
 
 截至 2026-06-26，Vane 可以视为 **MVP baseline 已完成**：Source → Webhook intake → Event →
 Route → Destination → Delivery → Worker → History 的主链路已经贯通，并且具备 dashboard
-登录、首次 setup、SQLite 持久化、provider/destination registry、TOML import/export、健康检查和
+登录、首次 setup、SQLite 持久化、provider/destination registry、TOML/JSON import/export、健康检查和
 Docker runtime 形态。
 
 这个结论的含义是：可以停止继续往 MVP PRD 里追加功能，进入下一轮产品讨论、产出新的 post-MVP PRD，
@@ -36,7 +36,7 @@ Docker runtime 形态。
 - Delivery worker：SQLite-backed in-process worker，支持 pending/running/succeeded/failed 状态、
   attempt history、bounded retry、manual retry、adapter `retryHint`、stale running reclaim 与
   worker health projection。
-- 配置：Sources、Routes、Destinations、Settings 可通过 UI 管理；TOML import/export 避免默认导出明文
+- 配置：Sources、Routes、Destinations、Settings 可通过 UI 管理；TOML/JSON import/export 避免默认导出明文
   secret，并支持 env ref。
 - Runtime：单进程、SQLite-first、application container、request context、显式 migrations、
   health/readiness endpoint、Dockerfile、docker compose 和数据卷。
@@ -156,6 +156,6 @@ MVP baseline 已能覆盖以下演示路径；发布前仍需要用自动化 E2E
 7. 在 Events 中看到规范化告警、route match、脱敏 raw debug data。
 8. 在 Deliveries 中看到投递状态、attempts、rendered payload、失败与 retry 行为。
 9. 重启进程后 worker 不遗留永久 running delivery。
-10. 导出 TOML 时不包含明文 secret。
+10. 导出 TOML 或 JSON 时不包含明文 secret。
 11. 发布 gate 中，CI、测试、build、Docker smoke 和 E2E 通过。
 12. 发布文档能指导用户完成自托管部署、备份、升级和恢复。

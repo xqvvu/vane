@@ -1,4 +1,8 @@
-import { UpdateAppSettingsCommandSchema, type UpdateAppSettingsCommand } from "@vane/core";
+import {
+  UpdateAppSettingsCommandSchema,
+  type AppSettings,
+  type UpdateAppSettingsCommand,
+} from "@vane/core";
 
 import type {
   AppSettingsServiceOptions,
@@ -10,6 +14,10 @@ export class AppSettingsService {
 
   constructor(options: AppSettingsServiceOptions) {
     this.store = options.store;
+  }
+
+  async getAppSettings(): Promise<AppSettings> {
+    return this.store.settings.get();
   }
 
   async updateAppSettings(command: UpdateAppSettingsCommand): Promise<UpdateAppSettingsResult> {

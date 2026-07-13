@@ -1,4 +1,4 @@
-import { RiCloseLine, RiShieldCheckLine } from "@remixicon/react";
+import { X, ShieldCheck } from "reicon-react";
 import { toast } from "sonner";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
@@ -30,7 +30,7 @@ export function SourceTokenNoticePanel({
     <section className="border-l-primary bg-muted/50 border-l-4 p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <RiShieldCheckLine className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
+          <ShieldCheck className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
           <div className="min-w-0">
             <h2 className="text-sm font-semibold">{t("sources.notice.createdTitle")}</h2>
             <p className="text-muted-foreground mt-1 text-xs">
@@ -82,7 +82,7 @@ export function SourceTokenNoticePanel({
               aria-label={dismissLabel}
               onClick={onDismiss}
             >
-              <RiCloseLine aria-hidden />
+              <X aria-hidden />
             </Button>
           </IconTooltip>
         </div>

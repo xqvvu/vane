@@ -1,6 +1,6 @@
-import { RiArrowLeftLine, RiErrorWarningLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { ArrowLeft, AlertTriangle } from "reicon-react";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
@@ -27,7 +27,7 @@ export function EventDetailPage({ eventId }: { eventId: string }) {
             </section>
           ) : (
             <Alert variant="destructive">
-              <RiErrorWarningLine aria-hidden />
+              <AlertTriangle aria-hidden />
               <AlertTitle>{t("events.detail.notFoundTitle")}</AlertTitle>
               <AlertDescription>{t("events.detail.notFoundDescription")}</AlertDescription>
             </Alert>
@@ -53,7 +53,7 @@ function EventDetailPageToolbar({ eventId, canReplay }: { eventId: string; canRe
             to="/events"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit")}
           >
-            <RiArrowLeftLine data-icon="inline-start" aria-hidden />
+            <ArrowLeft data-icon="inline-start" aria-hidden />
             {t("events.detail.back")}
           </Link>
         </>

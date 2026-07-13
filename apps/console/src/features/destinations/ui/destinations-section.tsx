@@ -1,20 +1,21 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
+import type { RouteDefinition } from "@vane/core";
+
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
 import { OperationsTable } from "#/components/common/operations-table.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage.ts";
+import type { DestinationSummary } from "#/features/destinations/model/destination-types.ts";
 import { DestinationActions } from "#/features/destinations/ui/destination-actions.tsx";
 import { DestinationIdentityCell } from "#/features/destinations/ui/destination-identity-cell.tsx";
 import { DestinationRouteCoverageCell } from "#/features/destinations/ui/destination-route-coverage-cell.tsx";
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
 import { DestinationsEmptyState } from "#/features/destinations/ui/destinations-empty-state.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export interface DestinationsSectionProps {
   destinations: DestinationSummary[];
-  routes: Configuration["routes"];
+  routes: RouteDefinition[];
   pending: boolean;
   onTest: (destination: DestinationSummary) => void;
   onPreview: (destination: DestinationSummary) => void;

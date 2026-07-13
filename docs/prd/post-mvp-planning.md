@@ -13,7 +13,7 @@ Vane 的 MVP 已经建立了自托管 Alert Hub 的基本闭环：
 - 投递目标配置、预览、测试和发送。
 - SQLite-backed Delivery worker、重试和历史。
 - Events / Deliveries 运维视图。
-- Settings 与 TOML import/export。
+- Settings、TOML import/export 与 JSON import/export。
 - Docker runtime 与 health/readiness endpoint。
 
 下一阶段应该从“继续补 MVP”切换为“选择一个明确产品方向，写新的 PRD，再拆 issue”。每个新
@@ -26,7 +26,12 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 3. 新需求必须说明它如何增强 Source、Event、Route、Destination、Delivery 或配置可信度。
 4. 不引入 Redis、Postgres、Kafka、Temporal、独立 worker 服务或 SaaS 租户模型，除非有新的架构文档接受这种改变。
 5. 模板、路由和规则仍然禁止执行用户提供的 JavaScript、shell、SQL 或动态代码。
-6. Secret、raw sensitive payload、token hash、destination secret 不进入客户端 query data、route data、TOML 默认导出或普通日志。
+6. Secret、raw sensitive payload、token hash、destination secret 不进入客户端 query data、route data、TOML/JSON 默认导出或普通日志。
+
+## 已交付增量
+
+- [设置页 JSON 配置导入导出](./configuration-json-export.md)：复用 TOML 的可移植配置快照、
+  schema、事务导入和 secret 脱敏规则，增加 JSON 编辑、导入与下载。
 
 ## 当前内测配置删除策略
 

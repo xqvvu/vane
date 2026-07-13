@@ -1,21 +1,21 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
+import type { RouteDefinition, SourceSummary } from "@vane/core";
+
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
 import { OperationsTable } from "#/components/common/operations-table.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { sourceRouteCoverage } from "#/features/sources/model/source-route-coverage.ts";
 import { SourceActions } from "#/features/sources/ui/source-actions.tsx";
 import { SourceIdentityCell } from "#/features/sources/ui/source-identity-cell.tsx";
 import { SourceRouteCoverageCell } from "#/features/sources/ui/source-route-coverage-cell.tsx";
-import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
 import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell.tsx";
 import { SourcesEmptyState } from "#/features/sources/ui/sources-empty-state.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
 export interface SourcesSectionProps {
-  sources: Configuration["sources"];
-  routes: Configuration["routes"];
+  sources: SourceSummary[];
+  routes: RouteDefinition[];
   pending: boolean;
   onEdit: (sourceId: string) => void;
   onToggle: (source: SourceSummary) => void;

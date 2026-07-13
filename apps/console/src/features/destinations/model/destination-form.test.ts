@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyDynamicStatusColor,
+  canApplyDynamicStatusColor,
+  destinationTemplateFormStateFromDraft,
   destinationConfigPatchFromForm,
   destinationConfigFromForm,
   formDestinationKind,
@@ -70,6 +73,16 @@ describe("destination form helpers", () => {
     data.set("signSecret", "feishu-sign-secret");
     data.set("templateMode", "feishu_card");
     data.set(
+      "templateBindings",
+      JSON.stringify({
+        statusColor: {
+          select: "event.status",
+          cases: { firing: "red", resolved: "green", unknown: "grey" },
+          fallback: "grey",
+        },
+      }),
+    );
+    data.set(
       "templateCard",
       JSON.stringify({
         header: {
@@ -95,6 +108,13 @@ describe("destination form helpers", () => {
       signSecret: "feishu-sign-secret",
       template: {
         mode: "feishu_card",
+        bindings: {
+          statusColor: {
+            select: "event.status",
+            cases: { firing: "red", resolved: "green", unknown: "grey" },
+            fallback: "grey",
+          },
+        },
         card: {
           header: {
             title: {
@@ -154,5 +174,57 @@ describe("destination form helpers", () => {
 
   it("falls back unknown destination form kinds to generic webhook", () => {
     expect(formDestinationKindValue("unsupported")).toBe("generic_webhook");
+  });
+
+  it("loads a saved binding draft without exposing unrelated config", () => {
+    expect(
+      destinationTemplateFormStateFromDraft({
+        mode: "feishu_card",
+        bindings: {
+          statusColor: {
+            select: "event.status",
+            cases: { firing: "orange", resolved: "green" },
+            fallback: "grey",
+          },
+        },
+        card: {
+          header: { template: "{{bindings.statusColor}}" },
+        },
+      }),
+    ).toMatchObject({
+      templateMode: "feishu_card",
+      templateColorEnabled: true,
+      templateColorSelector: "event.status",
+      templateColorCases: { firing: "orange", resolved: "green" },
+      templateColorFallback: "grey",
+      templateCard: expect.stringContaining("{{bindings.statusColor}}"),
+    });
+  });
+
+  it("applies dynamic status colors only to recognized card paths", () => {
+    const card = JSON.stringify({
+      header: {
+        template: "red",
+        text_tag_list: [
+          { text: { content: "{{event.severity}}" }, color: "red" },
+          { text: { content: "{{event.status}}" }, color: "orange" },
+        ],
+      },
+      body: {
+        color: "red",
+      },
+    });
+
+    expect(canApplyDynamicStatusColor(card)).toBe(true);
+
+    const applied = JSON.parse(applyDynamicStatusColor(card)) as {
+      header: { template: string; text_tag_list: Array<{ color: string }> };
+      body: { color: string };
+    };
+
+    expect(applied.header.template).toBe("{{bindings.statusColor}}");
+    expect(applied.header.text_tag_list[0]?.color).toBe("red");
+    expect(applied.header.text_tag_list[1]?.color).toBe("{{bindings.statusColor}}");
+    expect(applied.body.color).toBe("red");
   });
 });

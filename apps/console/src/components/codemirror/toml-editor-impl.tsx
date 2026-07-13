@@ -2,11 +2,11 @@ import "@tanstack/react-start/client-only";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 
-import { tomlEditorTheme } from "#/components/codemirror/toml-editor-theme.ts";
+import { codeEditorTheme } from "#/components/codemirror/code-editor-theme.ts";
 import type { TomlEditorProps } from "#/components/codemirror/toml-editor.tsx";
 import { toml } from "#/components/codemirror/toml-language.ts";
 
-const tomlExtensions = [toml(), EditorView.lineWrapping, tomlEditorTheme];
+const tomlExtensions = [toml(), EditorView.lineWrapping, codeEditorTheme];
 
 export function TomlEditorClient({
   id,
@@ -18,12 +18,11 @@ export function TomlEditorClient({
   return (
     <div
       id={id}
-      className="border-border bg-background focus-within:ring-ring/30 min-w-0 overflow-hidden border transition-shadow focus-within:ring-[1px]"
+      className="border-border bg-background focus-within:ring-ring/30 h-full min-w-0 overflow-hidden border transition-shadow focus-within:ring-[1px]"
     >
       <CodeMirror
         value={value}
         height="28rem"
-        minHeight="28rem"
         basicSetup={{
           bracketMatching: true,
           closeBrackets: true,

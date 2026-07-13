@@ -12,6 +12,8 @@ export function renderSlackPayload(input: DestinationSendInput<SlackConfig>): Js
       ? DestinationTemplateEngine.renderTextOrThrow(
           DestinationTemplateEngine.createRenderContext(input),
           input.config.template.text,
+          "template.text",
+          input.config.template.bindings,
         )
       : event.message;
   const labelText = Object.entries(event.labels)

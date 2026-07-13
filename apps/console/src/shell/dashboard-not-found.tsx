@@ -1,5 +1,5 @@
-import { RiCompass3Line, RiHomeLine } from "@remixicon/react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { Compass, Home } from "reicon-react";
 
 import { redactText } from "@vane/core";
 
@@ -28,7 +28,7 @@ export function DashboardNotFoundPage() {
     <div className="flex min-h-[calc(100vh-3rem)] w-full items-center justify-center px-3 py-10 sm:px-8">
       <main className="flex w-full max-w-3xl flex-col gap-5">
         <Alert className="flex items-center px-4 py-5">
-          <RiCompass3Line aria-hidden />
+          <Compass aria-hidden />
           <AlertTitle className="flex flex-wrap items-center gap-3">
             <Badge className="font-mono font-bold">404</Badge>
             <h1 className="font-heading text-xl font-semibold">{t("shell.notFound.title")}</h1>
@@ -50,7 +50,7 @@ export function DashboardNotFoundPage() {
           aria-label={t("shell.notFound.actionsLabel")}
         >
           <Link to="/sources" className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}>
-            <RiHomeLine data-icon="inline-start" aria-hidden />
+            <Home data-icon="inline-start" aria-hidden />
             {t("shell.notFound.returnToSources")}
           </Link>
           <Separator orientation="vertical" className="mx-2 hidden h-7 sm:block" />

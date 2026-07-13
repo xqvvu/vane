@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { configurationQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
 import { DeliveriesPage } from "#/features/deliveries/ui/deliveries-page.tsx";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
 import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
 import {
   DashboardOperationSearchSchema,
   mergeOperationSearch,
   operationFiltersFromSearch,
 } from "#/features/operations/model/operation-search.ts";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
 export const Route = createFileRoute("/_dashboard/deliveries")({
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/_dashboard/deliveries")({
     const filters = operationFiltersFromSearch(search);
 
     await Promise.all([
-      context.queryClient.ensureQueryData(configurationQueryOptions()),
+      context.queryClient.ensureQueryData(sourcesQueryOptions()),
+      context.queryClient.ensureQueryData(destinationsQueryOptions()),
       context.queryClient.ensureQueryData(operationsQueryOptions(filters)),
     ]);
 

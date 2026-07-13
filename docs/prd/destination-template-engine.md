@@ -19,6 +19,8 @@ SRE 用户配置告警通知时，不只需要“把标题和消息拼成一段�
 - Feishu 支持 `text` 与 `feishu_card` 两种模板模式。
 - `messageTemplate` 被 `template` 完全替代，不做迁移兼容。
 - 模板语言只支持安全路径插值，不支持条件、循环、表达式、函数调用或默认值表达式。
+- 模板支持受控动态绑定（`bindings`）：从一个允许的低基数标量字段选择字符串值，再通过
+  `{{bindings.<name>}}` 插入同一份模板中的局部属性。
 - 结构化 JSON 模板递归遍历字符串字段并做变量插值。
 - 模板保存前必须通过 mode、基础结构、变量路径、大小和长度校验。
 - Preview 返回 rendered payload、safe template context、diagnostics，并可用内置样例 Event 或历史 Event 作为样本。
@@ -55,6 +57,14 @@ SRE 用户配置告警通知时，不只需要“把标题和消息拼成一段�
 25. As a security-conscious operator, I want templates to avoid user code execution, so that Vane does not become a remote code execution surface.
 26. As a security-conscious operator, I want source tokens, destination secrets, raw sensitive headers, and webhook URLs excluded from template context, so that notifications cannot leak secrets.
 27. As a maintainer, I want templates to remain Destination config JSON, so that this feature does not introduce new persistence relations before reuse is proven.
+28. As an SRE, I want one Destination template to map `event.status` to platform-specific colors, so that firing and resolved notifications are visually distinct without maintaining duplicate templates.
+29. As an SRE, I want new Feishu card Destinations to use red for firing, green for resolved, and grey for unknown by default, so that the common status-color behavior requires no setup.
+30. As an SRE, I want to customize a dynamic binding through a compact mapping editor, so that I do not need to edit binding JSON by hand.
+31. As an SRE, I want every dynamic binding to have an explicit fallback, so that previously unseen selector values render deterministically.
+32. As an SRE, I want preview to exercise each configured selector case and its fallback, so that dynamic local properties can be reviewed before save or delivery.
+33. As an SRE, I want existing customized Feishu cards to remain unchanged until I explicitly apply dynamic status colors, so that an upgrade does not silently rewrite notification appearance.
+34. As a maintainer, I want dynamic bindings to remain shared destination template infrastructure while Feishu is the first UI integration, so that later destination modes can reuse the safety model without expanding this delivery scope.
+35. As a security-conscious operator, I want bindings to select only approved scalar fields and return literal strings, so that dynamic styling does not introduce executable conditions or a workflow DSL.
 
 ## Implementation Decisions
 
@@ -75,6 +85,20 @@ SRE 用户配置告警通知时，不只需要“把标题和消息拼成一段�
 - Feishu preview/rendered payload must omit `timestamp`, `sign`, webhook URL, and sign secret.
 - Template language supports path interpolation only, using `{{event.title}}` style variables.
 - Template language does not support expressions, function calls, conditionals, loops, default-value expressions, JavaScript, shell, SQL, or dynamic code.
+- A template may declare a `bindings` record. Each binding has exactly one `select` path, a non-empty
+  `cases` string map, and a required string `fallback`.
+- Binding names must be safe path segments and are referenced as `{{bindings.<name>}}`.
+- Binding resolution happens before ordinary template interpolation. A matching case returns its literal string;
+  an unmatched selector value returns `fallback`. Case values and fallbacks are not recursively evaluated as
+  templates.
+- Template bindings may select only `event.status`, `event.severity`, `source.provider`, or
+  `destination.kind` in the first version. Arbitrary `event.labels.*` selectors are out of scope.
+- Bindings may only produce bounded strings. They cannot produce JSON objects, arrays, booleans, numbers, null,
+  template fragments, or changes to template structure.
+- Unknown binding references, invalid selector paths, missing fallbacks, invalid binding names, and invalid
+  adapter-specific values are save-blocking diagnostics. Declared but unused bindings produce warnings.
+- Adapter-specific schema may further restrict binding outputs used for platform fields. Feishu color controls
+  expose only Feishu-supported color values even though the shared binding engine operates on strings.
 - JSON templates are rendered by recursively interpolating string values only.
 - Unknown variables fail validation before save.
 - Missing allowed label values render as empty strings.
@@ -91,6 +115,21 @@ SRE 用户配置告警通知时，不只需要“把标题和消息拼成一段�
 - Template validation errors at save time reject create/update.
 - Runtime template failures become `configuration_error` with `retryHint = "not_retryable"`.
 - Feishu platform rejection remains `target_rejected` or existing HTTP classification, separate from local template validation.
+- The default Feishu card persists a `statusColor` binding with `firing -> red`, `resolved -> green`,
+  `unknown -> grey`, and `fallback -> grey`; the card header references
+  `{{bindings.statusColor}}` instead of hard-coding `red`.
+- Dynamic bindings belong to Destination template config, not Source or Route config. A Source does not own
+  separate firing and resolved templates.
+- Shared binding parsing, validation, diagnostics, and rendering live in `@vane/destinations`. The first product
+  slice exposes dynamic-property controls only for Feishu card templates; Slack, Email, and generic webhook UI
+  remain unchanged.
+- The Feishu template editor includes a compact dynamic-property section with a selector control, case mappings,
+  adapter-aware value controls such as color swatches, and a fallback. This is not a general rule builder.
+- Existing persisted Feishu cards are never rewritten automatically. When the editor recognizes a hard-coded
+  default status-color path, it may offer an explicit "apply dynamic status colors" action that stages the
+  binding and template reference changes for preview; the user must save them.
+- "Restore default template" remains a separate explicit action and warns that it replaces the complete card
+  JSON.
 
 ## Testing Decisions
 
@@ -98,10 +137,18 @@ SRE 用户配置告警通知时，不只需要“把标题和消息拼成一段�
 - Feishu sender tests should assert both text and card wire payloads using fake fetch and deterministic clock.
 - Feishu tests must assert preview/rendered payloads do not include signing fields or secrets.
 - Template tests should assert unknown variables fail before rendering, missing labels render as empty strings, and JSON path diagnostics identify nested string fields.
+- Binding tests should cover each allowed selector, exact case matching, fallback behavior, literal output,
+  unknown references, invalid selectors, missing fallback, unused-binding warnings, and rejection of non-string
+  outputs.
+- Feishu tests should assert the default card renders a red header for `firing`, green for `resolved`, and grey
+  for `unknown`, while preview and send continue using the same renderer.
 - Registry tests should assert destination catalog remains client-safe and exposes template mode metadata without leaking schema, send functions, or secret fields.
 - Configuration integration tests should assert Destination create/update rejects invalid templates and TOML import/export uses `template`.
 - Destination service preview tests should assert preview returns safe context, rendered payload, diagnostics, and redacted raw payload reference when a historical Event sample is selected.
 - UI tests should focus on user-visible behavior: selecting Feishu template mode, editing JSON, inserting variables, previewing with a sample Event, seeing diagnostics, and avoiding secret exposure.
+- Dynamic-property UI tests should cover editing case mappings, adapter-aware color selection, previewing all
+  configured status cases and fallback, applying dynamic status colors to a recognized existing card, and never
+  rewriting an existing template without an explicit save.
 - Delivery worker or delivery execution tests should assert runtime template configuration errors are non-retryable.
 - Tests should prefer external behavior at package/service/UI boundaries over private helper implementation details.
 
@@ -111,6 +158,13 @@ SRE 用户配置告警通知时，不只需要“把标题和消息拼成一段�
 - Long-term compatibility with `messageTemplate`.
 - Migration logic for old `messageTemplate` data.
 - User JavaScript, expression language, shell, SQL, dynamic code, loops, conditionals, functions, or default-value expressions.
+- Multiple templates or full-card variants selected by Source, status, severity, label, or another field.
+- Conditional insertion, removal, replacement, or merging of JSON objects, arrays, card elements, sections, or
+  actions.
+- Multi-field selectors, selector precedence, boolean expressions, nested bindings, recursive binding values, or
+  bindings that return non-string JSON values.
+- Arbitrary `event.labels.*` binding selectors.
+- Dynamic-property UI for Slack, Email, or generic webhook in the first slice.
 - Direct raw payload variables such as `{{raw.*}}`.
 - Direct source token, destination config, destination secret, raw header, route, or delivery attempt variables.
 - Complete Feishu card schema replication.

@@ -7,9 +7,9 @@ import {
   VaneConfigurationSchema,
   vaneConfigurationToTomlDocument,
   vaneTomlDocumentToConfiguration,
-  type RouteDefinition,
   type JsonObject,
   type JsonValue,
+  type RouteDefinition,
   type VaneConfigDestination,
   type VaneConfigSource,
   type VaneConfiguration,
@@ -30,14 +30,6 @@ export interface ExportConfigurationOptions {
 
 export interface ImportConfigurationOptions {
   env?: Record<string, string | undefined>;
-}
-
-export interface ImportedConfigurationResult {
-  generatedSourceTokens: Array<{
-    sourceId: string;
-    sourceName: string;
-    token: string;
-  }>;
 }
 
 export const PortableConfigurationSchema = VaneConfigurationSchema;
@@ -96,8 +88,16 @@ export function serializePortableConfigurationToml(config: PortableConfiguration
   ].join("\n");
 }
 
+export function serializePortableConfigurationJson(config: PortableConfiguration): string {
+  return `${JSON.stringify(vaneConfigurationToTomlDocument(config), null, 2)}\n`;
+}
+
 export function parsePortableConfigurationToml(toml: string): PortableConfiguration {
   return vaneTomlDocumentToConfiguration(parse(toml));
+}
+
+export function parsePortableConfigurationJson(json: string): PortableConfiguration {
+  return vaneTomlDocumentToConfiguration(JSON.parse(json));
 }
 
 export function resolveDestinationSecretRefs(

@@ -1,6 +1,6 @@
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import type { RouteDefinition } from "@vane/core";
 
-export function describeRule(rule: Configuration["routes"][number]["rule"]): string {
+export function describeRule(rule: RouteDefinition["rule"]): string {
   const labels = rule.labels.map(
     (label) => `${label.key}${label.operator === "equals" ? "=" : "~"}${label.value}`,
   );

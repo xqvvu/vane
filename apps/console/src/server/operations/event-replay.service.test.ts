@@ -162,26 +162,26 @@ describe("event replay service", () => {
       destinationIds: ["destination-1"],
     });
 
-    await expect(service.previewRouteReplay({ routeId: "route-1", limit: 20 })).resolves.toMatchObject(
-      {
-        routeId: "route-1",
-        routeName: "Critical checkout",
-        enabled: true,
-        scannedEventCount: 2,
-        matchedEventCount: 1,
-        newDeliveryCount: 1,
-        candidates: [
-          {
-            event: {
-              id: matchingEvent.id,
-              sourceName: "Generic source",
-              title: "Checkout unavailable",
-            },
-            newDeliveryCount: 1,
+    await expect(
+      service.previewRouteReplay({ routeId: "route-1", limit: 20 }),
+    ).resolves.toMatchObject({
+      routeId: "route-1",
+      routeName: "Critical checkout",
+      enabled: true,
+      scannedEventCount: 2,
+      matchedEventCount: 1,
+      newDeliveryCount: 1,
+      candidates: [
+        {
+          event: {
+            id: matchingEvent.id,
+            sourceName: "Generic source",
+            title: "Checkout unavailable",
           },
-        ],
-      },
-    );
+          newDeliveryCount: 1,
+        },
+      ],
+    });
 
     const replay = await service.replayRouteEvents({
       routeId: "route-1",
@@ -191,13 +191,13 @@ describe("event replay service", () => {
     expect(replay?.createdDeliveryIds).toEqual(["delivery-3"]);
     expect(replay?.eventCount).toBe(1);
 
-    await expect(service.previewRouteReplay({ routeId: "route-1", limit: 20 })).resolves.toMatchObject(
-      {
-        matchedEventCount: 1,
-        newDeliveryCount: 0,
-        candidates: [],
-      },
-    );
+    await expect(
+      service.previewRouteReplay({ routeId: "route-1", limit: 20 }),
+    ).resolves.toMatchObject({
+      matchedEventCount: 1,
+      newDeliveryCount: 0,
+      candidates: [],
+    });
 
     await store.close();
   });

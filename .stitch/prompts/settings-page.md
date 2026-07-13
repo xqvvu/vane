@@ -6,10 +6,11 @@ system, compact shadcn/base-lyra operational style, neutral light theme,
 restrained typography, flat 1px bordered panels, and Remix Icon-like icon
 language.
 
-Settings should support two operator modes:
+Settings should support three operator modes:
 
 1. Routine configuration through UI controls.
 2. Raw portable TOML editing/import/export.
+3. Raw portable JSON editing/import/export.
 
 The page must feel like dense self-hosted SRE software, not SaaS account
 settings, billing, tenant administration, profile management, or incident
@@ -26,13 +27,14 @@ workflow software.
    - Title `Settings`
    - Small outline `Configuration` badge
    - No descriptive paragraph
-   - A top control row containing the `UI` / `TOML` tab navigation aligned
+   - A top control row containing the `UI` / `TOML` / `JSON` tab navigation aligned
      left and a small outline `Refresh` action aligned right
 
-3. **Tabs:** The top control row uses a line-style tab bar with exactly two
+3. **Tabs:** The top control row uses a line-style tab bar with exactly three
    tabs:
    - `UI`
    - `TOML`
+   - `JSON`
 
    `UI` is selected by default with a clear underline/active state. Inactive
    tabs should be quiet. Do not create a secondary sidebar or persistent right
@@ -45,26 +47,32 @@ workflow software.
 
 5. **UI Tab Content:**
    - First panel: `OperationalSummary` with enabled Sources, enabled
-     Destinations, enabled Routes, and raw payload retention days.
-   - Below the summary, a responsive two-column grid:
-     - `App Settings` panel with raw payload retention days numeric input and
-       `Save settings` button.
-     - `Language` panel for dashboard language preference.
+     Destinations, enabled Routes, and raw payload retention days. Render it as
+     one flat segmented summary band, not four nested metric cards.
+   - Below the summary, a responsive asymmetric two-column grid. Give the
+     `App Settings` panel slightly more width for the raw payload retention days
+     field and compact `Save settings` action. Use the narrower `Language`
+     panel for dashboard language preference.
    - Remove the old `Portability and Safety` facts panel entirely.
    - Keep helper copy concise.
 
-6. **TOML Tab Content:**
-   - One wide code-oriented panel titled `Portable TOML`.
-   - Include a compact `TOML` badge and concise helper text.
+6. **TOML and JSON Tab Content:**
+   - Each format uses the same wide code-oriented panel titled `Portable
+configuration`.
+   - Include a compact format badge and concise helper text.
    - Editor area should look like GitHub light CodeMirror: white/light editor
-     surface, line number gutter, syntax-colored TOML sample text, wrapped
+     surface, line number gutter, syntax-colored TOML or JSON sample text, wrapped
      long lines, comfortable fixed height, and no plaintext secrets.
+   - Use the same CodeMirror geometry, gutter width, fold markers, focus ring,
+     syntax theme, editor height, and footer placement for both formats.
    - Footer actions:
      - Outline `Export current config`
      - Primary `Apply import`, visually disabled when editor is empty.
+   - Both editors are editable. Import validates the selected format before
+     applying the configuration transaction.
 
 7. **Responsive Behavior:** On narrow widths, keep tabs at the top, stack UI
-   panels vertically, and keep the TOML editor full-width without horizontal
+   panels vertically, and keep the TOML/JSON editor full-width without horizontal
    page overflow.
 
 ## Product Boundaries
@@ -87,7 +95,8 @@ workflow software.
 - Map the design to existing React feature modules:
   `SettingsPage`, `OperationalSummary`, `AppSettingsForm`,
   `LanguageSettingsPanel`, `PortableConfigForm`, and `ImportNoticePanel`.
-- The TOML editor maps to a CodeMirror integration, not a plain textarea.
+- The TOML and JSON editors map to CodeMirror language integrations, not plain
+  textareas.
 - Use existing shadcn primitives such as `Tabs`, `Button`, `Alert`, `Badge`,
   `Field`, `Input`, `Separator`, and compact bordered panels.
 - Keep TanStack Form as the raw retention form behavior owner.

@@ -1,4 +1,4 @@
-import { RiArrowRightLine } from "@remixicon/react";
+import { ArrowRight } from "reicon-react";
 
 import { FormPanel } from "#/components/common/content-panel.tsx";
 import {
@@ -9,6 +9,7 @@ import type {
   CreateDestinationFormInput,
   DestinationCatalog,
   DestinationSubmitResult,
+  PreviewDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
@@ -24,7 +25,7 @@ export function CreateDestinationForm({
   showHeader?: boolean;
   layout?: "panel" | "dialog";
   pending: boolean;
-  onPreview: (input: CreateDestinationFormInput) => DestinationSubmitResult;
+  onPreview: (input: PreviewDestinationFormInput) => DestinationSubmitResult;
   onSubmit: (input: CreateDestinationFormInput) => DestinationSubmitResult;
 }) {
   const t = useTranslations();
@@ -46,7 +47,7 @@ export function CreateDestinationForm({
   }
 
   return (
-    <FormPanel title={t("destinations.form.create.title")} icon={<RiArrowRightLine aria-hidden />}>
+    <FormPanel title={t("destinations.form.create.title")} icon={<ArrowRight aria-hidden />}>
       <p className="text-muted-foreground mb-3 text-xs leading-5">
         {t("destinations.form.create.description")}
       </p>

@@ -1,16 +1,17 @@
-import type { JsonObject } from "@vane/core";
-import type { DestinationCatalogItem } from "@vane/destinations";
+import type { AlertStatus, JsonObject } from "@vane/core";
 
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
-import type { DestinationFormKind } from "#/features/destinations/model/destination-form.ts";
-
-export type DestinationSummary = Configuration["destinations"][number];
-
-export type DestinationCatalog = DestinationCatalogItem[];
+import type {
+  DestinationFormKind,
+  DestinationTemplateFormState,
+} from "#/features/destinations/model/destination-form.ts";
+export type {
+  DestinationCatalog,
+  DestinationSummary,
+} from "#/features/destinations/model/destination-types.ts";
 
 export type DestinationFormMode = "create" | "edit";
 
-export type DestinationFormValues = {
+export type DestinationFormValues = DestinationTemplateFormState & {
   name: string;
   kind: DestinationFormKind;
   endpointUrl: string;
@@ -23,9 +24,6 @@ export type DestinationFormValues = {
   webhookUrl: string;
   method: string;
   signSecret: string;
-  templateMode: "text" | "feishu_card";
-  templateText: string;
-  templateCard: string;
 };
 
 export type DestinationFormSubmitInput = {
@@ -34,7 +32,15 @@ export type DestinationFormSubmitInput = {
   config: JsonObject;
 };
 
+export type DestinationFormPreviewInput = DestinationFormSubmitInput & {
+  sampleStatus: AlertStatus;
+};
+
 export type CreateDestinationFormInput = DestinationFormSubmitInput;
+export type PreviewDestinationFormInput = DestinationFormPreviewInput;
+export type PreviewEditDestinationFormInput = DestinationFormPreviewInput & {
+  id: string;
+};
 
 export type EditDestinationFormInput = DestinationFormSubmitInput & {
   id: string;

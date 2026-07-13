@@ -1,12 +1,8 @@
-import {
-  RiAddLine,
-  RiArrowDownSLine,
-  RiCloseLine,
-  RiEditLine,
-  RiGitBranchLine,
-} from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
+import { Add2, ChevronDown, X, Edit2, BranchDown } from "reicon-react";
+
+import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
 import { FormPanel } from "#/components/common/content-panel.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
@@ -28,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import {
   routeFormDefaultsFromRule,
   routeRuleFromValues,
@@ -47,13 +42,13 @@ export function CreateRouteForm({
   onSubmit,
 }: {
   showHeader?: boolean;
-  sources: Configuration["sources"];
-  destinations: Configuration["destinations"];
+  sources: SourceSummary[];
+  destinations: DestinationSummary[];
   layout?: "dialog" | "panel";
   pending: boolean;
   onSubmit: (input: {
     name: string;
-    rule: Configuration["routes"][number]["rule"];
+    rule: RouteDefinition["rule"];
     destinationIds: string[];
   }) => void;
 }) {
@@ -79,7 +74,7 @@ export function CreateRouteForm({
         destinationIds: [],
       }}
       submitLabel={t("routing.form.create.submit")}
-      submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
+      submitIcon={<Add2 data-icon="inline-start" aria-hidden />}
       resetOnSubmit
       onSubmit={(values) => {
         onSubmit({
@@ -98,7 +93,7 @@ export function CreateRouteForm({
   return (
     <FormPanel
       title={t("routing.form.create.title")}
-      icon={<RiGitBranchLine className="size-4" aria-hidden />}
+      icon={<BranchDown className="size-4" aria-hidden />}
     >
       <p className="text-muted-foreground mb-3 text-xs">{t("routing.form.create.description")}</p>
       {form}
@@ -114,15 +109,15 @@ export function EditRouteForm({
   onCancel,
   onSubmit,
 }: {
-  route: Configuration["routes"][number];
-  sources: Configuration["sources"];
-  destinations: Configuration["destinations"];
+  route: RouteDefinition;
+  sources: SourceSummary[];
+  destinations: DestinationSummary[];
   pending: boolean;
   onCancel: () => void;
   onSubmit: (input: {
     id: string;
     name: string;
-    rule: Configuration["routes"][number]["rule"];
+    rule: RouteDefinition["rule"];
     destinationIds: string[];
   }) => void;
 }) {
@@ -131,7 +126,7 @@ export function EditRouteForm({
   return (
     <section className="border-border bg-muted/30 mt-3 border p-3">
       <h3 className="flex items-center gap-2 text-xs font-semibold">
-        <RiEditLine className="size-3.5" aria-hidden />
+        <Edit2 className="size-3.5" aria-hidden />
         {t("routing.form.edit.title")}
       </h3>
       <p className="text-muted-foreground mt-1 mb-3 text-xs">
@@ -147,7 +142,7 @@ export function EditRouteForm({
           destinationIds: route.destinationIds,
         }}
         submitLabel={t("routing.form.edit.submit")}
-        submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
+        submitIcon={<Edit2 data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
             id: route.id,
@@ -180,8 +175,8 @@ function RouteForm({
   onSubmit,
   onCancel,
 }: {
-  sources: Configuration["sources"];
-  destinations: Configuration["destinations"];
+  sources: SourceSummary[];
+  destinations: DestinationSummary[];
   layout?: "dialog" | "panel";
   pending: boolean;
   defaultValues: RouteFormValues;
@@ -517,7 +512,7 @@ function DestinationMultiSelect({
   onChange,
 }: {
   id: string;
-  destinations: Configuration["destinations"];
+  destinations: DestinationSummary[];
   selectedIds: string[];
   disabled: boolean;
   placeholder: string;
@@ -531,9 +526,7 @@ function DestinationMultiSelect({
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const selectedDestinations = selectedIds
     .map((destinationId) => destinations.find((destination) => destination.id === destinationId))
-    .filter((destination): destination is Configuration["destinations"][number] =>
-      Boolean(destination),
-    );
+    .filter((destination): destination is DestinationSummary => Boolean(destination));
 
   React.useEffect(() => {
     if (!open) {
@@ -626,7 +619,7 @@ function DestinationMultiSelect({
                     onChange(selectedIds.filter((selectedId) => selectedId !== destination.id));
                   }}
                 >
-                  <RiCloseLine aria-hidden />
+                  <X aria-hidden />
                 </Button>
               </Badge>
             ))
@@ -649,7 +642,7 @@ function DestinationMultiSelect({
           {selectedDestinations.length > 0 ? (
             <span>{selectedCountLabel(selectedDestinations.length)}</span>
           ) : null}
-          <RiArrowDownSLine aria-hidden />
+          <ChevronDown aria-hidden />
         </Button>
       </div>
 

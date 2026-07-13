@@ -60,9 +60,7 @@ export interface ApplicationContainer {
   createRouteService(): Promise<RouteService>;
   createAppSettingsService(): Promise<AppSettingsService>;
   createConfigPortabilityService(
-    options?: Partial<
-      Omit<ConfigPortabilityServiceOptions, "store" | "providers" | "destinations">
-    >,
+    options?: Partial<Omit<ConfigPortabilityServiceOptions, "store" | "destinations">>,
   ): Promise<ConfigPortabilityService>;
   createWebhookIntakeService(
     options?: Partial<Omit<WebhookIntakeServiceOptions, "store" | "providers">>,
@@ -187,7 +185,6 @@ export function createApplicationContainer(
     async createConfigPortabilityService(serviceOptions = {}) {
       return new ConfigPortabilityService({
         store: await container.getSqliteStore(),
-        providers: container.getProviderRegistry(),
         destinations: container.getDestinationRegistry(),
         ...serviceOptions,
       });

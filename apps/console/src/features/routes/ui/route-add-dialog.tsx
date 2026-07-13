@@ -1,5 +1,7 @@
-import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
+import { Add2 } from "reicon-react";
+
+import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
 import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -10,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "#/components/ui/dialog.tsx";
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
 import { CreateRouteForm } from "#/features/routes/ui/route-forms.tsx";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
@@ -21,13 +22,13 @@ export function RouteAddDialog({
   pending,
   onSubmit,
 }: {
-  sources: Configuration["sources"];
-  destinations: Configuration["destinations"];
+  sources: SourceSummary[];
+  destinations: DestinationSummary[];
   disabled?: boolean;
   pending: boolean;
   onSubmit: (input: {
     name: string;
-    rule: Configuration["routes"][number]["rule"];
+    rule: RouteDefinition["rule"];
     destinationIds: string[];
   }) => void;
 }) {
@@ -55,7 +56,7 @@ export function RouteAddDialog({
           />
         }
       >
-        <RiAddLine data-icon="inline-start" aria-hidden />
+        <Add2 data-icon="inline-start" aria-hidden />
         {t("common.actions.add")}
       </DialogTrigger>
 

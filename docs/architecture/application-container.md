@@ -112,7 +112,7 @@ export const createSourceFn = createServerFn({ method: "POST" })
   });
 ```
 
-这个入口只负责 schema validation、通过 middleware 建立 dashboard context、取 service、调用业务方法。Sources、Routes、Destinations、Settings、TOML portability 分别调用 container 暴露的对应 service factory，不再经过单一 `ConfigurationService` 门面。
+这个入口只负责 schema validation、通过 middleware 建立 dashboard context、取 service、调用业务方法。Sources、Routes、Destinations、Settings、配置 portability 分别调用 container 暴露的对应 service factory，不再经过单一 `ConfigurationService` 门面。
 
 `*.functions.ts` 是 RPC boundary 文件。它们可以被 route、feature query/mutation 和 client-safe code 导入。静态 imports 可以包含 TanStack Start、`@vane/core` 契约、server function middleware，以及只在 handler 内调用的窄 runtime accessor；不要在 module 初始化阶段调用 runtime/container。
 

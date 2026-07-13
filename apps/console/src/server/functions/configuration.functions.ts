@@ -8,7 +8,9 @@ import {
   DeleteRouteCommandSchema,
   DeleteSourceCommandSchema,
   ExportConfigurationCommandSchema,
+  GetDestinationTemplateDraftCommandSchema,
   ImportConfigurationCommandSchema,
+  ImportConfigurationJsonCommandSchema,
   PreviewDestinationDraftCommandSchema,
   PreviewDestinationCommandSchema,
   PreviewDestinationUpdateCommandSchema,
@@ -22,10 +24,28 @@ import {
 
 import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware.ts";
 
-export const listConfigurationFn = createServerFn({ method: "GET" })
+export const listSourcesFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
   .handler(async ({ context }) =>
-    (await context.dashboardRequest.container.createConfigPortabilityService()).listConfiguration(),
+    (await context.dashboardRequest.container.createSourceService()).listSources(),
+  );
+
+export const listDestinationsFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .handler(async ({ context }) =>
+    (await context.dashboardRequest.container.createDestinationService()).listDestinations(),
+  );
+
+export const listRoutesFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .handler(async ({ context }) =>
+    (await context.dashboardRequest.container.createRouteService()).listRoutes(),
+  );
+
+export const getAppSettingsFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .handler(async ({ context }) =>
+    (await context.dashboardRequest.container.createAppSettingsService()).getAppSettings(),
   );
 
 export const listDestinationCatalogFn = createServerFn({ method: "GET" })
@@ -34,12 +54,13 @@ export const listDestinationCatalogFn = createServerFn({ method: "GET" })
     (await context.dashboardRequest.container.createDestinationService()).listDestinationCatalog(),
   );
 
-export const listProviderCatalogFn = createServerFn({ method: "GET" })
+export const getDestinationTemplateDraftFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
-  .handler(async ({ context }) =>
+  .validator(GetDestinationTemplateDraftCommandSchema)
+  .handler(async ({ data, context }) =>
     (
-      await context.dashboardRequest.container.createConfigPortabilityService()
-    ).listProviderCatalog(),
+      await context.dashboardRequest.container.createDestinationService()
+    ).getDestinationTemplateDraft(data),
   );
 
 export const exportConfigurationTomlFn = createServerFn({ method: "GET" })
@@ -53,6 +74,17 @@ export const exportConfigurationTomlFn = createServerFn({ method: "GET" })
     };
   });
 
+export const exportConfigurationJsonFn = createServerFn({ method: "GET" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(ExportConfigurationCommandSchema)
+  .handler(async ({ data, context }) => {
+    return {
+      json: await (
+        await context.dashboardRequest.container.createConfigPortabilityService()
+      ).exportJsonFromCommand(data),
+    };
+  });
+
 export const importConfigurationTomlFn = createServerFn({ method: "POST" })
   .middleware([requireDashboardContextMiddleware])
   .validator(ImportConfigurationCommandSchema)
@@ -60,6 +92,15 @@ export const importConfigurationTomlFn = createServerFn({ method: "POST" })
     (
       await context.dashboardRequest.container.createConfigPortabilityService()
     ).importTomlFromCommand(data),
+  );
+
+export const importConfigurationJsonFn = createServerFn({ method: "POST" })
+  .middleware([requireDashboardContextMiddleware])
+  .validator(ImportConfigurationJsonCommandSchema)
+  .handler(async ({ data, context }) =>
+    (
+      await context.dashboardRequest.container.createConfigPortabilityService()
+    ).importJsonFromCommand(data),
   );
 
 export const createSourceFn = createServerFn({ method: "POST" })

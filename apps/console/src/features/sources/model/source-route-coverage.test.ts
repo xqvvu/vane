@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { Configuration } from "#/features/configuration/model/configuration-types.ts";
+import type { RouteDefinition } from "@vane/core";
+
 import { sourceRouteCoverage } from "#/features/sources/model/source-route-coverage.ts";
 
-type RouteSummary = Configuration["routes"][number];
+type RouteSummary = RouteDefinition;
 
 describe("source route coverage", () => {
   it("counts enabled direct and catch-all routes covering a source", () => {

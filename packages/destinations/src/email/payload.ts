@@ -17,6 +17,8 @@ export function renderEmailPayload(
       ? DestinationTemplateEngine.renderTextOrThrow(
           DestinationTemplateEngine.createRenderContext(input),
           config.template.text,
+          "template.text",
+          config.template.bindings,
         )
       : renderEmailText(input);
   return {

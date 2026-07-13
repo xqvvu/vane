@@ -7,6 +7,41 @@ import type { DestinationSendInput } from "#/types.ts";
 
 const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
 const LABEL_PATH_PATTERN = /^event\.labels\.([a-zA-Z0-9_.-]+)$/;
+const BINDING_PATH_PATTERN = /^bindings\.([a-zA-Z][a-zA-Z0-9_-]{0,63})$/;
+const TEMPLATE_BINDING_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/;
+const TEMPLATE_BINDING_VALUE_MAX_LENGTH = 256;
+
+export const TemplateBindingSelectorSchema = z.enum([
+  "event.status",
+  "event.severity",
+  "source.provider",
+  "destination.kind",
+]);
+
+export const TemplateBindingSchema = z.strictObject({
+  select: TemplateBindingSelectorSchema,
+  cases: z
+    .record(z.string().min(1).max(128), z.string().max(TEMPLATE_BINDING_VALUE_MAX_LENGTH))
+    .refine((cases) => Object.keys(cases).length > 0, {
+      message: "Destination template binding cases must not be empty",
+    }),
+  fallback: z.string().max(TEMPLATE_BINDING_VALUE_MAX_LENGTH),
+});
+
+export const TemplateBindingsSchema = z
+  .record(
+    z.string().regex(TEMPLATE_BINDING_NAME_PATTERN, {
+      message: "Destination template binding name is invalid",
+    }),
+    TemplateBindingSchema,
+  )
+  .refine((bindings) => Object.keys(bindings).length <= 32, {
+    message: "Destination template supports at most 32 bindings",
+  });
+
+export type TemplateBindingSelector = z.infer<typeof TemplateBindingSelectorSchema>;
+export type TemplateBinding = z.infer<typeof TemplateBindingSchema>;
+export type TemplateBindings = z.infer<typeof TemplateBindingsSchema>;
 
 type TemplateStaticPath =
   | "event.id"
@@ -51,12 +86,18 @@ export const TextDestinationTemplateSchema = z
   .strictObject({
     mode: z.literal("text"),
     text: z.string().trim().min(1).max(4000),
+    bindings: TemplateBindingsSchema.optional(),
   })
   .superRefine((template, context) => {
     for (const diagnostic of DestinationTemplateEngine.diagnoseTextTemplate(
       template.text,
       "template.text",
+      template.bindings,
     )) {
+      if (diagnostic.severity !== "error") {
+        continue;
+      }
+
       context.addIssue({
         code: "custom",
         path: ["text"],
@@ -69,12 +110,18 @@ export const FeishuCardDestinationTemplateSchema = z
   .strictObject({
     mode: z.literal("feishu_card"),
     card: JsonObjectSchema,
+    bindings: TemplateBindingsSchema.optional(),
   })
   .superRefine((template, context) => {
     for (const diagnostic of DestinationTemplateEngine.diagnoseJsonTemplate(
       template.card,
       "template.card",
+      template.bindings,
     )) {
+      if (diagnostic.severity !== "error") {
+        continue;
+      }
+
       context.addIssue({
         code: "custom",
         path: diagnostic.path?.replace(/^template\./, "").split(".") ?? ["card"],
@@ -119,6 +166,7 @@ export interface TemplateContext {
   vane: {
     eventUrl: string;
   };
+  bindings: Record<string, string>;
 }
 
 export interface TemplateDiagnostic {
@@ -147,9 +195,9 @@ export class TemplateValidationError extends Error {
 export class DestinationTemplateEngine {
   static createRenderContext(
     input: DestinationSendInput<unknown>,
-    options: { eventUrl?: string } = {},
+    options: { eventUrl?: string; bindings?: TemplateBindings } = {},
   ): TemplateContext {
-    return {
+    const context: TemplateContext = {
       event: {
         id: input.eventId,
         title: input.normalizedEvent.title,
@@ -165,7 +213,30 @@ export class DestinationTemplateEngine {
       vane: {
         eventUrl: options.eventUrl ?? "",
       },
+      bindings: {},
     };
+
+    context.bindings = resolveTemplateBindings(
+      context,
+      options.bindings ?? templateBindingsFromConfig(input.config),
+    );
+
+    return context;
+  }
+
+  static diagnoseDestinationTemplate(
+    template: DestinationTemplate,
+    path = "template",
+  ): TemplateDiagnostic[] {
+    return template.mode === "text"
+      ? this.diagnoseTextTemplate(template.text, `${path}.text`, template.bindings)
+      : this.diagnoseJsonTemplate(template.card, `${path}.card`, template.bindings);
+  }
+
+  static diagnoseConfig(config: JsonObject): TemplateDiagnostic[] {
+    const parsed = DestinationTemplateSchema.safeParse(config.template);
+
+    return parsed.success ? this.diagnoseDestinationTemplate(parsed.data) : [];
   }
 
   static diagnoseTemplateValue(
@@ -177,22 +248,31 @@ export class DestinationTemplateEngine {
       : this.diagnoseJsonTemplate(template, path);
   }
 
-  static diagnoseTextTemplate(template: string, path = "text"): TemplateDiagnostic[] {
-    return diagnosticsForTemplateString(template, path);
+  static diagnoseTextTemplate(
+    template: string,
+    path = "text",
+    bindings: TemplateBindings = {},
+  ): TemplateDiagnostic[] {
+    return diagnosticsForTemplateEntries([{ template, path }], bindings);
   }
 
-  static diagnoseJsonTemplate(template: JsonValue, path = "template"): TemplateDiagnostic[] {
-    return diagnosticsForJsonTemplate(template, path);
+  static diagnoseJsonTemplate(
+    template: JsonValue,
+    path = "template",
+    bindings: TemplateBindings = {},
+  ): TemplateDiagnostic[] {
+    return diagnosticsForTemplateEntries(templateStringEntries(template, path), bindings);
   }
 
   static renderText(
     context: TemplateContext,
     template: string,
     path = "text",
+    bindings: TemplateBindings = {},
   ): RenderTemplateResult<string> {
-    const diagnostics = this.diagnoseTextTemplate(template, path);
+    const diagnostics = this.diagnoseTextTemplate(template, path, bindings);
 
-    if (diagnostics.length > 0) {
+    if (hasErrorDiagnostics(diagnostics)) {
       return {
         ok: false,
         value: "",
@@ -202,8 +282,8 @@ export class DestinationTemplateEngine {
 
     return {
       ok: true,
-      value: interpolateTemplateString(context, template),
-      diagnostics: [],
+      value: interpolateTemplateString(contextWithBindings(context, bindings), template),
+      diagnostics,
     };
   }
 
@@ -211,10 +291,11 @@ export class DestinationTemplateEngine {
     context: TemplateContext,
     template: JsonValue,
     path = "template",
+    bindings: TemplateBindings = {},
   ): RenderTemplateResult<JsonValue> {
-    const diagnostics = this.diagnoseJsonTemplate(template, path);
+    const diagnostics = this.diagnoseJsonTemplate(template, path, bindings);
 
-    if (diagnostics.length > 0) {
+    if (hasErrorDiagnostics(diagnostics)) {
       return {
         ok: false,
         value: null,
@@ -224,13 +305,18 @@ export class DestinationTemplateEngine {
 
     return {
       ok: true,
-      value: interpolateJsonTemplate(context, template),
-      diagnostics: [],
+      value: interpolateJsonTemplate(contextWithBindings(context, bindings), template),
+      diagnostics,
     };
   }
 
-  static renderTextOrThrow(context: TemplateContext, template: string, path = "text"): string {
-    const rendered = this.renderText(context, template, path);
+  static renderTextOrThrow(
+    context: TemplateContext,
+    template: string,
+    path = "text",
+    bindings: TemplateBindings = {},
+  ): string {
+    const rendered = this.renderText(context, template, path, bindings);
 
     if (!rendered.ok) {
       throw new TemplateValidationError(rendered.diagnostics);
@@ -243,8 +329,9 @@ export class DestinationTemplateEngine {
     context: TemplateContext,
     template: JsonValue,
     path = "template",
+    bindings: TemplateBindings = {},
   ): JsonValue {
-    const rendered = this.renderJson(context, template, path);
+    const rendered = this.renderJson(context, template, path, bindings);
 
     if (!rendered.ok) {
       throw new TemplateValidationError(rendered.diagnostics);
@@ -253,18 +340,26 @@ export class DestinationTemplateEngine {
     return rendered.value;
   }
 
-  static assertTextTemplateIsValid(template: string, path = "text"): void {
-    const diagnostics = this.diagnoseTextTemplate(template, path);
+  static assertTextTemplateIsValid(
+    template: string,
+    path = "text",
+    bindings: TemplateBindings = {},
+  ): void {
+    const diagnostics = this.diagnoseTextTemplate(template, path, bindings);
 
-    if (diagnostics.length > 0) {
+    if (hasErrorDiagnostics(diagnostics)) {
       throw new TemplateValidationError(diagnostics);
     }
   }
 
-  static assertJsonTemplateIsValid(template: JsonValue, path = "template"): void {
-    const diagnostics = this.diagnoseJsonTemplate(template, path);
+  static assertJsonTemplateIsValid(
+    template: JsonValue,
+    path = "template",
+    bindings: TemplateBindings = {},
+  ): void {
+    const diagnostics = this.diagnoseJsonTemplate(template, path, bindings);
 
-    if (diagnostics.length > 0) {
+    if (hasErrorDiagnostics(diagnostics)) {
       throw new TemplateValidationError(diagnostics);
     }
   }
@@ -287,34 +382,69 @@ export class DestinationTemplateEngine {
   }
 }
 
-function diagnosticsForJsonTemplate(value: JsonValue, path: string): TemplateDiagnostic[] {
+interface TemplateStringEntry {
+  template: string;
+  path: string;
+}
+
+function templateStringEntries(value: JsonValue, path: string): TemplateStringEntry[] {
   if (typeof value === "string") {
-    return diagnosticsForTemplateString(value, path);
+    return [{ template: value, path }];
   }
 
   if (Array.isArray(value)) {
-    return value.flatMap((item, index) => diagnosticsForJsonTemplate(item, `${path}.${index}`));
+    return value.flatMap((item, index) => templateStringEntries(item, `${path}.${index}`));
   }
 
   if (isJsonObject(value)) {
     return Object.entries(value).flatMap(([key, item]) =>
-      diagnosticsForJsonTemplate(item, `${path}.${key}`),
+      templateStringEntries(item, `${path}.${key}`),
     );
   }
 
   return [];
 }
 
-function diagnosticsForTemplateString(template: string, path: string): TemplateDiagnostic[] {
-  return [...template.matchAll(TEMPLATE_VARIABLE_PATTERN)]
-    .map((match) => match[1]!)
-    .filter((variable) => !isAllowedTemplatePath(variable))
-    .map((variable) => ({
-      severity: "error" as const,
-      path,
-      variable,
-      message: `Destination template contains unknown variable: ${variable}`,
-    }));
+function diagnosticsForTemplateEntries(
+  entries: TemplateStringEntry[],
+  bindings: TemplateBindings,
+): TemplateDiagnostic[] {
+  const bindingNames = new Set(Object.keys(bindings));
+  const referencedBindings = new Set<string>();
+  const diagnostics: TemplateDiagnostic[] = [];
+
+  for (const entry of entries) {
+    for (const match of entry.template.matchAll(TEMPLATE_VARIABLE_PATTERN)) {
+      const variable = match[1]!;
+      const bindingMatch = BINDING_PATH_PATTERN.exec(variable);
+
+      if (bindingMatch && bindingNames.has(bindingMatch[1]!)) {
+        referencedBindings.add(bindingMatch[1]!);
+      }
+
+      if (!isAllowedTemplatePath(variable, bindingNames)) {
+        diagnostics.push({
+          severity: "error",
+          path: entry.path,
+          variable,
+          message: `Destination template contains unknown variable: ${variable}`,
+        });
+      }
+    }
+  }
+
+  for (const bindingName of bindingNames) {
+    if (!referencedBindings.has(bindingName)) {
+      diagnostics.push({
+        severity: "warning",
+        path: `template.bindings.${bindingName}`,
+        variable: `bindings.${bindingName}`,
+        message: `Destination template binding is not referenced: ${bindingName}`,
+      });
+    }
+  }
+
+  return diagnostics;
 }
 
 function interpolateJsonTemplate(context: TemplateContext, value: JsonValue): JsonValue {
@@ -352,11 +482,89 @@ function templateValue(context: TemplateContext, path: string): string {
     return context.event.labels[labelMatch[1]!] ?? "";
   }
 
+  const bindingMatch = BINDING_PATH_PATTERN.exec(path);
+
+  if (bindingMatch) {
+    return context.bindings[bindingMatch[1]!] ?? "";
+  }
+
   return "";
 }
 
-function isAllowedTemplatePath(path: string): boolean {
-  return isTemplateStaticPath(path) || LABEL_PATH_PATTERN.test(path);
+function isAllowedTemplatePath(path: string, bindingNames: ReadonlySet<string>): boolean {
+  if (isTemplateStaticPath(path) || LABEL_PATH_PATTERN.test(path)) {
+    return true;
+  }
+
+  const bindingMatch = BINDING_PATH_PATTERN.exec(path);
+
+  return Boolean(bindingMatch && bindingNames.has(bindingMatch[1]!));
+}
+
+function resolveTemplateBindings(
+  context: TemplateContext,
+  bindings: TemplateBindings,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(bindings).map(([name, binding]) => {
+      const selectorValue = templateBindingSelectorValue(context, binding.select);
+      const value = Object.hasOwn(binding.cases, selectorValue)
+        ? binding.cases[selectorValue]!
+        : binding.fallback;
+
+      return [name, value];
+    }),
+  );
+}
+
+function contextWithBindings(
+  context: TemplateContext,
+  bindings: TemplateBindings,
+): TemplateContext {
+  return {
+    ...context,
+    bindings: resolveTemplateBindings(context, bindings),
+  };
+}
+
+function templateBindingSelectorValue(
+  context: TemplateContext,
+  selector: TemplateBindingSelector,
+): string {
+  switch (selector) {
+    case "event.status":
+      return context.event.status;
+    case "event.severity":
+      return context.event.severity;
+    case "source.provider":
+      return context.source.provider;
+    case "destination.kind":
+      return context.destination.kind;
+  }
+}
+
+function templateBindingsFromConfig(config: unknown): TemplateBindings {
+  if (!isUnknownRecord(config)) {
+    return {};
+  }
+
+  const template = config.template;
+
+  if (!isUnknownRecord(template)) {
+    return {};
+  }
+
+  const parsed = TemplateBindingsSchema.safeParse(template.bindings);
+
+  return parsed.success ? parsed.data : {};
+}
+
+function hasErrorDiagnostics(diagnostics: TemplateDiagnostic[]): boolean {
+  return diagnostics.some((diagnostic) => diagnostic.severity === "error");
+}
+
+function isUnknownRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isTemplateStaticPath(path: string): path is TemplateStaticPath {
