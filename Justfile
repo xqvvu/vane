@@ -63,3 +63,22 @@ test-providers:
 [group('Packages')]
 test-destinations:
     pnpm --filter @vane/destinations test
+
+# Build and push a multi-platform image.
+[group('Docker')]
+docker-buildx image tag:
+    docker buildx build \
+        --platform "linux/amd64,linux/arm64" \
+        --tag "{{ image }}:{{ tag }}" \
+        --push \
+        .
+
+# Tag a local image for a registry.
+[group('Docker')]
+docker-tag source image tag:
+    docker tag "{{ source }}" "{{ image }}:{{ tag }}"
+
+# Push a tagged local image.
+[group('Docker')]
+docker-push image tag:
+    docker push "{{ image }}:{{ tag }}"
