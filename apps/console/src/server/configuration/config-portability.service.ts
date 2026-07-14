@@ -133,6 +133,8 @@ export class ConfigPortabilityService {
 
     await this.store.transaction(async (tx) => {
       await tx.settings.update({
+        locale: portable.settings.locale,
+        timeZone: portable.settings.timeZone,
         rawPayloadRetentionDays: portable.settings.rawPayloadRetentionDays,
       });
 

@@ -1,4 +1,4 @@
-import { Eye, Restart } from "reicon-react";
+import { RiEyeLine, RiRestartLine } from "@remixicon/react";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -32,7 +32,7 @@ export function DeliveryActions({
             aria-label={retryLabel}
             onClick={() => onRetry(delivery.id)}
           >
-            <Restart data-icon="inline-start" aria-hidden />
+            <RiRestartLine data-icon="inline-start" aria-hidden />
           </Button>
         </IconTooltip>
       ) : null}
@@ -45,7 +45,7 @@ export function DeliveryActions({
           aria-label={inspectLabel}
           onClick={() => onInspect(delivery.id)}
         >
-          <Eye data-icon="inline-start" aria-hidden />
+          <RiEyeLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
     </div>

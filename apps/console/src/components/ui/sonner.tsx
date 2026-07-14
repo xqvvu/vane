@@ -1,5 +1,11 @@
+import {
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiErrorWarningLine,
+  RiInformationLine,
+  RiLoaderLine,
+} from "@remixicon/react";
 import type { CSSProperties } from "react";
-import { CheckCircle, XCircle, AlertTriangle, InfoCircle, Loader } from "reicon-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
@@ -8,11 +14,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="system"
       className="toaster group"
       icons={{
-        success: <CheckCircle aria-hidden />,
-        info: <InfoCircle aria-hidden />,
-        warning: <AlertTriangle aria-hidden />,
-        error: <XCircle aria-hidden />,
-        loading: <Loader aria-hidden />,
+        success: <RiCheckboxCircleLine aria-hidden />,
+        info: <RiInformationLine aria-hidden />,
+        warning: <RiErrorWarningLine aria-hidden />,
+        error: <RiCloseCircleLine aria-hidden />,
+        loading: <RiLoaderLine aria-hidden />,
       }}
       style={
         {

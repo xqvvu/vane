@@ -1,8 +1,8 @@
 import "@tanstack/react-start/client-only";
+import { RiLoginCircleLine } from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Login } from "reicon-react";
 import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
@@ -165,7 +165,7 @@ export function LoginFormClient({ redirectTo }: LoginFormProps) {
               {({ canSubmit, isSubmitting }) => (
                 <UiField>
                   <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                    <Login data-icon="inline-start" aria-hidden />
+                    <RiLoginCircleLine data-icon="inline-start" aria-hidden />
                     {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
                   </Button>
                 </UiField>

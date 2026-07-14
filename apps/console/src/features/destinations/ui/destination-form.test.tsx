@@ -89,7 +89,7 @@ describe("destination form", () => {
     const cardTemplate = (screen.getByLabelText("Feishu card JSON") as HTMLTextAreaElement).value;
 
     expect(cardTemplate).toContain('"schema": "2.0"');
-    expect(cardTemplate).toContain("告警摘要");
+    expect(cardTemplate).toContain("Alert summary");
     expect(cardTemplate).toContain("{{event.labels.service}}");
     expect(cardTemplate).toContain("{{bindings.statusColor}}");
   });

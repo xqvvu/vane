@@ -1,4 +1,4 @@
-import { ArrowRight } from "reicon-react";
+import { RiArrowRightLine } from "@remixicon/react";
 
 import {
   Empty,
@@ -16,7 +16,7 @@ export function DestinationsEmptyState() {
     <Empty className="border-0 py-3">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <ArrowRight aria-hidden />
+          <RiArrowRightLine aria-hidden />
         </EmptyMedia>
         <EmptyTitle>{t("destinations.table.empty.title")}</EmptyTitle>
         <EmptyDescription>{t("destinations.table.empty.description")}</EmptyDescription>

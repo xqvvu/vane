@@ -1,4 +1,4 @@
-import { CheckCircle, Key2 } from "reicon-react";
+import { RiCheckboxCircleLine, RiKey2Line } from "@remixicon/react";
 
 import type { ImportConfigurationResult } from "@vane/core";
 
@@ -15,7 +15,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
 
   return (
     <Alert>
-      <CheckCircle aria-hidden />
+      <RiCheckboxCircleLine aria-hidden />
       <AlertTitle>{t("configuration.importNotice.title")}</AlertTitle>
       <AlertDescription>
         {notice.generatedSourceTokens.length === 0
@@ -30,7 +30,7 @@ export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResul
             return (
               <div key={source.sourceId} className="border-border grid gap-1 border p-2">
                 <div className="flex items-center gap-2 font-medium">
-                  <Key2 className="size-3.5" aria-hidden />
+                  <RiKey2Line className="size-3.5" aria-hidden />
                   {source.sourceName}
                 </div>
                 <div className="text-muted-foreground">

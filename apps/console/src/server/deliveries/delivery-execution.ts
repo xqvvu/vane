@@ -6,6 +6,7 @@ import type {
   DestinationRetryHint,
   DestinationSendContext,
   DestinationRegistry,
+  DestinationPresentation,
 } from "@vane/destinations";
 
 import type {
@@ -49,7 +50,11 @@ export class DeliveryExecution {
     this.maxDelayMs = options.backoff?.maxDelayMs ?? 15 * 60_000;
   }
 
-  async execute(delivery: ClaimedDelivery, now: string): Promise<DeliveryExecutionOutcome> {
+  async execute(
+    delivery: ClaimedDelivery,
+    now: string,
+    presentation?: DestinationPresentation,
+  ): Promise<DeliveryExecutionOutcome> {
     try {
       const sendResult = await this.destinations.send(
         delivery.destination.kind,
@@ -59,6 +64,7 @@ export class DeliveryExecution {
           destination: delivery.destination,
           normalizedEvent: delivery.event.normalized,
           config: delivery.destination.config,
+          presentation,
         },
         this.sendContext,
       );

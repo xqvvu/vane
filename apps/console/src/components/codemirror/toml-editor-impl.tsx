@@ -22,7 +22,8 @@ export function TomlEditorClient({
     >
       <CodeMirror
         value={value}
-        height="28rem"
+        height="100%"
+        minHeight="min(28rem, 100%)"
         basicSetup={{
           bracketMatching: true,
           closeBrackets: true,
@@ -37,7 +38,7 @@ export function TomlEditorClient({
         readOnly={readOnly}
         placeholder={placeholder}
         theme="none"
-        className="min-w-0"
+        className="h-full min-w-0"
         onChange={onChange}
       />
     </div>

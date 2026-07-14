@@ -58,6 +58,8 @@ export class DeliveryWorker {
         now,
         limit: options.limit ?? this.batchSize,
       });
+      const settings = await this.store.settings.get();
+      const presentation = { locale: settings.locale, timeZone: settings.timeZone };
       const result: DeliveryWorkerRunResult = {
         claimed: claimed.length,
         reclaimed: reclaimed.reclaimed,
@@ -69,7 +71,7 @@ export class DeliveryWorker {
       };
 
       for (const delivery of claimed) {
-        addOutcome(result, await this.execution.execute(delivery, now));
+        addOutcome(result, await this.execution.execute(delivery, now, presentation));
       }
 
       result.finishedAt = options.now ?? this.now();

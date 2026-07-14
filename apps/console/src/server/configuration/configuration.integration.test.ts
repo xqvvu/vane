@@ -504,7 +504,7 @@ describe("configuration capabilities", () => {
     });
 
     expect(emailPreview.renderedPayload).toMatchObject({
-      subject: "[INFO firing] Vane destination test",
+      subject: "[Info Firing] Vane destination test",
     });
     expect(emailPreview.renderedPayload).not.toHaveProperty("to");
     expect(emailPreview.renderedPayload).not.toHaveProperty("from");
@@ -996,7 +996,11 @@ describe("configuration capabilities", () => {
       },
       destinationIds: [destination.id],
     });
-    await first.services.settings.updateAppSettings({ rawPayloadRetentionDays: 7 });
+    await first.services.settings.updateAppSettings({
+      locale: "zh-Hans",
+      timeZone: "Asia/Shanghai",
+      rawPayloadRetentionDays: 7,
+    });
 
     const toml = await first.services.portability.exportToml({
       now: () => now,
@@ -1016,6 +1020,8 @@ describe("configuration capabilities", () => {
       },
     ]);
     expect(await second.store.settings.get()).toEqual({
+      locale: "zh-Hans",
+      timeZone: "Asia/Shanghai",
       rawPayloadRetentionDays: 7,
     });
     expect(await second.store.sources.get(source.source.id)).toMatchObject({
@@ -1155,7 +1161,11 @@ describe("configuration capabilities", () => {
       },
       destinationIds: [destination.id],
     });
-    await first.services.settings.updateAppSettings({ rawPayloadRetentionDays: 7 });
+    await first.services.settings.updateAppSettings({
+      locale: "zh-Hans",
+      timeZone: "Asia/Shanghai",
+      rawPayloadRetentionDays: 7,
+    });
 
     const json = await first.services.portability.exportJson({
       now: () => now,
@@ -1175,6 +1185,8 @@ describe("configuration capabilities", () => {
       },
     ]);
     expect(await second.store.settings.get()).toEqual({
+      locale: "zh-Hans",
+      timeZone: "Asia/Shanghai",
       rawPayloadRetentionDays: 7,
     });
     expect(await second.store.sources.get(source.source.id)).toMatchObject({

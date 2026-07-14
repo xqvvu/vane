@@ -1,6 +1,6 @@
+import { RiRefreshLine } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
-import { Refresh } from "reicon-react";
 import { toast } from "sonner";
 
 import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
@@ -99,7 +99,7 @@ export function DestinationEditDialog({
                 size="xs"
                 onClick={() => void templateDraftQuery.refetch()}
               >
-                <Refresh data-icon="inline-start" aria-hidden />
+                <RiRefreshLine data-icon="inline-start" aria-hidden />
                 {t("common.actions.retry")}
               </Button>
             </AlertDescription>

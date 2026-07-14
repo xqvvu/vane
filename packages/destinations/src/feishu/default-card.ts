@@ -9,7 +9,7 @@ const defaultFeishuCardTemplateDefinition = {
     width_mode: "compact",
     enable_forward: true,
     summary: {
-      content: "[{{event.severity}}] {{event.title}}",
+      content: "[{{event.severityDisplay}}] {{event.title}}",
     },
   },
   header: {
@@ -20,14 +20,14 @@ const defaultFeishuCardTemplateDefinition = {
     },
     subtitle: {
       tag: "plain_text",
-      content: "{{source.name}} · {{event.occurredAt}}",
+      content: "{{source.name}} · {{event.occurredAtDisplay}}",
     },
     text_tag_list: [
       {
         tag: "text_tag",
         text: {
           tag: "plain_text",
-          content: "{{event.severity}}",
+          content: "{{event.severityDisplay}}",
         },
         color: "red",
       },
@@ -35,7 +35,7 @@ const defaultFeishuCardTemplateDefinition = {
         tag: "text_tag",
         text: {
           tag: "plain_text",
-          content: "{{event.status}}",
+          content: "{{event.statusDisplay}}",
         },
         color: "{{bindings.statusColor}}",
       },
@@ -48,7 +48,7 @@ const defaultFeishuCardTemplateDefinition = {
     elements: [
       {
         tag: "markdown",
-        content: "**告警摘要**\n{{event.message}}",
+        content: "**Alert summary**\n{{event.message}}",
         text_size: "normal",
       },
       {
@@ -66,7 +66,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**状态**\n{{event.status}}",
+                  content: "**Status**\n{{event.statusDisplay}}",
                   text_size: "notation",
                 },
               },
@@ -74,7 +74,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**告警源**\n{{source.name}}",
+                  content: "**Source**\n{{source.name}}",
                   text_size: "notation",
                 },
               },
@@ -90,7 +90,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**级别**\n{{event.severity}}",
+                  content: "**Severity**\n{{event.severityDisplay}}",
                   text_size: "notation",
                 },
               },
@@ -98,7 +98,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**上游系统**\n{{source.provider}}",
+                  content: "**Upstream system**\n{{source.provider}}",
                   text_size: "notation",
                 },
               },
@@ -119,7 +119,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**服务**\n{{event.labels.service}}",
+                  content: "**Service**\n{{event.labels.service}}",
                   text_size: "notation",
                 },
               },
@@ -134,7 +134,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**环境**\n{{event.labels.environment}}",
+                  content: "**Environment**\n{{event.labels.environment}}",
                   text_size: "notation",
                 },
               },
@@ -158,3 +158,68 @@ const defaultFeishuCardTemplateDefinition = {
 export const defaultFeishuCardTemplate: JsonObject = JsonObjectSchema.parse(
   defaultFeishuCardTemplateDefinition,
 );
+
+const zhHansText = new Map([
+  ["**Alert summary**\n{{event.message}}", "**告警摘要**\n{{event.message}}"],
+  ["**Status**\n{{event.statusDisplay}}", "**状态**\n{{event.statusDisplay}}"],
+  ["**Source**\n{{source.name}}", "**告警源**\n{{source.name}}"],
+  ["**Severity**\n{{event.severityDisplay}}", "**级别**\n{{event.severityDisplay}}"],
+  ["**Upstream system**\n{{source.provider}}", "**上游系统**\n{{source.provider}}"],
+  ["**Service**\n{{event.labels.service}}", "**服务**\n{{event.labels.service}}"],
+  ["**Environment**\n{{event.labels.environment}}", "**环境**\n{{event.labels.environment}}"],
+]);
+
+const legacyDefaultText = new Map([
+  ["[{{event.severityDisplay}}] {{event.title}}", "[{{event.severity}}] {{event.title}}"],
+  ["{{source.name}} · {{event.occurredAtDisplay}}", "{{source.name}} · {{event.occurredAt}}"],
+  ["{{event.severityDisplay}}", "{{event.severity}}"],
+  ["{{event.statusDisplay}}", "{{event.status}}"],
+  ["**Alert summary**\n{{event.message}}", "**告警摘要**\n{{event.message}}"],
+  ["**Status**\n{{event.statusDisplay}}", "**状态**\n{{event.status}}"],
+  ["**Source**\n{{source.name}}", "**告警源**\n{{source.name}}"],
+  ["**Severity**\n{{event.severityDisplay}}", "**级别**\n{{event.severity}}"],
+  ["**Upstream system**\n{{source.provider}}", "**上游系统**\n{{source.provider}}"],
+  ["**Service**\n{{event.labels.service}}", "**服务**\n{{event.labels.service}}"],
+  ["**Environment**\n{{event.labels.environment}}", "**环境**\n{{event.labels.environment}}"],
+]);
+
+export const legacyDefaultFeishuCardTemplate = localizeCardValue(
+  defaultFeishuCardTemplate,
+  legacyDefaultText,
+) as JsonObject;
+
+export function defaultFeishuCardTemplateForLocale(locale: "en-US" | "zh-Hans"): JsonObject {
+  return locale === "zh-Hans"
+    ? (localizeCardValue(defaultFeishuCardTemplate, zhHansText) as JsonObject)
+    : defaultFeishuCardTemplate;
+}
+
+export function isBuiltInFeishuCardTemplate(value: JsonObject): boolean {
+  const serialized = JSON.stringify(value);
+
+  return (
+    serialized === JSON.stringify(defaultFeishuCardTemplate) ||
+    serialized === JSON.stringify(legacyDefaultFeishuCardTemplate)
+  );
+}
+
+function localizeCardValue(
+  value: JsonObject[keyof JsonObject] | JsonObject,
+  replacements: ReadonlyMap<string, string>,
+): unknown {
+  if (typeof value === "string") {
+    return replacements.get(value) ?? value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => localizeCardValue(item, replacements));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, localizeCardValue(item, replacements)]),
+    );
+  }
+
+  return value;
+}

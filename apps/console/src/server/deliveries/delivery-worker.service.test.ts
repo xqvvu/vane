@@ -158,6 +158,7 @@ describe("delivery worker", () => {
       matches: [{ routeId: route.id, destinationIds: route.destinationIds }],
       dedupeWindowStartsAt: "2026-06-09T07:55:00.000Z",
     });
+    await store.settings.update({ locale: "zh-Hans", timeZone: "Asia/Shanghai" });
     const calls: Array<{ url: string; init: RequestInit }> = [];
     const worker = new DeliveryWorker({
       store,
@@ -194,7 +195,7 @@ describe("delivery worker", () => {
         schema: "2.0",
         config: {
           summary: {
-            content: "[critical] Checkout unavailable",
+            content: "[严重] Checkout unavailable",
           },
         },
         header: {
@@ -206,6 +207,7 @@ describe("delivery worker", () => {
     });
     expect(JSON.stringify(detail?.renderedPayload)).toContain("checkout returned 503");
     expect(JSON.stringify(detail?.renderedPayload)).toContain("**服务**\\ncheckout");
+    expect(JSON.stringify(detail?.renderedPayload)).toContain("2026年6月9日 16:00:00");
 
     await store.close();
   });
@@ -282,7 +284,7 @@ describe("delivery worker", () => {
     });
     expect(calls[0]?.url).toBe("https://hooks.slack.com/services/example");
     expect(detail?.renderedPayload).toMatchObject({
-      text: "[CRITICAL] Checkout unavailable",
+      text: "[Critical] Checkout unavailable",
       blocks: expect.any(Array),
     });
 
@@ -366,10 +368,10 @@ describe("delivery worker", () => {
     expect(JSON.parse(calls[0]?.init.body as string)).toMatchObject({
       to: ["sre@example.test"],
       from: "vane@example.test",
-      subject: "[Vane] [CRITICAL firing] Checkout unavailable",
+      subject: "[Vane] [Critical Firing] Checkout unavailable",
     });
     expect(detail?.renderedPayload).toMatchObject({
-      subject: "[Vane] [CRITICAL firing] Checkout unavailable",
+      subject: "[Vane] [Critical Firing] Checkout unavailable",
       metadata: {
         eventId: "event-1",
         destinationId: "destination-1",

@@ -1,4 +1,4 @@
-import { Envelope } from "reicon-react";
+import { RiMailLine } from "@remixicon/react";
 
 import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?url";
 import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";
@@ -8,7 +8,7 @@ import type { DestinationFormKind } from "#/features/destinations/model/destinat
 
 export function DestinationKindIcon({ kind }: { kind: DestinationFormKind }) {
   if (kind === "email") {
-    return <Envelope className="text-muted-foreground size-4" aria-hidden />;
+    return <RiMailLine className="text-muted-foreground size-4" aria-hidden />;
   }
 
   return (

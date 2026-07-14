@@ -23,6 +23,16 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
         value: "30",
         updated_at: sql<string>`strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`,
       },
+      {
+        key: "locale",
+        value: "en-US",
+        updated_at: sql<string>`strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`,
+      },
+      {
+        key: "time_zone",
+        value: "UTC",
+        updated_at: sql<string>`strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`,
+      },
     ])
     .execute();
 

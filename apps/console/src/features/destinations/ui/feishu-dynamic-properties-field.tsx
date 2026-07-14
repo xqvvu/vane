@@ -1,4 +1,4 @@
-import { WandSparkle } from "reicon-react";
+import { RiMagicLine } from "@remixicon/react";
 
 import type { AlertStatus } from "@vane/core";
 import type { TemplateBindingSelector } from "@vane/destinations";
@@ -118,7 +118,7 @@ export function FeishuDynamicPropertiesField({
         <AlertDescription className="flex flex-col items-start gap-2">
           <span>{t("destinations.form.dynamic.compatibilityDescription")}</span>
           <Button type="button" variant="outline" size="xs" disabled={!canApply} onClick={onApply}>
-            <WandSparkle data-icon="inline-start" aria-hidden />
+            <RiMagicLine data-icon="inline-start" aria-hidden />
             {t("destinations.form.dynamic.applyStatusColors")}
           </Button>
         </AlertDescription>

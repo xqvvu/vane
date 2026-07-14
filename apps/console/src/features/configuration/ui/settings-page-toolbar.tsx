@@ -1,4 +1,4 @@
-import { Refresh } from "reicon-react";
+import { RiRefreshLine } from "@remixicon/react";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -43,7 +43,7 @@ export function SettingsPageToolbar({
           title={t("configuration.settings.refreshTitle")}
           className="shrink-0"
         >
-          <Refresh data-icon="inline-start" aria-hidden />
+          <RiRefreshLine data-icon="inline-start" aria-hidden />
           {t("common.actions.refresh")}
         </Button>
       }

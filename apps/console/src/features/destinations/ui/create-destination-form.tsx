@@ -1,4 +1,4 @@
-import { ArrowRight } from "reicon-react";
+import { RiArrowRightLine } from "@remixicon/react";
 
 import { FormPanel } from "#/components/common/content-panel.tsx";
 import {
@@ -47,7 +47,7 @@ export function CreateDestinationForm({
   }
 
   return (
-    <FormPanel title={t("destinations.form.create.title")} icon={<ArrowRight aria-hidden />}>
+    <FormPanel title={t("destinations.form.create.title")} icon={<RiArrowRightLine aria-hidden />}>
       <p className="text-muted-foreground mb-3 text-xs leading-5">
         {t("destinations.form.create.description")}
       </p>

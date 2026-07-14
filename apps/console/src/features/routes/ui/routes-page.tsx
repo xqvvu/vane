@@ -1,6 +1,6 @@
+import { RiRefreshLine } from "@remixicon/react";
 import { useSuspenseQueries } from "@tanstack/react-query";
 import * as React from "react";
-import { Refresh } from "reicon-react";
 import { toast } from "sonner";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
@@ -163,7 +163,7 @@ function RoutesPageToolbar({
             title={t("routing.page.refreshTitle")}
             className="w-fit"
           >
-            <Refresh data-icon="inline-start" aria-hidden />
+            <RiRefreshLine data-icon="inline-start" aria-hidden />
             {t("common.actions.refresh")}
           </Button>
         </>

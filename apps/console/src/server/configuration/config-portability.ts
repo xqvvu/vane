@@ -40,6 +40,8 @@ export function createPortableConfiguration(
     destinations: DestinationRuntimeConfig[];
     routes: RouteDefinition[];
     settings: {
+      locale: VaneConfiguration["settings"]["locale"];
+      timeZone: string;
       rawPayloadRetentionDays: number;
     };
   },
@@ -54,6 +56,8 @@ export function createPortableConfiguration(
       schemaVersion: VANE_CONFIG_SCHEMA_VERSION,
       exportedAt: options.now?.() ?? new Date().toISOString(),
       includeSecrets: false,
+      locale: input.settings.locale,
+      timeZone: input.settings.timeZone,
       rawPayloadRetentionDays: input.settings.rawPayloadRetentionDays,
     },
     sources: input.sources.map((source) => sanitizeSourceConfig(source)),

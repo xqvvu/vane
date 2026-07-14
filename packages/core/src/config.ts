@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { DestinationKindSchema } from "#/destination/destination.ts";
 import { JsonObjectSchema } from "#/json.ts";
+import { IanaTimeZoneSchema, VaneLocaleSchema } from "#/presentation.ts";
 import {
   LabelMatchOperatorSchema,
   LabelMatcherSchema,
@@ -44,6 +45,8 @@ export const VaneConfigSettingsSchema = z.strictObject({
   schemaVersion: z.literal(VANE_CONFIG_SCHEMA_VERSION),
   exportedAt: z.string().optional(),
   includeSecrets: z.literal(false),
+  locale: VaneLocaleSchema.default("en-US"),
+  timeZone: IanaTimeZoneSchema.default("UTC"),
   rawPayloadRetentionDays: z.number().int().min(0).max(3650),
 });
 
@@ -108,6 +111,8 @@ export const VaneTomlSettingsDocumentSchema = z.strictObject({
   schema_version: z.literal(VANE_CONFIG_SCHEMA_VERSION),
   exported_at: z.string().optional(),
   include_secrets: z.literal(false),
+  locale: VaneLocaleSchema.default("en-US"),
+  time_zone: IanaTimeZoneSchema.default("UTC"),
   raw_payload_retention_days: z.number().int().min(0).max(3650),
 });
 
@@ -167,6 +172,8 @@ export function vaneConfigurationToTomlDocument(configInput: VaneConfiguration):
       schema_version: config.settings.schemaVersion,
       exported_at: config.settings.exportedAt,
       include_secrets: config.settings.includeSecrets,
+      locale: config.settings.locale,
+      time_zone: config.settings.timeZone,
       raw_payload_retention_days: config.settings.rawPayloadRetentionDays,
     },
     sources: config.sources.map((source) => ({
@@ -210,6 +217,8 @@ export function vaneTomlDocumentToConfiguration(documentInput: unknown): VaneCon
       schemaVersion: document.settings.schema_version,
       exportedAt: document.settings.exported_at,
       includeSecrets: document.settings.include_secrets,
+      locale: document.settings.locale,
+      timeZone: document.settings.time_zone,
       rawPayloadRetentionDays: document.settings.raw_payload_retention_days,
     },
     sources: document.sources.map((source) => ({

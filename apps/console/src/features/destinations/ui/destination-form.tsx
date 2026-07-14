@@ -1,6 +1,12 @@
+import {
+  RiAddLine,
+  RiEditLine,
+  RiEyeLine,
+  RiQuestionLine,
+  RiResetLeftLine,
+} from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
-import { Add2, Edit2, Eye, HelpCircle, Undo } from "reicon-react";
 
 import type { AdapterConfigHelp, AdapterTemplateConfigField } from "@vane/core";
 import { defaultFeishuCardTemplate as defaultFeishuCardTemplateObject } from "@vane/destinations/feishu/default-card";
@@ -315,7 +321,7 @@ export function DestinationForm({
             />
           }
         >
-          <HelpCircle data-icon="inline-start" aria-hidden />
+          <RiQuestionLine data-icon="inline-start" aria-hidden />
         </TooltipTrigger>
         <TooltipContent className="max-w-96 items-start text-left" side="top">
           <span className="flex flex-col gap-1">
@@ -360,7 +366,7 @@ export function DestinationForm({
                 form.setFieldValue("templateColorFallback", defaults.templateColorFallback);
               }}
             >
-              <Undo data-icon="inline-start" aria-hidden />
+              <RiResetLeftLine data-icon="inline-start" aria-hidden />
               {t("destinations.form.restoreDefaultCard")}
             </Button>
           </div>
@@ -695,7 +701,7 @@ export function DestinationForm({
             submitIntent.current = "preview";
           }}
         >
-          <Eye data-icon="inline-start" aria-hidden />
+          <RiEyeLine data-icon="inline-start" aria-hidden />
           {t("destinations.form.preview")}
         </Button>
         <Button
@@ -708,9 +714,9 @@ export function DestinationForm({
           }}
         >
           {mode === "create" ? (
-            <Add2 data-icon="inline-start" aria-hidden />
+            <RiAddLine data-icon="inline-start" aria-hidden />
           ) : (
-            <Edit2 data-icon="inline-start" aria-hidden />
+            <RiEditLine data-icon="inline-start" aria-hidden />
           )}
           {mode === "create"
             ? t("destinations.form.create.submit")

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.t
 
 export interface ContentPanelProps {
   title: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
 }
@@ -13,7 +13,7 @@ export function ContentPanel({ title, icon, action, children }: ContentPanelProp
   return (
     <section className="border-border bg-card border">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <h2 className="flex items-center-safe gap-2 text-sm font-semibold">
           {icon}
           {title}
         </h2>

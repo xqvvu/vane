@@ -1,8 +1,8 @@
 import "@tanstack/react-start/client-only";
+import { RiLogoutCircleLine } from "@remixicon/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
-import { Logout } from "reicon-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar.tsx";
@@ -104,7 +104,7 @@ export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem disabled={pending} onClick={() => void signOut()}>
-            <Logout aria-hidden />
+            <RiLogoutCircleLine aria-hidden />
             {pending ? t("shell.userMenu.signingOut") : t("shell.userMenu.signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>

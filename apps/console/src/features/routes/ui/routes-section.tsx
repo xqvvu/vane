@@ -1,6 +1,12 @@
+import {
+  RiDeleteBinLine,
+  RiEditLine,
+  RiRefreshLine,
+  RiRouteLine,
+  RiShutDownLine,
+} from "@remixicon/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
-import { Trash, Edit2, Refresh, Route, Power } from "reicon-react";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
@@ -181,7 +187,7 @@ function RouteActions({
           aria-label={editLabel}
           onClick={() => onEdit(route.id)}
         >
-          <Edit2 data-icon="inline-start" aria-hidden />
+          <RiEditLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={replayLabel}>
@@ -193,7 +199,7 @@ function RouteActions({
           aria-label={replayLabel}
           onClick={() => onPreviewReplay(route)}
         >
-          <Refresh data-icon="inline-start" aria-hidden />
+          <RiRefreshLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <IconTooltip label={toggleLabel}>
@@ -206,7 +212,7 @@ function RouteActions({
           className={powerActionButtonClassName(route.enabled)}
           onClick={() => onToggle(route)}
         >
-          <Power data-icon="inline-start" aria-hidden />
+          <RiShutDownLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
       <AlertDialog
@@ -229,7 +235,7 @@ function RouteActions({
               />
             }
           >
-            <Trash data-icon="inline-start" aria-hidden />
+            <RiDeleteBinLine data-icon="inline-start" aria-hidden />
           </AlertDialogTrigger>
         </IconTooltip>
         <AlertDialogContent size="sm">
@@ -321,7 +327,7 @@ function RoutesEmptyState({ hasDestinations }: { hasDestinations: boolean }) {
     <Empty className="border-none p-4">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <Route aria-hidden />
+          <RiRouteLine aria-hidden />
         </EmptyMedia>
         <EmptyTitle>{t("routing.table.empty.title")}</EmptyTitle>
         <EmptyDescription>{t("routing.table.empty.description")}</EmptyDescription>

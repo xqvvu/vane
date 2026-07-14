@@ -1,4 +1,4 @@
-import { FilterRemove2, Play } from "reicon-react";
+import { RiFilterOffLine, RiPlayLine } from "@remixicon/react";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -28,7 +28,7 @@ export function DeliveriesPageToolbar({
             onClick={onResetFilters}
             title={t("deliveries.page.resetTitle")}
           >
-            <FilterRemove2 data-icon="inline-start" aria-hidden />
+            <RiFilterOffLine data-icon="inline-start" aria-hidden />
             {t("common.actions.resetFilters")}
           </Button>
           <Button
@@ -39,7 +39,7 @@ export function DeliveriesPageToolbar({
             onClick={onRunWorker}
             title={t("deliveries.page.runWorkerTitle")}
           >
-            <Play data-icon="inline-start" aria-hidden />
+            <RiPlayLine data-icon="inline-start" aria-hidden />
             {t("common.actions.runWorker")}
           </Button>
         </>

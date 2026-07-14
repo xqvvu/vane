@@ -12,6 +12,8 @@ const portableConfig: VaneConfiguration = {
     schemaVersion: "vane.config.v1",
     exportedAt: "2026-06-09T08:00:00.000Z",
     includeSecrets: false,
+    locale: "zh-Hans",
+    timeZone: "Asia/Shanghai",
     rawPayloadRetentionDays: 14,
   },
   sources: [
@@ -66,6 +68,8 @@ describe("Vane portable configuration", () => {
       settings: {
         schema_version: "vane.config.v1",
         include_secrets: false,
+        locale: "zh-Hans",
+        time_zone: "Asia/Shanghai",
         raw_payload_retention_days: 14,
       },
       routes: [

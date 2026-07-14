@@ -1,7 +1,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 
-import type { AppSettings, ImportConfigurationResult } from "@vane/core";
+import type { ImportConfigurationResult } from "@vane/core";
 
 import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
@@ -31,7 +31,6 @@ export function useSettingsWorkspace() {
     importConfigurationJson,
     importConfigurationToml,
     invalidateConfiguration,
-    updateAppSettings,
   } = useConfigurationMutations();
   const [activeTab, setActiveTabState] = React.useState<SettingsTab>("ui");
   const [drafts, setDrafts] = React.useState<PortableConfigDrafts>(initialDrafts);
@@ -210,13 +209,6 @@ export function useSettingsWorkspace() {
     [importConfigurationJson, importConfigurationToml, submitConfigurationChange],
   );
 
-  const updateSettings = React.useCallback(
-    (input: AppSettings) => {
-      void submitConfigurationChange("update-settings", () => updateAppSettings({ data: input }));
-    },
-    [submitConfigurationChange, updateAppSettings],
-  );
-
   return {
     activeTab,
     setActiveTab: (value: string) => {
@@ -225,7 +217,6 @@ export function useSettingsWorkspace() {
     pending,
     importNotice,
     refresh: () => refreshConfiguration({ invalidatePortableConfig: true }),
-    updateSettings,
     portable: {
       toml: {
         value: drafts.toml.value,

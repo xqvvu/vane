@@ -73,7 +73,7 @@ describe("email sender", () => {
     };
     expect(body.to).toEqual(["sre@example.test"]);
     expect(body.from).toBe("vane@example.test");
-    expect(body.subject).toBe("[Vane] [CRITICAL firing] Checkout API unavailable");
+    expect(body.subject).toBe("[Vane] [Critical Firing] Checkout API unavailable");
     expect(body.text).toContain("health check failed");
     expect(body.text).toContain("Labels: service=checkout");
     expect(body.html).toContain("Checkout API unavailable");
@@ -84,7 +84,7 @@ describe("email sender", () => {
       status: "firing",
     });
     expect(result.renderedPayload).toMatchObject({
-      subject: "[Vane] [CRITICAL firing] Checkout API unavailable",
+      subject: "[Vane] [Critical Firing] Checkout API unavailable",
     });
     expect(result.renderedPayload).not.toHaveProperty("to");
     expect(result.renderedPayload).not.toHaveProperty("from");

@@ -1,4 +1,4 @@
-import { Play, Clock } from "reicon-react";
+import { RiPlayLine, RiTimeLine } from "@remixicon/react";
 
 import type { DestinationSummary, SourceSummary } from "@vane/core";
 
@@ -57,10 +57,10 @@ export function OperationsPanel({
   return (
     <ContentPanel
       title={t("operations.title")}
-      icon={<Clock className="size-4" aria-hidden />}
+      icon={<RiTimeLine className="size-4" aria-hidden />}
       action={
         <Button variant="outline" size="sm" disabled={pending} onClick={onRunWorker}>
-          <Play aria-hidden />
+          <RiPlayLine aria-hidden />
           {t("common.actions.runWorker")}
         </Button>
       }

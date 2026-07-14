@@ -1,4 +1,4 @@
-import { Copy } from "reicon-react";
+import { RiFileCopyLine } from "@remixicon/react";
 import { toast } from "sonner";
 
 import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
@@ -78,7 +78,7 @@ export function CopyableCodeLine({
             }
           }}
         >
-          <Copy data-icon="inline-start" aria-hidden />
+          <RiFileCopyLine data-icon="inline-start" aria-hidden />
         </Button>
       </IconTooltip>
     </div>

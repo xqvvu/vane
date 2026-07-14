@@ -1,3 +1,4 @@
+import { RiCheckLine, RiFileCopyLine } from "@remixicon/react";
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
 import {
   createContext,
@@ -9,7 +10,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Check, Copy } from "reicon-react";
 import type { BundledLanguage, BundledTheme, HighlighterGeneric, ThemedToken } from "shiki";
 import { createHighlighter } from "shiki";
 
@@ -458,7 +458,7 @@ export const CodeBlockCopyButton = ({
     [],
   );
 
-  const Icon = isCopied ? Check : Copy;
+  const Icon = isCopied ? RiCheckLine : RiFileCopyLine;
 
   return (
     <Button

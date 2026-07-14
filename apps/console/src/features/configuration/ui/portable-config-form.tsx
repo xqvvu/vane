@@ -1,6 +1,6 @@
+import { RiDownloadLine, RiFileCodeLine, RiUploadLine } from "@remixicon/react";
 import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
-import { Download, CodeFile, Upload } from "reicon-react";
 
 import { JsonEditor } from "#/components/codemirror/json-editor.tsx";
 import { TomlEditor } from "#/components/codemirror/toml-editor.tsx";
@@ -64,7 +64,7 @@ export function PortableConfigForm(props: PortableConfigFormProps) {
       <div className="border-border flex flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <CodeFile className="size-4" aria-hidden />
+            <RiFileCodeLine className="size-4" aria-hidden />
             {t("configuration.portableConfig.title")}
             <Badge variant="outline" className="font-mono text-[10px]">
               {formatLabel}
@@ -73,7 +73,7 @@ export function PortableConfigForm(props: PortableConfigFormProps) {
           <p className="text-muted-foreground mt-1 text-xs leading-5">{description}</p>
         </div>
       </div>
-      <div className="min-w-0 grow p-3">
+      <div className="min-h-0 min-w-0 grow p-3">
         {format === "toml" ? (
           <ClientOnly
             fallback={
@@ -129,7 +129,7 @@ export function PortableConfigForm(props: PortableConfigFormProps) {
           onClick={onExport}
           className="sm:w-fit"
         >
-          <Download data-icon="inline-start" aria-hidden />
+          <RiDownloadLine data-icon="inline-start" aria-hidden />
           {t("configuration.portableConfig.exportCurrent")}
         </Button>
         <Popover
@@ -151,7 +151,7 @@ export function PortableConfigForm(props: PortableConfigFormProps) {
               />
             }
           >
-            <Upload data-icon="inline-start" aria-hidden />
+            <RiUploadLine data-icon="inline-start" aria-hidden />
             {t("configuration.portableConfig.applyImport")}
           </PopoverTrigger>
           <PopoverContent align="end" side="top" sideOffset={6} className="w-80">
@@ -164,7 +164,7 @@ export function PortableConfigForm(props: PortableConfigFormProps) {
                 {t("configuration.portableConfig.cancelImport")}
               </PopoverClose>
               <Button type="button" size="sm" disabled={!canImport} onClick={confirmImport}>
-                <Upload data-icon="inline-start" aria-hidden />
+                <RiUploadLine data-icon="inline-start" aria-hidden />
                 {t("configuration.portableConfig.confirmImport")}
               </Button>
             </div>

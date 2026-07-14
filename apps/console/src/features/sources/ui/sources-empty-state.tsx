@@ -1,4 +1,4 @@
-import { Plug } from "reicon-react";
+import { RiWebhookLine } from "@remixicon/react";
 
 import {
   Empty,
@@ -17,7 +17,7 @@ export function SourcesEmptyState() {
     <Empty className="border-none p-4">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <Plug aria-hidden />
+          <RiWebhookLine aria-hidden />
         </EmptyMedia>
         <EmptyTitle>{t("sources.table.empty.title")}</EmptyTitle>
         <EmptyDescription>{t("sources.table.empty.description")}</EmptyDescription>

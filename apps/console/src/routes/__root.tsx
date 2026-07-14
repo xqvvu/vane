@@ -47,7 +47,7 @@ function Root({ children }: { children: React.ReactNode }) {
       </head>
 
       <body className="h-dvh">
-        <VaneIntlProvider locale={data.locale}>
+        <VaneIntlProvider locale={data.locale} timeZone={data.timeZone}>
           <TooltipProvider>{children}</TooltipProvider>
         </VaneIntlProvider>
 

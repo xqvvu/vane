@@ -24,6 +24,8 @@ export class AppSettingsService {
     const input = UpdateAppSettingsCommandSchema.parse(command);
 
     return this.store.settings.update({
+      ...(input.locale === undefined ? {} : { locale: input.locale }),
+      ...(input.timeZone === undefined ? {} : { timeZone: input.timeZone }),
       rawPayloadRetentionDays: input.rawPayloadRetentionDays,
     });
   }

@@ -1,9 +1,9 @@
 export const fallbackTimeZone = "UTC";
 
-export function detectRuntimeTimeZone(): string {
+export function supportedTimeZones(): string[] {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || fallbackTimeZone;
+    return [fallbackTimeZone, ...Intl.supportedValuesOf("timeZone")];
   } catch {
-    return fallbackTimeZone;
+    return [fallbackTimeZone];
   }
 }

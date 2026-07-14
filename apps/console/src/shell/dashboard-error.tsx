@@ -1,5 +1,5 @@
+import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
 import { Link, useLocation, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
-import { AlertTriangle, Refresh } from "reicon-react";
 
 import { redactText } from "@vane/core";
 
@@ -35,7 +35,7 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
     <div className="flex min-h-[calc(100vh-3rem)] w-full items-center justify-center px-3 py-10 sm:px-8">
       <main className="flex w-full max-w-3xl flex-col gap-5">
         <Alert variant="destructive" className="px-4 py-5">
-          <AlertTriangle aria-hidden />
+          <RiErrorWarningLine aria-hidden />
           <AlertTitle className="flex flex-wrap items-center gap-3">
             <Badge variant="destructive" className="font-mono font-bold">
               {t("shell.error.badge")}
@@ -69,7 +69,7 @@ export function DashboardErrorPage({ error, reset }: ErrorComponentProps) {
           aria-label={t("shell.error.actionsLabel")}
         >
           <Button type="button" size="sm" onClick={tryAgain}>
-            <Refresh data-icon="inline-start" aria-hidden />
+            <RiRefreshLine data-icon="inline-start" aria-hidden />
             {t("common.actions.tryAgain")}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => hardReloadPage()}>

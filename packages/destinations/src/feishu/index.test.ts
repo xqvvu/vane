@@ -4,6 +4,7 @@ import {
   createFeishuSign,
   defaultFeishuCardBindings,
   defaultFeishuCardTemplate,
+  legacyDefaultFeishuCardTemplate,
   FeishuConfigSchema,
   feishuSender,
 } from "#/feishu/index.ts";
@@ -70,7 +71,7 @@ describe("feishu sender", () => {
         config: {
           width_mode: "compact",
           summary: {
-            content: "[critical] Checkout API latency high",
+            content: "[Critical] Checkout API latency high",
           },
         },
         header: {
@@ -81,11 +82,49 @@ describe("feishu sender", () => {
         },
       },
     });
-    expect(JSON.stringify(preview)).toContain("告警摘要");
+    expect(JSON.stringify(preview)).toContain("Alert summary");
     expect(JSON.stringify(preview)).toContain("p95 latency exceeded");
-    expect(JSON.stringify(preview)).toContain("服务");
+    expect(JSON.stringify(preview)).toContain("Service");
     expect(JSON.stringify(preview)).toContain("checkout");
     expect(JSON.stringify(preview)).not.toContain("secret");
+  });
+
+  it("localizes the default card and timestamp with instance presentation settings", async () => {
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+    });
+    const preview = await feishuSender.preview({
+      ...input,
+      config,
+      presentation: { locale: "zh-Hans", timeZone: "Asia/Shanghai" },
+    });
+    const serialized = JSON.stringify(preview);
+
+    expect(serialized).toContain("告警摘要");
+    expect(serialized).toContain("严重");
+    expect(serialized).toContain("2026年6月7日 16:00:00");
+    expect(serialized).toContain("服务");
+  });
+
+  it("upgrades the legacy built-in card to the configured presentation locale", async () => {
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+      template: {
+        mode: "feishu_card",
+        card: legacyDefaultFeishuCardTemplate,
+        bindings: defaultFeishuCardBindings,
+      },
+    });
+    const preview = await feishuSender.preview({
+      ...input,
+      config,
+      presentation: { locale: "en-US", timeZone: "UTC" },
+    });
+    const serialized = JSON.stringify(preview);
+
+    expect(serialized).toContain("Alert summary");
+    expect(serialized).toContain("Critical");
+    expect(serialized).not.toContain("告警摘要");
   });
 
   it.each([

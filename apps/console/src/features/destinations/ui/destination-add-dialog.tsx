@@ -1,5 +1,5 @@
+import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
-import { Add2 } from "reicon-react";
 import { toast } from "sonner";
 
 import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
@@ -55,7 +55,7 @@ export function DestinationAddDialog({
           />
         }
       >
-        <Add2 data-icon="inline-start" aria-hidden />
+        <RiAddLine data-icon="inline-start" aria-hidden />
         {t("common.actions.add")}
       </DialogTrigger>
 

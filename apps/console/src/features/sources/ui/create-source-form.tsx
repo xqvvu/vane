@@ -1,4 +1,4 @@
-import { AddCircle2, Add2 } from "reicon-react";
+import { RiAddCircleLine, RiAddLine } from "@remixicon/react";
 
 import { SourceForm } from "#/features/sources/ui/source-form.tsx";
 import type {
@@ -26,7 +26,7 @@ export function CreateSourceForm({
       {showHeader ? (
         <div className="mb-6">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <AddCircle2 className="size-4" aria-hidden />
+            <RiAddCircleLine className="size-4" aria-hidden />
             {t("sources.form.create.title")}
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -41,7 +41,7 @@ export function CreateSourceForm({
         }}
         pending={pending}
         submitLabel={t("sources.form.create.submit")}
-        submitIcon={<Add2 data-icon="inline-start" aria-hidden />}
+        submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
         layout={isDialogLayout ? "dialog" : "rail"}
         bodyFooter={
           isDialogLayout ? (

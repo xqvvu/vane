@@ -6,6 +6,29 @@ import { openSqliteStore } from "#/infra/sqlite/store.ts";
 const now = "2026-06-07T00:00:00.000Z";
 
 describe("sqlite store", () => {
+  it("persists instance locale and time zone settings", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+
+    expect(await store.settings.get()).toEqual({
+      locale: "en-US",
+      timeZone: "UTC",
+      rawPayloadRetentionDays: 30,
+    });
+
+    await store.settings.update({ locale: "zh-Hans", timeZone: "Asia/Shanghai" });
+
+    expect(await store.settings.get()).toEqual({
+      locale: "zh-Hans",
+      timeZone: "Asia/Shanghai",
+      rawPayloadRetentionDays: 30,
+    });
+    await expect(store.settings.update({ timeZone: "Mars/Olympus" })).rejects.toThrow(
+      "valid IANA time zone",
+    );
+
+    await store.close();
+  });
+
   it("uses injected id factories for every repository-owned record", async () => {
     let nextId = 0;
     const store = await openSqliteStore({

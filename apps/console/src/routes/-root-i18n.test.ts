@@ -9,6 +9,6 @@ describe("root route i18n wiring", () => {
 
     expect(source).toContain("context.queryClient.ensureQueryData(requestLocaleQueryOptions())");
     expect(source).toContain("<html lang={data.locale}>");
-    expect(source).toContain("<VaneIntlProvider locale={data.locale}>");
+    expect(source).toContain("<VaneIntlProvider locale={data.locale} timeZone={data.timeZone}>");
   });
 });

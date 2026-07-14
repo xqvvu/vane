@@ -1,6 +1,12 @@
+import {
+  RiAddLine,
+  RiArrowDownSLine,
+  RiCloseLine,
+  RiEditLine,
+  RiGitBranchLine,
+} from "@remixicon/react";
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
-import { Add2, ChevronDown, X, Edit2, BranchDown } from "reicon-react";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
@@ -74,7 +80,7 @@ export function CreateRouteForm({
         destinationIds: [],
       }}
       submitLabel={t("routing.form.create.submit")}
-      submitIcon={<Add2 data-icon="inline-start" aria-hidden />}
+      submitIcon={<RiAddLine data-icon="inline-start" aria-hidden />}
       resetOnSubmit
       onSubmit={(values) => {
         onSubmit({
@@ -93,7 +99,7 @@ export function CreateRouteForm({
   return (
     <FormPanel
       title={t("routing.form.create.title")}
-      icon={<BranchDown className="size-4" aria-hidden />}
+      icon={<RiGitBranchLine className="size-4" aria-hidden />}
     >
       <p className="text-muted-foreground mb-3 text-xs">{t("routing.form.create.description")}</p>
       {form}
@@ -126,7 +132,7 @@ export function EditRouteForm({
   return (
     <section className="border-border bg-muted/30 mt-3 border p-3">
       <h3 className="flex items-center gap-2 text-xs font-semibold">
-        <Edit2 className="size-3.5" aria-hidden />
+        <RiEditLine className="size-3.5" aria-hidden />
         {t("routing.form.edit.title")}
       </h3>
       <p className="text-muted-foreground mt-1 mb-3 text-xs">
@@ -142,7 +148,7 @@ export function EditRouteForm({
           destinationIds: route.destinationIds,
         }}
         submitLabel={t("routing.form.edit.submit")}
-        submitIcon={<Edit2 data-icon="inline-start" aria-hidden />}
+        submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
             id: route.id,
@@ -619,7 +625,7 @@ function DestinationMultiSelect({
                     onChange(selectedIds.filter((selectedId) => selectedId !== destination.id));
                   }}
                 >
-                  <X aria-hidden />
+                  <RiCloseLine aria-hidden />
                 </Button>
               </Badge>
             ))
@@ -642,7 +648,7 @@ function DestinationMultiSelect({
           {selectedDestinations.length > 0 ? (
             <span>{selectedCountLabel(selectedDestinations.length)}</span>
           ) : null}
-          <ChevronDown aria-hidden />
+          <RiArrowDownSLine aria-hidden />
         </Button>
       </div>
 

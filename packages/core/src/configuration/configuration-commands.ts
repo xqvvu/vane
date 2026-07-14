@@ -3,6 +3,7 @@ import { z } from "zod";
 import { DestinationKindSchema } from "#/destination/destination.ts";
 import { AlertStatusSchema } from "#/event/normalized-event.ts";
 import { JsonObjectSchema } from "#/json.ts";
+import { IanaTimeZoneSchema, VaneLocaleSchema } from "#/presentation.ts";
 import { RouteDefinitionSchema } from "#/route/route.ts";
 import { SourceProviderSchema } from "#/source/source.ts";
 
@@ -95,6 +96,8 @@ export const ImportConfigurationJsonCommandSchema = z.object({
 });
 
 export const UpdateAppSettingsCommandSchema = z.object({
+  locale: VaneLocaleSchema.optional(),
+  timeZone: IanaTimeZoneSchema.optional(),
   rawPayloadRetentionDays: z.number().int().min(0).max(3650),
 });
 

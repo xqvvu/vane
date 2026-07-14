@@ -13,6 +13,7 @@ import type {
   NormalizedEvent,
   SourceSummary,
 } from "@vane/core";
+import type { VaneLocale } from "@vane/core/presentation";
 import { z } from "zod";
 
 export interface FetchLikeResponse {
@@ -23,12 +24,18 @@ export interface FetchLikeResponse {
 
 export type FetchLike = (url: string, init: RequestInit) => Promise<FetchLikeResponse>;
 
+export interface DestinationPresentation {
+  locale: VaneLocale;
+  timeZone: string;
+}
+
 export interface DestinationRenderInput<Config> {
   eventId: string;
   source: SourceSummary;
   destination: DestinationSummary;
   normalizedEvent: NormalizedEvent;
   config: Config;
+  presentation?: DestinationPresentation;
 }
 
 export interface DestinationTransportContext {

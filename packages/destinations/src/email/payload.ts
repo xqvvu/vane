@@ -1,5 +1,11 @@
 import type { JsonValue } from "@vane/core";
 
+import {
+  destinationCopy,
+  displaySeverity,
+  displayStatus,
+  formatDestinationDateTime,
+} from "#/presentation.ts";
 import { DestinationTemplateEngine } from "#/template.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
@@ -11,7 +17,7 @@ export function renderEmailPayload(
 ): JsonValue {
   const event = input.normalizedEvent;
   const subjectPrefix = config.subjectPrefix ? `${config.subjectPrefix.trim()} ` : "";
-  const subject = `${subjectPrefix}[${event.severity.toUpperCase()} ${event.status}] ${event.title}`;
+  const subject = `${subjectPrefix}[${displaySeverity(event.severity, input.presentation)} ${displayStatus(event.status, input.presentation)}] ${event.title}`;
   const text =
     config.template?.mode === "text"
       ? DestinationTemplateEngine.renderTextOrThrow(
@@ -68,20 +74,21 @@ export function renderEmailRequestPayload(
 
 function renderEmailText(input: DestinationSendInput<EmailConfig>): string {
   const event = input.normalizedEvent;
+  const labels = destinationCopy(input.presentation).labels;
   const labelText = Object.entries(event.labels)
     .map(([key, value]) => `${key}=${value}`)
     .join(", ");
 
   return [
-    `[${event.severity.toUpperCase()} ${event.status}] ${event.title}`,
+    `[${displaySeverity(event.severity, input.presentation)} ${displayStatus(event.status, input.presentation)}] ${event.title}`,
     "",
     event.message,
     "",
-    `Source: ${input.source.name}`,
-    `Fingerprint: ${event.fingerprint}`,
-    `Occurred at: ${event.occurredAt}`,
-    `Event ID: ${input.eventId}`,
-    labelText ? `Labels: ${labelText}` : null,
+    `${labels.source}: ${input.source.name}`,
+    `${labels.fingerprint}: ${event.fingerprint}`,
+    `${labels.occurredAt}: ${formatDestinationDateTime(event.occurredAt, input.presentation)}`,
+    `${labels.eventId}: ${input.eventId}`,
+    labelText ? `${labels.labels}: ${labelText}` : null,
   ]
     .filter((line): line is string => line !== null)
     .join("\n");

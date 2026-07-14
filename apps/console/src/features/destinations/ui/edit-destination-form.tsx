@@ -1,4 +1,4 @@
-import { Edit2 } from "reicon-react";
+import { RiEditLine } from "@remixicon/react";
 
 import type { JsonObject } from "@vane/core";
 
@@ -47,7 +47,7 @@ export function EditDestinationForm({
       {showHeader ? (
         <div className="mb-3">
           <h3 className="flex items-center gap-2 text-xs font-semibold">
-            <Edit2 aria-hidden />
+            <RiEditLine aria-hidden />
             {t("destinations.form.edit.title")}
           </h3>
           <p className="text-muted-foreground mt-1 text-xs">

@@ -5,6 +5,7 @@ export * from "#/hash.ts";
 export * from "#/json.ts";
 export * from "#/redaction.ts";
 export * from "#/operations.ts";
+export * from "#/presentation.ts";
 
 export * from "#/configuration/index.ts";
 export * from "#/delivery/index.ts";

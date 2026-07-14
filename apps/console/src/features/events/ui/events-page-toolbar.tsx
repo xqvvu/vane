@@ -1,4 +1,4 @@
-import { FilterRemove2, Refresh } from "reicon-react";
+import { RiFilterOffLine, RiRefreshLine } from "@remixicon/react";
 
 import { PageToolbar } from "#/components/common/page-toolbar.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -28,7 +28,7 @@ export function EventsPageToolbar({
             onClick={onRefresh}
             title={t("events.page.refreshTitle")}
           >
-            <Refresh data-icon="inline-start" aria-hidden />
+            <RiRefreshLine data-icon="inline-start" aria-hidden />
             {t("common.actions.refresh")}
           </Button>
           <Button
@@ -39,7 +39,7 @@ export function EventsPageToolbar({
             onClick={onResetFilters}
             title={t("events.page.resetTitle")}
           >
-            <FilterRemove2 data-icon="inline-start" aria-hidden />
+            <RiFilterOffLine data-icon="inline-start" aria-hidden />
             {t("common.actions.resetFilters")}
           </Button>
         </>

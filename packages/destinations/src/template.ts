@@ -3,6 +3,7 @@ import { z } from "zod";
 import { JsonObjectSchema } from "@vane/core";
 import type { DestinationSummary, JsonObject, JsonValue, SourceSummary } from "@vane/core";
 
+import { displaySeverity, displayStatus, formatDestinationDateTime } from "#/presentation.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
 const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
@@ -48,9 +49,12 @@ type TemplateStaticPath =
   | "event.title"
   | "event.message"
   | "event.severity"
+  | "event.severityDisplay"
   | "event.status"
+  | "event.statusDisplay"
   | "event.fingerprint"
   | "event.occurredAt"
+  | "event.occurredAtDisplay"
   | "source.id"
   | "source.name"
   | "source.provider"
@@ -66,9 +70,12 @@ const TemplateStaticPathResolvers = {
   "event.title": (context) => context.event.title,
   "event.message": (context) => context.event.message,
   "event.severity": (context) => context.event.severity,
+  "event.severityDisplay": (context) => context.event.severityDisplay,
   "event.status": (context) => context.event.status,
+  "event.statusDisplay": (context) => context.event.statusDisplay,
   "event.fingerprint": (context) => context.event.fingerprint,
   "event.occurredAt": (context) => context.event.occurredAt,
+  "event.occurredAtDisplay": (context) => context.event.occurredAtDisplay,
   "source.id": (context) => context.source.id,
   "source.name": (context) => context.source.name,
   "source.provider": (context) => context.source.provider,
@@ -148,9 +155,12 @@ export interface TemplateContext {
     title: string;
     message: string;
     severity: string;
+    severityDisplay: string;
     status: string;
+    statusDisplay: string;
     fingerprint: string;
     occurredAt: string;
+    occurredAtDisplay: string;
     labels: Record<string, string>;
   };
   source: {
@@ -203,9 +213,15 @@ export class DestinationTemplateEngine {
         title: input.normalizedEvent.title,
         message: input.normalizedEvent.message,
         severity: input.normalizedEvent.severity,
+        severityDisplay: displaySeverity(input.normalizedEvent.severity, input.presentation),
         status: input.normalizedEvent.status,
+        statusDisplay: displayStatus(input.normalizedEvent.status, input.presentation),
         fingerprint: input.normalizedEvent.fingerprint,
         occurredAt: input.normalizedEvent.occurredAt,
+        occurredAtDisplay: formatDestinationDateTime(
+          input.normalizedEvent.occurredAt,
+          input.presentation,
+        ),
         labels: input.normalizedEvent.labels,
       },
       source: templateSource(input.source),

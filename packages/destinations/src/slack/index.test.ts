@@ -60,7 +60,7 @@ describe("slack sender", () => {
       text: string;
       blocks: Array<{ type: string }>;
     };
-    expect(body.text).toBe("[CRITICAL] Checkout API latency high");
+    expect(body.text).toBe("[Critical] Checkout API latency high");
     expect(body.blocks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

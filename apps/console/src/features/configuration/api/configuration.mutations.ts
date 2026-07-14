@@ -10,7 +10,6 @@ import {
   exportConfigurationTomlFn,
   importConfigurationJsonFn,
   importConfigurationTomlFn,
-  updateAppSettingsFn,
 } from "#/server/functions/configuration.functions.ts";
 
 export function useConfigurationMutations() {
@@ -19,14 +18,12 @@ export function useConfigurationMutations() {
   const exportConfigurationToml = useServerFn(exportConfigurationTomlFn);
   const importConfigurationJson = useServerFn(importConfigurationJsonFn);
   const importConfigurationToml = useServerFn(importConfigurationTomlFn);
-  const updateAppSettings = useServerFn(updateAppSettingsFn);
 
   return {
     exportConfigurationJson,
     exportConfigurationToml,
     importConfigurationJson,
     importConfigurationToml,
-    updateAppSettings,
     invalidateConfiguration: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: appSettingsQueryKeys.all }),

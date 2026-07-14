@@ -1,6 +1,6 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { RiCloseLine } from "@remixicon/react";
 import * as React from "react";
-import { X } from "reicon-react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { cn } from "#/lib/utils.ts";
@@ -59,7 +59,7 @@ function DialogContent({
             data-slot="dialog-close"
             render={<Button variant="ghost" className="absolute top-2 right-2" size="icon-sm" />}
           >
-            <X />
+            <RiCloseLine />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

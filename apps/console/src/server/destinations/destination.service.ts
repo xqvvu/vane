@@ -256,12 +256,14 @@ export class DestinationService {
     } = {},
   ): Promise<DestinationPreviewResult> {
     const sample = await this.resolvePreviewSample(sampleEventId, options.sampleStatus);
+    const settings = await this.store.settings.get();
     const input = {
       eventId: sample.metadata.eventId,
       source: sample.metadata.source,
       destination,
       normalizedEvent: sample.normalizedEvent,
       config,
+      presentation: { locale: settings.locale, timeZone: settings.timeZone },
     };
 
     const context = DestinationTemplateEngine.createRenderContext(input);

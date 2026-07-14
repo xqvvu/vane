@@ -6,7 +6,8 @@
     "#/*": "./src/*"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./presentation": "./src/presentation.ts"
   },
   "scripts": {
     "test": "vitest run",

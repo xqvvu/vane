@@ -1,4 +1,4 @@
-import { Edit2 } from "reicon-react";
+import { RiEditLine } from "@remixicon/react";
 
 import { SourceForm } from "#/features/sources/ui/source-form.tsx";
 import type {
@@ -30,7 +30,7 @@ export function EditSourceForm({
       {showHeader ? (
         <>
           <h3 className="flex items-center gap-2 text-xs font-semibold">
-            <Edit2 className="size-3.5" aria-hidden />
+            <RiEditLine className="size-3.5" aria-hidden />
             {t("sources.form.edit.title")}
           </h3>
           <p className="text-muted-foreground mt-1 mb-3 text-xs">
@@ -45,7 +45,7 @@ export function EditSourceForm({
         }}
         pending={pending}
         submitLabel={t("sources.form.edit.submit")}
-        submitIcon={<Edit2 data-icon="inline-start" aria-hidden />}
+        submitIcon={<RiEditLine data-icon="inline-start" aria-hidden />}
         onSubmit={(values) =>
           onSubmit({
             id: source.id,

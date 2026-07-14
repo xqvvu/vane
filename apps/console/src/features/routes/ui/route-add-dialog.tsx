@@ -1,5 +1,5 @@
+import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
-import { Add2 } from "reicon-react";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
@@ -56,7 +56,7 @@ export function RouteAddDialog({
           />
         }
       >
-        <Add2 data-icon="inline-start" aria-hidden />
+        <RiAddLine data-icon="inline-start" aria-hidden />
         {t("common.actions.add")}
       </DialogTrigger>
 
