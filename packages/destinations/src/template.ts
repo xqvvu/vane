@@ -1,15 +1,16 @@
 import { z } from "zod";
 
-import { JsonObjectSchema } from "@vane/core";
+import { JsonObjectSchema, redactJsonValue } from "@vane/core";
 import type { DestinationSummary, JsonObject, JsonValue, SourceSummary } from "@vane/core";
 
 import { displaySeverity, displayStatus, formatDestinationDateTime } from "#/presentation.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
-const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
-const LABEL_PATH_PATTERN = /^event\.labels\.([a-zA-Z0-9_.-]+)$/;
-const BINDING_PATH_PATTERN = /^bindings\.([a-zA-Z][a-zA-Z0-9_-]{0,63})$/;
-const TEMPLATE_BINDING_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/;
+const RE_TEMPLATE_VARIABLE = /\{\{\s*([^{}]+?)\s*\}\}/g;
+const RE_LABEL_PATH = /^event\.labels\.([a-zA-Z0-9_.-]+)$/;
+const RE_BINDING_PATH = /^bindings\.([a-zA-Z][a-zA-Z0-9_-]{0,63})$/;
+const RE_TEMPLATE_BINDING_NAME = /^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/;
+
 const TEMPLATE_BINDING_VALUE_MAX_LENGTH = 256;
 
 export const TemplateBindingSelectorSchema = z.enum([
@@ -31,7 +32,7 @@ export const TemplateBindingSchema = z.strictObject({
 
 export const TemplateBindingsSchema = z
   .record(
-    z.string().regex(TEMPLATE_BINDING_NAME_PATTERN, {
+    z.string().regex(RE_TEMPLATE_BINDING_NAME, {
       message: "Destination template binding name is invalid",
     }),
     TemplateBindingSchema,
@@ -176,6 +177,7 @@ export interface TemplateContext {
   vane: {
     eventUrl: string;
   };
+  payload: JsonValue;
   bindings: Record<string, string>;
 }
 
@@ -229,6 +231,7 @@ export class DestinationTemplateEngine {
       vane: {
         eventUrl: options.eventUrl ?? "",
       },
+      payload: redactJsonValue(input.payload ?? {}),
       bindings: {},
     };
 
@@ -430,9 +433,9 @@ function diagnosticsForTemplateEntries(
   const diagnostics: TemplateDiagnostic[] = [];
 
   for (const entry of entries) {
-    for (const match of entry.template.matchAll(TEMPLATE_VARIABLE_PATTERN)) {
+    for (const match of entry.template.matchAll(RE_TEMPLATE_VARIABLE)) {
       const variable = match[1]!;
-      const bindingMatch = BINDING_PATH_PATTERN.exec(variable);
+      const bindingMatch = RE_BINDING_PATH.exec(variable);
 
       if (bindingMatch && bindingNames.has(bindingMatch[1]!)) {
         referencedBindings.add(bindingMatch[1]!);
@@ -482,7 +485,7 @@ function interpolateJsonTemplate(context: TemplateContext, value: JsonValue): Js
 }
 
 function interpolateTemplateString(context: TemplateContext, template: string): string {
-  return template.replaceAll(TEMPLATE_VARIABLE_PATTERN, (_match, rawPath: string) =>
+  return template.replaceAll(RE_TEMPLATE_VARIABLE, (_match, rawPath: string) =>
     templateValue(context, rawPath),
   );
 }
@@ -492,13 +495,19 @@ function templateValue(context: TemplateContext, path: string): string {
     return TemplateStaticPathResolvers[path](context);
   }
 
-  const labelMatch = LABEL_PATH_PATTERN.exec(path);
+  const labelMatch = RE_LABEL_PATH.exec(path);
 
   if (labelMatch) {
     return context.event.labels[labelMatch[1]!] ?? "";
   }
 
-  const bindingMatch = BINDING_PATH_PATTERN.exec(path);
+  const payloadSegments = payloadPathSegments(path);
+
+  if (payloadSegments) {
+    return payloadTemplateValue(context.payload, payloadSegments);
+  }
+
+  const bindingMatch = RE_BINDING_PATH.exec(path);
 
   if (bindingMatch) {
     return context.bindings[bindingMatch[1]!] ?? "";
@@ -508,13 +517,93 @@ function templateValue(context: TemplateContext, path: string): string {
 }
 
 function isAllowedTemplatePath(path: string, bindingNames: ReadonlySet<string>): boolean {
-  if (isTemplateStaticPath(path) || LABEL_PATH_PATTERN.test(path)) {
+  if (
+    isTemplateStaticPath(path) ||
+    RE_LABEL_PATH.test(path) ||
+    payloadPathSegments(path) !== null
+  ) {
     return true;
   }
 
-  const bindingMatch = BINDING_PATH_PATTERN.exec(path);
+  const bindingMatch = RE_BINDING_PATH.exec(path);
 
   return Boolean(bindingMatch && bindingNames.has(bindingMatch[1]!));
+}
+
+function payloadTemplateValue(payload: JsonValue, segments: string[]): string {
+  let value: JsonValue | undefined = payload;
+
+  for (const segment of segments) {
+    if (Array.isArray(value)) {
+      if (!/^\d+$/.test(segment)) {
+        return "";
+      }
+
+      value = value[Number(segment)];
+      continue;
+    }
+
+    if (!isJsonObject(value) || !Object.hasOwn(value, segment)) {
+      return "";
+    }
+
+    value = value[segment];
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return typeof value === "number" || typeof value === "boolean" ? String(value) : "";
+}
+
+function payloadPathSegments(path: string): string[] | null {
+  if (!path.startsWith("payload")) {
+    return null;
+  }
+
+  const segments: string[] = [];
+  let remainder = path.slice("payload".length);
+
+  while (remainder.length > 0) {
+    const propertyMatch = /^\.([a-zA-Z0-9_-]+)/.exec(remainder);
+
+    if (propertyMatch) {
+      segments.push(propertyMatch[1]!);
+      remainder = remainder.slice(propertyMatch[0].length);
+      continue;
+    }
+
+    const indexMatch = /^\[(\d+)\]/.exec(remainder);
+
+    if (indexMatch) {
+      segments.push(indexMatch[1]!);
+      remainder = remainder.slice(indexMatch[0].length);
+      continue;
+    }
+
+    const quotedKeyMatch = /^\[("(?:[^"\\]|\\.)*")\]/.exec(remainder);
+
+    if (quotedKeyMatch) {
+      try {
+        const key = JSON.parse(quotedKeyMatch[1]!) as unknown;
+
+        if (typeof key !== "string") {
+          return null;
+        }
+
+        segments.push(key);
+        remainder = remainder.slice(quotedKeyMatch[0].length);
+        continue;
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  return segments.length > 0 ? segments : null;
 }
 
 function resolveTemplateBindings(

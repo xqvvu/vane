@@ -1,0 +1,129 @@
+{
+  "schema": "2.0",
+  "config": {
+    "width_mode": "compact",
+    "enable_forward": true,
+    "summary": {
+      "content": "[{{event.statusDisplay}}] {{payload.monitor.name}} · {{event.message}}"
+    }
+  },
+  "header": {
+    "template": "{{bindings.statusColor}}",
+    "title": {
+      "tag": "plain_text",
+      "content": "{{payload.monitor.name}}"
+    },
+    "subtitle": {
+      "tag": "plain_text",
+      "content": "Uptime Kuma · {{event.occurredAtDisplay}}"
+    },
+    "text_tag_list": [
+      {
+        "tag": "text_tag",
+        "text": {
+          "tag": "plain_text",
+          "content": "{{event.statusDisplay}}"
+        },
+        "color": "{{bindings.statusColor}}"
+      },
+      {
+        "tag": "text_tag",
+        "text": {
+          "tag": "plain_text",
+          "content": "{{payload.monitor.type}}"
+        },
+        "color": "blue"
+      }
+    ]
+  },
+  "body": {
+    "direction": "vertical",
+    "padding": "12px 12px 10px 12px",
+    "vertical_spacing": "8px",
+    "elements": [
+      {
+        "tag": "markdown",
+        "content": "**检查结果**\n{{event.message}}",
+        "text_size": "normal"
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "bisect",
+        "background_style": "grey",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_spacing": "4px",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**当前状态**\n{{event.statusDisplay}}",
+                  "text_size": "notation"
+                }
+              },
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**响应耗时**\n{{payload.heartbeat.ping}} ms",
+                  "text_size": "notation"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_spacing": "4px",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**检查类型**\n{{payload.monitor.type}}",
+                  "text_size": "notation"
+                }
+              },
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**Monitor ID**\n{{payload.monitor.id}}",
+                  "text_size": "notation"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "markdown",
+        "content": "**监控路径**\n{{payload.monitor.pathName}}",
+        "text_size": "notation"
+      },
+      {
+        "tag": "markdown",
+        "content": "**检查地址**\n`{{payload.monitor.url}}`",
+        "text_size": "notation"
+      },
+      {
+        "tag": "markdown",
+        "content": "**上次故障**\n{{payload.heartbeat.lastDownTime}}",
+        "text_size": "notation"
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "markdown",
+        "content": "告警源：{{source.name}}  ·  Event：`{{event.id}}`\n指纹：`{{event.fingerprint}}`",
+        "text_size": "notation"
+      }
+    ]
+  }
+}

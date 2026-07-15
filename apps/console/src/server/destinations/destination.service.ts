@@ -262,6 +262,7 @@ export class DestinationService {
       source: sample.metadata.source,
       destination,
       normalizedEvent: sample.normalizedEvent,
+      payload: sample.payload,
       config,
       presentation: { locale: settings.locale, timeZone: settings.timeZone },
     };
@@ -334,6 +335,7 @@ export class DestinationService {
           ? { ...normalizedEvent, status: sampleStatus }
           : normalizedEvent,
         rawPayloadReference: null,
+        payload: {},
       };
     }
 
@@ -343,6 +345,8 @@ export class DestinationService {
       throw new Error(`Preview sample Event not found: ${sampleEventId}`);
     }
 
+    const payload = redactJsonValue(detail.event.rawPayload);
+
     return {
       metadata: {
         kind: "historical_event" as const,
@@ -351,9 +355,10 @@ export class DestinationService {
         receivedAt: detail.event.receivedAt,
       },
       normalizedEvent: detail.event.normalized,
+      payload,
       rawPayloadReference: {
         eventId: detail.event.id,
-        payload: redactJsonValue(detail.event.rawPayload),
+        payload,
         headers: redactHeaders(detail.event.rawHeaders),
       },
     };

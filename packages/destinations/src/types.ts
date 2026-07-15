@@ -34,6 +34,7 @@ export interface DestinationRenderInput<Config> {
   source: SourceSummary;
   destination: DestinationSummary;
   normalizedEvent: NormalizedEvent;
+  payload?: JsonValue;
   config: Config;
   presentation?: DestinationPresentation;
 }

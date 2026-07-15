@@ -92,9 +92,15 @@ function extractLabels(payload: JsonObject, monitor: JsonObject | undefined): La
     provider: "uptime_kuma",
   };
 
+  const heartbeat = objectValue(payload.heartbeat) ?? objectValue(payload.heartbeatJSON);
+
   setOptionalLabel(labels, "monitor", firstString(monitor, ["name", "friendly_name"]));
+  setOptionalLabel(labels, "monitor_id", firstScalarString(monitor, ["id"]));
+  setOptionalLabel(labels, "monitor_path", firstString(monitor, ["pathName"]));
   setOptionalLabel(labels, "url", firstString(monitor, ["url", "hostname"]));
   setOptionalLabel(labels, "type", firstString(monitor, ["type"]));
+  setOptionalLabel(labels, "response_time_ms", firstScalarString(heartbeat, ["ping"]));
+  setOptionalLabel(labels, "last_down_at", firstString(heartbeat, ["lastDownTime"]));
   setOptionalLabel(labels, "tag", firstString(payload, ["tag"]));
 
   const rawLabels = payload.labels;

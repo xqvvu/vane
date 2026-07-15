@@ -25,6 +25,10 @@ describe("delivery execution", () => {
         expect(kind).toBe("generic_webhook");
         expect(input).toMatchObject({
           eventId: "event-1",
+          payload: {
+            monitor: "checkout",
+            token: "[REDACTED]",
+          },
           config: {
             url: "https://example.test/webhook",
           },
@@ -231,7 +235,10 @@ function createClaimedDelivery(input: Partial<DeliveryJob> = {}): ClaimedDeliver
         occurredAt: now,
       },
       providerMetadata: {},
-      rawPayload: {},
+      rawPayload: {
+        monitor: "checkout",
+        token: "upstream-secret",
+      },
       rawHeaders: {},
       routeMatches: null,
       receivedAt: now,

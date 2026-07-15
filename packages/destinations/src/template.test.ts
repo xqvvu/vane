@@ -33,6 +33,20 @@ const input: DestinationSendInput<unknown> = {
     },
     occurredAt: "2026-06-07T08:00:00.000Z",
   },
+  payload: {
+    monitor: {
+      name: "Checkout API",
+      token: "must-not-render",
+    },
+    heartbeat: {
+      ping: 75,
+      important: true,
+    },
+    commonLabels: {
+      "threshold.name": "critical",
+    },
+    incidents: [{ message: "timeout" }],
+  },
   config: {},
 };
 
@@ -58,7 +72,7 @@ describe("destination templates", () => {
   it("rejects unknown variables with path-level diagnostics", () => {
     expect(
       DestinationTemplateEngine.diagnoseTemplateValue(
-        "{{event.title.toUpperCase}} {{process.env.SECRET}}",
+        "{{event.title.toUpperCase}} {{process.env.SECRET}} {{payload}} {{raw.secret}}",
       ),
     ).toEqual([
       {
@@ -72,6 +86,18 @@ describe("destination templates", () => {
         path: "template",
         variable: "process.env.SECRET",
         message: "Destination template contains unknown variable: process.env.SECRET",
+      },
+      {
+        severity: "error",
+        path: "template",
+        variable: "payload",
+        message: "Destination template contains unknown variable: payload",
+      },
+      {
+        severity: "error",
+        path: "template",
+        variable: "raw.secret",
+        message: "Destination template contains unknown variable: raw.secret",
       },
     ]);
   });
@@ -87,6 +113,35 @@ describe("destination templates", () => {
     ).toMatchObject({
       ok: true,
       value: "service=checkout pod=",
+    });
+  });
+
+  it("interpolates nested redacted payload scalar paths and array indexes", () => {
+    const context = DestinationTemplateEngine.createRenderContext(input);
+
+    expect(
+      DestinationTemplateEngine.renderText(
+        context,
+        'monitor={{payload.monitor.name}} ping={{payload.heartbeat.ping}} important={{payload.heartbeat.important}} incident={{payload.incidents[0].message}} threshold={{payload.commonLabels["threshold.name"]}} token={{payload.monitor.token}}',
+      ),
+    ).toMatchObject({
+      ok: true,
+      value:
+        "monitor=Checkout API ping=75 important=true incident=timeout threshold=critical token=[REDACTED]",
+    });
+  });
+
+  it("renders missing or non-scalar payload paths as empty strings", () => {
+    const context = DestinationTemplateEngine.createRenderContext(input);
+
+    expect(
+      DestinationTemplateEngine.renderText(
+        context,
+        "missing={{payload.monitor.missing}} object={{payload.monitor}} array={{payload.incidents}} invalidIndex={{payload.incidents.first.message}}",
+      ),
+    ).toMatchObject({
+      ok: true,
+      value: "missing= object= array= invalidIndex=",
     });
   });
 

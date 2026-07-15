@@ -195,7 +195,7 @@ describe("delivery worker", () => {
         schema: "2.0",
         config: {
           summary: {
-            content: "[严重] Checkout unavailable",
+            content: "[触发中] [严重] Checkout unavailable",
           },
         },
         header: {
@@ -206,7 +206,7 @@ describe("delivery worker", () => {
       },
     });
     expect(JSON.stringify(detail?.renderedPayload)).toContain("checkout returned 503");
-    expect(JSON.stringify(detail?.renderedPayload)).toContain("**服务**\\ncheckout");
+    expect(JSON.stringify(detail?.renderedPayload)).not.toContain("**服务**");
     expect(JSON.stringify(detail?.renderedPayload)).toContain("2026年6月9日 16:00:00");
 
     await store.close();

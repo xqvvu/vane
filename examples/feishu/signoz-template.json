@@ -1,0 +1,175 @@
+{
+  "schema": "2.0",
+  "config": {
+    "width_mode": "compact",
+    "enable_forward": true,
+    "summary": {
+      "content": "[{{event.statusDisplay}}] [{{event.severityDisplay}}] {{payload.commonLabels.alertname}}"
+    }
+  },
+  "header": {
+    "template": "{{bindings.statusColor}}",
+    "title": {
+      "tag": "plain_text",
+      "content": "{{payload.commonLabels.alertname}}"
+    },
+    "subtitle": {
+      "tag": "plain_text",
+      "content": "SigNoz · {{event.occurredAtDisplay}}"
+    },
+    "text_tag_list": [
+      {
+        "tag": "text_tag",
+        "text": {
+          "tag": "plain_text",
+          "content": "{{event.statusDisplay}}"
+        },
+        "color": "{{bindings.statusColor}}"
+      },
+      {
+        "tag": "text_tag",
+        "text": {
+          "tag": "plain_text",
+          "content": "{{event.severityDisplay}}"
+        },
+        "color": "grey"
+      }
+    ]
+  },
+  "body": {
+    "direction": "vertical",
+    "padding": "12px 12px 10px 12px",
+    "vertical_spacing": "8px",
+    "elements": [
+      {
+        "tag": "markdown",
+        "content": "**告警摘要**\n{{payload.commonAnnotations.summary}}",
+        "text_size": "normal"
+      },
+      {
+        "tag": "markdown",
+        "content": "**详细描述**\n{{payload.commonAnnotations.description}}",
+        "text_size": "normal"
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "bisect",
+        "background_style": "grey",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_spacing": "4px",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**当前状态**\n{{event.statusDisplay}}",
+                  "text_size": "notation"
+                }
+              },
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**业务核心**\n{{payload.commonLabels.core}}",
+                  "text_size": "notation"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_spacing": "4px",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**严重程度**\n{{event.severityDisplay}}",
+                  "text_size": "notation"
+                }
+              },
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**触发时间**\n{{event.occurredAtDisplay}}",
+                  "text_size": "notation"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "markdown",
+        "content": "**Rule ID**\n`{{payload.commonLabels.ruleId}}`",
+        "text_size": "notation"
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "bisect",
+        "horizontal_spacing": "8px",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "查看告警规则"
+                },
+                "type": "primary",
+                "width": "fill",
+                "behaviors": [
+                  {
+                    "type": "open_url",
+                    "default_url": "{{payload.commonLabels.ruleSource}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "查看关联日志"
+                },
+                "type": "default",
+                "width": "fill",
+                "behaviors": [
+                  {
+                    "type": "open_url",
+                    "default_url": "{{payload.commonAnnotations.related_logs}}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "markdown",
+        "content": "告警源：{{source.name}}  ·  Event：`{{event.id}}`\n指纹：`{{event.fingerprint}}`  ·  阈值：{{payload.commonLabels[\"threshold.name\"]}}",
+        "text_size": "notation"
+      }
+    ]
+  }
+}

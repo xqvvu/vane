@@ -185,8 +185,10 @@ Email 和 generic webhook 可以先保留文本模式，后续再扩展到平台
 扩展设计应满足这些约束：
 
 - 模板仍然是安全解释执行，不引入用户 JavaScript、远程代码、shell、SQL 或不受控表达式求值。
-- 模板输入仍以 normalized event、Source summary、Destination summary 和安全上下文为主，不暴露
-  destination secrets、source token、raw sensitive headers 或未脱敏 raw payload。
+- 模板输入仍以 normalized event、Source summary、Destination summary 和安全上下文为主；同时允许通过
+  `payload.*` 路径读取递归脱敏后的 provider payload 标量叶子，便于展示 provider-specific 信息。对象、
+  数组、null、缺失路径渲染为空字符串，raw headers、destination secrets、source token 和未脱敏 payload
+  永不进入模板上下文。
 - Preview、test result 和 Delivery `renderedPayload` 继续只保存 secret-safe debug representation；
   真实 wire payload 可以由 adapter 在 `send` 内部追加签名、鉴权字段或平台特定 envelope。
 - Adapter manifest/catalog 需要表达模板能力，例如支持的模式、字段、默认模板、预览能力和是否需要

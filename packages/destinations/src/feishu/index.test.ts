@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import signozTemplate from "../../../../examples/feishu/signoz-template.json" with { type: "json" };
+import uptimeKumaTemplate from "../../../../examples/feishu/uptime-kuma-template.json" with { type: "json" };
+
 import {
   createFeishuSign,
   defaultFeishuCardBindings,
@@ -48,6 +51,147 @@ const input: DestinationSendInput<FeishuConfig> = {
 };
 
 describe("feishu sender", () => {
+  it("renders the SigNoz example with alert context, dotted keys, and action links", async () => {
+    const ruleUrl =
+      "https://signoz.example.test/alerts/edit?ruleId=019ebfb1-c154-7b40-bcbd-cc841780b3ad";
+    const logsUrl = "https://signoz.example.test/logs/logs-explorer?query=llm-response-empty";
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+      template: {
+        mode: "feishu_card",
+        card: signozTemplate,
+        bindings: defaultFeishuCardBindings,
+      },
+    });
+
+    const preview = await feishuSender.preview({
+      ...input,
+      source: {
+        ...input.source,
+        name: "SigNoz prod",
+        provider: "signoz",
+      },
+      normalizedEvent: {
+        ...input.normalizedEvent,
+        title: "LLM empty response",
+        message: "LLM returned an empty response 3 times in a row",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "d23d1e1ec71befd6",
+      },
+      payload: {
+        status: "firing",
+        commonLabels: {
+          alertname: "LLM empty response",
+          core: "model",
+          ruleId: "019ebfb1-c154-7b40-bcbd-cc841780b3ad",
+          ruleSource: ruleUrl,
+          severity: "critical",
+          "threshold.name": "critical",
+        },
+        commonAnnotations: {
+          description: "LLM returned an empty response 3 times in a row",
+          related_logs: logsUrl,
+          summary: "LLM empty responses are occurring frequently",
+        },
+        alerts: [
+          {
+            startsAt: "2026-07-06T07:39:07.585456709Z",
+            fingerprint: "d23d1e1ec71befd6",
+          },
+        ],
+      },
+      config,
+      presentation: { locale: "en-US", timeZone: "Asia/Shanghai" },
+    });
+    const serialized = JSON.stringify(preview);
+
+    expect(preview).toMatchObject({
+      msg_type: "interactive",
+      card: {
+        header: {
+          template: "red",
+          title: { content: "LLM empty response" },
+          text_tag_list: [{ color: "red" }, { color: "grey" }],
+        },
+      },
+    });
+    expect(serialized).toContain("model");
+    expect(serialized).toContain("阈值：critical");
+    expect(serialized).toContain(ruleUrl);
+    expect(serialized).toContain(logsUrl);
+    expect(serialized).not.toContain("authorization");
+    expect(serialized).not.toContain("x-forwarded-for");
+  });
+
+  it("renders the Uptime Kuma example with operational details and no request headers", async () => {
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+      template: {
+        mode: "feishu_card",
+        card: uptimeKumaTemplate,
+        bindings: defaultFeishuCardBindings,
+      },
+    });
+
+    const preview = await feishuSender.preview({
+      ...input,
+      source: {
+        ...input.source,
+        name: "Uptime Kuma prod",
+        provider: "uptime_kuma",
+      },
+      normalizedEvent: {
+        ...input.normalizedEvent,
+        title: "Login page is resolved",
+        message: "[Login page] [Up] 200 - OK",
+        severity: "info",
+        status: "resolved",
+        fingerprint: "uptime_kuma:20",
+        labels: {
+          provider: "uptime_kuma",
+          monitor: "Login page",
+          monitor_id: "20",
+          monitor_path: "Services / Primary / Login page",
+          url: "https://status.example.test/login",
+          type: "http",
+          response_time_ms: "75",
+          last_down_at: "2026-07-14 09:52:34.195",
+        },
+      },
+      payload: {
+        heartbeat: {
+          ping: 75,
+          lastDownTime: "2026-07-14 09:52:34.195",
+        },
+        monitor: {
+          id: 20,
+          name: "Login page",
+          pathName: "Services / Primary / Login page",
+          url: "https://status.example.test/login",
+          type: "http",
+        },
+      },
+      config,
+      presentation: { locale: "en-US", timeZone: "Asia/Shanghai" },
+    });
+    const serialized = JSON.stringify(preview);
+
+    expect(preview).toMatchObject({
+      msg_type: "interactive",
+      card: {
+        header: {
+          template: "green",
+          title: { content: "Login page" },
+        },
+      },
+    });
+    expect(serialized).toContain("75 ms");
+    expect(serialized).toContain("Services / Primary / Login page");
+    expect(serialized).not.toContain("authorization");
+    expect(serialized).not.toContain("x-forwarded-for");
+  });
+
   it("uses a typed Feishu card as the default template", async () => {
     const config = FeishuConfigSchema.parse({
       webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
@@ -71,7 +215,7 @@ describe("feishu sender", () => {
         config: {
           width_mode: "compact",
           summary: {
-            content: "[Critical] Checkout API latency high",
+            content: "[Firing] [Critical] Checkout API latency high",
           },
         },
         header: {
@@ -84,8 +228,8 @@ describe("feishu sender", () => {
     });
     expect(JSON.stringify(preview)).toContain("Alert summary");
     expect(JSON.stringify(preview)).toContain("p95 latency exceeded");
-    expect(JSON.stringify(preview)).toContain("Service");
-    expect(JSON.stringify(preview)).toContain("checkout");
+    expect(JSON.stringify(preview)).not.toContain("Service");
+    expect(JSON.stringify(preview)).not.toContain("Environment");
     expect(JSON.stringify(preview)).not.toContain("secret");
   });
 
@@ -103,7 +247,7 @@ describe("feishu sender", () => {
     expect(serialized).toContain("告警摘要");
     expect(serialized).toContain("严重");
     expect(serialized).toContain("2026年6月7日 16:00:00");
-    expect(serialized).toContain("服务");
+    expect(serialized).not.toContain("**服务**");
   });
 
   it("upgrades the legacy built-in card to the configured presentation locale", async () => {

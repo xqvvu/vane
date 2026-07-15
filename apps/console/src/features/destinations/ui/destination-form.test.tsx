@@ -90,7 +90,8 @@ describe("destination form", () => {
 
     expect(cardTemplate).toContain('"schema": "2.0"');
     expect(cardTemplate).toContain("Alert summary");
-    expect(cardTemplate).toContain("{{event.labels.service}}");
+    expect(cardTemplate).not.toContain("{{event.labels.service}}");
+    expect(cardTemplate).not.toContain("{{event.labels.environment}}");
     expect(cardTemplate).toContain("{{bindings.statusColor}}");
   });
 

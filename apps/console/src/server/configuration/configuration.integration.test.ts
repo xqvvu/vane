@@ -555,7 +555,10 @@ describe("configuration capabilities", () => {
       kind: "generic_webhook",
       config: {
         url: "https://example.test/webhook-secret",
-        template: { mode: "text", text: "{{event.title}} {{event.labels.service}}" },
+        template: {
+          mode: "text",
+          text: "{{event.title}} {{payload.alertname}} {{payload.nested.safe}} token={{payload.token}}",
+        },
       },
     });
 
@@ -572,10 +575,18 @@ describe("configuration capabilities", () => {
     });
     expect(result.context.event.id).toBe(event.id);
     expect(result.context.event.labels.service).toBe("api");
+    expect(result.context.payload).toEqual({
+      alertname: "HighCPU",
+      token: "[REDACTED]",
+      nested: {
+        signingSecret: "[REDACTED]",
+        safe: "visible",
+      },
+    });
     expect(result.normalizedEvent.title).toBe("High CPU");
     expect(result.renderedPayload).toMatchObject({
       eventId: event.id,
-      message: "High CPU api",
+      message: "High CPU HighCPU visible token=[REDACTED]",
     });
     expect(result.rawPayloadReference).toEqual({
       eventId: event.id,

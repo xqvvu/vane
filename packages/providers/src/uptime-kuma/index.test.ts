@@ -39,6 +39,7 @@ describe("uptime kuma provider parser", () => {
       labels: {
         provider: "uptime_kuma",
         monitor: "Vane API",
+        monitor_id: "42",
         type: "http",
         url: "https://vane.example.test/health",
       },
@@ -74,6 +75,50 @@ describe("uptime kuma provider parser", () => {
     expect(result.normalized.severity).toBe("info");
     expect(result.normalized.fingerprint).toBe("uptime_kuma:42");
     expect(result.normalized.occurredAt).toBe("2026-06-09T08:02:00.000Z");
+  });
+
+  it("extracts safe operational labels from Uptime Kuma 2.x notifications", () => {
+    const result = parseUptimeKumaProvider({
+      sourceId: "source-uptime-kuma",
+      sourceName: "Uptime Kuma prod",
+      receivedAt,
+      headers: {
+        authorization: "must-not-be-normalized",
+        "x-forwarded-for": "203.0.113.10",
+      },
+      payload: {
+        heartbeat: {
+          monitorID: 20,
+          status: 1,
+          time: "2026-07-14 09:54:34.195",
+          msg: "200 - OK",
+          ping: 75,
+          localDateTime: "2026-07-14 17:54:34",
+          lastDownTime: "2026-07-14 09:52:34.195",
+        },
+        monitor: {
+          id: 20,
+          name: "Login page",
+          pathName: "Services / Primary / Login page",
+          url: "https://status.example.test/login",
+          type: "http",
+        },
+        msg: "[Login page] [Up] 200 - OK",
+      },
+    });
+
+    expect(result.normalized.labels).toEqual({
+      provider: "uptime_kuma",
+      monitor: "Login page",
+      monitor_id: "20",
+      monitor_path: "Services / Primary / Login page",
+      url: "https://status.example.test/login",
+      type: "http",
+      response_time_ms: "75",
+      last_down_at: "2026-07-14 09:52:34.195",
+    });
+    expect(JSON.stringify(result.normalized)).not.toContain("must-not-be-normalized");
+    expect(JSON.stringify(result.normalized)).not.toContain("203.0.113.10");
   });
 
   it("registers Uptime Kuma in the default provider registry", () => {

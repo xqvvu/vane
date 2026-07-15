@@ -9,7 +9,7 @@ const defaultFeishuCardTemplateDefinition = {
     width_mode: "compact",
     enable_forward: true,
     summary: {
-      content: "[{{event.severityDisplay}}] {{event.title}}",
+      content: "[{{event.statusDisplay}}] [{{event.severityDisplay}}] {{event.title}}",
     },
   },
   header: {
@@ -29,7 +29,7 @@ const defaultFeishuCardTemplateDefinition = {
           tag: "plain_text",
           content: "{{event.severityDisplay}}",
         },
-        color: "red",
+        color: "grey",
       },
       {
         tag: "text_tag",
@@ -107,42 +107,6 @@ const defaultFeishuCardTemplateDefinition = {
         ],
       },
       {
-        tag: "column_set",
-        flex_mode: "bisect",
-        columns: [
-          {
-            tag: "column",
-            width: "weighted",
-            weight: 1,
-            elements: [
-              {
-                tag: "div",
-                text: {
-                  tag: "lark_md",
-                  content: "**Service**\n{{event.labels.service}}",
-                  text_size: "notation",
-                },
-              },
-            ],
-          },
-          {
-            tag: "column",
-            width: "weighted",
-            weight: 1,
-            elements: [
-              {
-                tag: "div",
-                text: {
-                  tag: "lark_md",
-                  content: "**Environment**\n{{event.labels.environment}}",
-                  text_size: "notation",
-                },
-              },
-            ],
-          },
-        ],
-      },
-      {
         tag: "hr",
       },
       {
@@ -165,12 +129,13 @@ const zhHansText = new Map([
   ["**Source**\n{{source.name}}", "**告警源**\n{{source.name}}"],
   ["**Severity**\n{{event.severityDisplay}}", "**级别**\n{{event.severityDisplay}}"],
   ["**Upstream system**\n{{source.provider}}", "**上游系统**\n{{source.provider}}"],
-  ["**Service**\n{{event.labels.service}}", "**服务**\n{{event.labels.service}}"],
-  ["**Environment**\n{{event.labels.environment}}", "**环境**\n{{event.labels.environment}}"],
 ]);
 
 const legacyDefaultText = new Map([
-  ["[{{event.severityDisplay}}] {{event.title}}", "[{{event.severity}}] {{event.title}}"],
+  [
+    "[{{event.statusDisplay}}] [{{event.severityDisplay}}] {{event.title}}",
+    "[{{event.status}}] [{{event.severity}}] {{event.title}}",
+  ],
   ["{{source.name}} · {{event.occurredAtDisplay}}", "{{source.name}} · {{event.occurredAt}}"],
   ["{{event.severityDisplay}}", "{{event.severity}}"],
   ["{{event.statusDisplay}}", "{{event.status}}"],
@@ -179,8 +144,6 @@ const legacyDefaultText = new Map([
   ["**Source**\n{{source.name}}", "**告警源**\n{{source.name}}"],
   ["**Severity**\n{{event.severityDisplay}}", "**级别**\n{{event.severity}}"],
   ["**Upstream system**\n{{source.provider}}", "**上游系统**\n{{source.provider}}"],
-  ["**Service**\n{{event.labels.service}}", "**服务**\n{{event.labels.service}}"],
-  ["**Environment**\n{{event.labels.environment}}", "**环境**\n{{event.labels.environment}}"],
 ]);
 
 export const legacyDefaultFeishuCardTemplate = localizeCardValue(

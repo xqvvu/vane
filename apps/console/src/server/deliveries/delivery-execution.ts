@@ -1,6 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 
-import { redactText } from "@vane/core";
+import { redactJsonValue, redactText } from "@vane/core";
 import type {
   DestinationErrorKind,
   DestinationRetryHint,
@@ -63,6 +63,7 @@ export class DeliveryExecution {
           source: delivery.source,
           destination: delivery.destination,
           normalizedEvent: delivery.event.normalized,
+          payload: redactJsonValue(delivery.event.rawPayload),
           config: delivery.destination.config,
           presentation,
         },
