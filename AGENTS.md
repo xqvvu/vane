@@ -23,9 +23,11 @@ changes, update the appropriate document under `docs` instead.
 - Write project docs in Chinese by default.
 - After creating or updating docs, use the `obsidian-vault` skill to sync them
   into Obsidian.
-- Sync Vane notes into `/Users/chuanhu9/Documents/Obsidian/Vane`.
-- Before syncing docs to Obsidian, inspect the previously synced Vane notes in
-  that directory and keep the same note naming/linking style.
+- Do not hard-code the Obsidian vault path. Before syncing, discover the local
+  vault location from the Obsidian configuration, then locate the existing Vane
+  notes within that vault.
+- Inspect the previously synced Vane notes, keep the same note naming/linking
+  style, and migrate the project docs into the discovered Vane notes location.
 - If the `obsidian-vault` skill is unavailable, say that the sync was skipped
   and continue with the repository change.
 
@@ -471,6 +473,22 @@ Use pnpm and the existing workspace scripts.
 
 Prefer package-scoped commands while working on a focused area. Run broader
 checks when touching shared packages or cross-package contracts.
+
+## Local Browser Preview
+
+- Before starting a dev server for browser preview or frontend verification,
+  inspect the currently listening ports and reuse an existing Vane console dev
+  server when one is already running.
+- Reuse the existing server's exact port. For example, if the console is
+  already available on port `6180`, use that server instead of starting another
+  instance on `6181` or any other port.
+- When a new dev server is actually required, bind it to `localhost`; do not
+  start it with `127.0.0.1` as the host.
+- Browser, Computer Use, Browser MCP, and Chrome DevTools MCP navigation must
+  use `http://localhost:<port>`, never `http://127.0.0.1:<port>`.
+- Do not treat an occupied port as a reason to start a second server until you
+  have verified that the existing listener is not a usable Vane console dev
+  server.
 
 ## Browser Test Credentials
 

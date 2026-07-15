@@ -12,6 +12,7 @@ import {
 import { cn } from "#/lib/utils.ts";
 
 const Combobox = ComboboxPrimitive.Root;
+const useComboboxFilteredItems = ComboboxPrimitive.useFilteredItems;
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
   return <ComboboxPrimitive.Value data-slot="combobox-value" {...props} />;
@@ -267,5 +268,6 @@ export {
   ComboboxChipsInput,
   ComboboxTrigger,
   ComboboxValue,
+  useComboboxFilteredItems,
   useComboboxAnchor,
 };

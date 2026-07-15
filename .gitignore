@@ -30,6 +30,7 @@ dist-ssr
 !.vscode/
 !.vscode/settings.json
 !.vscode/extensions.json
+.wayfinder
 
 # MCP
 .playwright-mcp

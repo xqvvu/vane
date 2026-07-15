@@ -1,8 +1,9 @@
 import { Tabs, TabsContent } from "#/components/ui/tabs.tsx";
 import { ImportNoticePanel } from "#/features/configuration/ui/import-notice-panel.tsx";
 import { PortableConfigForm } from "#/features/configuration/ui/portable-config-form.tsx";
+import { SettingsOperationalOverview } from "#/features/configuration/ui/settings-operational-overview.tsx";
 import { SettingsPageToolbar } from "#/features/configuration/ui/settings-page-toolbar.tsx";
-import { SettingsPreferencesTab } from "#/features/configuration/ui/settings-preferences-tab.tsx";
+import { SettingsPreferencesPanel } from "#/features/configuration/ui/settings-preferences-panel.tsx";
 import { useSettingsWorkspace } from "#/features/configuration/ui/use-settings-workspace.ts";
 import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
 
@@ -15,7 +16,7 @@ export function SettingsPage() {
         <Tabs
           value={workspace.activeTab}
           onValueChange={workspace.setActiveTab}
-          className="min-h-0 grow gap-4"
+          className="min-h-0 grow gap-4 overflow-hidden"
         >
           <SettingsPageToolbar
             pending={workspace.pending}
@@ -26,7 +27,10 @@ export function SettingsPage() {
               <ImportNoticePanel notice={workspace.importNotice} />
             </div>
           ) : null}
-          <SettingsPreferencesTab />
+          <TabsContent value="ui" className="flex min-h-0 flex-col gap-4 overflow-hidden">
+            <SettingsOperationalOverview />
+            <SettingsPreferencesPanel />
+          </TabsContent>
           <TabsContent value="toml" className="min-h-0">
             {workspace.activeTab === "toml" ? (
               <PortableConfigForm

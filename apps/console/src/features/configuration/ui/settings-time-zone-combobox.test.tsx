@@ -1,15 +1,49 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SettingsTimeZoneCombobox } from "#/features/configuration/ui/settings-time-zone-combobox.tsx";
 import { VaneIntlProvider } from "#/i18n/provider.tsx";
 
 describe("settings time zone combobox", () => {
-  afterEach(cleanup);
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return this.dataset.slot === "time-zone-virtualized-list" ? 288 : 32;
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(320);
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        const height =
+          this.dataset.slot === "time-zone-virtualized-list"
+            ? 288
+            : this.getAttribute("role") === "option"
+              ? 32
+              : 0;
 
-  it("limits rendered options and defers filtering to matching time zones", async () => {
+        return {
+          bottom: height,
+          height,
+          left: 0,
+          right: 320,
+          top: 0,
+          width: 320,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("virtualizes the full list and defers filtering to matching time zones", async () => {
     const onChange = vi.fn<(value: string) => void>();
 
     render(
@@ -28,8 +62,26 @@ describe("settings time zone combobox", () => {
     const input = screen.getByRole("combobox", { name: "Time zone" });
 
     fireEvent.click(screen.getByRole("button"));
+    fireEvent.change(input, { target: { value: "" } });
+
     await waitFor(() => {
-      expect(screen.getAllByRole("option").length).toBeLessThanOrEqual(60);
+      const renderedOptions = screen.getAllByRole("option");
+      expect(renderedOptions.length).toBeLessThan(30);
+      expect(Number(renderedOptions[0]?.getAttribute("aria-setsize"))).toBeGreaterThan(60);
+    });
+
+    const scrollElement = document.querySelector<HTMLElement>(
+      '[data-slot="time-zone-virtualized-list"]',
+    );
+    expect(scrollElement).not.toBeNull();
+
+    fireEvent.scroll(scrollElement!, { target: { scrollTop: 80 * 32 } });
+    await waitFor(() => {
+      expect(
+        screen
+          .getAllByRole("option")
+          .some((option) => Number(option.getAttribute("aria-posinset")) > 60),
+      ).toBe(true);
     });
 
     fireEvent.change(input, { target: { value: "Shanghai" } });

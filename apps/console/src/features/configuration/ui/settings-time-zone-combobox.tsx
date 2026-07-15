@@ -5,9 +5,11 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
 } from "#/components/ui/combobox.tsx";
+import {
+  SettingsTimeZoneVirtualizedList,
+  type SettingsTimeZoneVirtualizer,
+} from "#/features/configuration/ui/settings-time-zone-virtualized-list.tsx";
 import { supportedTimeZones } from "#/i18n/time-zone.ts";
 import { useTranslations } from "#/i18n/use-i18n.ts";
 
@@ -16,7 +18,6 @@ const searchableTimeZones = timeZones.map((value) => ({
   value,
   searchValue: value.toLowerCase(),
 }));
-const resultLimit = 60;
 
 export function SettingsTimeZoneCombobox({
   id,
@@ -32,7 +33,9 @@ export function SettingsTimeZoneCombobox({
   onChange: (value: string) => void;
 }) {
   const t = useTranslations();
+  const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(value);
+  const virtualizerRef = React.useRef<SettingsTimeZoneVirtualizer | null>(null);
   const deferredInputValue = React.useDeferredValue(inputValue);
   const filteredTimeZones = React.useMemo(
     () => filterTimeZones(deferredInputValue),
@@ -44,9 +47,28 @@ export function SettingsTimeZoneCombobox({
       items={timeZones}
       filteredItems={filteredTimeZones}
       inputValue={inputValue}
-      limit={resultLimit}
+      open={open}
+      virtualized
       value={value}
       onInputValueChange={setInputValue}
+      onOpenChange={setOpen}
+      onItemHighlighted={(item, { reason, index }) => {
+        const virtualizer = virtualizerRef.current;
+
+        if (!item || !virtualizer) {
+          return;
+        }
+
+        const isStart = index === 0;
+        const isEnd = index === virtualizer.options.count - 1;
+        const shouldScroll = reason === "none" || (reason === "keyboard" && (isStart || isEnd));
+
+        if (shouldScroll) {
+          queueMicrotask(() => {
+            virtualizer.scrollToIndex(index, { align: isEnd ? "start" : "end" });
+          });
+        }
+      }}
       onValueChange={(nextValue) => {
         if (nextValue) {
           setInputValue(nextValue);
@@ -64,13 +86,7 @@ export function SettingsTimeZoneCombobox({
       />
       <ComboboxContent>
         <ComboboxEmpty>{t("configuration.appSettings.timeZoneEmpty")}</ComboboxEmpty>
-        <ComboboxList>
-          {(timeZone) => (
-            <ComboboxItem key={timeZone} value={timeZone}>
-              {timeZone}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
+        <SettingsTimeZoneVirtualizedList open={open} virtualizerRef={virtualizerRef} />
       </ComboboxContent>
     </Combobox>
   );
@@ -80,11 +96,10 @@ function filterTimeZones(query: string): string[] {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (!normalizedQuery) {
-    return timeZones.slice(0, resultLimit);
+    return timeZones;
   }
 
   return searchableTimeZones
     .filter((timeZone) => timeZone.searchValue.includes(normalizedQuery))
-    .map((timeZone) => timeZone.value)
-    .slice(0, resultLimit);
+    .map((timeZone) => timeZone.value);
 }

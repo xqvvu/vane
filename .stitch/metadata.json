@@ -75,6 +75,21 @@
       ]
     },
     {
+      "id": "3370816d2bf3427d83ea0357c585887f",
+      "name": "projects/8189408707632940093/screens/3370816d2bf3427d83ea0357c585887f",
+      "title": "Vane Console - Settings (Compact UI Workspace)",
+      "promptFile": ".stitch/prompts/settings-page.md",
+      "localScreenshot": ".stitch/designs/settings-configuration-page.png",
+      "localHtml": ".stitch/designs/settings-configuration-page.html",
+      "status": "implemented-compact-settings-matrix",
+      "qaNotes": [
+        "Stitch replaced the sparse full-width form with a constrained vertical settings matrix.",
+        "Language and time zone are grouped as Presentation preferences; raw payload retention is grouped as Storage policy.",
+        "The implementation preserves the independently scrolling form body and fixed bottom action bar.",
+        "TOML and JSON workspaces remain unchanged, and no out-of-scope account, worker, incident, or secret controls were added."
+      ]
+    },
+    {
       "id": "33c7792dc8fc4833864c9080862e05e4",
       "name": "projects/8189408707632940093/screens/33c7792dc8fc4833864c9080862e05e4",
       "title": "Vane Console - Destinations (Standardized)",
@@ -159,9 +174,10 @@
     }
   ],
   "workflow": {
-    "externalStateCheckedAt": "2026-07-10",
+    "externalStateCheckedAt": "2026-07-14",
     "stitchDesignSystems": ["assets/c53b2ce16f154fe6a124ffea9d67f066"],
     "stitchScreens": [
+      "3370816d2bf3427d83ea0357c585887f",
       "60b4bb2074854c3c8d0fdc7f53daad97",
       "51d204938b0b4e5ebba372d1b19bb42c",
       "33c7792dc8fc4833864c9080862e05e4",
@@ -394,22 +410,42 @@
       ]
     },
     "settingsTabbedWorkspace": {
-      "status": "designed-in-stitch",
-      "designedAt": "2026-07-10",
-      "screenId": "60b4bb2074854c3c8d0fdc7f53daad97",
+      "status": "implemented-from-stitch-compact-ui-workspace",
+      "designedAt": "2026-07-14",
+      "screenId": "3370816d2bf3427d83ea0357c585887f",
       "sourcePrompt": ".stitch/prompts/settings-page.md",
       "localHtml": ".stitch/designs/settings-configuration-page.html",
       "localScreenshot": ".stitch/designs/settings-configuration-page.png",
       "outputSummary": [
         "Tabbed architecture separates routine UI configuration from raw portable TOML and JSON editing.",
         "UI/TOML/JSON tabs sit at the top of the workspace on the same row as Refresh, with Settings description text removed.",
-        "UI tab uses a segmented summary band and a unified Preferences panel for retention and language.",
+        "UI tab uses a segmented summary band and a constrained settings matrix instead of stretched full-width controls.",
+        "Language and time zone are grouped as Presentation preferences, while raw payload retention is grouped as Storage policy.",
+        "The form body scrolls independently and the Save settings action remains fixed at the bottom.",
         "TOML and JSON tabs use matching CodeMirror workspaces with footer import/export actions."
       ],
       "suggestions": [
-        "Switch to JSON tab to inspect the matching editor state.",
-        "Test Connection was rejected because Settings has no connection capability.",
-        "Active Worker Threads was rejected because worker tuning is outside the current product contract."
+        "A mobile follow-up can inspect the stacked form layout.",
+        "JSON summary export was rejected because it is outside this layout-only change.",
+        "A TOML editor follow-up was rejected because the existing TOML and JSON modes were intentionally preserved."
+      ]
+    },
+    "implementedSettingsCompactLayout": {
+      "screenId": "3370816d2bf3427d83ea0357c585887f",
+      "status": "implemented",
+      "files": [
+        "apps/console/src/features/configuration/ui/app-settings-form.tsx",
+        "apps/console/src/i18n/messages/en-US.json",
+        "apps/console/src/i18n/messages/zh-Hans.json",
+        ".stitch/prompts/settings-page.md",
+        ".stitch/designs/settings-configuration-page.html",
+        ".stitch/designs/settings-configuration-page.png"
+      ],
+      "implementationNotes": [
+        "Mapped the Stitch settings matrix to shadcn FieldSet, FieldLegend, FieldGroup, Select, Combobox, and InputGroup primitives.",
+        "Constrained the desktop form matrix to 512px while allowing it to shrink without horizontal overflow.",
+        "Kept the existing TanStack Form behavior, validation, mutation flow, independent scrolling, and fixed footer.",
+        "Rejected Stitch suggestions that would change JSON export behavior or redesign the existing TOML workspace."
       ]
     }
   }

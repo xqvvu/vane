@@ -49,12 +49,17 @@ workflow software.
    - First panel: `OperationalSummary` with enabled Sources, enabled
      Destinations, enabled Routes, and raw payload retention days. Render it as
      one flat segmented summary band, not four nested metric cards.
-   - Below the summary, a responsive asymmetric two-column grid. Give the
-     `App Settings` panel slightly more width for the raw payload retention days
-     field and compact `Save settings` action. Use the narrower `Language`
-     panel for dashboard language preference.
+   - Below the summary, use one compact `AppSettingsForm` matrix with exactly
+     three fields: dashboard language, time zone, and raw payload retention
+     days. Keep the matrix constrained to its intrinsic content width instead
+     of stretching controls across the full workspace.
+   - Group language and time zone under `Presentation`, and retention under
+     `Storage policy`. Use semantic fieldsets and concise helper text rather
+     than nested cards.
+   - Keep the form content vertically scrollable when space is constrained and
+     keep the `Save settings` action in a fixed bottom action bar.
    - Remove the old `Portability and Safety` facts panel entirely.
-   - Keep helper copy concise.
+   - On narrow widths, stack the settings rows without horizontal overflow.
 
 6. **TOML and JSON Tab Content:**
    - Each format uses the same wide code-oriented panel titled `Portable

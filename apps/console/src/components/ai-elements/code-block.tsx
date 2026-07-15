@@ -10,9 +10,9 @@ import {
   useRef,
   useState,
 } from "react";
-import type { BundledLanguage, BundledTheme, HighlighterGeneric, ThemedToken } from "shiki";
-import { createHighlighter } from "shiki";
+import type { ThemedToken } from "shiki/core";
 
+import { type CodeBlockLanguage, tokenizeCode } from "#/components/ai-elements/code-block-shiki.ts";
 import { Button } from "#/components/ui/button.tsx";
 import {
   Select,
@@ -92,7 +92,7 @@ const LineSpan = ({
 
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
-  language: BundledLanguage;
+  language: CodeBlockLanguage;
   showLineNumbers?: boolean;
   contentClassName?: string;
   preClassName?: string;
@@ -112,36 +112,14 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
-const highlighterCache = new Map<
-  string,
-  Promise<HighlighterGeneric<BundledLanguage, BundledTheme>>
->();
-
 const tokensCache = new Map<string, TokenizedCode>();
 
 const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>();
 
-const getTokensCacheKey = (code: string, language: BundledLanguage) => {
+const getTokensCacheKey = (code: string, language: CodeBlockLanguage) => {
   const start = code.slice(0, 100);
   const end = code.length > 100 ? code.slice(-100) : "";
   return `${language}:${code.length}:${start}:${end}`;
-};
-
-const getHighlighter = (
-  language: BundledLanguage,
-): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> => {
-  const cached = highlighterCache.get(language);
-  if (cached) {
-    return cached;
-  }
-
-  const highlighterPromise = createHighlighter({
-    langs: [language],
-    themes: ["github-light", "github-dark"],
-  });
-
-  highlighterCache.set(language, highlighterPromise);
-  return highlighterPromise;
 };
 
 const createRawTokens = (code: string): TokenizedCode => ({
@@ -161,7 +139,7 @@ const createRawTokens = (code: string): TokenizedCode => ({
 
 export const highlightCode = (
   code: string,
-  language: BundledLanguage,
+  language: CodeBlockLanguage,
   callback?: (result: TokenizedCode) => void,
 ): TokenizedCode | null => {
   const tokensCacheKey = getTokensCacheKey(code, language);
@@ -178,19 +156,8 @@ export const highlightCode = (
     subscribers.get(tokensCacheKey)?.add(callback);
   }
 
-  getHighlighter(language)
-    .then((highlighter) => {
-      const availableLangs = highlighter.getLoadedLanguages();
-      const langToUse = availableLangs.includes(language) ? language : "text";
-
-      const result = highlighter.codeToTokens(code, {
-        lang: langToUse,
-        themes: {
-          dark: "github-dark",
-          light: "github-light",
-        },
-      });
-
+  tokenizeCode(code, language)
+    .then((result) => {
       const tokenized: TokenizedCode = {
         bg: result.bg ?? "transparent",
         fg: result.fg ?? "inherit",
@@ -339,7 +306,7 @@ export const CodeBlockContent = ({
   preClassName,
 }: {
   code: string;
-  language: BundledLanguage;
+  language: CodeBlockLanguage;
   showLineNumbers?: boolean;
   className?: string;
   preClassName?: string;

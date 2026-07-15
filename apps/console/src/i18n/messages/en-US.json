@@ -111,6 +111,8 @@
   "configuration.preferences.title": "Preferences",
   "configuration.appSettings.title": "App settings",
   "configuration.appSettings.description": "Control alert presentation and raw webhook payload storage",
+  "configuration.appSettings.presentationGroup": "Presentation",
+  "configuration.appSettings.storagePolicyGroup": "Storage policy",
   "configuration.appSettings.language": "Default language",
   "configuration.appSettings.languageDescription": "Used by the console and standard alert notifications",
   "configuration.appSettings.timeZone": "Time zone",
