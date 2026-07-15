@@ -191,11 +191,15 @@ ID 工厂。
 
 ```ts
 export interface SqliteStore extends SqliteStoreUnitOfWork {
+  sqliteVersion(): Promise<string>;
   schemaVersion(): Promise<string | null>;
   close(): Promise<void>;
   transaction<T>(fn: (tx: SqliteStoreUnitOfWork) => Promise<T>): Promise<T>;
 }
 ```
+
+`sqliteVersion()` 通过当前 Kysely/`better-sqlite3` 连接执行 `sqlite_version()`，返回实际链接的
+SQLite runtime 版本。server entry 在启动阶段打开 store 后读取该值，用于进程级系统信息日志。
 
 `SqliteStoreUnitOfWork` 同时用于 store 本身和 transaction callback：
 

@@ -59,7 +59,7 @@ async function configureLogging(): Promise<void> {
     contextLocalStorage: new AsyncLocalStorage<Record<string, unknown>>(),
   });
 
-  getLogger(["vane", "runtime"]).info("Vane logging initialized with {format} output at {level}", {
+  getLogger(["vane", "runtime"]).info("Logging initialized with {format} output at {level}", {
     format,
     level: level ?? "off",
   });

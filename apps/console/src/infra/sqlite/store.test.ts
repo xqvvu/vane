@@ -6,6 +6,14 @@ import { openSqliteStore } from "#/infra/sqlite/store.ts";
 const now = "2026-06-07T00:00:00.000Z";
 
 describe("sqlite store", () => {
+  it("reports the SQLite runtime version used by the connection", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:" });
+
+    expect(await store.sqliteVersion()).toMatch(/^3\.\d+\.\d+$/);
+
+    await store.close();
+  });
+
   it("persists instance locale and time zone settings", async () => {
     const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
 

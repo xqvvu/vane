@@ -9,8 +9,11 @@ sidecar。
 日志运行时分为三个职责：
 
 1. `apps/console/src/server.ts` 在 server entry 启动时调用
-   `initializeVaneLogging()`。应用只配置 LogTape 一次；library 和 adapter 不调用
-   `configure()`。
+   `logger()`，随后初始化 SQLite store，并通过 `system-information.ts` 逐项记录 Vane package 版本、
+   Node 版本、操作系统、架构、运行环境、SQLite runtime 版本和 `better-sqlite3` 驱动名称。Vane
+   版本从仓库根 `package.json` 静态导入并随 server bundle 打包；SQLite runtime 版本来自实际连接
+   执行的 `sqlite_version()`，不是 npm package 版本。应用只配置 LogTape 一次；library 和 adapter
+   不调用 `configure()`。
 2. `server/runtime/logging.ts` 是 server-only 配置模块。它拥有 sink、formatter、level、
    `AsyncLocalStorage` 和 LogTape meta logger 配置，但不进入 application container。
 3. `start.ts` 注册全局 request logging middleware，并显式保留 TanStack Start CSRF
@@ -47,7 +50,7 @@ Console 内的业务模块直接使用 LogTape 原生分类 logger，不新增 `
 
 | Category               | 责任                                                      |
 | ---------------------- | --------------------------------------------------------- |
-| `vane.runtime`         | 日志运行时启动等进程级事实。                              |
+| `vane.runtime`         | 日志运行时启动、系统信息等进程级事实。                    |
 | `vane.http`            | HTTP 请求完成、失败、status 和 duration。                 |
 | `vane.intake`          | Webhook 接入接受/拒绝、parser failure、Event 与投递计数。 |
 | `vane.delivery`        | 单次 Delivery 成功、失败、重试和 destination 稳定结果。   |

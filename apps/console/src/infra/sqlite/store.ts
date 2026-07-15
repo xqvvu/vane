@@ -1,3 +1,5 @@
+import { sql } from "kysely";
+
 import type { IsoDateTimeString } from "@vane/core";
 
 import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
@@ -46,6 +48,7 @@ export interface SqliteStoreUnitOfWork {
 }
 
 export interface SqliteStore extends SqliteStoreUnitOfWork {
+  sqliteVersion(): Promise<string>;
   schemaVersion(): Promise<string | null>;
 
   close(): Promise<void>;
@@ -93,6 +96,14 @@ export class OpenedSqliteStore implements SqliteStore {
       .executeTakeFirst();
 
     return row?.version ?? null;
+  }
+
+  async sqliteVersion(): Promise<string> {
+    const result = await sql<{ version: string }>`select sqlite_version() as version`.execute(
+      this.db,
+    );
+
+    return result.rows[0]!.version;
   }
 
   get sources() {
