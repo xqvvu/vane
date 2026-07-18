@@ -43,12 +43,12 @@
     "elements": [
       {
         "tag": "markdown",
-        "content": "**告警摘要**\n{{payload.commonAnnotations.summary}}",
+        "content": "**{{presentation.labels.summary}}**\n{{payload.commonAnnotations.summary}}",
         "text_size": "normal"
       },
       {
         "tag": "markdown",
-        "content": "**详细描述**\n{{payload.commonAnnotations.description}}",
+        "content": "**{{presentation.labels.description}}**\n{{payload.commonAnnotations.description}}",
         "text_size": "normal"
       },
       {
@@ -66,7 +66,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**当前状态**\n{{event.statusDisplay}}",
+                  "content": "**{{presentation.labels.status}}**\n{{event.statusDisplay}}",
                   "text_size": "notation"
                 }
               },
@@ -74,7 +74,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**业务核心**\n{{payload.commonLabels.core}}",
+                  "content": "**{{presentation.labels.core}}**\n{{payload.commonLabels.core}}",
                   "text_size": "notation"
                 }
               }
@@ -90,7 +90,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**严重程度**\n{{event.severityDisplay}}",
+                  "content": "**{{presentation.labels.severity}}**\n{{event.severityDisplay}}",
                   "text_size": "notation"
                 }
               },
@@ -98,7 +98,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**触发时间**\n{{event.occurredAtDisplay}}",
+                  "content": "**{{presentation.labels.occurredAt}}**\n{{event.occurredAtDisplay}}",
                   "text_size": "notation"
                 }
               }
@@ -125,7 +125,7 @@
                 "tag": "button",
                 "text": {
                   "tag": "plain_text",
-                  "content": "查看告警规则"
+                  "content": "{{presentation.labels.viewAlertRule}}"
                 },
                 "type": "primary",
                 "width": "fill",
@@ -147,7 +147,7 @@
                 "tag": "button",
                 "text": {
                   "tag": "plain_text",
-                  "content": "查看关联日志"
+                  "content": "{{presentation.labels.viewRelatedLogs}}"
                 },
                 "type": "default",
                 "width": "fill",
@@ -167,7 +167,7 @@
       },
       {
         "tag": "markdown",
-        "content": "告警源：{{source.name}}  ·  Event：`{{event.id}}`\n指纹：`{{event.fingerprint}}`  ·  阈值：{{payload.commonLabels[\"threshold.name\"]}}",
+        "content": "{{presentation.labels.source}}: {{source.name}}  ·  {{presentation.labels.eventId}}: `{{event.id}}`\n{{presentation.labels.fingerprint}}: `{{event.fingerprint}}`  ·  {{presentation.labels.threshold}}: {{payload.commonLabels[\"threshold.name\"]}}",
         "text_size": "notation"
       }
     ]

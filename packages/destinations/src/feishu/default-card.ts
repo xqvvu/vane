@@ -48,7 +48,7 @@ const defaultFeishuCardTemplateDefinition = {
     elements: [
       {
         tag: "markdown",
-        content: "**Alert summary**\n{{event.message}}",
+        content: "**{{presentation.labels.summary}}**\n{{event.message}}",
         text_size: "normal",
       },
       {
@@ -66,7 +66,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**Status**\n{{event.statusDisplay}}",
+                  content: "**{{presentation.labels.status}}**\n{{event.statusDisplay}}",
                   text_size: "notation",
                 },
               },
@@ -74,7 +74,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**Source**\n{{source.name}}",
+                  content: "**{{presentation.labels.source}}**\n{{source.name}}",
                   text_size: "notation",
                 },
               },
@@ -90,7 +90,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**Severity**\n{{event.severityDisplay}}",
+                  content: "**{{presentation.labels.severity}}**\n{{event.severityDisplay}}",
                   text_size: "notation",
                 },
               },
@@ -98,7 +98,7 @@ const defaultFeishuCardTemplateDefinition = {
                 tag: "div",
                 text: {
                   tag: "lark_md",
-                  content: "**Upstream system**\n{{source.provider}}",
+                  content: "**{{presentation.labels.provider}}**\n{{source.provider}}",
                   text_size: "notation",
                 },
               },
@@ -112,7 +112,7 @@ const defaultFeishuCardTemplateDefinition = {
       {
         tag: "markdown",
         content:
-          "Fingerprint: `{{event.fingerprint}}` · Event: `{{event.id}}` · Destination: {{destination.name}}",
+          "{{presentation.labels.fingerprint}}: `{{event.fingerprint}}` · {{presentation.labels.eventId}}: `{{event.id}}` · {{presentation.labels.destination}}: {{destination.name}}",
         text_size: "notation",
       },
     ],
@@ -123,66 +123,19 @@ export const defaultFeishuCardTemplate: JsonObject = JsonObjectSchema.parse(
   defaultFeishuCardTemplateDefinition,
 );
 
-const zhHansText = new Map([
-  ["**Alert summary**\n{{event.message}}", "**告警摘要**\n{{event.message}}"],
-  ["**Status**\n{{event.statusDisplay}}", "**状态**\n{{event.statusDisplay}}"],
-  ["**Source**\n{{source.name}}", "**告警源**\n{{source.name}}"],
-  ["**Severity**\n{{event.severityDisplay}}", "**级别**\n{{event.severityDisplay}}"],
-  ["**Upstream system**\n{{source.provider}}", "**上游系统**\n{{source.provider}}"],
-]);
+export const BUILT_IN_FEISHU_ALERT_CARD_ID = "feishu.alert-card" as const;
+export const BUILT_IN_FEISHU_ALERT_CARD_VERSION = 1 as const;
 
-const legacyDefaultText = new Map([
-  [
-    "[{{event.statusDisplay}}] [{{event.severityDisplay}}] {{event.title}}",
-    "[{{event.status}}] [{{event.severity}}] {{event.title}}",
-  ],
-  ["{{source.name}} · {{event.occurredAtDisplay}}", "{{source.name}} · {{event.occurredAt}}"],
-  ["{{event.severityDisplay}}", "{{event.severity}}"],
-  ["{{event.statusDisplay}}", "{{event.status}}"],
-  ["**Alert summary**\n{{event.message}}", "**告警摘要**\n{{event.message}}"],
-  ["**Status**\n{{event.statusDisplay}}", "**状态**\n{{event.status}}"],
-  ["**Source**\n{{source.name}}", "**告警源**\n{{source.name}}"],
-  ["**Severity**\n{{event.severityDisplay}}", "**级别**\n{{event.severity}}"],
-  ["**Upstream system**\n{{source.provider}}", "**上游系统**\n{{source.provider}}"],
-]);
-
-export const legacyDefaultFeishuCardTemplate = localizeCardValue(
-  defaultFeishuCardTemplate,
-  legacyDefaultText,
-) as JsonObject;
-
-export function defaultFeishuCardTemplateForLocale(locale: "en-US" | "zh-Hans"): JsonObject {
-  return locale === "zh-Hans"
-    ? (localizeCardValue(defaultFeishuCardTemplate, zhHansText) as JsonObject)
-    : defaultFeishuCardTemplate;
-}
-
-export function isBuiltInFeishuCardTemplate(value: JsonObject): boolean {
-  const serialized = JSON.stringify(value);
-
-  return (
-    serialized === JSON.stringify(defaultFeishuCardTemplate) ||
-    serialized === JSON.stringify(legacyDefaultFeishuCardTemplate)
-  );
-}
-
-function localizeCardValue(
-  value: JsonObject[keyof JsonObject] | JsonObject,
-  replacements: ReadonlyMap<string, string>,
-): unknown {
-  if (typeof value === "string") {
-    return replacements.get(value) ?? value;
+export function resolveBuiltInFeishuCardTemplate(input: {
+  id: typeof BUILT_IN_FEISHU_ALERT_CARD_ID;
+  version: typeof BUILT_IN_FEISHU_ALERT_CARD_VERSION;
+}): JsonObject {
+  if (
+    input.id !== BUILT_IN_FEISHU_ALERT_CARD_ID ||
+    input.version !== BUILT_IN_FEISHU_ALERT_CARD_VERSION
+  ) {
+    throw new Error(`Unknown built-in Feishu template: ${input.id}@${input.version}`);
   }
 
-  if (Array.isArray(value)) {
-    return value.map((item) => localizeCardValue(item, replacements));
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, localizeCardValue(item, replacements)]),
-    );
-  }
-
-  return value;
+  return defaultFeishuCardTemplate;
 }

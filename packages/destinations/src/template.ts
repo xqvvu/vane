@@ -3,7 +3,13 @@ import { z } from "zod";
 import { JsonObjectSchema, redactJsonValue } from "@vane/core";
 import type { DestinationSummary, JsonObject, JsonValue, SourceSummary } from "@vane/core";
 
-import { displaySeverity, displayStatus, formatDestinationDateTime } from "#/presentation.ts";
+import {
+  destinationCopy,
+  displaySeverity,
+  displayStatus,
+  formatDestinationDateTime,
+  resolveDestinationPresentation,
+} from "#/presentation.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
 const RE_TEMPLATE_VARIABLE = /\{\{\s*([^{}]+?)\s*\}\}/g;
@@ -62,6 +68,32 @@ type TemplateStaticPath =
   | "destination.id"
   | "destination.name"
   | "destination.kind"
+  | "presentation.locale"
+  | "presentation.timeZone"
+  | "presentation.labels.summary"
+  | "presentation.labels.description"
+  | "presentation.labels.status"
+  | "presentation.labels.source"
+  | "presentation.labels.severity"
+  | "presentation.labels.provider"
+  | "presentation.labels.service"
+  | "presentation.labels.environment"
+  | "presentation.labels.fingerprint"
+  | "presentation.labels.occurredAt"
+  | "presentation.labels.eventId"
+  | "presentation.labels.destination"
+  | "presentation.labels.labels"
+  | "presentation.labels.core"
+  | "presentation.labels.viewAlertRule"
+  | "presentation.labels.viewRelatedLogs"
+  | "presentation.labels.threshold"
+  | "presentation.labels.checkResult"
+  | "presentation.labels.responseTime"
+  | "presentation.labels.checkType"
+  | "presentation.labels.monitorId"
+  | "presentation.labels.monitorPath"
+  | "presentation.labels.checkUrl"
+  | "presentation.labels.lastFailure"
   | "vane.eventUrl";
 
 type TemplateStaticPathResolver = (context: TemplateContext) => string;
@@ -83,6 +115,32 @@ const TemplateStaticPathResolvers = {
   "destination.id": (context) => context.destination.id,
   "destination.name": (context) => context.destination.name,
   "destination.kind": (context) => context.destination.kind,
+  "presentation.locale": (context) => context.presentation.locale,
+  "presentation.timeZone": (context) => context.presentation.timeZone,
+  "presentation.labels.summary": (context) => context.presentation.labels.summary,
+  "presentation.labels.description": (context) => context.presentation.labels.description,
+  "presentation.labels.status": (context) => context.presentation.labels.status,
+  "presentation.labels.source": (context) => context.presentation.labels.source,
+  "presentation.labels.severity": (context) => context.presentation.labels.severity,
+  "presentation.labels.provider": (context) => context.presentation.labels.provider,
+  "presentation.labels.service": (context) => context.presentation.labels.service,
+  "presentation.labels.environment": (context) => context.presentation.labels.environment,
+  "presentation.labels.fingerprint": (context) => context.presentation.labels.fingerprint,
+  "presentation.labels.occurredAt": (context) => context.presentation.labels.occurredAt,
+  "presentation.labels.eventId": (context) => context.presentation.labels.eventId,
+  "presentation.labels.destination": (context) => context.presentation.labels.destination,
+  "presentation.labels.labels": (context) => context.presentation.labels.labels,
+  "presentation.labels.core": (context) => context.presentation.labels.core,
+  "presentation.labels.viewAlertRule": (context) => context.presentation.labels.viewAlertRule,
+  "presentation.labels.viewRelatedLogs": (context) => context.presentation.labels.viewRelatedLogs,
+  "presentation.labels.threshold": (context) => context.presentation.labels.threshold,
+  "presentation.labels.checkResult": (context) => context.presentation.labels.checkResult,
+  "presentation.labels.responseTime": (context) => context.presentation.labels.responseTime,
+  "presentation.labels.checkType": (context) => context.presentation.labels.checkType,
+  "presentation.labels.monitorId": (context) => context.presentation.labels.monitorId,
+  "presentation.labels.monitorPath": (context) => context.presentation.labels.monitorPath,
+  "presentation.labels.checkUrl": (context) => context.presentation.labels.checkUrl,
+  "presentation.labels.lastFailure": (context) => context.presentation.labels.lastFailure,
   "vane.eventUrl": (context) => context.vane.eventUrl,
 } satisfies Record<TemplateStaticPath, TemplateStaticPathResolver>;
 
@@ -92,6 +150,7 @@ const AllowedTemplatePaths: ReadonlySet<TemplateStaticPath> = new Set(
 
 export const TextDestinationTemplateSchema = z
   .strictObject({
+    source: z.literal("custom").optional(),
     mode: z.literal("text"),
     text: z.string().trim().min(1).max(4000),
     bindings: TemplateBindingsSchema.optional(),
@@ -116,6 +175,7 @@ export const TextDestinationTemplateSchema = z
 
 export const FeishuCardDestinationTemplateSchema = z
   .strictObject({
+    source: z.literal("custom").optional(),
     mode: z.literal("feishu_card"),
     card: JsonObjectSchema,
     bindings: TemplateBindingsSchema.optional(),
@@ -174,6 +234,11 @@ export interface TemplateContext {
     name: string;
     kind: string;
   };
+  presentation: {
+    locale: string;
+    timeZone: string;
+    labels: ReturnType<typeof destinationCopy>["labels"];
+  };
   vane: {
     eventUrl: string;
   };
@@ -209,6 +274,7 @@ export class DestinationTemplateEngine {
     input: DestinationSendInput<unknown>,
     options: { eventUrl?: string; bindings?: TemplateBindings } = {},
   ): TemplateContext {
+    const presentation = resolveDestinationPresentation(input.presentation);
     const context: TemplateContext = {
       event: {
         id: input.eventId,
@@ -228,6 +294,10 @@ export class DestinationTemplateEngine {
       },
       source: templateSource(input.source),
       destination: templateDestination(input.destination),
+      presentation: {
+        ...presentation,
+        labels: destinationCopy(presentation).labels,
+      },
       vane: {
         eventUrl: options.eventUrl ?? "",
       },

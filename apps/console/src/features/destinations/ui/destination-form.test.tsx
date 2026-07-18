@@ -25,19 +25,23 @@ describe("destination form", () => {
   it("switches Feishu templates between text and card modes", () => {
     renderDestinationForm({ kind: "feishu" });
 
+    expect(screen.getByRole("button", { name: "Vane built-in" }).hasAttribute("data-pressed")).toBe(
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+
     expect(screen.getByText("Available variables")).toBeTruthy();
-    expect(screen.getByLabelText("Message template")).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Feishu card" }));
-
     expect(screen.getByLabelText("Feishu card JSON")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Restore default card" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Text" }));
+
+    expect(screen.getByLabelText("Message template")).toBeTruthy();
   });
 
   it("shows Feishu card JSON configuration help", () => {
     renderDestinationForm({ kind: "feishu" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Feishu card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
 
     expect(screen.getByRole("button", { name: "How to configure Feishu card JSON" })).toBeTruthy();
   });
@@ -48,7 +52,7 @@ describe("destination form", () => {
       { destinationCatalog: destinationCatalogWithHiddenFeishuCardHelp() },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Feishu card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
 
     expect(screen.queryByRole("button", { name: "How to configure Feishu card JSON" })).toBeNull();
   });
@@ -56,6 +60,8 @@ describe("destination form", () => {
   it("inserts template variables into the active template field", () => {
     renderDestinationForm({ kind: "feishu" });
 
+    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+    fireEvent.click(screen.getByRole("button", { name: "Text" }));
     fireEvent.click(screen.getByRole("button", { name: "event.title" }));
 
     expect((screen.getByLabelText("Message template") as HTMLTextAreaElement).value).toBe(
@@ -78,7 +84,7 @@ describe("destination form", () => {
   it("restores the default Feishu card template", () => {
     renderDestinationForm({ kind: "feishu" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Feishu card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
     fireEvent.change(screen.getByLabelText("Feishu card JSON"), {
       target: {
         value: '{"content": "custom"}',
@@ -86,18 +92,16 @@ describe("destination form", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Restore default card" }));
 
-    const cardTemplate = (screen.getByLabelText("Feishu card JSON") as HTMLTextAreaElement).value;
-
-    expect(cardTemplate).toContain('"schema": "2.0"');
-    expect(cardTemplate).toContain("Alert summary");
-    expect(cardTemplate).not.toContain("{{event.labels.service}}");
-    expect(cardTemplate).not.toContain("{{event.labels.environment}}");
-    expect(cardTemplate).toContain("{{bindings.statusColor}}");
+    expect(screen.queryByLabelText("Feishu card JSON")).toBeNull();
+    expect(screen.getByRole("button", { name: "Vane built-in" }).hasAttribute("data-pressed")).toBe(
+      true,
+    );
   });
 
   it("applies dynamic status colors to a saved fixed-color card", () => {
     renderDestinationForm({
       kind: "feishu",
+      templateSource: "custom",
       templateMode: "feishu_card",
       templateColorEnabled: false,
       templateBindings: "{}",
@@ -131,7 +135,6 @@ describe("destination form", () => {
         name: "Feishu SRE",
         kind: "feishu",
         webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
-        templateMode: "feishu_card",
       },
       { onPreview },
     );
@@ -145,6 +148,9 @@ describe("destination form", () => {
           sampleStatus: "resolved",
           config: expect.objectContaining({
             template: expect.objectContaining({
+              source: "builtin",
+              id: "feishu.alert-card",
+              version: 1,
               bindings: expect.objectContaining({
                 statusColor: expect.objectContaining({
                   select: "event.status",

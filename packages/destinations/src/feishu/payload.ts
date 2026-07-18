@@ -1,11 +1,7 @@
 import type { JsonObject, JsonValue } from "@vane/core";
 
 import { DestinationTemplateEngine } from "#/template.ts";
-import { resolveDestinationPresentation } from "#/presentation.ts";
-import {
-  defaultFeishuCardTemplateForLocale,
-  isBuiltInFeishuCardTemplate,
-} from "#/feishu/default-card.ts";
+import { resolveBuiltInFeishuCardTemplate } from "#/feishu/default-card.ts";
 import type { DestinationSendInput } from "#/types.ts";
 
 import type { FeishuConfig } from "#/feishu/schema.ts";
@@ -17,12 +13,11 @@ export function renderFeishuPreviewPayload(
 ): JsonValue {
   const context = DestinationTemplateEngine.createRenderContext(input);
 
-  if (config.template.mode === "feishu_card") {
-    const card = isBuiltInFeishuCardTemplate(config.template.card)
-      ? defaultFeishuCardTemplateForLocale(
-          resolveDestinationPresentation(input.presentation).locale,
-        )
-      : config.template.card;
+  if (config.template.source === "builtin" || config.template.mode === "feishu_card") {
+    const card =
+      config.template.source === "builtin"
+        ? resolveBuiltInFeishuCardTemplate(config.template)
+        : config.template.card;
 
     return {
       msg_type: "interactive",

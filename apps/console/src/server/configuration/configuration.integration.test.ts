@@ -325,7 +325,9 @@ describe("configuration capabilities", () => {
       destinationId: destination.id,
       kind: "feishu",
       template: {
-        mode: "feishu_card",
+        source: "builtin",
+        id: "feishu.alert-card",
+        version: 1,
         bindings: {
           statusColor: {
             select: "event.status",

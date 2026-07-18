@@ -182,6 +182,29 @@ Email 和 generic webhook 可以先保留文本模式，后续再扩展到平台
 - Email：支持文本正文、HTML 正文、主题模板，以及安全的 HTML 转义边界。
 - Generic webhook：支持可校验的 JSON payload 模板，而不仅是 `message` 字段。
 
+Feishu 内置卡片使用稳定引用而不是在 Destination config 中复制完整 JSON：
+
+```json
+{
+  "source": "builtin",
+  "id": "feishu.alert-card",
+  "version": 1,
+  "bindings": {}
+}
+```
+
+`id + version` 由 destination adapter 解析为受版本控制的内置模板。用户开始编辑卡片或文本后，
+配置显式切换为 `source: "custom"` 并保存完整模板内容；系统不自动翻译或覆盖自定义文案。旧版把
+内置卡片 JSON 直接写入配置的记录只在 schema 入口做兼容归一化，preview/send 渲染路径只消费
+归一化后的引用或自定义模板，不再通过整份 JSON 比较决定渲染语言。
+
+模板 i18n 使用显式 presentation context。Console 的 preview service 与 Delivery worker 从 Settings
+读取 `locale + timeZone` 后传入 destination render input，destination 包不读取数据库、request context
+或 Console i18n runtime。模板同时保留稳定机器值和本地化展示值，例如 `event.status` 与
+`event.statusDisplay`、`event.occurredAt` 与 `event.occurredAtDisplay`；受白名单约束的
+`presentation.labels.*` 提供内置模板和示例模板所需的系统文案。内置模板因此只维护一份结构，
+并在发送时按实例语言和时区渲染。
+
 扩展设计应满足这些约束：
 
 - 模板仍然是安全解释执行，不引入用户 JavaScript、远程代码、shell、SQL 或不受控表达式求值。

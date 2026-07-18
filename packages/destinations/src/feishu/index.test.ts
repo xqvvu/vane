@@ -7,7 +7,8 @@ import {
   createFeishuSign,
   defaultFeishuCardBindings,
   defaultFeishuCardTemplate,
-  legacyDefaultFeishuCardTemplate,
+  BUILT_IN_FEISHU_ALERT_CARD_ID,
+  BUILT_IN_FEISHU_ALERT_CARD_VERSION,
   FeishuConfigSchema,
   feishuSender,
 } from "#/feishu/index.ts";
@@ -44,6 +45,7 @@ const input: DestinationSendInput<FeishuConfig> = {
     webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
     signSecret: "secret",
     template: {
+      source: "custom",
       mode: "text",
       text: "[{{event.severity}}] {{event.title}}\n{{event.message}}\nStatus: {{event.status}}",
     },
@@ -117,7 +119,7 @@ describe("feishu sender", () => {
       },
     });
     expect(serialized).toContain("model");
-    expect(serialized).toContain("阈值：critical");
+    expect(serialized).toContain("Threshold: critical");
     expect(serialized).toContain(ruleUrl);
     expect(serialized).toContain(logsUrl);
     expect(serialized).not.toContain("authorization");
@@ -192,14 +194,39 @@ describe("feishu sender", () => {
     expect(serialized).not.toContain("x-forwarded-for");
   });
 
+  it.each([
+    ["SigNoz", signozTemplate, "Detailed description", "详细描述"],
+    ["Uptime Kuma", uptimeKumaTemplate, "Check result", "检查结果"],
+  ] as const)("localizes the %s example from presentation settings", async (_, card, en, zh) => {
+    const config = FeishuConfigSchema.parse({
+      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
+      template: {
+        mode: "feishu_card",
+        card,
+        bindings: defaultFeishuCardBindings,
+      },
+    });
+    const render = (locale: "en-US" | "zh-Hans") =>
+      feishuSender.preview({
+        ...input,
+        payload: {},
+        config,
+        presentation: { locale, timeZone: "UTC" },
+      });
+
+    expect(JSON.stringify(await render("en-US"))).toContain(en);
+    expect(JSON.stringify(await render("zh-Hans"))).toContain(zh);
+  });
+
   it("uses a typed Feishu card as the default template", async () => {
     const config = FeishuConfigSchema.parse({
       webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
     });
 
     expect(config.template).toEqual({
-      mode: "feishu_card",
-      card: defaultFeishuCardTemplate,
+      source: "builtin",
+      id: BUILT_IN_FEISHU_ALERT_CARD_ID,
+      version: BUILT_IN_FEISHU_ALERT_CARD_VERSION,
       bindings: defaultFeishuCardBindings,
     });
 
@@ -251,13 +278,29 @@ describe("feishu sender", () => {
   });
 
   it("upgrades the legacy built-in card to the configured presentation locale", async () => {
+    const legacyDefault = JSON.parse(
+      JSON.stringify(defaultFeishuCardTemplate)
+        .replaceAll("{{presentation.labels.summary}}", "告警摘要")
+        .replaceAll("{{presentation.labels.status}}", "状态")
+        .replaceAll("{{presentation.labels.source}}", "告警源")
+        .replaceAll("{{presentation.labels.severity}}", "级别")
+        .replaceAll("{{presentation.labels.provider}}", "上游系统")
+        .replaceAll("{{presentation.labels.fingerprint}}", "指纹")
+        .replaceAll("{{presentation.labels.eventId}}", "事件 ID")
+        .replaceAll("{{presentation.labels.destination}}", "通知目标"),
+    );
     const config = FeishuConfigSchema.parse({
       webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
       template: {
         mode: "feishu_card",
-        card: legacyDefaultFeishuCardTemplate,
+        card: legacyDefault,
         bindings: defaultFeishuCardBindings,
       },
+    });
+    expect(config.template).toMatchObject({
+      source: "builtin",
+      id: BUILT_IN_FEISHU_ALERT_CARD_ID,
+      version: BUILT_IN_FEISHU_ALERT_CARD_VERSION,
     });
     const preview = await feishuSender.preview({
       ...input,
@@ -389,6 +432,7 @@ describe("feishu sender", () => {
         config: {
           ...input.config,
           template: {
+            source: "custom",
             mode: "feishu_card",
             card: {
               header: {
@@ -460,6 +504,7 @@ describe("feishu sender", () => {
         config: {
           ...input.config,
           template: {
+            source: "custom",
             mode: "text",
             text: "{{raw.secret}}",
           },

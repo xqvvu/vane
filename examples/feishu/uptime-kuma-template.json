@@ -43,7 +43,7 @@
     "elements": [
       {
         "tag": "markdown",
-        "content": "**检查结果**\n{{event.message}}",
+        "content": "**{{presentation.labels.checkResult}}**\n{{event.message}}",
         "text_size": "normal"
       },
       {
@@ -61,7 +61,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**当前状态**\n{{event.statusDisplay}}",
+                  "content": "**{{presentation.labels.status}}**\n{{event.statusDisplay}}",
                   "text_size": "notation"
                 }
               },
@@ -69,7 +69,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**响应耗时**\n{{payload.heartbeat.ping}} ms",
+                  "content": "**{{presentation.labels.responseTime}}**\n{{payload.heartbeat.ping}} ms",
                   "text_size": "notation"
                 }
               }
@@ -85,7 +85,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**检查类型**\n{{payload.monitor.type}}",
+                  "content": "**{{presentation.labels.checkType}}**\n{{payload.monitor.type}}",
                   "text_size": "notation"
                 }
               },
@@ -93,7 +93,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**Monitor ID**\n{{payload.monitor.id}}",
+                  "content": "**{{presentation.labels.monitorId}}**\n{{payload.monitor.id}}",
                   "text_size": "notation"
                 }
               }
@@ -103,17 +103,17 @@
       },
       {
         "tag": "markdown",
-        "content": "**监控路径**\n{{payload.monitor.pathName}}",
+        "content": "**{{presentation.labels.monitorPath}}**\n{{payload.monitor.pathName}}",
         "text_size": "notation"
       },
       {
         "tag": "markdown",
-        "content": "**检查地址**\n`{{payload.monitor.url}}`",
+        "content": "**{{presentation.labels.checkUrl}}**\n`{{payload.monitor.url}}`",
         "text_size": "notation"
       },
       {
         "tag": "markdown",
-        "content": "**上次故障**\n{{payload.heartbeat.lastDownTime}}",
+        "content": "**{{presentation.labels.lastFailure}}**\n{{payload.heartbeat.lastDownTime}}",
         "text_size": "notation"
       },
       {
@@ -121,7 +121,7 @@
       },
       {
         "tag": "markdown",
-        "content": "告警源：{{source.name}}  ·  Event：`{{event.id}}`\n指纹：`{{event.fingerprint}}`",
+        "content": "{{presentation.labels.source}}: {{source.name}}  ·  {{presentation.labels.eventId}}: `{{event.id}}`\n{{presentation.labels.fingerprint}}: `{{event.fingerprint}}`",
         "text_size": "notation"
       }
     ]

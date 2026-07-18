@@ -13,11 +13,18 @@ import {
   type TemplateBindings,
 } from "@vane/destinations";
 import { defaultFeishuCardBindings } from "@vane/destinations/feishu/appearance";
+import {
+  BUILT_IN_FEISHU_ALERT_CARD_ID,
+  BUILT_IN_FEISHU_ALERT_CARD_VERSION,
+  defaultFeishuCardTemplate,
+} from "@vane/destinations/feishu/default-card";
 
 export type DestinationFormKind = "generic_webhook" | "feishu" | "slack" | "email";
 export type DestinationTemplateFormMode = "text" | "feishu_card";
+export type DestinationTemplateFormSource = "builtin" | "custom";
 
 export interface DestinationTemplateFormState {
+  templateSource: DestinationTemplateFormSource;
   templateMode: DestinationTemplateFormMode;
   templateText: string;
   templateCard: string;
@@ -177,11 +184,21 @@ export function destinationConfigPatchFromForm(
 function templateFromForm(kind: DestinationFormKind, data: FormData): JsonObject | null {
   const bindings = templateBindingsFromForm(data);
 
+  if (kind === "feishu" && templateSourceFromForm(data) === "builtin") {
+    return {
+      source: "builtin",
+      id: BUILT_IN_FEISHU_ALERT_CARD_ID,
+      version: BUILT_IN_FEISHU_ALERT_CARD_VERSION,
+      ...nonEmptyObject({ bindings }),
+    };
+  }
+
   if (kind === "feishu" && templateModeFromForm(data) === "feishu_card") {
     const card = formTrimmedString(data, "templateCard");
 
     return card
       ? {
+          source: "custom",
           mode: "feishu_card",
           card: JsonObjectSchema.parse(JSON.parse(card)),
           ...nonEmptyObject({ bindings }),
@@ -191,7 +208,14 @@ function templateFromForm(kind: DestinationFormKind, data: FormData): JsonObject
 
   const text = formTrimmedString(data, "templateText");
 
-  return text ? { mode: "text", text, ...nonEmptyObject({ bindings }) } : null;
+  return text
+    ? {
+        ...(kind === "feishu" ? { source: "custom" } : {}),
+        mode: "text",
+        text,
+        ...nonEmptyObject({ bindings }),
+      }
+    : null;
 }
 
 function templateBindingsFromForm(data: FormData): JsonObject {
@@ -204,6 +228,10 @@ function templateModeFromForm(data: FormData): DestinationTemplateFormMode {
   return formString(data, "templateMode") === "feishu_card" ? "feishu_card" : "text";
 }
 
+function templateSourceFromForm(data: FormData): DestinationTemplateFormSource {
+  return formString(data, "templateSource") === "builtin" ? "builtin" : "custom";
+}
+
 function formWebhookMethod(data: FormData): "POST" | "PUT" | "PATCH" {
   const method = formString(data, "method").toUpperCase();
 
@@ -214,9 +242,10 @@ export function createDefaultDestinationTemplateFormState(): DestinationTemplate
   const statusColor = defaultFeishuCardBindings.statusColor;
 
   return {
-    templateMode: "text",
+    templateSource: "builtin",
+    templateMode: "feishu_card",
     templateText: "",
-    templateCard: "",
+    templateCard: JSON.stringify(defaultFeishuCardTemplate, null, 2),
     templateBindings: "{}",
     templateColorEnabled: true,
     templateColorSelector: statusColor.select,
@@ -239,12 +268,16 @@ export function destinationTemplateFormStateFromDraft(
   const bindings = parsedBindings.success ? parsedBindings.data : {};
   const statusColor = bindings.statusColor;
   const card = JsonObjectSchema.safeParse(template.card);
+  const isBuiltIn = template.source === "builtin";
 
   return {
     ...defaults,
-    templateMode: template.mode === "feishu_card" ? "feishu_card" : "text",
+    templateSource: isBuiltIn ? "builtin" : "custom",
+    templateMode: isBuiltIn || template.mode === "feishu_card" ? "feishu_card" : "text",
     templateText: typeof template.text === "string" ? template.text : "",
-    templateCard: card.success ? JSON.stringify(card.data, null, 2) : "",
+    templateCard: card.success
+      ? JSON.stringify(card.data, null, 2)
+      : JSON.stringify(defaultFeishuCardTemplate, null, 2),
     templateBindings: JSON.stringify(bindings),
     templateColorEnabled: Boolean(statusColor),
     templateColorSelector: statusColor?.select ?? defaults.templateColorSelector,

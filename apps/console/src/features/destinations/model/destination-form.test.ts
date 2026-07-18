@@ -71,6 +71,7 @@ describe("destination form helpers", () => {
     data.set("kind", "feishu");
     data.set("webhookUrl", "https://open.feishu.cn/webhook");
     data.set("signSecret", "feishu-sign-secret");
+    data.set("templateSource", "custom");
     data.set("templateMode", "feishu_card");
     data.set(
       "templateBindings",
@@ -107,6 +108,7 @@ describe("destination form helpers", () => {
       webhookUrl: "https://open.feishu.cn/webhook",
       signSecret: "feishu-sign-secret",
       template: {
+        source: "custom",
         mode: "feishu_card",
         bindings: {
           statusColor: {
@@ -132,6 +134,23 @@ describe("destination form helpers", () => {
             },
           ],
         },
+      },
+    });
+  });
+
+  it("maps the built-in Feishu card to a stable template reference", () => {
+    const data = new FormData();
+
+    data.set("webhookUrl", "https://open.feishu.cn/webhook");
+    data.set("templateSource", "builtin");
+    data.set("templateBindings", "{}");
+
+    expect(destinationConfigFromForm("feishu", data)).toEqual({
+      webhookUrl: "https://open.feishu.cn/webhook",
+      template: {
+        source: "builtin",
+        id: "feishu.alert-card",
+        version: 1,
       },
     });
   });
@@ -179,6 +198,7 @@ describe("destination form helpers", () => {
   it("loads a saved binding draft without exposing unrelated config", () => {
     expect(
       destinationTemplateFormStateFromDraft({
+        source: "custom",
         mode: "feishu_card",
         bindings: {
           statusColor: {
@@ -192,12 +212,27 @@ describe("destination form helpers", () => {
         },
       }),
     ).toMatchObject({
+      templateSource: "custom",
       templateMode: "feishu_card",
       templateColorEnabled: true,
       templateColorSelector: "event.status",
       templateColorCases: { firing: "orange", resolved: "green" },
       templateColorFallback: "grey",
       templateCard: expect.stringContaining("{{bindings.statusColor}}"),
+    });
+  });
+
+  it("loads a built-in Feishu reference without persisting the card JSON", () => {
+    expect(
+      destinationTemplateFormStateFromDraft({
+        source: "builtin",
+        id: "feishu.alert-card",
+        version: 1,
+      }),
+    ).toMatchObject({
+      templateSource: "builtin",
+      templateMode: "feishu_card",
+      templateCard: expect.stringContaining("{{presentation.labels.summary}}"),
     });
   });
 

@@ -41,6 +41,7 @@ import {
   createDefaultDestinationTemplateFormState,
   templateBindingsJsonFromFormState,
   type DestinationTemplateFormMode,
+  type DestinationTemplateFormSource,
   type DestinationFormKind,
 } from "#/features/destinations/model/destination-form.ts";
 import type {
@@ -207,45 +208,52 @@ export function DestinationForm({
 
     return (
       <>
-        <form.Field name="templateMode">
+        <form.Field name="templateSource">
           {(field) => (
             <UiField>
-              <FieldLabel>{t("destinations.form.templateMode")}</FieldLabel>
+              <FieldLabel>{t("destinations.form.templateSource")}</FieldLabel>
               <ToggleGroup
                 value={[String(field.state.value)]}
                 variant="outline"
                 size="sm"
                 onValueChange={(value) => {
-                  const next = value[0] as DestinationTemplateFormMode | undefined;
+                  const next = value[0] as DestinationTemplateFormSource | undefined;
 
                   if (next) {
                     field.handleChange(next);
+                    form.setFieldValue("templateMode", "feishu_card");
                   }
                 }}
               >
-                <ToggleGroupItem value="text" aria-label={t("destinations.form.templateModeText")}>
-                  {t("destinations.form.templateModeText")}
+                <ToggleGroupItem
+                  value="builtin"
+                  aria-label={t("destinations.form.templateSourceBuiltin")}
+                >
+                  {t("destinations.form.templateSourceBuiltin")}
                 </ToggleGroupItem>
                 <ToggleGroupItem
-                  value="feishu_card"
-                  aria-label={t("destinations.form.templateModeFeishuCard")}
+                  value="custom"
+                  aria-label={t("destinations.form.templateSourceCustom")}
                 >
-                  {t("destinations.form.templateModeFeishuCard")}
+                  {t("destinations.form.templateSourceCustom")}
                 </ToggleGroupItem>
               </ToggleGroup>
-              <FieldDescription>{t("destinations.form.templateModeDescription")}</FieldDescription>
+              <FieldDescription>
+                {field.state.value === "builtin"
+                  ? t("destinations.form.templateSourceBuiltinDescription")
+                  : t("destinations.form.templateSourceCustomDescription")}
+              </FieldDescription>
             </UiField>
           )}
         </form.Field>
-        <form.Subscribe selector={(state) => state.values.templateMode}>
-          {(templateMode) =>
-            templateMode === "feishu_card"
-              ? renderFeishuCardTemplateField()
-              : renderTextTemplateField("feishu")
+        <form.Subscribe selector={(state) => state.values.templateSource}>
+          {(templateSource) =>
+            templateSource === "custom" ? renderCustomFeishuTemplateFields() : null
           }
         </form.Subscribe>
         <form.Subscribe
           selector={(state) => ({
+            source: state.values.templateSource,
             mode: state.values.templateMode,
             card: state.values.templateCard,
             enabled: state.values.templateColorEnabled,
@@ -255,8 +263,17 @@ export function DestinationForm({
             previewStatus: state.values.templatePreviewStatus,
           })}
         >
-          {({ mode: templateMode, card, enabled, selector, cases, fallback, previewStatus }) =>
-            templateMode === "feishu_card" ? (
+          {({
+            source: templateSource,
+            mode: templateMode,
+            card,
+            enabled,
+            selector,
+            cases,
+            fallback,
+            previewStatus,
+          }) =>
+            templateSource === "builtin" || templateMode === "feishu_card" ? (
               <FeishuDynamicPropertiesField
                 enabled={enabled}
                 canApply={canApplyDynamicStatusColor(card)}
@@ -288,10 +305,56 @@ export function DestinationForm({
             ) : null
           }
         </form.Subscribe>
-        {renderTemplateVariableReference()}
+        <form.Subscribe selector={(state) => state.values.templateSource}>
+          {(templateSource) =>
+            templateSource === "custom" ? renderTemplateVariableReference() : null
+          }
+        </form.Subscribe>
       </>
     );
   };
+
+  const renderCustomFeishuTemplateFields = () => (
+    <>
+      <form.Field name="templateMode">
+        {(field) => (
+          <UiField>
+            <FieldLabel>{t("destinations.form.templateMode")}</FieldLabel>
+            <ToggleGroup
+              value={[String(field.state.value)]}
+              variant="outline"
+              size="sm"
+              onValueChange={(value) => {
+                const next = value[0] as DestinationTemplateFormMode | undefined;
+
+                if (next) {
+                  field.handleChange(next);
+                }
+              }}
+            >
+              <ToggleGroupItem value="text" aria-label={t("destinations.form.templateModeText")}>
+                {t("destinations.form.templateModeText")}
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="feishu_card"
+                aria-label={t("destinations.form.templateModeFeishuCard")}
+              >
+                {t("destinations.form.templateModeFeishuCard")}
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <FieldDescription>{t("destinations.form.templateModeDescription")}</FieldDescription>
+          </UiField>
+        )}
+      </form.Field>
+      <form.Subscribe selector={(state) => state.values.templateMode}>
+        {(templateMode) =>
+          templateMode === "feishu_card"
+            ? renderFeishuCardTemplateField()
+            : renderTextTemplateField("feishu")
+        }
+      </form.Subscribe>
+    </>
+  );
 
   const renderTextTemplateField = (kind: DestinationFormKind) =>
     renderTextareaField({
@@ -358,7 +421,8 @@ export function DestinationForm({
               onClick={() => {
                 const defaults = createDefaultDestinationTemplateFormState();
 
-                field.handleChange(defaultFeishuCardTemplate);
+                form.setFieldValue("templateSource", "builtin");
+                form.setFieldValue("templateMode", "feishu_card");
                 form.setFieldValue("templateBindings", defaults.templateBindings);
                 form.setFieldValue("templateColorEnabled", defaults.templateColorEnabled);
                 form.setFieldValue("templateColorSelector", defaults.templateColorSelector);
@@ -763,7 +827,8 @@ function destinationValuesToFormData(values: DestinationFormValues): FormData {
 
   data.set(
     "templateBindings",
-    values.kind === "feishu" && values.templateMode === "feishu_card"
+    values.kind === "feishu" &&
+      (values.templateSource === "builtin" || values.templateMode === "feishu_card")
       ? templateBindingsJsonFromFormState(values)
       : values.templateBindings,
   );
@@ -806,12 +871,20 @@ const templateVariablePaths = [
   "event.title",
   "event.message",
   "event.severity",
+  "event.severityDisplay",
   "event.status",
+  "event.statusDisplay",
+  "event.occurredAtDisplay",
   "event.fingerprint",
   "event.labels.service",
   "event.labels.environment",
   "source.name",
   "destination.name",
+  "presentation.labels.summary",
+  "presentation.labels.status",
+  "presentation.labels.severity",
+  "presentation.labels.source",
+  "presentation.labels.occurredAt",
   "vane.eventUrl",
 ];
 
