@@ -1,7 +1,7 @@
 import { getLogger, withContext } from "@logtape/logtape";
 import { createMiddleware } from "@tanstack/react-start";
 
-import { safeErrorProperties } from "#/server/runtime/log-safety.ts";
+import { safeErrorProperties } from "#/server/runtime/log-safety";
 
 const httpLogger = getLogger(["vane", "http"]);
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;

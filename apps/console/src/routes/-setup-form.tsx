@@ -1,9 +1,9 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
-import { Card, CardContent, CardHeader } from "#/components/ui/card.tsx";
-import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { cn } from "#/lib/utils.ts";
+import { Card, CardContent, CardHeader } from "#/components/ui/card";
+import { Skeleton } from "#/components/ui/skeleton";
+import { cn } from "#/lib/utils";
 
 export interface SetupFormProps {
   redirectTo: string;
@@ -11,7 +11,7 @@ export interface SetupFormProps {
 
 const SetupFormClient = React.lazy(
   createClientOnlyFn(async () => {
-    const module = await import("#/routes/-setup-form-impl.tsx");
+    const module = await import("#/routes/-setup-form-impl");
 
     return { default: module.SetupFormClient };
   }),

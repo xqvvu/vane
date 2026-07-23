@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 
-import { Badge } from "#/components/ui/badge.tsx";
-import type { getEventDeliveryStats } from "#/features/events/ui/event-detail-stats.ts";
-import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
-import { SeverityBadge } from "#/features/events/ui/severity-badge.tsx";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+import { Badge } from "#/components/ui/badge";
+import type { getEventDeliveryStats } from "#/features/events/ui/event-detail-stats";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types";
+import { SeverityBadge } from "#/features/events/ui/severity-badge";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function EventDetailSummary({
   detail,

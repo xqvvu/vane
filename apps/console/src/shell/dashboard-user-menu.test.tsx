@@ -4,10 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
-import { DashboardUserMenuClient } from "#/shell/dashboard-user-menu-impl.tsx";
-import { DashboardUserMenu } from "#/shell/dashboard-user-menu.tsx";
+import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
+import { VaneIntlProvider } from "#/i18n/provider";
+import { DashboardUserMenu } from "#/shell/dashboard-user-menu";
+import { DashboardUserMenuClient } from "#/shell/dashboard-user-menu-impl";
 
 const testState = vi.hoisted(() => ({
   navigate: vi.fn<() => Promise<void>>(async () => {}),
@@ -28,7 +28,7 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => testState.navigate,
 }));
 
-vi.mock("#/lib/auth.client.ts", () => ({
+vi.mock("#/lib/auth.client", () => ({
   authClient: testState.authClient,
 }));
 
@@ -36,13 +36,13 @@ vi.mock("sonner", () => ({
   toast: testState.toast,
 }));
 
-vi.mock("#/components/ui/avatar.tsx", () => ({
+vi.mock("#/components/ui/avatar", () => ({
   Avatar: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   AvatarFallback: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   AvatarImage: ({ alt }: { alt?: string }) => <span>{alt}</span>,
 }));
 
-vi.mock("#/components/ui/button.tsx", () => ({
+vi.mock("#/components/ui/button", () => ({
   Button: ({
     children,
     render,
@@ -59,7 +59,7 @@ vi.mock("#/components/ui/button.tsx", () => ({
     ),
 }));
 
-vi.mock("#/components/ui/dropdown-menu.tsx", () => ({
+vi.mock("#/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

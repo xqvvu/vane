@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";
+import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config";
 
 describe("auth runtime config", () => {
   it("allows local development to rely on Better Auth defaults", () => {

@@ -8,20 +8,20 @@ import {
   CodeBlockFilename,
   CodeBlockHeader,
   CodeBlockTitle,
-} from "#/components/ai-elements/code-block.tsx";
+} from "#/components/ai-elements/code-block";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "#/components/ui/dialog.tsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
+} from "#/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import type {
   DestinationPreviewNotice,
   DestinationTestNotice,
-} from "#/features/destinations/model/destination-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/destinations/model/destination-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 type TranslationFn = ReturnType<typeof useTranslations>;
 

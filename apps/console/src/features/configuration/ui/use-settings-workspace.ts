@@ -3,9 +3,9 @@ import { toast } from "sonner";
 
 import type { ImportConfigurationResult } from "@vane/core";
 
-import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { downloadTextFile } from "#/lib/browser.ts";
+import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations";
+import { useTranslations } from "#/i18n/use-i18n";
+import { downloadTextFile } from "#/lib/browser";
 
 type SettingsTab = "ui" | PortableConfigFormat;
 type PortableConfigFormat = "toml" | "json";

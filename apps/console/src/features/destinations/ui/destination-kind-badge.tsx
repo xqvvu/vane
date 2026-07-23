@@ -1,6 +1,6 @@
-import { Badge } from "#/components/ui/badge.tsx";
-import type { DestinationFormKind } from "#/features/destinations/model/destination-form.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Badge } from "#/components/ui/badge";
+import type { DestinationFormKind } from "#/features/destinations/model/destination-form";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationKindBadge({ kind }: { kind: DestinationFormKind }) {
   const t = useTranslations();

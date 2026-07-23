@@ -3,16 +3,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
 
-import type { ApplicationContainer, VaneAuth } from "#/server/runtime/container.ts";
+import type { ApplicationContainer, VaneAuth } from "#/server/runtime/container";
 import {
   DashboardAuthError,
   DashboardAuthorizationError,
   type DashboardSession,
-} from "#/server/runtime/dashboard-session.ts";
+} from "#/server/runtime/dashboard-session";
 import {
   createWebhookRequestContext,
   requireDashboardRequestContext,
-} from "#/server/runtime/request-context.ts";
+} from "#/server/runtime/request-context";
 
 const session: DashboardSession = {
   session: {

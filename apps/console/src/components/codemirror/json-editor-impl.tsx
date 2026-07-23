@@ -3,9 +3,9 @@ import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 
-import { codeEditorTheme } from "#/components/codemirror/code-editor-theme.ts";
-import { codeFoldGutter } from "#/components/codemirror/code-fold-gutter.ts";
-import type { JsonEditorProps } from "#/components/codemirror/json-editor.tsx";
+import { codeEditorTheme } from "#/components/codemirror/code-editor-theme";
+import { codeFoldGutter } from "#/components/codemirror/code-fold-gutter";
+import type { JsonEditorProps } from "#/components/codemirror/json-editor";
 
 const jsonExtensions = [json(), codeFoldGutter(), EditorView.lineWrapping, codeEditorTheme];
 

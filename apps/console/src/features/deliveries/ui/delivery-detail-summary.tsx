@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
-import { Badge } from "#/components/ui/badge.tsx";
-import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types.ts";
-import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+import { Badge } from "#/components/ui/badge";
+import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types";
+import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function DeliveryDetailSummary({ detail }: { detail: DeliveryDetailData }) {
   const t = useTranslations();

@@ -1,15 +1,15 @@
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
 
-import { Button } from "#/components/ui/button.tsx";
+import { Button } from "#/components/ui/button";
 import {
   Field as UiField,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "#/components/ui/field.tsx";
-import { Input } from "#/components/ui/input.tsx";
+} from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -17,19 +17,19 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
+} from "#/components/ui/select";
 import {
   sourceConfigFromForm,
   sourceConfigPatchFromForm,
-} from "#/features/sources/model/source-form.ts";
+} from "#/features/sources/model/source-form";
 import type {
   SourceFormLayout,
   SourceFormSubmitInput,
   SourceFormValues,
   SourceSubmitResult,
-} from "#/features/sources/ui/source-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+} from "#/features/sources/ui/source-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function SourceForm({
   defaultValues,

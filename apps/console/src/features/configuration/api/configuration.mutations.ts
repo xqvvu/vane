@@ -1,16 +1,16 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { appSettingsQueryKeys } from "#/features/configuration/api/configuration.queries.ts";
-import { destinationQueryKeys } from "#/features/destinations/api/destination.queries.ts";
-import { routeQueryKeys } from "#/features/routes/api/route.queries.ts";
-import { sourceQueryKeys } from "#/features/sources/api/source.queries.ts";
+import { appSettingsQueryKeys } from "#/features/configuration/api/configuration.queries";
+import { destinationQueryKeys } from "#/features/destinations/api/destination.queries";
+import { routeQueryKeys } from "#/features/routes/api/route.queries";
+import { sourceQueryKeys } from "#/features/sources/api/source.queries";
 import {
   exportConfigurationJsonFn,
   exportConfigurationTomlFn,
   importConfigurationJsonFn,
   importConfigurationTomlFn,
-} from "#/server/functions/configuration.functions.ts";
+} from "#/server/functions/configuration.functions";
 
 export function useConfigurationMutations() {
   const queryClient = useQueryClient();

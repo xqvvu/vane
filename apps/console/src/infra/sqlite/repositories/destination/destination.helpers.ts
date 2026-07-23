@@ -1,12 +1,12 @@
 import { decodeJsonObject, DestinationKindSchema } from "@vane/core";
 import type { DestinationSummary, JsonObject } from "@vane/core";
 
-import { fromSqliteBoolean } from "#/infra/sqlite/codecs.ts";
-import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
+import { fromSqliteBoolean } from "#/infra/sqlite/codecs";
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
 import type {
   DestinationRow,
   DestinationRuntimeConfig,
-} from "#/infra/sqlite/repositories/destination/destination.interface.ts";
+} from "#/infra/sqlite/repositories/destination/destination.interface";
 
 export function destinationSummaryFromRow(row: DestinationRow): DestinationSummary {
   return {

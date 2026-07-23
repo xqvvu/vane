@@ -5,7 +5,7 @@ import { JsonObjectSchema, redactText } from "@vane/core";
 import type { DestinationKind, JsonObject, JsonValue, NormalizedEvent } from "@vane/core";
 import type { DestinationRegistry } from "@vane/destinations";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
 
 export function generateSourceToken(): string {
   return `vane_src_${randomBytes(24).toString("base64url")}`;

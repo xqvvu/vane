@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { destinationQueryKeys } from "#/features/destinations/api/destination.queries.ts";
-import { routeQueryKeys } from "#/features/routes/api/route.queries.ts";
+import { destinationQueryKeys } from "#/features/destinations/api/destination.queries";
+import { routeQueryKeys } from "#/features/routes/api/route.queries";
 import {
   createDestinationFn,
   deleteDestinationFn,
@@ -11,7 +11,7 @@ import {
   previewDestinationUpdateFn,
   testDestinationFn,
   updateDestinationFn,
-} from "#/server/functions/configuration.functions.ts";
+} from "#/server/functions/configuration.functions";
 
 export function useDestinationMutations() {
   const queryClient = useQueryClient();

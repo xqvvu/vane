@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
 import { APIError } from "better-auth/api";
 
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
 
 export interface BetterAuthUserCreateInput {
   id: string;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { highlightCode } from "#/components/ai-elements/code-block.tsx";
+import { highlightCode } from "#/components/ai-elements/code-block";
 
 describe("highlightCode", () => {
   it("tokenizes JSON with the configured fine-grained Shiki bundle", async () => {

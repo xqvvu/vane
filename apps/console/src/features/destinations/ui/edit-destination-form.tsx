@@ -2,20 +2,20 @@ import { RiEditLine } from "@remixicon/react";
 
 import type { JsonObject } from "@vane/core";
 
-import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { destinationTemplateFormStateFromDraft } from "#/features/destinations/model/destination-form.ts";
+import { Skeleton } from "#/components/ui/skeleton";
+import { destinationTemplateFormStateFromDraft } from "#/features/destinations/model/destination-form";
 import {
   createDestinationDefaults,
   DestinationForm,
-} from "#/features/destinations/ui/destination-form.tsx";
+} from "#/features/destinations/ui/destination-form";
 import type {
   DestinationCatalog,
   DestinationSubmitResult,
   DestinationSummary,
   EditDestinationFormInput,
   PreviewEditDestinationFormInput,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/destinations/ui/destination-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EditDestinationForm({
   destinationCatalog,

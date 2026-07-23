@@ -1,7 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import * as React from "react";
 
-import { ComboboxItem, ComboboxList, useComboboxFilteredItems } from "#/components/ui/combobox.tsx";
+import { ComboboxItem, ComboboxList, useComboboxFilteredItems } from "#/components/ui/combobox";
 
 export type SettingsTimeZoneVirtualizer = ReturnType<
   typeof useVirtualizer<HTMLDivElement, Element>

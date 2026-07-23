@@ -1,8 +1,8 @@
 import { RiEyeLine } from "@remixicon/react";
 
-import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { IconTooltip } from "#/components/common/icon-tooltip";
+import { Button } from "#/components/ui/button";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventActions({
   eventId,

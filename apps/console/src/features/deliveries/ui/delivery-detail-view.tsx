@@ -1,10 +1,10 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
-import { DeliveryAttemptsTable } from "#/features/deliveries/ui/delivery-attempts-table.tsx";
-import { DeliveryDetailSummary } from "#/features/deliveries/ui/delivery-detail-summary.tsx";
-import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types.ts";
-import { DeliveryJsonBlock } from "#/features/deliveries/ui/delivery-json-block.tsx";
-import { DeliverySummaryTab } from "#/features/deliveries/ui/delivery-summary-tab.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { DeliveryAttemptsTable } from "#/features/deliveries/ui/delivery-attempts-table";
+import { DeliveryDetailSummary } from "#/features/deliveries/ui/delivery-detail-summary";
+import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types";
+import { DeliveryJsonBlock } from "#/features/deliveries/ui/delivery-json-block";
+import { DeliverySummaryTab } from "#/features/deliveries/ui/delivery-summary-tab";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveryDetailView({ detail }: { detail: DeliveryDetailData }) {
   const t = useTranslations();

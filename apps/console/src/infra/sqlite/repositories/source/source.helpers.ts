@@ -1,12 +1,12 @@
 import { decodeJsonObject, SourceProviderSchema } from "@vane/core";
 import type { SourceSummary } from "@vane/core";
 
-import { fromSqliteBoolean } from "#/infra/sqlite/codecs.ts";
-import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
+import { fromSqliteBoolean } from "#/infra/sqlite/codecs";
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
 import type {
   SourceRow,
   SourceRuntimeConfig,
-} from "#/infra/sqlite/repositories/source/source.interface.ts";
+} from "#/infra/sqlite/repositories/source/source.interface";
 
 export function sourceSummaryFromRow(row: SourceRow): SourceSummary {
   return {

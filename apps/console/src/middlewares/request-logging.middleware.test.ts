@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   requestLoggingMiddleware,
   resolveRequestId,
-} from "#/middlewares/request-logging.middleware.ts";
+} from "#/middlewares/request-logging.middleware";
 
 const records: LogRecord[] = [];
 

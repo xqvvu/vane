@@ -2,19 +2,19 @@ import { RiPlayLine, RiTimeLine } from "@remixicon/react";
 
 import type { DestinationSummary, SourceSummary } from "@vane/core";
 
-import { ContentPanel } from "#/components/common/content-panel.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
-import { EventsTable } from "#/features/events/ui/events-table.tsx";
-import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
+import { ContentPanel } from "#/components/common/content-panel";
+import { Button } from "#/components/ui/button";
+import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table";
+import { EventsTable } from "#/features/events/ui/events-table";
+import type { DashboardOperationSearch } from "#/features/operations/model/operation-search";
 import type {
   DeliveryDetail,
   EventDetail,
   Operations,
-} from "#/features/operations/model/operation-types.ts";
-import { DetailPanel } from "#/features/operations/ui/detail-panel.tsx";
-import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/operations/model/operation-types";
+import { DetailPanel } from "#/features/operations/ui/detail-panel";
+import { OperationFilters } from "#/features/operations/ui/operation-filters";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export interface OperationsPanelProps {
   configuration: {

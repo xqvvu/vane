@@ -5,9 +5,9 @@ import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,12 +16,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu.tsx";
-import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import { LanguageMenuGroupClient } from "#/i18n/language-switcher-impl.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { authClient } from "#/lib/auth.client.ts";
-import type { DashboardUserMenuProps } from "#/shell/dashboard-user-menu.tsx";
+} from "#/components/ui/dropdown-menu";
+import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
+import { LanguageMenuGroupClient } from "#/i18n/language-switcher-impl";
+import { useTranslations } from "#/i18n/use-i18n";
+import { authClient } from "#/lib/auth.client";
+import type { DashboardUserMenuProps } from "#/shell/dashboard-user-menu";
 
 export function DashboardUserMenuClient({ user }: DashboardUserMenuProps) {
   const t = useTranslations();

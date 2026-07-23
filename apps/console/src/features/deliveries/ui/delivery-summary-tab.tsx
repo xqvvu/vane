@@ -1,8 +1,8 @@
-import { DeliveryDetailSectionHeader } from "#/features/deliveries/ui/delivery-detail-section-header.tsx";
-import { DeliveryDetailTerm } from "#/features/deliveries/ui/delivery-detail-term.tsx";
-import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types.ts";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { DeliveryDetailSectionHeader } from "#/features/deliveries/ui/delivery-detail-section-header";
+import { DeliveryDetailTerm } from "#/features/deliveries/ui/delivery-detail-term";
+import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliverySummaryTab({ detail }: { detail: DeliveryDetailData }) {
   const t = useTranslations();

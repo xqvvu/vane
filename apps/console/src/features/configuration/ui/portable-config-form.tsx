@@ -2,10 +2,10 @@ import { RiDownloadLine, RiFileCodeLine, RiUploadLine } from "@remixicon/react";
 import { ClientOnly } from "@tanstack/react-router";
 import * as React from "react";
 
-import { JsonEditor } from "#/components/codemirror/json-editor.tsx";
-import { TomlEditor } from "#/components/codemirror/toml-editor.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { JsonEditor } from "#/components/codemirror/json-editor";
+import { TomlEditor } from "#/components/codemirror/toml-editor";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import {
   Popover,
   PopoverClose,
@@ -14,9 +14,9 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "#/components/ui/popover.tsx";
-import { Textarea } from "#/components/ui/textarea.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/popover";
+import { Textarea } from "#/components/ui/textarea";
+import { useTranslations } from "#/i18n/use-i18n";
 
 interface PortableConfigFormProps {
   format: "toml" | "json";

@@ -1,6 +1,6 @@
 import type { SourceSummary } from "@vane/core";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
 
 export interface SourceServiceOptions {
   store: SqliteStore;

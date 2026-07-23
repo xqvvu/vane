@@ -4,14 +4,14 @@ import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
-import { Toaster } from "#/components/ui/sonner.tsx";
-import { TooltipProvider } from "#/components/ui/tooltip.tsx";
-import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import { requestLocaleQueryOptions } from "#/i18n/i18n.queries.ts";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
-import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
-import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
+import { Toaster } from "#/components/ui/sonner";
+import { TooltipProvider } from "#/components/ui/tooltip";
+import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
+import { requestLocaleQueryOptions } from "#/i18n/i18n.queries";
+import { VaneIntlProvider } from "#/i18n/provider";
+import { DashboardErrorPage } from "#/shell/dashboard-error";
+import { DashboardLayout } from "#/shell/dashboard-layout";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found";
 
 import appCss from "#/styles.css?url";
 

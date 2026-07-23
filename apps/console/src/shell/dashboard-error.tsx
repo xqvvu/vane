@@ -3,12 +3,12 @@ import { Link, useLocation, useRouter, type ErrorComponentProps } from "@tanstac
 
 import { redactText } from "@vane/core";
 
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button, buttonVariants } from "#/components/ui/button.tsx";
-import { Separator } from "#/components/ui/separator.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { hardReloadPage } from "#/lib/browser.ts";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { Badge } from "#/components/ui/badge";
+import { Button, buttonVariants } from "#/components/ui/button";
+import { Separator } from "#/components/ui/separator";
+import { useTranslations } from "#/i18n/use-i18n";
+import { hardReloadPage } from "#/lib/browser";
 
 const recoveryLinks = [
   { labelKey: "events", to: "/events" },

@@ -1,11 +1,11 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
-import { Skeleton } from "#/components/ui/skeleton.tsx";
+import { Skeleton } from "#/components/ui/skeleton";
 
 const LanguageSelectClient = React.lazy(
   createClientOnlyFn(async () => {
-    const module = await import("#/i18n/language-switcher-impl.tsx");
+    const module = await import("#/i18n/language-switcher-impl");
 
     return { default: module.LanguageSelectClient };
   }),

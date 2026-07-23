@@ -4,26 +4,26 @@ import type { DeliveryListItem, EventDetail, EventListItem, NumberedPage } from 
 import { decodeSchemaJson, evaluateRouteMatch, RouteMatchResultsSchema } from "@vane/core";
 import type { Page } from "@vane/core";
 
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
-import type { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository.ts";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
+import type { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository";
 import {
   decodeHistoryCursor,
   encodeHistoryCursor,
   eventDetailDeliveryFromRow,
   type EventDetailDeliveryRow,
-} from "#/infra/sqlite/repositories/history/history.helpers.ts";
+} from "#/infra/sqlite/repositories/history/history.helpers";
 import type {
   DeliveryListQuery,
   EventListQuery,
   HistoryRepository,
-} from "#/infra/sqlite/repositories/history/history.interface.ts";
-import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository.ts";
-import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface.ts";
+} from "#/infra/sqlite/repositories/history/history.interface";
+import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository";
+import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface";
 import {
   requireSource,
   sourceSummaryFromRuntime,
-} from "#/infra/sqlite/repositories/source/source.helpers.ts";
-import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface.ts";
+} from "#/infra/sqlite/repositories/source/source.helpers";
+import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface";
 
 export class SqliteHistoryRepository implements HistoryRepository {
   constructor(

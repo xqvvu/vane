@@ -19,7 +19,7 @@ const container = {
   ensureDeliveryWorkerRunner: vi.fn<() => Promise<typeof runner>>(async () => runner),
 };
 
-vi.mock("#/server/runtime/container.ts", () => ({
+vi.mock("#/server/runtime/container", () => ({
   getApplicationContainer: () => container,
 }));
 
@@ -30,7 +30,7 @@ describe("application store facade", () => {
 
   it("delegates legacy store helpers to the application container", async () => {
     const { createDefaultDeliveryWorkerDependencies, ensureDeliveryWorkerRunner, getSqliteStore } =
-      await import("#/server/runtime/store.ts");
+      await import("#/server/runtime/store");
 
     await expect(getSqliteStore()).resolves.toBe(store);
     await expect(createDefaultDeliveryWorkerDependencies()).resolves.toEqual({

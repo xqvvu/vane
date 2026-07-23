@@ -6,12 +6,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
 
-import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
-import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";
-import { WebhookIntakeService, hashSourceToken } from "#/server/intake/intake.service.ts";
-import { createApplicationContainer } from "#/server/runtime/container.ts";
-import type { DeliveryWorkerRunnerOptions } from "#/server/runtime/delivery-worker-runner.ts";
-import { withVaneLogRedaction } from "#/server/runtime/log-safety.ts";
+import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store";
+import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service";
+import { WebhookIntakeService, hashSourceToken } from "#/server/intake/intake.service";
+import { createApplicationContainer } from "#/server/runtime/container";
+import type { DeliveryWorkerRunnerOptions } from "#/server/runtime/delivery-worker-runner";
+import { withVaneLogRedaction } from "#/server/runtime/log-safety";
 
 const now = "2026-07-10T08:00:00.000Z";
 const records: LogRecord[] = [];

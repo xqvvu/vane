@@ -3,11 +3,11 @@ import type { AlertStatus, JsonObject } from "@vane/core";
 import type {
   DestinationFormKind,
   DestinationTemplateFormState,
-} from "#/features/destinations/model/destination-form.ts";
+} from "#/features/destinations/model/destination-form";
 export type {
   DestinationCatalog,
   DestinationSummary,
-} from "#/features/destinations/model/destination-types.ts";
+} from "#/features/destinations/model/destination-types";
 
 export type DestinationFormMode = "create" | "edit";
 

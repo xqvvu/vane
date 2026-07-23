@@ -3,10 +3,10 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations.ts";
-import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
-import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
-import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
+import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations";
+import { useDestinationMutations } from "#/features/destinations/api/destination.mutations";
+import { useRouteMutations } from "#/features/routes/api/route.mutations";
+import { useSourceMutations } from "#/features/sources/api/source.mutations";
 
 const testState = vi.hoisted(() => ({
   invalidateQueries: vi.fn<(input: { queryKey: readonly string[] }) => Promise<void>>(),
@@ -21,7 +21,7 @@ vi.mock("@tanstack/react-start", () => ({
   useServerFn: (serverFn: unknown) => serverFn,
 }));
 
-vi.mock("#/server/functions/configuration.functions.ts", () => {
+vi.mock("#/server/functions/configuration.functions", () => {
   const serverFn = vi.fn<() => void>();
 
   return {

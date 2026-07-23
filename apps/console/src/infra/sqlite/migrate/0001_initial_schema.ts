@@ -1,10 +1,10 @@
 import {
   createBetterAuthIndexes,
   createBetterAuthTables,
-} from "#/infra/sqlite/migrate/better-auth.schema.ts";
-import { createVaneIndexes, createVaneTables } from "#/infra/sqlite/migrate/schema.ts";
-import { defineSqliteMigration } from "#/infra/sqlite/migrate/types.ts";
-import type { VaneSqliteDatabaseSchema } from "#/infra/sqlite/schema.ts";
+} from "#/infra/sqlite/migrate/better-auth.schema";
+import { createVaneIndexes, createVaneTables } from "#/infra/sqlite/migrate/schema";
+import { defineSqliteMigration } from "#/infra/sqlite/migrate/types";
+import type { VaneSqliteDatabaseSchema } from "#/infra/sqlite/schema";
 
 export default defineSqliteMigration<VaneSqliteDatabaseSchema>({
   version: "0001",

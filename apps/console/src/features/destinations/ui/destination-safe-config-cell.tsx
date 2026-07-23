@@ -1,5 +1,5 @@
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationSafeConfigCell({ destination }: { destination: DestinationSummary }) {
   const t = useTranslations();

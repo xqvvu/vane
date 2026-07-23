@@ -9,7 +9,7 @@ import type {
   SourceProvider,
 } from "@vane/core";
 
-import type { SqliteBoolean, SqliteJsonText } from "#/infra/sqlite/codecs.ts";
+import type { SqliteBoolean, SqliteJsonText } from "#/infra/sqlite/codecs";
 
 export type SqliteGenerated<T> = ColumnType<T, T | undefined, T>;
 

@@ -1,17 +1,17 @@
 import { RiArrowRightLine } from "@remixicon/react";
 
-import { FormPanel } from "#/components/common/content-panel.tsx";
+import { FormPanel } from "#/components/common/content-panel";
 import {
   createDestinationDefaults,
   DestinationForm,
-} from "#/features/destinations/ui/destination-form.tsx";
+} from "#/features/destinations/ui/destination-form";
 import type {
   CreateDestinationFormInput,
   DestinationCatalog,
   DestinationSubmitResult,
   PreviewDestinationFormInput,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/destinations/ui/destination-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function CreateDestinationForm({
   destinationCatalog,

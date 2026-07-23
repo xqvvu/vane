@@ -3,8 +3,8 @@ import { randomUUID } from "node:crypto";
 
 import type { IsoDateTimeString } from "@vane/core";
 
-import type { VaneSqliteExecutor, VaneSqliteTransaction } from "#/infra/sqlite/schema.ts";
-import { transaction } from "#/infra/sqlite/transaction.ts";
+import type { VaneSqliteExecutor, VaneSqliteTransaction } from "#/infra/sqlite/schema";
+import { transaction } from "#/infra/sqlite/transaction";
 
 export interface SqliteRepositoryContextOptions {
   db: VaneSqliteExecutor;

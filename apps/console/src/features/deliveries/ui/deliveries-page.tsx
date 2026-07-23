@@ -3,21 +3,21 @@ import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { DeliveriesPageToolbar } from "#/features/deliveries/ui/deliveries-page-toolbar.tsx";
-import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table.tsx";
-import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
-import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
-import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
+import { DeliveriesPageToolbar } from "#/features/deliveries/ui/deliveries-page-toolbar";
+import { DeliveriesTable } from "#/features/deliveries/ui/deliveries-table";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries";
+import { useOperationMutations } from "#/features/operations/api/operation.mutations";
+import { operationsQueryOptions } from "#/features/operations/api/operations.queries";
 import type {
   DashboardOperationSearch,
   OperationFilterData,
-} from "#/features/operations/model/operation-search.ts";
-import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
-import { showWorkerRunToast } from "#/features/operations/ui/worker-notice-panel.tsx";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
+} from "#/features/operations/model/operation-search";
+import { OperationFilters } from "#/features/operations/ui/operation-filters";
+import { showWorkerRunToast } from "#/features/operations/ui/worker-notice-panel";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
+import { DashboardSidebar } from "#/shell/dashboard-sidebar";
 
 export interface DeliveriesPageProps {
   search: DashboardOperationSearch;

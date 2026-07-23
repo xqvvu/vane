@@ -5,38 +5,38 @@ import { betterAuth } from "better-auth";
 import { createDefaultDestinationRegistry, type DestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/providers";
 
-import { env } from "#/env.ts";
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { env } from "#/env";
+import { createSqliteDatabase } from "#/infra/sqlite/connection";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate";
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
-import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
-import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config.ts";
-import { createBaseBetterAuthOptions } from "#/lib/auth-options.ts";
-import { assignOwnerRoleBeforeUserCreate, hasRegisteredUsers } from "#/lib/auth-owner-bootstrap.ts";
-import { AppSettingsService } from "#/server/configuration/app-settings.service.ts";
-import { ConfigPortabilityService } from "#/server/configuration/config-portability.service.ts";
-import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types.ts";
-import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
+import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store";
+import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config";
+import { createBaseBetterAuthOptions } from "#/lib/auth-options";
+import { assignOwnerRoleBeforeUserCreate, hasRegisteredUsers } from "#/lib/auth-owner-bootstrap";
+import { AppSettingsService } from "#/server/configuration/app-settings.service";
+import { ConfigPortabilityService } from "#/server/configuration/config-portability.service";
+import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types";
+import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service";
 import type {
   DeliveryWorkerOptions,
   DeliveryWorkerRunResult,
-} from "#/server/deliveries/delivery-worker.service.types.ts";
-import { DestinationService } from "#/server/destinations/destination.service.ts";
-import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types.ts";
-import { WebhookIntakeService } from "#/server/intake/intake.service.ts";
-import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types.ts";
-import { EventReplayService } from "#/server/operations/event-replay.service.ts";
-import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types.ts";
-import { RouteService } from "#/server/routes/route.service.ts";
-import type { DashboardSession } from "#/server/runtime/dashboard-session.ts";
+} from "#/server/deliveries/delivery-worker.service.types";
+import { DestinationService } from "#/server/destinations/destination.service";
+import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types";
+import { WebhookIntakeService } from "#/server/intake/intake.service";
+import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types";
+import { EventReplayService } from "#/server/operations/event-replay.service";
+import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types";
+import { RouteService } from "#/server/routes/route.service";
+import type { DashboardSession } from "#/server/runtime/dashboard-session";
 import {
   createDeliveryWorkerRunner,
   type DeliveryWorkerRunner,
   type DeliveryWorkerRunnerOptions,
-} from "#/server/runtime/delivery-worker-runner.ts";
-import { safeErrorProperties } from "#/server/runtime/log-safety.ts";
-import { SourceService } from "#/server/sources/source.service.ts";
-import type { SourceServiceOptions } from "#/server/sources/source.service.types.ts";
+} from "#/server/runtime/delivery-worker-runner";
+import { safeErrorProperties } from "#/server/runtime/log-safety";
+import { SourceService } from "#/server/sources/source.service";
+import type { SourceServiceOptions } from "#/server/sources/source.service.types";
 
 const deliveryWorkerLogger = getLogger(["vane", "worker", "delivery"]);
 

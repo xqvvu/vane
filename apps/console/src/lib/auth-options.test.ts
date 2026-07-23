@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createBaseBetterAuthOptions } from "#/lib/auth-options.ts";
+import { createBaseBetterAuthOptions } from "#/lib/auth-options";
 
 describe("better auth options", () => {
   it("maps core auth table columns to snake_case", () => {

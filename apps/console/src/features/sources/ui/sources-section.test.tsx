@@ -4,15 +4,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
-import { SourcesSection } from "#/features/sources/ui/sources-section.tsx";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+import type { SourceSummary } from "#/features/sources/ui/source-ui-types";
+import { SourcesSection } from "#/features/sources/ui/sources-section";
+import { VaneIntlProvider } from "#/i18n/provider";
 
 type RouteSummary = ComponentProps<typeof SourcesSection>["routes"][number];
 type SourceActionHandler = (source: SourceSummary) => void;
 type SourceEditHandler = (sourceId: string) => void;
 
-vi.mock("#/lib/browser.ts", () => ({
+vi.mock("#/lib/browser", () => ({
   copyText: vi.fn<() => Promise<boolean>>(async () => true),
   urlFromCurrentOrigin: (path: string) => `http://localhost${path}`,
 }));

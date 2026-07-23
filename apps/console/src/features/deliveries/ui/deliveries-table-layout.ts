@@ -1,4 +1,4 @@
-import { stickyActionsColumnClassName } from "#/components/common/operations-table-layout.ts";
+import { stickyActionsColumnClassName } from "#/components/common/operations-table-layout";
 
 export const deliveriesPageSize = 20;
 export const deliveriesTableMinWidthClassName = "min-w-320";

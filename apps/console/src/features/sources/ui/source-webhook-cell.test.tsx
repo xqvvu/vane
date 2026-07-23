@@ -3,11 +3,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { CopyableCodeLineProps } from "#/components/common/copyable-code-line.tsx";
-import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell.tsx";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+import type { CopyableCodeLineProps } from "#/components/common/copyable-code-line";
+import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell";
+import { VaneIntlProvider } from "#/i18n/provider";
 
-vi.mock("#/components/common/copyable-code-line.tsx", () => ({
+vi.mock("#/components/common/copyable-code-line", () => ({
   CopyableCodeLine: ({ value, copyValue, copyLabel, tooltipValue }: CopyableCodeLineProps) => (
     <div
       data-testid="copyable-code-line"
@@ -21,7 +21,7 @@ vi.mock("#/components/common/copyable-code-line.tsx", () => ({
   ),
 }));
 
-vi.mock("#/lib/browser.ts", () => ({
+vi.mock("#/lib/browser", () => ({
   urlFromCurrentOrigin: (path: string) => `http://localhost${path}`,
 }));
 

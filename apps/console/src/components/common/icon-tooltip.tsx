@@ -1,6 +1,6 @@
 import type * as React from "react";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 
 export function IconTooltip({
   label,

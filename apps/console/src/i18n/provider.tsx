@@ -1,9 +1,9 @@
 import * as React from "react";
 import { IntlProvider } from "use-intl";
 
-import type { AppLocale } from "#/i18n/locales.ts";
-import { getMessages } from "#/i18n/messages.ts";
-import { fallbackTimeZone } from "#/i18n/time-zone.ts";
+import type { AppLocale } from "#/i18n/locales";
+import { getMessages } from "#/i18n/messages";
+import { fallbackTimeZone } from "#/i18n/time-zone";
 
 export interface VaneIntlProviderProps {
   children: React.ReactNode;

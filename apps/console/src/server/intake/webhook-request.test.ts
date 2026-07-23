@@ -4,7 +4,7 @@ import {
   InvalidWebhookJsonError,
   readWebhookJsonPayload,
   WebhookPayloadTooLargeError,
-} from "#/server/intake/webhook-request.ts";
+} from "#/server/intake/webhook-request";
 
 describe("webhook request payload reader", () => {
   it("parses JSON request bodies within the configured size limit", async () => {

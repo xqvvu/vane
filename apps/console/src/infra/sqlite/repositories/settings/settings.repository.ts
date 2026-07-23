@@ -1,6 +1,6 @@
 import { IanaTimeZoneSchema, VaneLocaleSchema } from "@vane/core/presentation";
 
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   DEFAULT_VANE_LOCALE,
   DEFAULT_VANE_TIME_ZONE,
@@ -8,11 +8,11 @@ import {
   LOCALE_KEY,
   RAW_PAYLOAD_RETENTION_DAYS_KEY,
   TIME_ZONE_KEY,
-} from "#/infra/sqlite/repositories/settings/settings.helpers.ts";
+} from "#/infra/sqlite/repositories/settings/settings.helpers";
 import type {
   AppSettings,
   SettingsRepository,
-} from "#/infra/sqlite/repositories/settings/settings.interface.ts";
+} from "#/infra/sqlite/repositories/settings/settings.interface";
 
 export class SqliteSettingsRepository implements SettingsRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}

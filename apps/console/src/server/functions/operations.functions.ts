@@ -10,7 +10,7 @@ import {
   ReplayRouteEventsCommandSchema,
 } from "@vane/core";
 
-import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware.ts";
+import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware";
 
 const ListOperationsInputSchema = z
   .object({

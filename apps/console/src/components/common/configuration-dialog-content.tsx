@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { DialogContent } from "#/components/ui/dialog.tsx";
-import { cn } from "#/lib/utils.ts";
+import { DialogContent } from "#/components/ui/dialog";
+import { cn } from "#/lib/utils";
 
 export function ConfigurationDialogContent({
   className,

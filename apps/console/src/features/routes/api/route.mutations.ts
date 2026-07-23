@@ -1,12 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { routeQueryKeys } from "#/features/routes/api/route.queries.ts";
+import { routeQueryKeys } from "#/features/routes/api/route.queries";
 import {
   createRouteFn,
   deleteRouteFn,
   updateRouteFn,
-} from "#/server/functions/configuration.functions.ts";
+} from "#/server/functions/configuration.functions";
 
 export function useRouteMutations() {
   const queryClient = useQueryClient();

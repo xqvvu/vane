@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { listSourcesFn } from "#/server/functions/configuration.functions.ts";
+import { listSourcesFn } from "#/server/functions/configuration.functions";
 
 export const sourceQueryKeys = {
   all: ["sources"] as const,

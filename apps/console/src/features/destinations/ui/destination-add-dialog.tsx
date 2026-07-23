@@ -2,23 +2,23 @@ import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content";
+import { Button } from "#/components/ui/button";
 import {
   Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "#/components/ui/dialog.tsx";
-import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
-import { CreateDestinationForm } from "#/features/destinations/ui/create-destination-form.tsx";
+} from "#/components/ui/dialog";
+import { useDestinationMutations } from "#/features/destinations/api/destination.mutations";
+import { CreateDestinationForm } from "#/features/destinations/ui/create-destination-form";
 import type {
   DestinationCatalog,
   DestinationSubmitResult,
   PreviewDestinationFormInput,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/destinations/ui/destination-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationAddDialog({
   destinationCatalog,

@@ -1,5 +1,5 @@
-import { SeverityBadge } from "#/features/events/ui/severity-badge.tsx";
-import type { Operations } from "#/features/operations/model/operation-types.ts";
+import { SeverityBadge } from "#/features/events/ui/severity-badge";
+import type { Operations } from "#/features/operations/model/operation-types";
 
 export function EventTitleCell({
   title,

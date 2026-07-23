@@ -1,4 +1,4 @@
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveryTargetCell({
   destinationName,

@@ -3,17 +3,17 @@ import * as React from "react";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
-import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content";
+import { Button } from "#/components/ui/button";
 import {
   Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "#/components/ui/dialog.tsx";
-import { CreateRouteForm } from "#/features/routes/ui/route-forms.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/dialog";
+import { CreateRouteForm } from "#/features/routes/ui/route-forms";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function RouteAddDialog({
   sources,

@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { RoutesPage } from "#/features/routes/ui/routes-page.tsx";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { RoutesPage } from "#/features/routes/ui/routes-page";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export const Route = createFileRoute("/_dashboard/routes")({
   loader: ({ context }) =>

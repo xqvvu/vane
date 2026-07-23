@@ -12,16 +12,16 @@ import {
 } from "react";
 import type { ThemedToken } from "shiki/core";
 
-import { type CodeBlockLanguage, tokenizeCode } from "#/components/ai-elements/code-block-shiki.ts";
-import { Button } from "#/components/ui/button.tsx";
+import { type CodeBlockLanguage, tokenizeCode } from "#/components/ai-elements/code-block-shiki";
+import { Button } from "#/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
-import { cn } from "#/lib/utils.ts";
+} from "#/components/ui/select";
+import { cn } from "#/lib/utils";
 
 const isItalic = (fontStyle: number | undefined) => fontStyle && fontStyle & 1;
 const isBold = (fontStyle: number | undefined) => fontStyle && fontStyle & 2;

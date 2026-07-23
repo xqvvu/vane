@@ -2,10 +2,10 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
-import { DashboardLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
+import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
+import { DashboardErrorPage } from "#/shell/dashboard-error";
+import { DashboardLayout } from "#/shell/dashboard-layout";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found";
 
 export const Route = createFileRoute("/_dashboard")({
   loader: async ({ context, location }) => {

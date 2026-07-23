@@ -1,6 +1,6 @@
-import { DestinationKindIcon } from "#/features/destinations/ui/destination-kind-icon.tsx";
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { DestinationKindIcon } from "#/features/destinations/ui/destination-kind-icon";
+import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationIdentityCell({ destination }: { destination: DestinationSummary }) {
   const t = useTranslations();

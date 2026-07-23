@@ -1,9 +1,9 @@
 import { RiRefreshLine } from "@remixicon/react";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { PageToolbar } from "#/components/common/page-toolbar";
+import { Button } from "#/components/ui/button";
+import { TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function SettingsPageToolbar({
   pending,

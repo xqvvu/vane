@@ -1,6 +1,6 @@
 import { sql, type Kysely } from "kysely";
 
-import type { VaneSqliteDatabaseSchema } from "#/infra/sqlite/schema.ts";
+import type { VaneSqliteDatabaseSchema } from "#/infra/sqlite/schema";
 
 export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Promise<void> {
   await db.schema

@@ -5,9 +5,9 @@ import { z } from "zod";
 import {
   authBootstrapQueryOptions,
   dashboardSessionQueryOptions,
-} from "#/features/auth/api/auth.queries.ts";
-import { LanguageSelector } from "#/i18n/language-switcher.tsx";
-import { LoginForm } from "#/routes/-login-form.tsx";
+} from "#/features/auth/api/auth.queries";
+import { LanguageSelector } from "#/i18n/language-switcher";
+import { LoginForm } from "#/routes/-login-form";
 
 const LoginSearchSchema = z.object({
   redirect: z.string().catch("/"),

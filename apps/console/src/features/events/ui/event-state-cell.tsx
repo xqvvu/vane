@@ -1,6 +1,6 @@
-import { Badge } from "#/components/ui/badge.tsx";
-import type { Operations } from "#/features/operations/model/operation-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Badge } from "#/components/ui/badge";
+import type { Operations } from "#/features/operations/model/operation-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventStateCell({
   status,

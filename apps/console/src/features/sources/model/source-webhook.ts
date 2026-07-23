@@ -2,7 +2,7 @@ export { sourceWebhookPath } from "@vane/core";
 
 import { sourceWebhookPath } from "@vane/core";
 
-import { urlFromCurrentOrigin } from "#/lib/browser.ts";
+import { urlFromCurrentOrigin } from "#/lib/browser";
 
 export function sourceWebhookUrlFromPath(path: string): string {
   return urlFromCurrentOrigin(path);

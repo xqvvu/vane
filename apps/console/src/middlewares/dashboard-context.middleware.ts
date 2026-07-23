@@ -1,6 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 
-import { requireDashboardRequestContext } from "#/server/runtime/request-context.ts";
+import { requireDashboardRequestContext } from "#/server/runtime/request-context";
 
 export const requireDashboardContextMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {

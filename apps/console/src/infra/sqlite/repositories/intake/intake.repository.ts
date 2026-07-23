@@ -7,18 +7,18 @@ import {
 } from "@vane/core";
 import type { EventRecord } from "@vane/core";
 
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   eventFromRow,
   PRUNED_RAW_PAYLOAD,
   requireEvent,
-} from "#/infra/sqlite/repositories/intake/intake.helpers.ts";
+} from "#/infra/sqlite/repositories/intake/intake.helpers";
 import type {
   IntakeRepository,
   ListRecentEventsInput,
   PruneRawPayloadsInput,
   RecordEventInput,
-} from "#/infra/sqlite/repositories/intake/intake.interface.ts";
+} from "#/infra/sqlite/repositories/intake/intake.interface";
 
 export class SqliteIntakeRepository implements IntakeRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}

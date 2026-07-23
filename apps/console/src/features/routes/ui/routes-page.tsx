@@ -5,17 +5,17 @@ import { toast } from "sonner";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
-import { useRouteMutations } from "#/features/routes/api/route.mutations.ts";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { RouteAddDialog } from "#/features/routes/ui/route-add-dialog.tsx";
-import { RouteReplayPrompt } from "#/features/routes/ui/route-replay-prompt.tsx";
-import { RoutesSection } from "#/features/routes/ui/routes-section.tsx";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { PageToolbar } from "#/components/common/page-toolbar";
+import { Button } from "#/components/ui/button";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries";
+import { useRouteMutations } from "#/features/routes/api/route.mutations";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { RouteAddDialog } from "#/features/routes/ui/route-add-dialog";
+import { RouteReplayPrompt } from "#/features/routes/ui/route-replay-prompt";
+import { RoutesSection } from "#/features/routes/ui/routes-section";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function RoutesPage() {
   const t = useTranslations();

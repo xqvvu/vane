@@ -7,7 +7,7 @@ import {
 import type {
   AppSettingsServiceOptions,
   UpdateAppSettingsResult,
-} from "#/server/configuration/app-settings.service.types.ts";
+} from "#/server/configuration/app-settings.service.types";
 
 export class AppSettingsService {
   private readonly store: AppSettingsServiceOptions["store"];

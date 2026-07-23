@@ -10,18 +10,18 @@ import * as React from "react";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
-import { FormPanel } from "#/components/common/content-panel.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { Checkbox } from "#/components/ui/checkbox.tsx";
+import { FormPanel } from "#/components/common/content-panel";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { Checkbox } from "#/components/ui/checkbox";
 import {
   Field as UiField,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "#/components/ui/field.tsx";
-import { Input } from "#/components/ui/input.tsx";
+} from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -29,15 +29,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
+} from "#/components/ui/select";
 import {
   routeFormDefaultsFromRule,
   routeRuleFromValues,
   routeRulePatchFromValues,
   type RouteRuleFormValues,
-} from "#/features/routes/model/route-form.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+} from "#/features/routes/model/route-form";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function CreateRouteForm({
   showHeader = true,

@@ -4,7 +4,7 @@ import signozIconUrl from "@vane/providers/assets/provider-icons/signoz.svg";
 import uptimeKumaIconUrl from "@vane/providers/assets/provider-icons/uptime-kuma.svg";
 import webhookIconUrl from "@vane/providers/assets/provider-icons/webhook.svg";
 
-import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
+import type { SourceSummary } from "#/features/sources/ui/source-ui-types";
 
 export function SourceProviderIcon({ provider }: { provider: SourceSummary["provider"] }) {
   return (

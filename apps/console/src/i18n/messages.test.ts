@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getMessages } from "#/i18n/messages.ts";
+import { getMessages } from "#/i18n/messages";
 import enUsMessages from "#/i18n/messages/en-US.json";
 import zhHansMessages from "#/i18n/messages/zh-Hans.json";
 

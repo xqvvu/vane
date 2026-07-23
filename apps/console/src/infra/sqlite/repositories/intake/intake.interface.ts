@@ -7,7 +7,7 @@ import type {
 } from "@vane/core";
 import type { IsoDateTimeString } from "@vane/core";
 
-import type { SqliteJsonText } from "#/infra/sqlite/codecs.ts";
+import type { SqliteJsonText } from "#/infra/sqlite/codecs";
 
 export interface EventRow {
   id: string;

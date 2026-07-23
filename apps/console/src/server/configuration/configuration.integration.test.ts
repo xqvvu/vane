@@ -4,13 +4,13 @@ import { describe, expect, it } from "vitest";
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import type { DestinationSendContext } from "@vane/destinations";
 
-import { openSqliteStore } from "#/infra/sqlite/store.ts";
-import { AppSettingsService } from "#/server/configuration/app-settings.service.ts";
-import { ConfigPortabilityService } from "#/server/configuration/config-portability.service.ts";
-import { DestinationService } from "#/server/destinations/destination.service.ts";
-import { hashSourceToken } from "#/server/intake/intake.service.ts";
-import { RouteService } from "#/server/routes/route.service.ts";
-import { SourceService } from "#/server/sources/source.service.ts";
+import { openSqliteStore } from "#/infra/sqlite/store";
+import { AppSettingsService } from "#/server/configuration/app-settings.service";
+import { ConfigPortabilityService } from "#/server/configuration/config-portability.service";
+import { DestinationService } from "#/server/destinations/destination.service";
+import { hashSourceToken } from "#/server/intake/intake.service";
+import { RouteService } from "#/server/routes/route.service";
+import { SourceService } from "#/server/sources/source.service";
 
 const now = "2026-06-09T08:00:00.000Z";
 

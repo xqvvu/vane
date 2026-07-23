@@ -11,8 +11,8 @@ import {
   type LogLevel,
 } from "@logtape/logtape";
 
-import { env } from "#/env.ts";
-import { withVaneLogRedaction } from "#/server/runtime/log-safety.ts";
+import { env } from "#/env";
+import { withVaneLogRedaction } from "#/server/runtime/log-safety";
 
 type VaneLogFormat = "json" | "text";
 

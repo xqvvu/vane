@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
-import type { WorkerRunNotice } from "#/features/operations/model/operation-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import type { WorkerRunNotice } from "#/features/operations/model/operation-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 type TranslationFn = ReturnType<typeof useTranslations>;
 

@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
-import { EventsPage } from "#/features/events/ui/events-page.tsx";
-import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries";
+import { EventsPage } from "#/features/events/ui/events-page";
+import { operationsQueryOptions } from "#/features/operations/api/operations.queries";
 import {
   DashboardOperationSearchSchema,
   mergeOperationSearch,
   operationFiltersFromSearch,
-} from "#/features/operations/model/operation-search.ts";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+} from "#/features/operations/model/operation-search";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export const Route = createFileRoute("/_dashboard/events")({
   validateSearch: (search) => DashboardOperationSearchSchema.parse(search),

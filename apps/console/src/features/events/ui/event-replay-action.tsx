@@ -15,15 +15,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "#/components/ui/alert-dialog.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
+} from "#/components/ui/alert-dialog";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { useOperationMutations } from "#/features/operations/api/operation.mutations";
 import {
   eventReplayPreviewQueryOptions,
   operationsQueryKeys,
-} from "#/features/operations/api/operations.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/operations/api/operations.queries";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventReplayAction({
   eventId,

@@ -7,9 +7,9 @@ import {
   CodeBlockFilename,
   CodeBlockHeader,
   CodeBlockTitle,
-} from "#/components/ai-elements/code-block.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+} from "#/components/ai-elements/code-block";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function DeliveryJsonBlock({
   title,

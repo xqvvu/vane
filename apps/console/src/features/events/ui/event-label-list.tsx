@@ -1,6 +1,6 @@
-import { Badge } from "#/components/ui/badge.tsx";
-import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Badge } from "#/components/ui/badge";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventLabelList({
   labels,

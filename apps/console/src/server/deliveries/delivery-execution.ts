@@ -12,8 +12,8 @@ import type {
 import type {
   ClaimedDelivery,
   DeliveryRepository,
-} from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
-import { safeErrorProperties } from "#/server/runtime/log-safety.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.interface";
+import { safeErrorProperties } from "#/server/runtime/log-safety";
 
 const deliveryLogger = getLogger(["vane", "delivery"]);
 

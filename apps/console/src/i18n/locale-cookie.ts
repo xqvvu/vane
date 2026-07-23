@@ -1,4 +1,4 @@
-import { defaultLocale, normalizeLocale, type AppLocale } from "#/i18n/locales.ts";
+import { defaultLocale, normalizeLocale, type AppLocale } from "#/i18n/locales";
 
 export const localeCookieName = "vane_locale";
 

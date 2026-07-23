@@ -6,11 +6,11 @@ import type { DestinationRegistry, DestinationSendContext } from "@vane/destinat
 import type {
   ClaimedDelivery,
   DeliveryRepository,
-} from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.interface";
 import {
   DeliveryExecution,
   type DeliveryExecutionStore,
-} from "#/server/deliveries/delivery-execution.ts";
+} from "#/server/deliveries/delivery-execution";
 
 const now = "2026-06-09T08:00:00.000Z";
 

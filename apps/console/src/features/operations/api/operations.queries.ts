@@ -1,13 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import type { OperationFilterData } from "#/features/operations/model/operation-search.ts";
+import type { OperationFilterData } from "#/features/operations/model/operation-search";
 import {
   getDeliveryDetailFn,
   getEventDetailFn,
   listOperationsFn,
   previewEventReplayFn,
   previewRouteReplayFn,
-} from "#/server/functions/operations.functions.ts";
+} from "#/server/functions/operations.functions";
 
 export const operationsQueryKeys = {
   all: ["operations"] as const,

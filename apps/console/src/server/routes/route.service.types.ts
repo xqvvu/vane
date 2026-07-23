@@ -1,4 +1,4 @@
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
 
 export interface RouteServiceOptions {
   store: SqliteStore;

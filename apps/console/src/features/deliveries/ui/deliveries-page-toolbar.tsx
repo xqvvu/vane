@@ -1,8 +1,8 @@
 import { RiFilterOffLine, RiPlayLine } from "@remixicon/react";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { PageToolbar } from "#/components/common/page-toolbar";
+import { Button } from "#/components/ui/button";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveriesPageToolbar({
   pending,

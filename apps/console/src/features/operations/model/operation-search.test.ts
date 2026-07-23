@@ -4,7 +4,7 @@ import {
   DashboardOperationSearchSchema,
   mergeOperationSearch,
   operationFiltersFromSearch,
-} from "#/features/operations/model/operation-search.ts";
+} from "#/features/operations/model/operation-search";
 
 describe("operation search params", () => {
   it("coerces eventPage into numbered pagination filters", () => {

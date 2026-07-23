@@ -1,12 +1,12 @@
 import { getRequestHeaders } from "@tanstack/react-start/server";
 
-import { getApplicationContainer, type ApplicationContainer } from "#/server/runtime/container.ts";
+import { getApplicationContainer, type ApplicationContainer } from "#/server/runtime/container";
 import {
   DashboardAuthError,
   DashboardAuthorizationError,
   type DashboardSession,
   type GetDashboardSession,
-} from "#/server/runtime/dashboard-session.ts";
+} from "#/server/runtime/dashboard-session";
 
 export interface RequestContextOptions {
   container?: ApplicationContainer;

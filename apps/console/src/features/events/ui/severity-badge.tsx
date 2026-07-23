@@ -1,7 +1,7 @@
 import type { AlertSeverity } from "@vane/core";
 
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function SeverityBadge({ severity }: { severity: AlertSeverity }) {
   const t = useTranslations();

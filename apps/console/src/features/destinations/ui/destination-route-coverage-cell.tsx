@@ -1,8 +1,8 @@
 import { RiRouteLine } from "@remixicon/react";
 
-import { Badge } from "#/components/ui/badge.tsx";
-import type { DestinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Badge } from "#/components/ui/badge";
+import type { DestinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationRouteCoverageCell({ coverage }: { coverage: DestinationRouteCoverage }) {
   const t = useTranslations();

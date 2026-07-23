@@ -12,7 +12,7 @@ import type {
   TemplateDiagnostic,
 } from "@vane/destinations";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
 
 export interface DestinationServiceOptions {
   store: SqliteStore;

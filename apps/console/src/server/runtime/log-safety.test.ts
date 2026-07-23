@@ -5,7 +5,7 @@ import {
   redactLogRecord,
   safeErrorProperties,
   withVaneLogRedaction,
-} from "#/server/runtime/log-safety.ts";
+} from "#/server/runtime/log-safety";
 
 describe("log safety", () => {
   it("redacts sensitive structured fields and their named placeholders", () => {

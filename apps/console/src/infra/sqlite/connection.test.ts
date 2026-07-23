@@ -5,7 +5,7 @@ import path from "node:path";
 import { sql } from "kysely";
 import { describe, expect, it } from "vitest";
 
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection";
 
 describe("sqlite connection", () => {
   it("creates the database parent directory before opening a file database", async () => {

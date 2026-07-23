@@ -5,20 +5,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { Button } from "#/components/ui/button.tsx";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "#/components/ui/card.tsx";
-import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
-import { Input } from "#/components/ui/input.tsx";
-import { authQueryKeys } from "#/features/auth/api/auth.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { authClient } from "#/lib/auth.client.ts";
-import type { SetupFormProps } from "#/routes/-setup-form.tsx";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { Field as UiField, FieldError, FieldGroup, FieldLabel } from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
+import { authQueryKeys } from "#/features/auth/api/auth.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { authClient } from "#/lib/auth.client";
+import type { SetupFormProps } from "#/routes/-setup-form";
 
 type SetupFormValues = {
   name: string;

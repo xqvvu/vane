@@ -1,4 +1,4 @@
-import { getApplicationContainer } from "#/server/runtime/container.ts";
+import { getApplicationContainer } from "#/server/runtime/container";
 
 export function getAuth() {
   return getApplicationContainer().getAuth();

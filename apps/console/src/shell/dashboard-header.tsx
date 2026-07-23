@@ -2,9 +2,9 @@ import { RiNotification3Line, RiQuestionLine } from "@remixicon/react";
 import { ClientOnly, Link } from "@tanstack/react-router";
 import * as React from "react";
 
-import { Button } from "#/components/ui/button.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardUserMenu } from "#/shell/dashboard-user-menu.tsx";
+import { Button } from "#/components/ui/button";
+import { useTranslations } from "#/i18n/use-i18n";
+import { DashboardUserMenu } from "#/shell/dashboard-user-menu";
 
 export interface DashboardHeaderProps {
   user: {

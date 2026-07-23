@@ -4,7 +4,7 @@ import {
   createDeliveryWorkerRunner,
   type DeliveryWorkerClearInterval,
   type DeliveryWorkerSetInterval,
-} from "#/server/runtime/delivery-worker-runner.ts";
+} from "#/server/runtime/delivery-worker-runner";
 
 interface TestRunResult {
   claimed: number;

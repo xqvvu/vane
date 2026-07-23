@@ -13,14 +13,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "#/components/ui/alert-dialog.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
+} from "#/components/ui/alert-dialog";
+import { Badge } from "#/components/ui/badge";
+import { useOperationMutations } from "#/features/operations/api/operation.mutations";
 import {
   operationsQueryKeys,
   routeReplayPreviewQueryOptions,
-} from "#/features/operations/api/operations.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/operations/api/operations.queries";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function RouteReplayPrompt({
   routeId,

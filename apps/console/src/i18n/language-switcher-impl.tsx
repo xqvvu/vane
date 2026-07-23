@@ -1,7 +1,7 @@
 import "@tanstack/react-start/client-only";
 import { RiGlobalLine } from "@remixicon/react";
 
-import { DropdownMenuGroup, DropdownMenuLabel } from "#/components/ui/dropdown-menu.tsx";
+import { DropdownMenuGroup, DropdownMenuLabel } from "#/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -9,17 +9,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
-import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group.tsx";
-import { writeLocaleCookie } from "#/i18n/locale-cookie.ts";
-import {
-  isAppLocale,
-  localeDisplayName,
-  supportedLocales,
-  type AppLocale,
-} from "#/i18n/locales.ts";
-import { useLocale, useTranslations } from "#/i18n/use-i18n.ts";
-import { hardReloadPage } from "#/lib/browser.ts";
+} from "#/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { writeLocaleCookie } from "#/i18n/locale-cookie";
+import { isAppLocale, localeDisplayName, supportedLocales, type AppLocale } from "#/i18n/locales";
+import { useLocale, useTranslations } from "#/i18n/use-i18n";
+import { hardReloadPage } from "#/lib/browser";
 
 export function LanguageSelectClient() {
   const locale = useCurrentAppLocale();

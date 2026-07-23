@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { fallbackTimeZone } from "#/i18n/time-zone.ts";
-import { useLocale, useTimeZone } from "#/i18n/use-i18n.ts";
+import { fallbackTimeZone } from "#/i18n/time-zone";
+import { useLocale, useTimeZone } from "#/i18n/use-i18n";
 
 export interface OperationDateFormatter {
   formatDateTime: (value: string) => string;

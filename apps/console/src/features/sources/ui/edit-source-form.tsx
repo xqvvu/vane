@@ -1,12 +1,12 @@
 import { RiEditLine } from "@remixicon/react";
 
-import { SourceForm } from "#/features/sources/ui/source-form.tsx";
+import { SourceForm } from "#/features/sources/ui/source-form";
 import type {
   EditSourceFormInput,
   SourceSubmitResult,
   SourceSummary,
-} from "#/features/sources/ui/source-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/sources/ui/source-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EditSourceForm({
   showHeader = true,

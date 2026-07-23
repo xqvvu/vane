@@ -4,7 +4,7 @@ import {
   loadSystemInformation,
   logSystemInformation,
   type SystemInformation,
-} from "#/server/runtime/system-information.ts";
+} from "#/server/runtime/system-information";
 
 import packageJson from "../../../../../package.json";
 

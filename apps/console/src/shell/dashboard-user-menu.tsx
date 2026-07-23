@@ -1,8 +1,8 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
-import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Skeleton } from "#/components/ui/skeleton";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export interface DashboardUserMenuProps {
   user: {
@@ -15,7 +15,7 @@ export interface DashboardUserMenuProps {
 
 const DashboardUserMenuClient = React.lazy(
   createClientOnlyFn(async () => {
-    const module = await import("#/shell/dashboard-user-menu-impl.tsx");
+    const module = await import("#/shell/dashboard-user-menu-impl");
 
     return { default: module.DashboardUserMenuClient };
   }),

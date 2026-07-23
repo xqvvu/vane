@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { DeliveryDetailPage } from "#/features/deliveries/ui/delivery-detail-page.tsx";
-import { deliveryDetailQueryOptions } from "#/features/operations/api/operations.queries.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { DeliveryDetailPage } from "#/features/deliveries/ui/delivery-detail-page";
+import { deliveryDetailQueryOptions } from "#/features/operations/api/operations.queries";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export const Route = createFileRoute("/_dashboard/deliveries_/$deliveryId")({
   loader: ({ context, params }) =>

@@ -1,4 +1,4 @@
-import { cn } from "#/lib/utils.ts";
+import { cn } from "#/lib/utils";
 
 export function powerActionButtonClassName(enabled: boolean): string {
   return cn(

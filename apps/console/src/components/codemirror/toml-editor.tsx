@@ -1,7 +1,7 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
-import { CodeEditorSkeleton } from "#/components/codemirror/code-editor-skeleton.tsx";
+import { CodeEditorSkeleton } from "#/components/codemirror/code-editor-skeleton";
 
 export interface TomlEditorProps {
   id: string;
@@ -13,7 +13,7 @@ export interface TomlEditorProps {
 
 const TomlEditorClient = React.lazy(
   createClientOnlyFn(async () => {
-    const module = await import("#/components/codemirror/toml-editor-impl.tsx");
+    const module = await import("#/components/codemirror/toml-editor-impl");
 
     return { default: module.TomlEditorClient };
   }),

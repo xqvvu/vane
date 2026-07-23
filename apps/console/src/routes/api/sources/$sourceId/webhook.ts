@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { env } from "#/env.ts";
-import { WebhookIntakeError } from "#/server/intake/intake.service.ts";
+import { env } from "#/env";
+import { WebhookIntakeError } from "#/server/intake/intake.service";
 import {
   InvalidWebhookJsonError,
   readWebhookJsonPayload,
   WebhookPayloadTooLargeError,
-} from "#/server/intake/webhook-request.ts";
-import type { ApplicationContainer } from "#/server/runtime/container.ts";
-import { createWebhookRequestContext } from "#/server/runtime/request-context.ts";
+} from "#/server/intake/webhook-request";
+import type { ApplicationContainer } from "#/server/runtime/container";
+import { createWebhookRequestContext } from "#/server/runtime/request-context";
 
 export const Route = createFileRoute("/api/sources/$sourceId/webhook")({
   server: {

@@ -3,14 +3,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
 
-import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store.ts";
-import { WebhookIntakeService } from "#/server/intake/intake.service.ts";
+import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store";
+import { WebhookIntakeService } from "#/server/intake/intake.service";
 import {
   createApplicationContainer,
   disposeApplicationContainer,
   getApplicationContainer,
   type ApplicationContainerOptions,
-} from "#/server/runtime/container.ts";
+} from "#/server/runtime/container";
 
 describe("application container", () => {
   let store: SqliteStore | undefined;

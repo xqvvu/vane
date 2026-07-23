@@ -10,17 +10,17 @@ import {
   type UpdateSourceCommand,
 } from "@vane/core";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
 import {
   generateSourceToken as defaultGenerateSourceToken,
   mergeJsonObjects,
-} from "#/server/configuration/configuration-support.ts";
-import { hashSourceToken } from "#/server/intake/intake.service.ts";
+} from "#/server/configuration/configuration-support";
+import { hashSourceToken } from "#/server/intake/intake.service";
 import type {
   CreatedSource,
   RotatedSourceToken,
   SourceServiceOptions,
-} from "#/server/sources/source.service.types.ts";
+} from "#/server/sources/source.service.types";
 
 export class SourceService {
   private readonly store: SqliteStore;

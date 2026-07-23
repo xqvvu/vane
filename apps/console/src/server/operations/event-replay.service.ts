@@ -18,9 +18,9 @@ import {
   type RouteReplayResult,
 } from "@vane/core";
 
-import type { EnqueueDeliveriesResult } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
-import type { SqliteStoreUnitOfWork } from "#/infra/sqlite/store.ts";
-import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types.ts";
+import type { EnqueueDeliveriesResult } from "#/infra/sqlite/repositories/delivery/delivery.interface";
+import type { SqliteStoreUnitOfWork } from "#/infra/sqlite/store";
+import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types";
 
 export class EventReplayService {
   private readonly store: EventReplayServiceOptions["store"];

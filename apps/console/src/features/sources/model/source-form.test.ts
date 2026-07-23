@@ -5,7 +5,7 @@ import {
   formSourceProviderValue,
   sourceConfigFromForm,
   sourceConfigPatchFromForm,
-} from "#/features/sources/model/source-form.ts";
+} from "#/features/sources/model/source-form";
 
 describe("source form helpers", () => {
   it("maps supported provider values from form data", () => {

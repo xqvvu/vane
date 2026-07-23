@@ -1,8 +1,8 @@
 import type { DeliveryState } from "@vane/core";
 
-import { Badge } from "#/components/ui/badge.tsx";
-import type { DeliveryDetail } from "#/features/operations/model/operation-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Badge } from "#/components/ui/badge";
+import type { DeliveryDetail } from "#/features/operations/model/operation-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveryStateBadge({ state }: { state: DeliveryState }) {
   const t = useTranslations();

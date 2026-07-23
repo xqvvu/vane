@@ -3,20 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "#/components/ui/dialog.tsx";
-import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
-import { destinationTemplateDraftQueryOptions } from "#/features/destinations/api/destination.queries.ts";
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "#/components/ui/dialog";
+import { useDestinationMutations } from "#/features/destinations/api/destination.mutations";
+import { destinationTemplateDraftQueryOptions } from "#/features/destinations/api/destination.queries";
 import type {
   DestinationCatalog,
   DestinationSubmitResult,
   DestinationSummary,
   PreviewEditDestinationFormInput,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { EditDestinationForm } from "#/features/destinations/ui/edit-destination-form.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/destinations/ui/destination-ui-types";
+import { EditDestinationForm } from "#/features/destinations/ui/edit-destination-form";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationEditDialog({
   destinationCatalog,

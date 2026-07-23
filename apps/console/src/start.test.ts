@@ -1,8 +1,8 @@
 import { csrfSymbol } from "@tanstack/react-start";
 import { describe, expect, it } from "vitest";
 
-import { requestLoggingMiddleware } from "#/middlewares/request-logging.middleware.ts";
-import { startInstance } from "#/start.ts";
+import { requestLoggingMiddleware } from "#/middlewares/request-logging.middleware";
+import { startInstance } from "#/start";
 
 describe("TanStack Start configuration", () => {
   it("keeps request logging outside the CSRF middleware", async () => {

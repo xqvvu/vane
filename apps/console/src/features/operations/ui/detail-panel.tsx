@@ -1,6 +1,6 @@
-import { DeliveryDetailView } from "#/features/deliveries/ui/delivery-detail-view.tsx";
-import { EventDetailView } from "#/features/events/ui/event-detail-view.tsx";
-import type { DeliveryDetail, EventDetail } from "#/features/operations/model/operation-types.ts";
+import { DeliveryDetailView } from "#/features/deliveries/ui/delivery-detail-view";
+import { EventDetailView } from "#/features/events/ui/event-detail-view";
+import type { DeliveryDetail, EventDetail } from "#/features/operations/model/operation-types";
 
 export function DetailPanel({
   eventDetail,

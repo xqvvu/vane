@@ -1,5 +1,5 @@
-import { StatusBadge } from "#/components/common/status-badge.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { StatusBadge } from "#/components/common/status-badge";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EnabledStateBadge({ enabled }: { enabled: boolean }) {
   const t = useTranslations();

@@ -1,20 +1,20 @@
 import { encodeJsonObject } from "@vane/core";
 import type { DestinationSummary } from "@vane/core";
 
-import { toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import { toSqliteBoolean } from "#/infra/sqlite/codecs";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   destinationRuntimeFromRow,
   destinationSummaryFromRow,
   destinationSummaryFromRuntime,
   requireDestination,
-} from "#/infra/sqlite/repositories/destination/destination.helpers.ts";
+} from "#/infra/sqlite/repositories/destination/destination.helpers";
 import type {
   CreateDestinationInput,
   DestinationRepository,
   DestinationRuntimeConfig,
   UpdateDestinationInput,
-} from "#/infra/sqlite/repositories/destination/destination.interface.ts";
+} from "#/infra/sqlite/repositories/destination/destination.interface";
 
 export class SqliteDestinationRepository implements DestinationRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}

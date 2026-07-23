@@ -3,22 +3,22 @@ import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { OperationalSummary } from "#/features/configuration/ui/operational-summary.tsx";
-import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
-import { EventsPageToolbar } from "#/features/events/ui/events-page-toolbar.tsx";
-import { EventsTable } from "#/features/events/ui/events-table.tsx";
-import { useOperationMutations } from "#/features/operations/api/operation.mutations.ts";
-import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
+import { OperationalSummary } from "#/features/configuration/ui/operational-summary";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries";
+import { EventsPageToolbar } from "#/features/events/ui/events-page-toolbar";
+import { EventsTable } from "#/features/events/ui/events-table";
+import { useOperationMutations } from "#/features/operations/api/operation.mutations";
+import { operationsQueryOptions } from "#/features/operations/api/operations.queries";
 import type {
   DashboardOperationSearch,
   OperationFilterData,
-} from "#/features/operations/model/operation-search.ts";
-import { OperationFilters } from "#/features/operations/ui/operation-filters.tsx";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
+} from "#/features/operations/model/operation-search";
+import { OperationFilters } from "#/features/operations/ui/operation-filters";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
+import { DashboardSidebar } from "#/shell/dashboard-sidebar";
 
 export interface EventsPageProps {
   search: DashboardOperationSearch;

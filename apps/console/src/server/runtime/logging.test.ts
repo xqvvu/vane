@@ -1,7 +1,7 @@
 import { getConfig, reset } from "@logtape/logtape";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { logger } from "#/server/runtime/logging.ts";
+import { logger } from "#/server/runtime/logging";
 
 describe("logging runtime", () => {
   afterEach(async () => {

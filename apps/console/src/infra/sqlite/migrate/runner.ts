@@ -1,8 +1,8 @@
 import "@tanstack/react-start/server-only";
-import { SqliteMigrationError } from "#/infra/sqlite/errors.ts";
-import { sqliteSchemaPlan } from "#/infra/sqlite/migrate/plan.ts";
-import type { MigrationResult, SqliteMigration } from "#/infra/sqlite/migrate/types.ts";
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
+import { SqliteMigrationError } from "#/infra/sqlite/errors";
+import { sqliteSchemaPlan } from "#/infra/sqlite/migrate/plan";
+import type { MigrationResult, SqliteMigration } from "#/infra/sqlite/migrate/types";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
 
 export interface MigrateSqliteDatabaseOptions {
   plan?: readonly SqliteMigration[];

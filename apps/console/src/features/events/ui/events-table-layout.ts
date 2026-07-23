@@ -1,4 +1,4 @@
-import { stickyActionsColumnClassName } from "#/components/common/operations-table-layout.ts";
+import { stickyActionsColumnClassName } from "#/components/common/operations-table-layout";
 
 export const eventsPageSize = 20;
 export const eventsTableMinWidthClassName = "min-w-275";

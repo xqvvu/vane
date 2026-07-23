@@ -4,7 +4,7 @@ import {
   getDestinationTemplateDraftFn,
   listDestinationCatalogFn,
   listDestinationsFn,
-} from "#/server/functions/configuration.functions.ts";
+} from "#/server/functions/configuration.functions";
 
 export const destinationQueryKeys = {
   all: ["destinations"] as const,

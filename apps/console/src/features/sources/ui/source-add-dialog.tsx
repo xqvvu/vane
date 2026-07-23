@@ -2,20 +2,20 @@ import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content";
+import { Button } from "#/components/ui/button";
 import {
   Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "#/components/ui/dialog.tsx";
-import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
-import { sourceWebhookPath } from "#/features/sources/model/source-webhook.ts";
-import { CreateSourceForm } from "#/features/sources/ui/create-source-form.tsx";
-import type { SourceTokenNotice } from "#/features/sources/ui/source-token-notice-panel.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/dialog";
+import { useSourceMutations } from "#/features/sources/api/source.mutations";
+import { sourceWebhookPath } from "#/features/sources/model/source-webhook";
+import { CreateSourceForm } from "#/features/sources/ui/create-source-form";
+import type { SourceTokenNotice } from "#/features/sources/ui/source-token-notice-panel";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function SourcesAddDialog({
   disabled = false,

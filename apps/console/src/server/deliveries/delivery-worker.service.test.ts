@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 
-import { openSqliteStore } from "#/infra/sqlite/store.ts";
-import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service.ts";
+import { openSqliteStore } from "#/infra/sqlite/store";
+import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service";
 
 const now = "2026-06-09T08:00:00.000Z";
 

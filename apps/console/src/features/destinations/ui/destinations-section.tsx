@@ -3,15 +3,15 @@ import * as React from "react";
 
 import type { RouteDefinition } from "@vane/core";
 
-import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
-import { OperationsTable } from "#/components/common/operations-table.tsx";
-import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage.ts";
-import type { DestinationSummary } from "#/features/destinations/model/destination-types.ts";
-import { DestinationActions } from "#/features/destinations/ui/destination-actions.tsx";
-import { DestinationIdentityCell } from "#/features/destinations/ui/destination-identity-cell.tsx";
-import { DestinationRouteCoverageCell } from "#/features/destinations/ui/destination-route-coverage-cell.tsx";
-import { DestinationsEmptyState } from "#/features/destinations/ui/destinations-empty-state.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
+import { OperationsTable } from "#/components/common/operations-table";
+import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage";
+import type { DestinationSummary } from "#/features/destinations/model/destination-types";
+import { DestinationActions } from "#/features/destinations/ui/destination-actions";
+import { DestinationIdentityCell } from "#/features/destinations/ui/destination-identity-cell";
+import { DestinationRouteCoverageCell } from "#/features/destinations/ui/destination-route-coverage-cell";
+import { DestinationsEmptyState } from "#/features/destinations/ui/destinations-empty-state";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export interface DestinationsSectionProps {
   destinations: DestinationSummary[];

@@ -6,8 +6,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "#/components/ui/empty.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/empty";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveriesEmptyState() {
   const t = useTranslations();

@@ -8,7 +8,7 @@ import {
   destinationConfigFromForm,
   formDestinationKind,
   formDestinationKindValue,
-} from "#/features/destinations/model/destination-form.ts";
+} from "#/features/destinations/model/destination-form";
 
 describe("destination form helpers", () => {
   it("maps generic webhook method, headers, and template fields into destination config", () => {

@@ -7,9 +7,9 @@ import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?ur
 import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";
 import webhookIconUrl from "@vane/destinations/assets/destination-icons/webhook.svg?url";
 
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
-import { DestinationsSection } from "#/features/destinations/ui/destinations-section.tsx";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import { DestinationsSection } from "#/features/destinations/ui/destinations-section";
+import { VaneIntlProvider } from "#/i18n/provider";
 
 type DestinationActionHandler = (destination: DestinationSummary) => void;
 type DestinationEditHandler = (destinationId: string) => void;

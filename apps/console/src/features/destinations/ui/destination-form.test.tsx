@@ -8,12 +8,12 @@ import { createDefaultDestinationRegistry } from "@vane/destinations";
 import {
   createDestinationDefaults,
   DestinationForm,
-} from "#/features/destinations/ui/destination-form.tsx";
+} from "#/features/destinations/ui/destination-form";
 import type {
   DestinationCatalog,
   DestinationFormPreviewInput,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+} from "#/features/destinations/ui/destination-ui-types";
+import { VaneIntlProvider } from "#/i18n/provider";
 
 const defaultDestinationCatalog = createDefaultDestinationRegistry().toCatalog();
 

@@ -1,4 +1,4 @@
-import { SqliteDataIntegrityError } from "#/infra/sqlite/errors.ts";
+import { SqliteDataIntegrityError } from "#/infra/sqlite/errors";
 
 export type SqliteBoolean = 0 | 1;
 export type SqliteJsonText = string;

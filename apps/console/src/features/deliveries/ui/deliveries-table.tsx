@@ -1,21 +1,21 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
-import { HistoryPagination } from "#/components/common/history-pagination.tsx";
-import { OperationsTable } from "#/components/common/operations-table.tsx";
-import { DeliveriesEmptyState } from "#/features/deliveries/ui/deliveries-empty-state.tsx";
+import { HistoryPagination } from "#/components/common/history-pagination";
+import { OperationsTable } from "#/components/common/operations-table";
+import { DeliveriesEmptyState } from "#/features/deliveries/ui/deliveries-empty-state";
 import {
   deliveriesColumnClassName,
   deliveriesPageSize,
   deliveriesTableMinWidthClassName,
-} from "#/features/deliveries/ui/deliveries-table-layout.ts";
-import { DeliveryActions } from "#/features/deliveries/ui/delivery-actions.tsx";
-import { DeliveryEventCell } from "#/features/deliveries/ui/delivery-event-cell.tsx";
-import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
-import { DeliveryTargetCell } from "#/features/deliveries/ui/delivery-target-cell.tsx";
-import type { Operations } from "#/features/operations/model/operation-types.ts";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/deliveries/ui/deliveries-table-layout";
+import { DeliveryActions } from "#/features/deliveries/ui/delivery-actions";
+import { DeliveryEventCell } from "#/features/deliveries/ui/delivery-event-cell";
+import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge";
+import { DeliveryTargetCell } from "#/features/deliveries/ui/delivery-target-cell";
+import type { Operations } from "#/features/operations/model/operation-types";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveriesTable({
   deliveries,

@@ -1,11 +1,11 @@
 import { RiAddCircleLine, RiAddLine } from "@remixicon/react";
 
-import { SourceForm } from "#/features/sources/ui/source-form.tsx";
+import { SourceForm } from "#/features/sources/ui/source-form";
 import type {
   CreateSourceFormInput,
   SourceSubmitResult,
-} from "#/features/sources/ui/source-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/sources/ui/source-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function CreateSourceForm({
   showHeader = true,

@@ -1,8 +1,8 @@
 import "@tanstack/react-start/server-only";
 import { betterAuth } from "better-auth";
 
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
-import { createBaseBetterAuthOptions } from "#/lib/auth-options.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection";
+import { createBaseBetterAuthOptions } from "#/lib/auth-options";
 
 const db = createSqliteDatabase({ databasePath: ":memory:" });
 

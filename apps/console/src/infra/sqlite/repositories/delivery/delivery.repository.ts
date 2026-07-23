@@ -3,7 +3,7 @@ import { sql } from "kysely";
 import { encodeJson, redactText } from "@vane/core";
 import type { DeliveryAttempt, DeliveryDetail, DeliveryJob } from "@vane/core";
 
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   attemptFromRow,
   decodeRenderedPayload,
@@ -13,7 +13,7 @@ import {
   requireAttempt,
   requireDelivery,
   reserveDedupeKey,
-} from "#/infra/sqlite/repositories/delivery/delivery.helpers.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.helpers";
 import type {
   ClaimDeliveriesInput,
   ClaimedDelivery,
@@ -27,26 +27,26 @@ import type {
   ReclaimStaleRunningDeliveriesInput,
   ReclaimStaleRunningDeliveriesResult,
   RetryDeliveryInput,
-} from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
-import { InvalidDeliveryStateError } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.interface";
+import { InvalidDeliveryStateError } from "#/infra/sqlite/repositories/delivery/delivery.interface";
 import {
   destinationMetadataFromRuntime,
   destinationSummaryFromRuntime,
   requireDestination,
-} from "#/infra/sqlite/repositories/destination/destination.helpers.ts";
-import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
-import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destination/destination.repository.ts";
-import { requireEvent } from "#/infra/sqlite/repositories/intake/intake.helpers.ts";
-import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository.ts";
-import { SqliteIntakeRepository as SqliteIntakeRepositoryImpl } from "#/infra/sqlite/repositories/intake/intake.repository.ts";
-import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface.ts";
-import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository.ts";
+} from "#/infra/sqlite/repositories/destination/destination.helpers";
+import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface";
+import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destination/destination.repository";
+import { requireEvent } from "#/infra/sqlite/repositories/intake/intake.helpers";
+import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository";
+import { SqliteIntakeRepository as SqliteIntakeRepositoryImpl } from "#/infra/sqlite/repositories/intake/intake.repository";
+import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface";
+import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository";
 import {
   requireSource,
   sourceSummaryFromRuntime,
-} from "#/infra/sqlite/repositories/source/source.helpers.ts";
-import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface.ts";
-import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository.ts";
+} from "#/infra/sqlite/repositories/source/source.helpers";
+import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface";
+import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository";
 
 export class SqliteDeliveryRepository implements DeliveryRepository {
   constructor(

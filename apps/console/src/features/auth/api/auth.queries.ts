@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getAuthBootstrapFn, getDashboardSessionFn } from "#/server/functions/auth.functions.ts";
+import { getAuthBootstrapFn, getDashboardSessionFn } from "#/server/functions/auth.functions";
 
 export const authQueryKeys = {
   all: ["auth"] as const,

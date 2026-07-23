@@ -1,9 +1,9 @@
 import { sql } from "kysely";
 import { describe, expect, it } from "vitest";
 
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
-import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
-import { transaction } from "#/infra/sqlite/transaction.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection";
+import { SqliteRepositoryContext } from "#/infra/sqlite/context";
+import { transaction } from "#/infra/sqlite/transaction";
 
 describe("sqlite transactions", () => {
   it("rolls back a failed Kysely transaction", async () => {

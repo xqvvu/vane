@@ -15,7 +15,7 @@ import {
 import type { JsonValue } from "@vane/core";
 import type { ProviderParseFailure, ProviderParseSuccess } from "@vane/providers";
 
-import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface.ts";
+import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
 import type {
   AcceptedWebhook,
   AcceptWebhookInput,
@@ -23,7 +23,7 @@ import type {
   WebhookIntakeErrorOptions,
   WebhookIntakeFailureReason,
   WebhookIntakeServiceOptions,
-} from "#/server/intake/intake.service.types.ts";
+} from "#/server/intake/intake.service.types";
 
 const intakeLogger = getLogger(["vane", "intake"]);
 

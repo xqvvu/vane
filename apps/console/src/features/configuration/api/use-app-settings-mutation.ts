@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 
 import type { AppSettings } from "@vane/core";
 
-import { appSettingsQueryKeys } from "#/features/configuration/api/configuration.queries.ts";
-import { i18nQueryKeys } from "#/i18n/i18n.queries.ts";
-import { updateAppSettingsFn } from "#/server/functions/configuration.functions.ts";
+import { appSettingsQueryKeys } from "#/features/configuration/api/configuration.queries";
+import { i18nQueryKeys } from "#/i18n/i18n.queries";
+import { updateAppSettingsFn } from "#/server/functions/configuration.functions";
 
 export function useAppSettingsMutation() {
   const queryClient = useQueryClient();

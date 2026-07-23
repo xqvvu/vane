@@ -1,9 +1,9 @@
 import { sql } from "kysely";
 import { describe, expect, it } from "vitest";
 
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
-import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
-import { SqliteMigrationError } from "#/infra/sqlite/errors.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection";
+import { SqliteRepositoryContext } from "#/infra/sqlite/context";
+import { SqliteMigrationError } from "#/infra/sqlite/errors";
 import {
   defineSqliteMigration,
   getAppliedMigrationVersions,
@@ -12,7 +12,7 @@ import {
   sqliteSchemaPlan,
 } from "#/infra/sqlite/migrate";
 import betterAuthGeneratedSql from "#/infra/sqlite/migrate/better-auth.generated.sql?raw";
-import { OpenedSqliteStore } from "#/infra/sqlite/store.ts";
+import { OpenedSqliteStore } from "#/infra/sqlite/store";
 
 describe("sqlite schema plan", () => {
   it("reads the MVP baseline from the explicit TypeScript schema plan", () => {

@@ -2,25 +2,25 @@ import { sql } from "kysely";
 
 import type { IsoDateTimeString } from "@vane/core";
 
-import { createSqliteDatabase } from "#/infra/sqlite/connection.ts";
-import { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import { createSqliteDatabase } from "#/infra/sqlite/connection";
+import { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import type { SqliteMigration } from "#/infra/sqlite/migrate";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate";
-import type { DeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
-import { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository.ts";
-import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
-import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destination/destination.repository.ts";
-import type { HistoryRepository } from "#/infra/sqlite/repositories/history/history.interface.ts";
-import { SqliteHistoryRepository } from "#/infra/sqlite/repositories/history/history.repository.ts";
-import type { IntakeRepository } from "#/infra/sqlite/repositories/intake/intake.interface.ts";
-import { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository.ts";
-import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface.ts";
-import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository.ts";
-import type { SettingsRepository } from "#/infra/sqlite/repositories/settings/settings.interface.ts";
-import { SqliteSettingsRepository } from "#/infra/sqlite/repositories/settings/settings.repository.ts";
-import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface.ts";
-import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository.ts";
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
+import type { DeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.interface";
+import { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository";
+import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface";
+import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destination/destination.repository";
+import type { HistoryRepository } from "#/infra/sqlite/repositories/history/history.interface";
+import { SqliteHistoryRepository } from "#/infra/sqlite/repositories/history/history.repository";
+import type { IntakeRepository } from "#/infra/sqlite/repositories/intake/intake.interface";
+import { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository";
+import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface";
+import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository";
+import type { SettingsRepository } from "#/infra/sqlite/repositories/settings/settings.interface";
+import { SqliteSettingsRepository } from "#/infra/sqlite/repositories/settings/settings.repository";
+import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface";
+import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository";
+import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
 
 export interface OpenSqliteStoreOptions {
   databasePath?: string;

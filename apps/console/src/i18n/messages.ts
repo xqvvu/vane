@@ -1,6 +1,6 @@
 import type { AbstractIntlMessages } from "use-intl";
 
-import type { AppLocale } from "#/i18n/locales.ts";
+import type { AppLocale } from "#/i18n/locales";
 import enUsMessages from "#/i18n/messages/en-US.json";
 import zhHansMessages from "#/i18n/messages/zh-Hans.json";
 

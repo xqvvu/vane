@@ -7,11 +7,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "#/components/ui/dialog.tsx";
-import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
-import { EditSourceForm } from "#/features/sources/ui/edit-source-form.tsx";
-import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/dialog";
+import { useSourceMutations } from "#/features/sources/api/source.mutations";
+import { EditSourceForm } from "#/features/sources/ui/edit-source-form";
+import type { SourceSummary } from "#/features/sources/ui/source-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function SourcesEditDialog({
   source,

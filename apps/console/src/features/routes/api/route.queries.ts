@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { listRoutesFn } from "#/server/functions/configuration.functions.ts";
+import { listRoutesFn } from "#/server/functions/configuration.functions";
 
 export const routeQueryKeys = {
   all: ["routes"] as const,

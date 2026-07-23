@@ -1,7 +1,7 @@
 import type { EventDetailDelivery } from "@vane/core";
 
-import { deliveryFromRow } from "#/infra/sqlite/repositories/delivery/delivery.helpers.ts";
-import type { DeliveryRow } from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
+import { deliveryFromRow } from "#/infra/sqlite/repositories/delivery/delivery.helpers";
+import type { DeliveryRow } from "#/infra/sqlite/repositories/delivery/delivery.interface";
 
 export interface EventDetailDeliveryRow extends DeliveryRow {
   destination_name: string;

@@ -1,6 +1,6 @@
-import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
-import { EventJsonBlock } from "#/features/events/ui/event-json-block.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types";
+import { EventJsonBlock } from "#/features/events/ui/event-json-block";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventRawTab({ detail }: { detail: EventDetailData }) {
   const t = useTranslations();

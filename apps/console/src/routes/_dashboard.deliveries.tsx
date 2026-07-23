@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { DeliveriesPage } from "#/features/deliveries/ui/deliveries-page.tsx";
-import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries.ts";
-import { operationsQueryOptions } from "#/features/operations/api/operations.queries.ts";
+import { DeliveriesPage } from "#/features/deliveries/ui/deliveries-page";
+import { destinationsQueryOptions } from "#/features/destinations/api/destination.queries";
+import { operationsQueryOptions } from "#/features/operations/api/operations.queries";
 import {
   DashboardOperationSearchSchema,
   mergeOperationSearch,
   operationFiltersFromSearch,
-} from "#/features/operations/model/operation-search.ts";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+} from "#/features/operations/model/operation-search";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export const Route = createFileRoute("/_dashboard/deliveries")({
   validateSearch: (search) => DashboardOperationSearchSchema.parse(search),

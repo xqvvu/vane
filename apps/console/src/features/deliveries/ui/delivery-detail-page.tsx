@@ -2,14 +2,14 @@ import { RiArrowLeftLine, RiErrorWarningLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { buttonVariants } from "#/components/ui/button.tsx";
-import { DeliveryDetailView } from "#/features/deliveries/ui/delivery-detail-view.tsx";
-import { deliveryDetailQueryOptions } from "#/features/operations/api/operations.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { PageToolbar } from "#/components/common/page-toolbar";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { buttonVariants } from "#/components/ui/button";
+import { DeliveryDetailView } from "#/features/deliveries/ui/delivery-detail-view";
+import { deliveryDetailQueryOptions } from "#/features/operations/api/operations.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function DeliveryDetailPage({ deliveryId }: { deliveryId: string }) {
   const t = useTranslations();

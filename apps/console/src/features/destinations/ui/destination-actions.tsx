@@ -7,8 +7,8 @@ import {
 } from "@remixicon/react";
 import * as React from "react";
 
-import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
-import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
+import { IconTooltip } from "#/components/common/icon-tooltip";
+import { powerActionButtonClassName } from "#/components/common/power-action-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "#/components/ui/alert-dialog.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/alert-dialog";
+import { Button } from "#/components/ui/button";
+import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationActions({
   destination,

@@ -1,12 +1,12 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
-import { EventDetailDeliveriesTable } from "#/features/events/ui/event-detail-deliveries-table.tsx";
-import { EventDetailRouteMatchesTable } from "#/features/events/ui/event-detail-route-matches-table.tsx";
-import { getEventDeliveryStats } from "#/features/events/ui/event-detail-stats.ts";
-import { EventDetailSummary } from "#/features/events/ui/event-detail-summary.tsx";
-import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
-import { EventNormalizedTab } from "#/features/events/ui/event-normalized-tab.tsx";
-import { EventRawTab } from "#/features/events/ui/event-raw-tab.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { EventDetailDeliveriesTable } from "#/features/events/ui/event-detail-deliveries-table";
+import { EventDetailRouteMatchesTable } from "#/features/events/ui/event-detail-route-matches-table";
+import { getEventDeliveryStats } from "#/features/events/ui/event-detail-stats";
+import { EventDetailSummary } from "#/features/events/ui/event-detail-summary";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types";
+import { EventNormalizedTab } from "#/features/events/ui/event-normalized-tab";
+import { EventRawTab } from "#/features/events/ui/event-raw-tab";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventDetailView({ detail }: { detail: EventDetailData }) {
   const t = useTranslations();

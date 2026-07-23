@@ -1,6 +1,6 @@
 import { RiArrowRightLine, RiRefreshLine } from "@remixicon/react";
 
-import { Button } from "#/components/ui/button.tsx";
+import { Button } from "#/components/ui/button";
 
 export interface HistoryPaginationProps {
   latestLabel: string;

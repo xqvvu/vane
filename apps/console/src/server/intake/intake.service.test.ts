@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createDefaultProviderRegistry } from "@vane/providers";
 
-import { openSqliteStore } from "#/infra/sqlite/store.ts";
+import { openSqliteStore } from "#/infra/sqlite/store";
 import {
   WebhookIntakeError,
   WebhookIntakeService,
   hashSourceToken,
   verifySourceToken,
-} from "#/server/intake/intake.service.ts";
+} from "#/server/intake/intake.service";
 
 const now = "2026-06-09T08:00:00.000Z";
 

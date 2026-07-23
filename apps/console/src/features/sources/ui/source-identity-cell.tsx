@@ -1,6 +1,6 @@
-import { SourceProviderIcon } from "#/features/sources/ui/source-provider-icon.tsx";
-import type { SourceSummary } from "#/features/sources/ui/source-ui-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { SourceProviderIcon } from "#/features/sources/ui/source-provider-icon";
+import type { SourceSummary } from "#/features/sources/ui/source-ui-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function SourceIdentityCell({ source }: { source: SourceSummary }) {
   const t = useTranslations();

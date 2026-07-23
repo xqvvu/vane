@@ -1,21 +1,21 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
-import { OperationsTable } from "#/components/common/operations-table.tsx";
-import { TablePagination } from "#/components/common/table-pagination.tsx";
-import { EventActions } from "#/features/events/ui/event-actions.tsx";
-import { EventDeliveryCountsCell } from "#/features/events/ui/event-delivery-counts-cell.tsx";
-import { EventStateCell } from "#/features/events/ui/event-state-cell.tsx";
-import { EventTitleCell } from "#/features/events/ui/event-title-cell.tsx";
-import { EventsEmptyState } from "#/features/events/ui/events-empty-state.tsx";
+import { OperationsTable } from "#/components/common/operations-table";
+import { TablePagination } from "#/components/common/table-pagination";
+import { EventActions } from "#/features/events/ui/event-actions";
+import { EventDeliveryCountsCell } from "#/features/events/ui/event-delivery-counts-cell";
+import { EventStateCell } from "#/features/events/ui/event-state-cell";
+import { EventTitleCell } from "#/features/events/ui/event-title-cell";
+import { EventsEmptyState } from "#/features/events/ui/events-empty-state";
 import {
   eventsColumnClassName,
   eventsPageSize,
   eventsTableMinWidthClassName,
-} from "#/features/events/ui/events-table-layout.ts";
-import type { Operations } from "#/features/operations/model/operation-types.ts";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/events/ui/events-table-layout";
+import type { Operations } from "#/features/operations/model/operation-types";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventsTable({
   events,

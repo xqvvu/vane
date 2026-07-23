@@ -5,12 +5,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "#/components/ui/table.tsx";
-import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
-import { EventDetailSectionHeader } from "#/features/events/ui/event-detail-section-header.tsx";
-import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/table";
+import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge";
+import { EventDetailSectionHeader } from "#/features/events/ui/event-detail-section-header";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function EventDetailDeliveriesTable({
   deliveries,

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Skeleton } from "#/components/ui/skeleton.tsx";
+import { Skeleton } from "#/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -8,10 +8,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "#/components/ui/table.tsx";
-import { cn } from "#/lib/utils.ts";
-import { DashboardHeader } from "#/shell/dashboard-header.tsx";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar.tsx";
+} from "#/components/ui/table";
+import { cn } from "#/lib/utils";
+import { DashboardHeader } from "#/shell/dashboard-header";
+import { DashboardSidebar } from "#/shell/dashboard-sidebar";
 
 export interface DashboardLayoutProps {
   user: {

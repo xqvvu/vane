@@ -16,8 +16,8 @@ import {
   type VaneSecretReferences,
 } from "@vane/core";
 
-import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
-import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface.ts";
+import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface";
+import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
 
 export type PortableConfiguration = VaneConfiguration;
 export type PortableDestination = VaneConfigDestination;

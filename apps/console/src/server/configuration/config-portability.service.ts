@@ -9,7 +9,6 @@ import {
   type ImportConfigurationJsonCommand,
 } from "@vane/core";
 
-import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types.ts";
 import {
   createPortableConfiguration,
   parsePortableConfigurationJson,
@@ -21,14 +20,15 @@ import {
   type ExportConfigurationOptions,
   type ImportConfigurationOptions,
   type PortableConfiguration,
-} from "#/server/configuration/config-portability.ts";
+} from "#/server/configuration/config-portability";
+import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types";
 import {
   generateSourceToken as defaultGenerateSourceToken,
   parseDestinationConfig,
   requireExistingDestinationIds,
   requireExistingSourceIds,
-} from "#/server/configuration/configuration-support.ts";
-import { hashSourceToken } from "#/server/intake/intake.service.ts";
+} from "#/server/configuration/configuration-support";
+import { hashSourceToken } from "#/server/intake/intake.service";
 
 export class ConfigPortabilityService {
   private readonly store: ConfigPortabilityServiceOptions["store"];

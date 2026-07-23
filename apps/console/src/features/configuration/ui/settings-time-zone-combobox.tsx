@@ -1,17 +1,12 @@
 import * as React from "react";
 
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-} from "#/components/ui/combobox.tsx";
+import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput } from "#/components/ui/combobox";
 import {
   SettingsTimeZoneVirtualizedList,
   type SettingsTimeZoneVirtualizer,
-} from "#/features/configuration/ui/settings-time-zone-virtualized-list.tsx";
-import { supportedTimeZones } from "#/i18n/time-zone.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/configuration/ui/settings-time-zone-virtualized-list";
+import { supportedTimeZones } from "#/i18n/time-zone";
+import { useTranslations } from "#/i18n/use-i18n";
 
 const timeZones = supportedTimeZones();
 const searchableTimeZones = timeZones.map((value) => ({

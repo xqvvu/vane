@@ -1,7 +1,7 @@
 import type { DestinationRegistry, DestinationSendContext } from "@vane/destinations";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
-import type { DeliveryBackoffOptions } from "#/server/deliveries/delivery-execution.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
+import type { DeliveryBackoffOptions } from "#/server/deliveries/delivery-execution";
 
 export interface DeliveryWorkerOptions {
   store: SqliteStore;

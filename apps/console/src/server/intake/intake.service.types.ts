@@ -1,7 +1,7 @@
 import type { JsonValue, RouteMatchResult } from "@vane/core";
 import type { ProviderRegistry } from "@vane/providers";
 
-import type { SqliteStore } from "#/infra/sqlite/store.ts";
+import type { SqliteStore } from "#/infra/sqlite/store";
 
 export interface WebhookIntakeServiceOptions {
   store: SqliteStore;

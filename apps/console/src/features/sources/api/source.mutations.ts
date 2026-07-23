@@ -1,14 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { routeQueryKeys } from "#/features/routes/api/route.queries.ts";
-import { sourceQueryKeys } from "#/features/sources/api/source.queries.ts";
+import { routeQueryKeys } from "#/features/routes/api/route.queries";
+import { sourceQueryKeys } from "#/features/sources/api/source.queries";
 import {
   createSourceFn,
   deleteSourceFn,
   rotateSourceTokenFn,
   updateSourceFn,
-} from "#/server/functions/configuration.functions.ts";
+} from "#/server/functions/configuration.functions";
 
 export function useSourceMutations() {
   const queryClient = useQueryClient();

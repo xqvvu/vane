@@ -10,10 +10,10 @@ import * as React from "react";
 
 import type { DestinationSummary, RouteDefinition, SourceSummary } from "@vane/core";
 
-import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
-import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
-import { OperationsTable } from "#/components/common/operations-table.tsx";
-import { powerActionButtonClassName } from "#/components/common/power-action-button.ts";
+import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
+import { IconTooltip } from "#/components/common/icon-tooltip";
+import { OperationsTable } from "#/components/common/operations-table";
+import { powerActionButtonClassName } from "#/components/common/power-action-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +24,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "#/components/ui/alert-dialog.tsx";
-import { Badge } from "#/components/ui/badge.tsx";
-import { Button } from "#/components/ui/button.tsx";
+} from "#/components/ui/alert-dialog";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -34,9 +34,9 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "#/components/ui/empty.tsx";
-import { EditRouteForm } from "#/features/routes/ui/route-forms.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/empty";
+import { EditRouteForm } from "#/features/routes/ui/route-forms";
+import { useTranslations } from "#/i18n/use-i18n";
 
 type RouteSummary = RouteDefinition;
 

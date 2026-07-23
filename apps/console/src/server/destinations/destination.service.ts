@@ -32,14 +32,14 @@ import {
   mergeJsonObjects,
   parseDestinationConfig,
   redactNullableText,
-} from "#/server/configuration/configuration-support.ts";
+} from "#/server/configuration/configuration-support";
 import type {
   DestinationPreviewResult,
   DestinationPreviewSample,
   DestinationServiceOptions,
   DestinationTemplateDraft,
   DestinationTestResult,
-} from "#/server/destinations/destination.service.types.ts";
+} from "#/server/destinations/destination.service.types";
 
 export class DestinationService {
   private readonly store: DestinationServiceOptions["store"];

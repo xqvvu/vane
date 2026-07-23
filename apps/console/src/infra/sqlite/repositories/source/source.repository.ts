@@ -1,20 +1,20 @@
 import { encodeJsonObject } from "@vane/core";
 import type { SourceSummary } from "@vane/core";
 
-import { toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import { toSqliteBoolean } from "#/infra/sqlite/codecs";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   requireSource,
   sourceRuntimeFromRow,
   sourceSummaryFromRow,
   sourceSummaryFromRuntime,
-} from "#/infra/sqlite/repositories/source/source.helpers.ts";
+} from "#/infra/sqlite/repositories/source/source.helpers";
 import type {
   CreateSourceInput,
   SourceRepository,
   SourceRuntimeConfig,
   UpdateSourceInput,
-} from "#/infra/sqlite/repositories/source/source.interface.ts";
+} from "#/infra/sqlite/repositories/source/source.interface";
 
 export class SqliteSourceRepository implements SourceRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}

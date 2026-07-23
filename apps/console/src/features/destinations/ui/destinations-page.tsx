@@ -3,28 +3,28 @@ import { useSuspenseQueries } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { Button } from "#/components/ui/button.tsx";
-import { useDestinationMutations } from "#/features/destinations/api/destination.mutations.ts";
+import { Button } from "#/components/ui/button";
+import { useDestinationMutations } from "#/features/destinations/api/destination.mutations";
 import {
   destinationCatalogQueryOptions,
   destinationsQueryOptions,
-} from "#/features/destinations/api/destination.queries.ts";
-import type { DestinationPreviewNotice } from "#/features/destinations/model/destination-types.ts";
-import { DestinationAddDialog } from "#/features/destinations/ui/destination-add-dialog.tsx";
-import { DestinationEditDialog } from "#/features/destinations/ui/destination-edit-dialog.tsx";
+} from "#/features/destinations/api/destination.queries";
+import type { DestinationPreviewNotice } from "#/features/destinations/model/destination-types";
+import { DestinationAddDialog } from "#/features/destinations/ui/destination-add-dialog";
+import { DestinationEditDialog } from "#/features/destinations/ui/destination-edit-dialog";
 import {
   DestinationPreviewDialog,
   showDestinationTestToast,
-} from "#/features/destinations/ui/destination-notices.tsx";
+} from "#/features/destinations/ui/destination-notices";
 import type {
   PreviewDestinationFormInput,
   PreviewEditDestinationFormInput,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { DestinationsPageToolbar } from "#/features/destinations/ui/destinations-page-toolbar.tsx";
-import { DestinationsSection } from "#/features/destinations/ui/destinations-section.tsx";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+} from "#/features/destinations/ui/destination-ui-types";
+import { DestinationsPageToolbar } from "#/features/destinations/ui/destinations-page-toolbar";
+import { DestinationsSection } from "#/features/destinations/ui/destinations-section";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function DestinationsPage() {
   const t = useTranslations();

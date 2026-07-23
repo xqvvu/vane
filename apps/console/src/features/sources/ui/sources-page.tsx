@@ -3,21 +3,21 @@ import { useSuspenseQueries } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { Button } from "#/components/ui/button.tsx";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { useSourceMutations } from "#/features/sources/api/source.mutations.ts";
-import { sourcesQueryOptions } from "#/features/sources/api/source.queries.ts";
-import { sourceWebhookPath } from "#/features/sources/model/source-webhook.ts";
-import { SourcesAddDialog } from "#/features/sources/ui/source-add-dialog.tsx";
-import { SourcesEditDialog } from "#/features/sources/ui/source-edit-dialog.tsx";
+import { Button } from "#/components/ui/button";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { useSourceMutations } from "#/features/sources/api/source.mutations";
+import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
+import { sourceWebhookPath } from "#/features/sources/model/source-webhook";
+import { SourcesAddDialog } from "#/features/sources/ui/source-add-dialog";
+import { SourcesEditDialog } from "#/features/sources/ui/source-edit-dialog";
 import {
   SourceTokenNoticePanel,
   type SourceTokenNotice,
-} from "#/features/sources/ui/source-token-notice-panel.tsx";
-import { SourcesPageToolbar } from "#/features/sources/ui/sources-page-toolbar.tsx";
-import { SourcesSection } from "#/features/sources/ui/sources-section.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+} from "#/features/sources/ui/source-token-notice-panel";
+import { SourcesPageToolbar } from "#/features/sources/ui/sources-page-toolbar";
+import { SourcesSection } from "#/features/sources/ui/sources-section";
+import { useTranslations } from "#/i18n/use-i18n";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function SourcesPage() {
   const t = useTranslations();

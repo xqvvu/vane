@@ -5,13 +5,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "#/components/ui/table.tsx";
-import { DeliveryDetailSectionHeader } from "#/features/deliveries/ui/delivery-detail-section-header.tsx";
-import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types.ts";
-import { DeliveryAttemptStateBadge } from "#/features/deliveries/ui/delivery-state-badge.tsx";
-import { summarizeResponseBody } from "#/features/operations/model/operation-format.ts";
-import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/table";
+import { DeliveryDetailSectionHeader } from "#/features/deliveries/ui/delivery-detail-section-header";
+import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types";
+import { DeliveryAttemptStateBadge } from "#/features/deliveries/ui/delivery-state-badge";
+import { summarizeResponseBody } from "#/features/operations/model/operation-format";
+import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveryAttemptsTable({ attempts }: { attempts: DeliveryDetailData["attempts"] }) {
   const t = useTranslations();

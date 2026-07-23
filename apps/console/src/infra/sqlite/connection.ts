@@ -7,7 +7,7 @@ import process from "node:process";
 import Sqlite from "better-sqlite3";
 import { Kysely, SqliteDialect } from "kysely";
 
-import type { VaneSqliteDatabaseSchema, VaneSqliteKysely } from "#/infra/sqlite/schema.ts";
+import type { VaneSqliteDatabaseSchema, VaneSqliteKysely } from "#/infra/sqlite/schema";
 
 export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;

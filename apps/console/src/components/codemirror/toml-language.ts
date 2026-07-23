@@ -11,7 +11,7 @@ import {
 import { styleTags, tags } from "@lezer/highlight";
 import { parser } from "lezer-toml";
 
-import { codeFoldGutter } from "#/components/codemirror/code-fold-gutter.ts";
+import { codeFoldGutter } from "#/components/codemirror/code-fold-gutter";
 
 function defineTomlLanguage(): LRLanguage {
   const comments = ["Comment"];

@@ -4,9 +4,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+import { VaneIntlProvider } from "#/i18n/provider";
 
-import { DestinationPreviewDialog, showDestinationTestToast } from "./destination-notices.tsx";
+import { DestinationPreviewDialog, showDestinationTestToast } from "./destination-notices";
 
 const testState = vi.hoisted(() => ({
   toast: {

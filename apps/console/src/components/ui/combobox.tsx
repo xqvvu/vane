@@ -2,14 +2,14 @@ import { Combobox as ComboboxPrimitive } from "@base-ui/react";
 import { RiArrowDownSLine, RiCloseLine, RiCheckLine } from "@remixicon/react";
 import * as React from "react";
 
-import { Button } from "#/components/ui/button.tsx";
+import { Button } from "#/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "#/components/ui/input-group.tsx";
-import { cn } from "#/lib/utils.ts";
+} from "#/components/ui/input-group";
+import { cn } from "#/lib/utils";
 
 const Combobox = ComboboxPrimitive.Root;
 const useComboboxFilteredItems = ComboboxPrimitive.useFilteredItems;

@@ -1,4 +1,4 @@
-import type { VaneSqliteKysely, VaneSqliteTransaction } from "#/infra/sqlite/schema.ts";
+import type { VaneSqliteKysely, VaneSqliteTransaction } from "#/infra/sqlite/schema";
 
 export function transaction<T>(
   db: VaneSqliteKysely,

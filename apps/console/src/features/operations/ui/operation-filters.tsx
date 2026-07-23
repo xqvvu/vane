@@ -1,7 +1,7 @@
 import type { DestinationSummary, SourceSummary } from "@vane/core";
 
-import { Field as UiField, FieldGroup, FieldLabel } from "#/components/ui/field.tsx";
-import { Input } from "#/components/ui/input.tsx";
+import { Field as UiField, FieldGroup, FieldLabel } from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,10 +9,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
-import type { DashboardOperationSearch } from "#/features/operations/model/operation-search.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+} from "#/components/ui/select";
+import type { DashboardOperationSearch } from "#/features/operations/model/operation-search";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function OperationFilters({
   configuration,

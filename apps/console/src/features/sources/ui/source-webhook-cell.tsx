@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { CopyableCodeLine } from "#/components/common/copyable-code-line.tsx";
+import { CopyableCodeLine } from "#/components/common/copyable-code-line";
 import {
   sourceWebhookPath,
   sourceWebhookUrlFromPath,
-} from "#/features/sources/model/source-webhook.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/sources/model/source-webhook";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function SourceWebhookCell({ sourceId }: { sourceId: string }) {
   const t = useTranslations();

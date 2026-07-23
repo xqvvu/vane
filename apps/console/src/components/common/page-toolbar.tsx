@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { Badge } from "#/components/ui/badge.tsx";
-import { cn } from "#/lib/utils.ts";
+import { Badge } from "#/components/ui/badge";
+import { cn } from "#/lib/utils";
 
 export interface PageToolbarProps {
   description?: ReactNode;

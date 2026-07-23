@@ -3,15 +3,15 @@ import * as React from "react";
 
 import type { RouteDefinition, SourceSummary } from "@vane/core";
 
-import { EnabledStateBadge } from "#/components/common/enabled-state-badge.tsx";
-import { OperationsTable } from "#/components/common/operations-table.tsx";
-import { sourceRouteCoverage } from "#/features/sources/model/source-route-coverage.ts";
-import { SourceActions } from "#/features/sources/ui/source-actions.tsx";
-import { SourceIdentityCell } from "#/features/sources/ui/source-identity-cell.tsx";
-import { SourceRouteCoverageCell } from "#/features/sources/ui/source-route-coverage-cell.tsx";
-import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell.tsx";
-import { SourcesEmptyState } from "#/features/sources/ui/sources-empty-state.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
+import { OperationsTable } from "#/components/common/operations-table";
+import { sourceRouteCoverage } from "#/features/sources/model/source-route-coverage";
+import { SourceActions } from "#/features/sources/ui/source-actions";
+import { SourceIdentityCell } from "#/features/sources/ui/source-identity-cell";
+import { SourceRouteCoverageCell } from "#/features/sources/ui/source-route-coverage-cell";
+import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell";
+import { SourcesEmptyState } from "#/features/sources/ui/sources-empty-state";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export interface SourcesSectionProps {
   sources: SourceSummary[];

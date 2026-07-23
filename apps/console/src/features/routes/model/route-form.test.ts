@@ -6,7 +6,7 @@ import {
   routeRuleFromValues,
   routeRulePatchFromForm,
   routeRulePatchFromValues,
-} from "#/features/routes/model/route-form.ts";
+} from "#/features/routes/model/route-form";
 
 describe("route form helpers", () => {
   it("maps route form fields into an inspectable route rule", () => {

@@ -11,8 +11,8 @@ import {
 import {
   requireExistingDestinationIds,
   requireExistingSourceIds,
-} from "#/server/configuration/configuration-support.ts";
-import type { RouteServiceOptions } from "#/server/routes/route.service.types.ts";
+} from "#/server/configuration/configuration-support";
+import type { RouteServiceOptions } from "#/server/routes/route.service.types";
 
 export class RouteService {
   private readonly store: RouteServiceOptions["store"];

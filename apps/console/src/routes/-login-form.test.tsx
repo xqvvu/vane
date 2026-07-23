@@ -4,10 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries.ts";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
-import { LoginFormClient } from "#/routes/-login-form-impl.tsx";
-import { LoginForm } from "#/routes/-login-form.tsx";
+import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
+import { VaneIntlProvider } from "#/i18n/provider";
+import { LoginForm } from "#/routes/-login-form";
+import { LoginFormClient } from "#/routes/-login-form-impl";
 
 const testState = vi.hoisted(() => ({
   navigate: vi.fn<() => Promise<void>>(async () => {}),
@@ -32,7 +32,7 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => testState.navigate,
 }));
 
-vi.mock("#/lib/auth.client.ts", () => ({
+vi.mock("#/lib/auth.client", () => ({
   authClient: testState.authClient,
 }));
 

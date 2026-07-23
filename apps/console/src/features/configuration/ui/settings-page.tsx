@@ -1,11 +1,11 @@
-import { Tabs, TabsContent } from "#/components/ui/tabs.tsx";
-import { ImportNoticePanel } from "#/features/configuration/ui/import-notice-panel.tsx";
-import { PortableConfigForm } from "#/features/configuration/ui/portable-config-form.tsx";
-import { SettingsOperationalOverview } from "#/features/configuration/ui/settings-operational-overview.tsx";
-import { SettingsPageToolbar } from "#/features/configuration/ui/settings-page-toolbar.tsx";
-import { SettingsPreferencesPanel } from "#/features/configuration/ui/settings-preferences-panel.tsx";
-import { useSettingsWorkspace } from "#/features/configuration/ui/use-settings-workspace.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { Tabs, TabsContent } from "#/components/ui/tabs";
+import { ImportNoticePanel } from "#/features/configuration/ui/import-notice-panel";
+import { PortableConfigForm } from "#/features/configuration/ui/portable-config-form";
+import { SettingsOperationalOverview } from "#/features/configuration/ui/settings-operational-overview";
+import { SettingsPageToolbar } from "#/features/configuration/ui/settings-page-toolbar";
+import { SettingsPreferencesPanel } from "#/features/configuration/ui/settings-preferences-panel";
+import { useSettingsWorkspace } from "#/features/configuration/ui/use-settings-workspace";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function SettingsPage() {
   const workspace = useSettingsWorkspace();

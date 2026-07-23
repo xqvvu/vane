@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ImportConfigurationResult } from "@vane/core";
 
-import { useSettingsWorkspace } from "#/features/configuration/ui/use-settings-workspace.ts";
+import { useSettingsWorkspace } from "#/features/configuration/ui/use-settings-workspace";
 
 const testState = vi.hoisted(() => ({
   exportConfigurationJson:
@@ -25,7 +25,7 @@ const testState = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("#/features/configuration/api/configuration.mutations.ts", () => ({
+vi.mock("#/features/configuration/api/configuration.mutations", () => ({
   useConfigurationMutations: () => ({
     exportConfigurationJson: testState.exportConfigurationJson,
     exportConfigurationToml: testState.exportConfigurationToml,
@@ -36,11 +36,11 @@ vi.mock("#/features/configuration/api/configuration.mutations.ts", () => ({
   }),
 }));
 
-vi.mock("#/i18n/use-i18n.ts", () => ({
+vi.mock("#/i18n/use-i18n", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("#/lib/browser.ts", () => ({
+vi.mock("#/lib/browser", () => ({
   downloadTextFile: testState.downloadTextFile,
 }));
 

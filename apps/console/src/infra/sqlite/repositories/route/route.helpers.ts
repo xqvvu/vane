@@ -1,9 +1,9 @@
 import { decodeSchemaJson, RouteDefinitionSchema, RouteRuleSchema } from "@vane/core";
 import type { RouteDefinition } from "@vane/core";
 
-import { fromSqliteBoolean } from "#/infra/sqlite/codecs.ts";
-import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
-import type { RouteRow } from "#/infra/sqlite/repositories/route/route.interface.ts";
+import { fromSqliteBoolean } from "#/infra/sqlite/codecs";
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
+import type { RouteRow } from "#/infra/sqlite/repositories/route/route.interface";
 
 export function routeFromRow(row: RouteRow): RouteDefinition {
   return RouteDefinitionSchema.parse({

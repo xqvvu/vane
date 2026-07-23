@@ -4,8 +4,8 @@ import type { AlertStatus } from "@vane/core";
 import type { TemplateBindingSelector } from "@vane/destinations";
 import { FeishuCardColors, type FeishuCardColor } from "@vane/destinations/feishu/appearance";
 
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { Button } from "#/components/ui/button.tsx";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
 import {
   Field,
   FieldDescription,
@@ -13,7 +13,7 @@ import {
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "#/components/ui/field.tsx";
+} from "#/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -21,9 +21,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
-import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export const BindingSelectorCases = {
   "event.status": ["firing", "resolved", "unknown"],

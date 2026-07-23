@@ -2,13 +2,13 @@ import { RiCheckboxCircleLine, RiKey2Line } from "@remixicon/react";
 
 import type { ImportConfigurationResult } from "@vane/core";
 
-import { CopyableCodeLine } from "#/components/common/copyable-code-line.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
+import { CopyableCodeLine } from "#/components/common/copyable-code-line";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import {
   sourceWebhookPath,
   sourceWebhookUrlFromPath,
-} from "#/features/sources/model/source-webhook.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+} from "#/features/sources/model/source-webhook";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function ImportNoticePanel({ notice }: { notice: ImportConfigurationResult }) {
   const t = useTranslations();

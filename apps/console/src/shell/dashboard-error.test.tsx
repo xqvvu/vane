@@ -3,9 +3,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
-import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
-import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
+import { VaneIntlProvider } from "#/i18n/provider";
+import { DashboardErrorPage } from "#/shell/dashboard-error";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found";
 
 const routerState = vi.hoisted(() => ({
   invalidate: vi.fn<() => Promise<void>>(async () => {}),

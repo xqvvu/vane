@@ -22,7 +22,7 @@ import {
   UpdateSourceCommandSchema,
 } from "@vane/core";
 
-import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware.ts";
+import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware";
 
 export const listSourcesFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])

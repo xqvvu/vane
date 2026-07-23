@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { localeCookieValue, readLocaleCookie } from "#/i18n/locale-cookie.ts";
-import { normalizeLocale, parseAcceptLanguage, resolveLocale } from "#/i18n/locales.ts";
+import { localeCookieValue, readLocaleCookie } from "#/i18n/locale-cookie";
+import { normalizeLocale, parseAcceptLanguage, resolveLocale } from "#/i18n/locales";
 
 describe("locale resolution", () => {
   it("normalizes supported English and simplified Chinese locale tags", () => {

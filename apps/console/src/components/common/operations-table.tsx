@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-table";
 import * as React from "react";
 
-import { TablePagination } from "#/components/common/table-pagination.tsx";
+import { TablePagination } from "#/components/common/table-pagination";
 import {
   Table,
   TableBody,
@@ -16,8 +16,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "#/components/ui/table.tsx";
-import { cn } from "#/lib/utils.ts";
+} from "#/components/ui/table";
+import { cn } from "#/lib/utils";
 
 export interface OperationsTableProps<TData> {
   data: TData[];

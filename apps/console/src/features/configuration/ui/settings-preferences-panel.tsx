@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import type { AppSettings } from "@vane/core";
 
-import { Button } from "#/components/ui/button.tsx";
+import { Button } from "#/components/ui/button";
 import {
   Field as UiField,
   FieldDescription,
@@ -13,13 +13,13 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSet,
-} from "#/components/ui/field.tsx";
+} from "#/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
   InputGroupText,
-} from "#/components/ui/input-group.tsx";
+} from "#/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -27,14 +27,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
-import { appSettingsQueryOptions } from "#/features/configuration/api/configuration.queries.ts";
-import { useAppSettingsMutation } from "#/features/configuration/api/use-app-settings-mutation.ts";
-import { SettingsTimeZoneCombobox } from "#/features/configuration/ui/settings-time-zone-combobox.tsx";
-import { writeLocaleCookie } from "#/i18n/locale-cookie.ts";
-import { localeDisplayName, supportedLocales, type AppLocale } from "#/i18n/locales.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { hardReloadPage } from "#/lib/browser.ts";
+} from "#/components/ui/select";
+import { appSettingsQueryOptions } from "#/features/configuration/api/configuration.queries";
+import { useAppSettingsMutation } from "#/features/configuration/api/use-app-settings-mutation";
+import { SettingsTimeZoneCombobox } from "#/features/configuration/ui/settings-time-zone-combobox";
+import { writeLocaleCookie } from "#/i18n/locale-cookie";
+import { localeDisplayName, supportedLocales, type AppLocale } from "#/i18n/locales";
+import { useTranslations } from "#/i18n/use-i18n";
+import { hardReloadPage } from "#/lib/browser";
 
 export function SettingsPreferencesPanel() {
   const t = useTranslations();

@@ -3,10 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   destinationCatalogQueryOptions,
   destinationsQueryOptions,
-} from "#/features/destinations/api/destination.queries.ts";
-import { DestinationsPage } from "#/features/destinations/ui/destinations-page.tsx";
-import { routesQueryOptions } from "#/features/routes/api/route.queries.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+} from "#/features/destinations/api/destination.queries";
+import { DestinationsPage } from "#/features/destinations/ui/destinations-page";
+import { routesQueryOptions } from "#/features/routes/api/route.queries";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export const Route = createFileRoute("/_dashboard/destinations")({
   loader: ({ context }) =>

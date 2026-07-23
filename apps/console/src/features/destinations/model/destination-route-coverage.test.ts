@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { RouteDefinition } from "@vane/core";
 
-import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage.ts";
+import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage";
 
 type RouteSummary = RouteDefinition;
 

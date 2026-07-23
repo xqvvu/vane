@@ -8,10 +8,10 @@ import {
   authBootstrapQueryOptions,
   authQueryKeys,
   dashboardSessionQueryOptions,
-} from "#/features/auth/api/auth.queries.ts";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
-import { SetupFormClient } from "#/routes/-setup-form-impl.tsx";
-import { SetupForm } from "#/routes/-setup-form.tsx";
+} from "#/features/auth/api/auth.queries";
+import { VaneIntlProvider } from "#/i18n/provider";
+import { SetupForm } from "#/routes/-setup-form";
+import { SetupFormClient } from "#/routes/-setup-form-impl";
 
 const testState = vi.hoisted(() => ({
   navigate: vi.fn<() => Promise<void>>(async () => {}),
@@ -37,7 +37,7 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => testState.navigate,
 }));
 
-vi.mock("#/lib/auth.client.ts", () => ({
+vi.mock("#/lib/auth.client", () => ({
   authClient: testState.authClient,
 }));
 

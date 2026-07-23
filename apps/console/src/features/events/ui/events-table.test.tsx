@@ -3,9 +3,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { EventsTable } from "#/features/events/ui/events-table.tsx";
-import type { Operations } from "#/features/operations/model/operation-types.ts";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+import { EventsTable } from "#/features/events/ui/events-table";
+import type { Operations } from "#/features/operations/model/operation-types";
+import { VaneIntlProvider } from "#/i18n/provider";
 
 describe("events table", () => {
   afterEach(() => {

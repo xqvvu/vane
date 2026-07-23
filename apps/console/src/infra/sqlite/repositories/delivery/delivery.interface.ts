@@ -8,10 +8,10 @@ import type {
 } from "@vane/core";
 import type { IsoDateTimeString } from "@vane/core";
 
-import type { SqliteJsonText } from "#/infra/sqlite/codecs.ts";
-import { SqliteError } from "#/infra/sqlite/errors.ts";
-import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface.ts";
-import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface.ts";
+import type { SqliteJsonText } from "#/infra/sqlite/codecs";
+import { SqliteError } from "#/infra/sqlite/errors";
+import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface";
+import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
 
 export type { DeliveryAttempt, DeliveryDetail } from "@vane/core";
 

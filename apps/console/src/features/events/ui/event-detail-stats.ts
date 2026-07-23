@@ -1,4 +1,4 @@
-import type { EventDetailData } from "#/features/events/ui/event-detail-types.ts";
+import type { EventDetailData } from "#/features/events/ui/event-detail-types";
 
 export function getEventDeliveryStats(deliveries: EventDetailData["deliveries"]) {
   const stats = {

@@ -1,19 +1,19 @@
 import { encodeSchemaJson, RouteDefinitionSchema, RouteRuleSchema } from "@vane/core";
 import type { RouteDefinition } from "@vane/core";
 
-import { toSqliteBoolean } from "#/infra/sqlite/codecs.ts";
-import type { SqliteRepositoryContext } from "#/infra/sqlite/context.ts";
+import { toSqliteBoolean } from "#/infra/sqlite/codecs";
+import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   encodeDestinationIds,
   requireRoute,
   routeFromRow,
-} from "#/infra/sqlite/repositories/route/route.helpers.ts";
+} from "#/infra/sqlite/repositories/route/route.helpers";
 import type {
   CreateRouteInput,
   RouteReferenceCleanupResult,
   RouteRepository,
   UpdateRouteInput,
-} from "#/infra/sqlite/repositories/route/route.interface.ts";
+} from "#/infra/sqlite/repositories/route/route.interface";
 
 export class SqliteRouteRepository implements RouteRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}

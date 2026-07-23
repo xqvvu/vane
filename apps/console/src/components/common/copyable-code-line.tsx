@@ -1,12 +1,12 @@
 import { RiFileCopyLine } from "@remixicon/react";
 import { toast } from "sonner";
 
-import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { copyText } from "#/lib/browser.ts";
-import { cn } from "#/lib/utils.ts";
+import { IconTooltip } from "#/components/common/icon-tooltip";
+import { Button } from "#/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
+import { useTranslations } from "#/i18n/use-i18n";
+import { copyText } from "#/lib/browser";
+import { cn } from "#/lib/utils";
 
 export interface CopyableCodeLineProps {
   value: string;

@@ -1,7 +1,7 @@
 import type { RouteDefinition, RouteDefinitionInput } from "@vane/core";
 import type { IsoDateTimeString } from "@vane/core";
 
-import type { SqliteBoolean, SqliteJsonText } from "#/infra/sqlite/codecs.ts";
+import type { SqliteBoolean, SqliteJsonText } from "#/infra/sqlite/codecs";
 
 export interface RouteRow {
   id: string;

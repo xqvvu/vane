@@ -6,8 +6,8 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "#/components/ui/pagination.tsx";
-import { cn } from "#/lib/utils.ts";
+} from "#/components/ui/pagination";
+import { cn } from "#/lib/utils";
 
 export interface TablePaginationProps {
   rangeLabel: string;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { openSqliteStore } from "#/infra/sqlite/store.ts";
-import { EventReplayService } from "#/server/operations/event-replay.service.ts";
+import { openSqliteStore } from "#/infra/sqlite/store";
+import { EventReplayService } from "#/server/operations/event-replay.service";
 
 const now = "2026-06-09T08:00:00.000Z";
 

@@ -8,8 +8,8 @@ import {
 } from "@vane/core";
 import type { EventRecord } from "@vane/core";
 
-import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
-import type { EventRow } from "#/infra/sqlite/repositories/intake/intake.interface.ts";
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
+import type { EventRow } from "#/infra/sqlite/repositories/intake/intake.interface";
 
 export const PRUNED_RAW_PAYLOAD = {
   retentionPruned: true,

@@ -1,12 +1,9 @@
 import serverEntry from "@tanstack/react-start/server-entry";
 import { FastResponse } from "srvx";
 
-import { getApplicationContainer } from "#/server/runtime/container.ts";
-import { logger } from "#/server/runtime/logging.ts";
-import {
-  loadSystemInformation,
-  logSystemInformation,
-} from "#/server/runtime/system-information.ts";
+import { getApplicationContainer } from "#/server/runtime/container";
+import { logger } from "#/server/runtime/logging";
+import { loadSystemInformation, logSystemInformation } from "#/server/runtime/system-information";
 
 async function bootstrap() {
   globalThis.Response = FastResponse;

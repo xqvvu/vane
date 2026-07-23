@@ -3,8 +3,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SettingsTimeZoneCombobox } from "#/features/configuration/ui/settings-time-zone-combobox.tsx";
-import { VaneIntlProvider } from "#/i18n/provider.tsx";
+import { SettingsTimeZoneCombobox } from "#/features/configuration/ui/settings-time-zone-combobox";
+import { VaneIntlProvider } from "#/i18n/provider";
 
 describe("settings time zone combobox", () => {
   beforeEach(() => {

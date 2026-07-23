@@ -1,8 +1,8 @@
 import { ClientOnly } from "@tanstack/react-router";
 
-import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { useOperationDateFormatter } from "#/features/operations/model/operation-format.ts";
-import { cn } from "#/lib/utils.ts";
+import { Skeleton } from "#/components/ui/skeleton";
+import { useOperationDateFormatter } from "#/features/operations/model/operation-format";
+import { cn } from "#/lib/utils";
 
 export interface OperationTimestampProps {
   className?: string;

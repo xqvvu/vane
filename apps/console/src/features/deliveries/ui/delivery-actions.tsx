@@ -1,9 +1,9 @@
 import { RiEyeLine, RiRestartLine } from "@remixicon/react";
 
-import { IconTooltip } from "#/components/common/icon-tooltip.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import type { Operations } from "#/features/operations/model/operation-types.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
+import { IconTooltip } from "#/components/common/icon-tooltip";
+import { Button } from "#/components/ui/button";
+import type { Operations } from "#/features/operations/model/operation-types";
+import { useTranslations } from "#/i18n/use-i18n";
 
 export function DeliveryActions({
   delivery,

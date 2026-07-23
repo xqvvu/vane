@@ -2,9 +2,9 @@ import "@tanstack/react-start/client-only";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 
-import { codeEditorTheme } from "#/components/codemirror/code-editor-theme.ts";
-import type { TomlEditorProps } from "#/components/codemirror/toml-editor.tsx";
-import { toml } from "#/components/codemirror/toml-language.ts";
+import { codeEditorTheme } from "#/components/codemirror/code-editor-theme";
+import type { TomlEditorProps } from "#/components/codemirror/toml-editor";
+import { toml } from "#/components/codemirror/toml-language";
 
 const tomlExtensions = [toml(), EditorView.lineWrapping, codeEditorTheme];
 

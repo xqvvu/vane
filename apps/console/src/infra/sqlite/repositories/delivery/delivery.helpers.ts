@@ -1,13 +1,13 @@
 import { decodeJson, DeliveryJobSchema, redactText } from "@vane/core";
 import type { DeliveryAttempt, DeliveryJob, JsonValue } from "@vane/core";
 
-import { RecordNotFoundError } from "#/infra/sqlite/errors.ts";
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
 import type {
   DeliveryAttemptRow,
   DeliveryDedupeKeyRow,
   DeliveryRow,
-} from "#/infra/sqlite/repositories/delivery/delivery.interface.ts";
-import type { VaneSqliteExecutor } from "#/infra/sqlite/schema.ts";
+} from "#/infra/sqlite/repositories/delivery/delivery.interface";
+import type { VaneSqliteExecutor } from "#/infra/sqlite/schema";
 
 export function deliveryFromRow(row: DeliveryRow): DeliveryJob {
   return DeliveryJobSchema.parse({

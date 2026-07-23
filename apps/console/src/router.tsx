@@ -2,9 +2,9 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
-import { routeTree } from "#/route-tree.gen.ts";
-import { DashboardErrorPage } from "#/shell/dashboard-error.tsx";
-import { DashboardNotFoundPage } from "#/shell/dashboard-not-found.tsx";
+import { routeTree } from "#/route-tree.gen";
+import { DashboardErrorPage } from "#/shell/dashboard-error";
+import { DashboardNotFoundPage } from "#/shell/dashboard-not-found";
 
 export function getRouter() {
   const context = {

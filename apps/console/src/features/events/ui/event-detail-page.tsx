@@ -2,15 +2,15 @@ import { RiArrowLeftLine, RiErrorWarningLine } from "@remixicon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-import { PageToolbar } from "#/components/common/page-toolbar.tsx";
-import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert.tsx";
-import { buttonVariants } from "#/components/ui/button.tsx";
-import { EventDetailView } from "#/features/events/ui/event-detail-view.tsx";
-import { EventReplayAction } from "#/features/events/ui/event-replay-action.tsx";
-import { eventDetailQueryOptions } from "#/features/operations/api/operations.queries.ts";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
-import { DashboardContentLayout } from "#/shell/dashboard-layout.tsx";
+import { PageToolbar } from "#/components/common/page-toolbar";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { buttonVariants } from "#/components/ui/button";
+import { EventDetailView } from "#/features/events/ui/event-detail-view";
+import { EventReplayAction } from "#/features/events/ui/event-replay-action";
+import { eventDetailQueryOptions } from "#/features/operations/api/operations.queries";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
+import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function EventDetailPage({ eventId }: { eventId: string }) {
   const t = useTranslations();

@@ -3,13 +3,13 @@ import { redactText } from "@vane/core";
 import {
   DeliveryExecution,
   type DeliveryExecutionOutcome,
-} from "#/server/deliveries/delivery-execution.ts";
+} from "#/server/deliveries/delivery-execution";
 import type {
   DeliveryWorkerHealthSnapshot,
   DeliveryWorkerOptions,
   DeliveryWorkerRunOptions,
   DeliveryWorkerRunResult,
-} from "#/server/deliveries/delivery-worker.service.types.ts";
+} from "#/server/deliveries/delivery-worker.service.types";
 
 export class DeliveryWorker {
   private readonly store: DeliveryWorkerOptions["store"];

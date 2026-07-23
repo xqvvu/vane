@@ -11,7 +11,7 @@ import * as React from "react";
 import type { AdapterConfigHelp, AdapterTemplateConfigField } from "@vane/core";
 import { defaultFeishuCardTemplate as defaultFeishuCardTemplateObject } from "@vane/destinations/feishu/default-card";
 
-import { Button } from "#/components/ui/button.tsx";
+import { Button } from "#/components/ui/button";
 import {
   Field as UiField,
   FieldDescription,
@@ -20,8 +20,8 @@ import {
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "#/components/ui/field.tsx";
-import { Input } from "#/components/ui/input.tsx";
+} from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -29,10 +29,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select.tsx";
-import { Textarea } from "#/components/ui/textarea.tsx";
-import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip.tsx";
+} from "#/components/ui/select";
+import { Textarea } from "#/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import {
   destinationConfigFromForm,
   destinationConfigPatchFromForm,
@@ -43,7 +43,7 @@ import {
   type DestinationTemplateFormMode,
   type DestinationTemplateFormSource,
   type DestinationFormKind,
-} from "#/features/destinations/model/destination-form.ts";
+} from "#/features/destinations/model/destination-form";
 import type {
   DestinationCatalog,
   DestinationFormMode,
@@ -51,10 +51,10 @@ import type {
   DestinationFormSubmitInput,
   DestinationFormValues,
   DestinationSubmitResult,
-} from "#/features/destinations/ui/destination-ui-types.ts";
-import { FeishuDynamicPropertiesField } from "#/features/destinations/ui/feishu-dynamic-properties-field.tsx";
-import { useTranslations } from "#/i18n/use-i18n.ts";
-import { cn } from "#/lib/utils.ts";
+} from "#/features/destinations/ui/destination-ui-types";
+import { FeishuDynamicPropertiesField } from "#/features/destinations/ui/feishu-dynamic-properties-field";
+import { useTranslations } from "#/i18n/use-i18n";
+import { cn } from "#/lib/utils";
 
 export function DestinationForm({
   mode,

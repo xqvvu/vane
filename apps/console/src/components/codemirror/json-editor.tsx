@@ -1,7 +1,7 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
 import * as React from "react";
 
-import { CodeEditorSkeleton } from "#/components/codemirror/code-editor-skeleton.tsx";
+import { CodeEditorSkeleton } from "#/components/codemirror/code-editor-skeleton";
 
 export interface JsonEditorProps {
   id: string;
@@ -13,7 +13,7 @@ export interface JsonEditorProps {
 
 const JsonEditorClient = React.lazy(
   createClientOnlyFn(async () => {
-    const module = await import("#/components/codemirror/json-editor-impl.tsx");
+    const module = await import("#/components/codemirror/json-editor-impl");
 
     return { default: module.JsonEditorClient };
   }),
