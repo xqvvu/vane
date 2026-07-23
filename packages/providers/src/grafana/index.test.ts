@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultProviderRegistry } from "#/registry.ts";
-import { parseGrafanaProvider } from "#/grafana/index.ts";
+import { createDefaultProviderRegistry } from "#providers/registry";
+import { parseGrafanaProvider } from "#providers/grafana/index";
 
 const receivedAt = "2026-06-09T08:00:00.000Z";
 

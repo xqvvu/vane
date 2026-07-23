@@ -1,9 +1,9 @@
 import { NormalizedEventSchema, createStableHash, isJsonObject, stableStringify } from "@vane/core";
 import type { JsonObject, Labels } from "@vane/core";
 
-import type { ProviderParseInput, ProviderParseOutput } from "#/types.ts";
+import type { ProviderParseInput, ProviderParseOutput } from "#providers/types";
 
-import { normalizeSeverity, normalizeStatus } from "#/shared/normalization.ts";
+import { normalizeSeverity, normalizeStatus } from "#providers/shared/normalization";
 import {
   firstString,
   firstValue,
@@ -11,7 +11,7 @@ import {
   normalizeStringDate,
   objectValue,
   setOptionalString,
-} from "#/shared/object.ts";
+} from "#providers/shared/object";
 
 export interface AlertmanagerCompatibleParseOptions {
   provider: string;

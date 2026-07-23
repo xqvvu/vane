@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultProviderRegistry } from "#/registry.ts";
-import { parseUptimeKumaProvider } from "#/uptime-kuma/index.ts";
+import { createDefaultProviderRegistry } from "#providers/registry";
+import { parseUptimeKumaProvider } from "#providers/uptime-kuma/index";
 
 const receivedAt = "2026-06-09T08:00:00.000Z";
 

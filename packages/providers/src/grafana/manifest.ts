@@ -1,4 +1,4 @@
-import type { ProviderManifest } from "#/types.ts";
+import type { ProviderManifest } from "#providers/types";
 
 export const grafanaProviderManifest = {
   provider: "grafana",

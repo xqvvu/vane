@@ -1,12 +1,12 @@
-import { parseAlertmanagerCompatibleProvider } from "#/shared/alertmanager-compatible.ts";
+import { parseAlertmanagerCompatibleProvider } from "#providers/shared/alertmanager-compatible";
 import {
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderStandaloneParseInput,
-} from "#/types.ts";
-import { ParseInput, ParseResult } from "#/utils.ts";
+} from "#providers/types";
+import { ParseInput, ParseResult } from "#providers/utils";
 
-import type { SignozProviderConfig } from "#/signoz/schema.ts";
+import type { SignozProviderConfig } from "#providers/signoz/schema";
 
 export function parseSignozProviderResult(input: ProviderParseInput<SignozProviderConfig>) {
   return ParseResult.ok(

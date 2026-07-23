@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseGenericProvider } from "#/generic/index.ts";
+import { parseGenericProvider } from "#providers/generic/index";
 
 describe("generic provider parser", () => {
   it("normalizes representative alert-like payloads", () => {

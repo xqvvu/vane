@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultProviderRegistry } from "#/registry.ts";
+import { createDefaultProviderRegistry } from "#providers/registry";
 
 describe("provider registry", () => {
   it("audits the default adapter registry without warnings", () => {

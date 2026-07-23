@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultProviderRegistry } from "#/registry.ts";
-import { parseSignozProvider } from "#/signoz/index.ts";
+import { createDefaultProviderRegistry } from "#providers/registry";
+import { parseSignozProvider } from "#providers/signoz/index";
 
 const receivedAt = "2026-06-09T08:00:00.000Z";
 

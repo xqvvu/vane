@@ -1,8 +1,8 @@
-import { Adapter } from "#/utils.ts";
+import { Adapter } from "#providers/utils";
 
-import { signozProviderManifest } from "#/signoz/manifest.ts";
-import { parseSignozProviderResult } from "#/signoz/parse.ts";
-import { SignozProviderConfigSchema } from "#/signoz/schema.ts";
+import { signozProviderManifest } from "#providers/signoz/manifest";
+import { parseSignozProviderResult } from "#providers/signoz/parse";
+import { SignozProviderConfigSchema } from "#providers/signoz/schema";
 
 export const signozProviderAdapter = Adapter.define({
   manifest: signozProviderManifest,

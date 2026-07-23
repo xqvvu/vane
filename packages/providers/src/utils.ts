@@ -9,7 +9,7 @@ import type {
   ProviderParseOutput,
   ProviderParseResult,
   ProviderStandaloneParseInput,
-} from "#/types.ts";
+} from "#providers/types";
 
 type ProviderParseSuccessResult = Extract<ProviderParseResult, { ok: true }>;
 type ProviderParseFailureResult = Extract<ProviderParseResult, { ok: false }>;

@@ -1,8 +1,8 @@
-import { Adapter } from "#/utils.ts";
+import { Adapter } from "#providers/utils";
 
-import { alertmanagerProviderManifest } from "#/alertmanager/manifest.ts";
-import { parseAlertmanagerProviderResult } from "#/alertmanager/parse.ts";
-import { AlertmanagerProviderConfigSchema } from "#/alertmanager/schema.ts";
+import { alertmanagerProviderManifest } from "#providers/alertmanager/manifest";
+import { parseAlertmanagerProviderResult } from "#providers/alertmanager/parse";
+import { AlertmanagerProviderConfigSchema } from "#providers/alertmanager/schema";
 
 export const alertmanagerProviderAdapter = Adapter.define({
   manifest: alertmanagerProviderManifest,

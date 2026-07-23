@@ -1,19 +1,19 @@
 import { SourceProviderSchema, type SourceProvider } from "@vane/core";
 
-import { alertmanagerProviderAdapter } from "#/alertmanager/index.ts";
-import { genericProviderAdapter } from "#/generic/index.ts";
-import { grafanaProviderAdapter } from "#/grafana/index.ts";
-import { signozProviderAdapter } from "#/signoz/index.ts";
+import { alertmanagerProviderAdapter } from "#providers/alertmanager/index";
+import { genericProviderAdapter } from "#providers/generic/index";
+import { grafanaProviderAdapter } from "#providers/grafana/index";
+import { signozProviderAdapter } from "#providers/signoz/index";
 import type {
   ProviderAdapter,
   ProviderCatalogItem,
   ProviderParseInput,
   ProviderParseOutput,
   ProviderParseResult,
-} from "#/types.ts";
-import { ProviderCatalogItemSchema, ProviderManifestSchema } from "#/types.ts";
-import { ParseResult } from "#/utils.ts";
-import { uptimeKumaProviderAdapter } from "#/uptime-kuma/index.ts";
+} from "#providers/types";
+import { ProviderCatalogItemSchema, ProviderManifestSchema } from "#providers/types";
+import { ParseResult } from "#providers/utils";
+import { uptimeKumaProviderAdapter } from "#providers/uptime-kuma/index";
 
 export interface ProviderRegistryAuditOptions {
   messageKeys?: ReadonlySet<string>;

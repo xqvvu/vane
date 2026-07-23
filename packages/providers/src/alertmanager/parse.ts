@@ -1,12 +1,12 @@
-import { parseAlertmanagerCompatibleProvider } from "#/shared/alertmanager-compatible.ts";
+import { parseAlertmanagerCompatibleProvider } from "#providers/shared/alertmanager-compatible";
 import {
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderStandaloneParseInput,
-} from "#/types.ts";
-import { ParseInput, ParseResult } from "#/utils.ts";
+} from "#providers/types";
+import { ParseInput, ParseResult } from "#providers/utils";
 
-import type { AlertmanagerProviderConfig } from "#/alertmanager/schema.ts";
+import type { AlertmanagerProviderConfig } from "#providers/alertmanager/schema";
 
 export function parseAlertmanagerProviderResult(
   input: ProviderParseInput<AlertmanagerProviderConfig>,

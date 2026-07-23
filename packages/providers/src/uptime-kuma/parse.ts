@@ -1,7 +1,7 @@
 import { NormalizedEventSchema, createStableHash, isJsonObject, stableStringify } from "@vane/core";
 import type { JsonObject, Labels } from "@vane/core";
 
-import { normalizeSeverity, normalizeStatus } from "#/shared/normalization.ts";
+import { normalizeSeverity, normalizeStatus } from "#providers/shared/normalization";
 import {
   firstScalarString,
   firstString,
@@ -9,16 +9,16 @@ import {
   normalizeDate,
   objectValue,
   setOptionalLabel,
-} from "#/shared/object.ts";
+} from "#providers/shared/object";
 import {
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderParseResult,
   type ProviderStandaloneParseInput,
-} from "#/types.ts";
-import { ParseInput, ParseResult } from "#/utils.ts";
+} from "#providers/types";
+import { ParseInput, ParseResult } from "#providers/utils";
 
-import type { UptimeKumaProviderConfig } from "#/uptime-kuma/schema.ts";
+import type { UptimeKumaProviderConfig } from "#providers/uptime-kuma/schema";
 
 export function parseUptimeKumaProviderResult(
   input: ProviderParseInput<UptimeKumaProviderConfig>,
