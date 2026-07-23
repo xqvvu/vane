@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { IsoDateTimeSchema } from "#/event/normalized-event.ts";
+import { IsoDateTimeSchema } from "#core/event/normalized-event";
 
 export const DeliveryStateSchema = z.enum(["pending", "running", "succeeded", "failed"]);
 export type DeliveryState = z.infer<typeof DeliveryStateSchema>;

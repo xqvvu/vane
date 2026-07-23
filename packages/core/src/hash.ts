@@ -1,7 +1,7 @@
 import { mapValues, sortKeys } from "es-toolkit/object";
 
-import type { JsonObject, JsonValue } from "#/json.ts";
-import { toJsonValue } from "#/json.ts";
+import type { JsonObject, JsonValue } from "#core/json";
+import { toJsonValue } from "#core/json";
 
 export function stableStringify(value: unknown): string {
   return JSON.stringify(sortJsonValue(toJsonValue(value)));

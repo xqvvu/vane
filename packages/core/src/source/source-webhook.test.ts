@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { sourceWebhookPath } from "#/source/source-webhook.ts";
+import { sourceWebhookPath } from "#core/source/source-webhook";
 
 describe("source webhook helpers", () => {
   it("builds encoded webhook paths for source ids", () => {

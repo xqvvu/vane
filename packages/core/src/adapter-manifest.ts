@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { JsonValueSchema } from "#/json.ts";
+import { JsonValueSchema } from "#core/json";
 
 const UnsafeAdapterConfigPathSegments = new Set(["__proto__", "prototype", "constructor"]);
 

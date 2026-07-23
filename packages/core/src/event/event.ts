@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { JsonObjectSchema, JsonValueSchema } from "#/json.ts";
-import { IsoDateTimeSchema, NormalizedEventSchema } from "#/event/normalized-event.ts";
-import { RouteMatchResultsSchema } from "#/route/route.ts";
+import { JsonObjectSchema, JsonValueSchema } from "#core/json";
+import { IsoDateTimeSchema, NormalizedEventSchema } from "#core/event/normalized-event";
+import { RouteMatchResultsSchema } from "#core/route/route";
 
 export const EventRecordSchema = z.object({
   id: z.string().min(1),

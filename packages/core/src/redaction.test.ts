@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { REDACTED_VALUE, redactHeaders, redactJsonValue, redactText } from "#/redaction.ts";
+import { REDACTED_VALUE, redactHeaders, redactJsonValue, redactText } from "#core/redaction";
 
 describe("redaction", () => {
   it("redacts common sensitive headers", () => {

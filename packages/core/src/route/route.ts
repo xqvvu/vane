@@ -4,8 +4,8 @@ import {
   AlertSeveritySchema,
   AlertStatusSchema,
   NormalizedEventSchema,
-} from "#/event/normalized-event.ts";
-import type { NormalizedEvent } from "#/event/normalized-event.ts";
+} from "#core/event/normalized-event";
+import type { NormalizedEvent } from "#core/event/normalized-event";
 
 export const LabelMatchOperatorSchema = z.enum(["equals", "contains"]);
 const NonEmptyRouteStringSchema = z.string().trim().min(1);

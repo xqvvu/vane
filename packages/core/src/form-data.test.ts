@@ -7,7 +7,7 @@ import {
   formTrimmedString,
   nonEmptyObject,
   type FormDataReader,
-} from "#/form-data.ts";
+} from "#core/form-data";
 
 describe("form data helpers", () => {
   it("reads strings without depending on DOM FormData types", () => {

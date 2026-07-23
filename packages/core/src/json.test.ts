@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toJsonValue } from "#/json.ts";
+import { toJsonValue } from "#core/json";
 
 describe("JSON helpers", () => {
   it("converts unknown object values into serializable JSON values", () => {

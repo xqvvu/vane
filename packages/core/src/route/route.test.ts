@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import type { NormalizedEvent } from "#/event/normalized-event.ts";
-import type { RouteDefinitionInput } from "#/route/route.ts";
+import type { NormalizedEvent } from "#core/event/normalized-event";
+import type { RouteDefinitionInput } from "#core/route/route";
 import {
   RouteDefinitionSchema,
   evaluateRouteMatch,
   findMatchingRoutes,
   routeMatchesEvent,
-} from "#/route/route.ts";
+} from "#core/route/route";
 
 const event: NormalizedEvent = {
   title: "Checkout API latency high",

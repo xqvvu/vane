@@ -1,2 +1,2 @@
-export * from "#/configuration/configuration-commands.ts";
-export * from "#/configuration/configuration-results.ts";
+export * from "#core/configuration/configuration-commands";
+export * from "#core/configuration/configuration-results";

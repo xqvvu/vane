@@ -1,1 +1,1 @@
-export * from "#/destination/destination.ts";
+export * from "#core/destination/destination";

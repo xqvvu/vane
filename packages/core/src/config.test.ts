@@ -5,7 +5,7 @@ import {
   vaneConfigurationToTomlDocument,
   vaneTomlDocumentToConfiguration,
   type VaneConfiguration,
-} from "#/config.ts";
+} from "#core/config";
 
 const portableConfig: VaneConfiguration = {
   settings: {

@@ -1,6 +1,6 @@
-import type { DestinationKind } from "#/destination/destination.ts";
-import type { JsonObject } from "#/json.ts";
-import type { VaneLocale } from "#/presentation.ts";
+import type { DestinationKind } from "#core/destination/destination";
+import type { JsonObject } from "#core/json";
+import type { VaneLocale } from "#core/presentation";
 
 export interface AppSettings {
   locale: VaneLocale;

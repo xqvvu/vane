@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { DestinationKindSchema } from "#/destination/destination.ts";
-import { AlertStatusSchema } from "#/event/normalized-event.ts";
-import { JsonObjectSchema } from "#/json.ts";
-import { IanaTimeZoneSchema, VaneLocaleSchema } from "#/presentation.ts";
-import { RouteDefinitionSchema } from "#/route/route.ts";
-import { SourceProviderSchema } from "#/source/source.ts";
+import { DestinationKindSchema } from "#core/destination/destination";
+import { AlertStatusSchema } from "#core/event/normalized-event";
+import { JsonObjectSchema } from "#core/json";
+import { IanaTimeZoneSchema, VaneLocaleSchema } from "#core/presentation";
+import { RouteDefinitionSchema } from "#core/route/route";
+import { SourceProviderSchema } from "#core/source/source";
 
 export const CreateSourceCommandSchema = z.object({
   name: z.string().trim().min(1),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NormalizedEventSchema } from "#/event/normalized-event.ts";
+import { NormalizedEventSchema } from "#core/event/normalized-event";
 
 describe("normalized events", () => {
   it("normalizes label keys and values for inspectable routing", () => {

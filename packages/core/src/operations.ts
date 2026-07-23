@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import type { DeliveryJob, DeliveryState } from "#/delivery/delivery.ts";
-import type { DestinationSummary } from "#/destination/destination.ts";
-import type { EventRecord } from "#/event/event.ts";
-import type { JsonObject, JsonValue } from "#/json.ts";
-import type { NormalizedEvent } from "#/event/normalized-event.ts";
-import type { RouteDefinition, RouteMatchResult } from "#/route/route.ts";
-import type { SourceSummary } from "#/source/source.ts";
+import type { DeliveryJob, DeliveryState } from "#core/delivery/delivery";
+import type { DestinationSummary } from "#core/destination/destination";
+import type { EventRecord } from "#core/event/event";
+import type { JsonObject, JsonValue } from "#core/json";
+import type { NormalizedEvent } from "#core/event/normalized-event";
+import type { RouteDefinition, RouteMatchResult } from "#core/route/route";
+import type { SourceSummary } from "#core/source/source";
 
 export type IsoDateTimeString = string;
 

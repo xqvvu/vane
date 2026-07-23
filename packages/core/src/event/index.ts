@@ -1,2 +1,2 @@
-export * from "#/event/event.ts";
-export * from "#/event/normalized-event.ts";
+export * from "#core/event/event";
+export * from "#core/event/normalized-event";

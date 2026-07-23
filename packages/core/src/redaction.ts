@@ -1,6 +1,6 @@
 import { mapValues } from "es-toolkit/object";
 
-import type { JsonObject, JsonValue } from "#/json.ts";
+import type { JsonObject, JsonValue } from "#core/json";
 
 const SENSITIVE_KEY_SOURCE =
   "authorization|cookie|set-cookie|x-api-key|api-key|apikey|apiKey|x-vane-source-token|x-vane-provider-secret|token|access-token|accessToken|refresh-token|refreshToken|secret|password|passwd|webhook_url|webhook-url|webhookUrl|signing_secret|signing-secret|signingSecret|signSecret";

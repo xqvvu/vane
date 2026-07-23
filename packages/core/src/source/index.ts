@@ -1,2 +1,2 @@
-export * from "#/source/source.ts";
-export * from "#/source/source-webhook.ts";
+export * from "#core/source/source";
+export * from "#core/source/source-webhook";

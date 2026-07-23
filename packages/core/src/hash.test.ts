@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { stableStringify } from "#/hash.ts";
+import { stableStringify } from "#core/hash";
 
 describe("hash helpers", () => {
   it("stable stringifies object keys recursively", () => {

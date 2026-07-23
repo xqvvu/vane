@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-import { DestinationKindSchema } from "#/destination/destination.ts";
-import { JsonObjectSchema } from "#/json.ts";
-import { IanaTimeZoneSchema, VaneLocaleSchema } from "#/presentation.ts";
+import { DestinationKindSchema } from "#core/destination/destination";
+import { JsonObjectSchema } from "#core/json";
+import { IanaTimeZoneSchema, VaneLocaleSchema } from "#core/presentation";
 import {
   LabelMatchOperatorSchema,
   LabelMatcherSchema,
   RouteDefinitionSchema,
   RouteRuleSchema,
-} from "#/route/route.ts";
-import { SourceProviderSchema } from "#/source/source.ts";
+} from "#core/route/route";
+import { SourceProviderSchema } from "#core/source/source";
 
 export const VANE_CONFIG_SCHEMA_VERSION = "vane.config.v1";
 
