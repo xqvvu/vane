@@ -1,14 +1,13 @@
 import { z } from "zod";
 
-import { DestinationTemplateSchema, TemplateBindingsSchema } from "#/template.ts";
+import { DestinationTemplateSchema, TemplateBindingsSchema } from "#destinations/template";
 
-import { defaultFeishuCardBindings, FeishuCardColors } from "#/feishu/appearance.ts";
+import { defaultFeishuCardBindings, FeishuCardColors } from "#destinations/feishu/appearance";
 import {
   BUILT_IN_FEISHU_ALERT_CARD_ID,
   BUILT_IN_FEISHU_ALERT_CARD_VERSION,
   resolveBuiltInFeishuCardTemplate,
-} from "#/feishu/default-card.ts";
-import { isLegacyBuiltInFeishuCardTemplate } from "#/feishu/legacy-template.ts";
+} from "#destinations/feishu/default-card";
 
 const FeishuCardColorSet: ReadonlySet<string> = new Set(FeishuCardColors);
 
@@ -24,15 +23,6 @@ const FeishuDestinationTemplateSchema = z
   .transform((template) => {
     if (template.source === "builtin") {
       return template;
-    }
-
-    if (template.mode === "feishu_card" && isLegacyBuiltInFeishuCardTemplate(template.card)) {
-      return {
-        source: "builtin" as const,
-        id: BUILT_IN_FEISHU_ALERT_CARD_ID,
-        version: BUILT_IN_FEISHU_ALERT_CARD_VERSION,
-        ...(template.bindings ? { bindings: template.bindings } : {}),
-      };
     }
 
     return { ...template, source: "custom" as const };

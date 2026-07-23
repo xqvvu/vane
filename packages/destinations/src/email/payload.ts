@@ -5,11 +5,11 @@ import {
   displaySeverity,
   displayStatus,
   formatDestinationDateTime,
-} from "#/presentation.ts";
-import { DestinationTemplateEngine } from "#/template.ts";
-import type { DestinationSendInput } from "#/types.ts";
+} from "#destinations/presentation";
+import { DestinationTemplateEngine } from "#destinations/template";
+import type { DestinationSendInput } from "#destinations/types";
 
-import type { EmailConfig } from "#/email/schema.ts";
+import type { EmailConfig } from "#destinations/email/schema";
 
 export function renderEmailPayload(
   input: DestinationSendInput<EmailConfig>,

@@ -1,8 +1,8 @@
-import { Adapter, R, Send } from "#/utils.ts";
+import { Adapter, R, Send } from "#destinations/utils";
 
-import { slackManifest } from "#/slack/manifest.ts";
-import { renderSlackPayload } from "#/slack/payload.ts";
-import { SlackConfigSchema } from "#/slack/schema.ts";
+import { slackManifest } from "#destinations/slack/manifest";
+import { renderSlackPayload } from "#destinations/slack/payload";
+import { SlackConfigSchema } from "#destinations/slack/schema";
 
 export const slackAdapter = Adapter.define({
   manifest: slackManifest,

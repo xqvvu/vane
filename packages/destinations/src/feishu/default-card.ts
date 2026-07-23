@@ -1,7 +1,7 @@
 import { JsonObjectSchema } from "@vane/core";
 import type { JsonObject } from "@vane/core";
 
-import type { FeishuCardV2 } from "#/feishu/card.types.ts";
+import type { FeishuCardV2 } from "#destinations/feishu/card.types";
 
 const defaultFeishuCardTemplateDefinition = {
   schema: "2.0",

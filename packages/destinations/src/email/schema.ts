@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { TextOnlyDestinationTemplateSchema } from "#/template.ts";
+import { TextOnlyDestinationTemplateSchema } from "#destinations/template";
 
 export const EmailConfigSchema = z.strictObject({
   endpointUrl: z.url(),

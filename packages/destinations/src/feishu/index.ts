@@ -1,9 +1,9 @@
-export * from "#/feishu/adapter.ts";
-export * from "#/feishu/appearance.ts";
-export type * from "#/feishu/card.types.ts";
-export * from "#/feishu/default-card.ts";
-export * from "#/feishu/manifest.ts";
-export * from "#/feishu/payload.ts";
-export * from "#/feishu/result.ts";
-export * from "#/feishu/schema.ts";
-export * from "#/feishu/signing.ts";
+export * from "#destinations/feishu/adapter";
+export * from "#destinations/feishu/appearance";
+export type * from "#destinations/feishu/card.types";
+export * from "#destinations/feishu/default-card";
+export * from "#destinations/feishu/manifest";
+export * from "#destinations/feishu/payload";
+export * from "#destinations/feishu/result";
+export * from "#destinations/feishu/schema";
+export * from "#destinations/feishu/sign";

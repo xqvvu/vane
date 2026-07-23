@@ -1,4 +1,4 @@
-import type { DestinationManifest } from "#/types.ts";
+import type { DestinationManifest } from "#destinations/types";
 
 export const emailManifest = {
   kind: "email",

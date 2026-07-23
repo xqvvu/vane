@@ -6,15 +6,14 @@ import uptimeKumaTemplate from "../../../../examples/feishu/uptime-kuma-template
 import {
   createFeishuSign,
   defaultFeishuCardBindings,
-  defaultFeishuCardTemplate,
   BUILT_IN_FEISHU_ALERT_CARD_ID,
   BUILT_IN_FEISHU_ALERT_CARD_VERSION,
   FeishuConfigSchema,
   feishuSender,
-} from "#/feishu/index.ts";
-import type { FeishuConfig } from "#/feishu/index.ts";
-import { createDefaultDestinationRegistry } from "#/registry.ts";
-import type { DestinationSendInput, FetchLike } from "#/types.ts";
+} from "#destinations/feishu/index";
+import type { FeishuConfig } from "#destinations/feishu/index";
+import { createDefaultDestinationRegistry } from "#destinations/registry";
+import type { DestinationSendInput, FetchLike } from "#destinations/types";
 
 const input: DestinationSendInput<FeishuConfig> = {
   eventId: "event-1",
@@ -206,6 +205,7 @@ describe("feishu sender", () => {
         bindings: defaultFeishuCardBindings,
       },
     });
+    expect(config.template).toMatchObject({ source: "custom", mode: "feishu_card" });
     const render = (locale: "en-US" | "zh-Hans") =>
       feishuSender.preview({
         ...input,
@@ -275,43 +275,6 @@ describe("feishu sender", () => {
     expect(serialized).toContain("严重");
     expect(serialized).toContain("2026年6月7日 16:00:00");
     expect(serialized).not.toContain("**服务**");
-  });
-
-  it("upgrades the legacy built-in card to the configured presentation locale", async () => {
-    const legacyDefault = JSON.parse(
-      JSON.stringify(defaultFeishuCardTemplate)
-        .replaceAll("{{presentation.labels.summary}}", "告警摘要")
-        .replaceAll("{{presentation.labels.status}}", "状态")
-        .replaceAll("{{presentation.labels.source}}", "告警源")
-        .replaceAll("{{presentation.labels.severity}}", "级别")
-        .replaceAll("{{presentation.labels.provider}}", "上游系统")
-        .replaceAll("{{presentation.labels.fingerprint}}", "指纹")
-        .replaceAll("{{presentation.labels.eventId}}", "事件 ID")
-        .replaceAll("{{presentation.labels.destination}}", "通知目标"),
-    );
-    const config = FeishuConfigSchema.parse({
-      webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
-      template: {
-        mode: "feishu_card",
-        card: legacyDefault,
-        bindings: defaultFeishuCardBindings,
-      },
-    });
-    expect(config.template).toMatchObject({
-      source: "builtin",
-      id: BUILT_IN_FEISHU_ALERT_CARD_ID,
-      version: BUILT_IN_FEISHU_ALERT_CARD_VERSION,
-    });
-    const preview = await feishuSender.preview({
-      ...input,
-      config,
-      presentation: { locale: "en-US", timeZone: "UTC" },
-    });
-    const serialized = JSON.stringify(preview);
-
-    expect(serialized).toContain("Alert summary");
-    expect(serialized).toContain("Critical");
-    expect(serialized).not.toContain("告警摘要");
   });
 
   it.each([

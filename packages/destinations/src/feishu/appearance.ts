@@ -1,4 +1,4 @@
-import type { TemplateBindings } from "#/template.ts";
+import type { TemplateBindings } from "#destinations/template";
 
 export const FeishuCardColors = [
   "blue",

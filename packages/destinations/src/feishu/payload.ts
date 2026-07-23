@@ -1,11 +1,11 @@
 import type { JsonObject, JsonValue } from "@vane/core";
 
-import { DestinationTemplateEngine } from "#/template.ts";
-import { resolveBuiltInFeishuCardTemplate } from "#/feishu/default-card.ts";
-import type { DestinationSendInput } from "#/types.ts";
+import { DestinationTemplateEngine } from "#destinations/template";
+import { resolveBuiltInFeishuCardTemplate } from "#destinations/feishu/default-card";
+import type { DestinationSendInput } from "#destinations/types";
 
-import type { FeishuConfig } from "#/feishu/schema.ts";
-import { createFeishuSign } from "#/feishu/signing.ts";
+import type { FeishuConfig } from "#destinations/feishu/schema";
+import { createFeishuSign } from "#destinations/feishu/sign";
 
 export function renderFeishuPreviewPayload(
   input: DestinationSendInput<FeishuConfig>,

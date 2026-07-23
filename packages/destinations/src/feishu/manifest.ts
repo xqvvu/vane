@@ -1,6 +1,6 @@
 import { defineAdapterTemplateConfigField } from "@vane/core";
 
-import type { DestinationManifest } from "#/types.ts";
+import type { DestinationManifest } from "#destinations/types";
 
 export const feishuManifest = {
   kind: "feishu",

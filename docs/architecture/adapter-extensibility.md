@@ -195,8 +195,8 @@ Feishu 内置卡片使用稳定引用而不是在 Destination config 中复制�
 
 `id + version` 由 destination adapter 解析为受版本控制的内置模板。用户开始编辑卡片或文本后，
 配置显式切换为 `source: "custom"` 并保存完整模板内容；系统不自动翻译或覆盖自定义文案。旧版把
-内置卡片 JSON 直接写入配置的记录只在 schema 入口做兼容归一化，preview/send 渲染路径只消费
-归一化后的引用或自定义模板，不再通过整份 JSON 比较决定渲染语言。
+内置卡片 JSON 直接写入配置的记录不做兼容迁移，按自定义模板解析。preview/send 渲染路径只消费
+版本化内置模板引用或自定义模板，不通过整份 JSON 比较决定渲染语言。
 
 模板 i18n 使用显式 presentation context。Console 的 preview service 与 Delivery worker 从 Settings
 读取 `locale + timeZone` 后传入 destination render input，destination 包不读取数据库、request context

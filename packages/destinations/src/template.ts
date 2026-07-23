@@ -9,8 +9,8 @@ import {
   displayStatus,
   formatDestinationDateTime,
   resolveDestinationPresentation,
-} from "#/presentation.ts";
-import type { DestinationSendInput } from "#/types.ts";
+} from "#destinations/presentation";
+import type { DestinationSendInput } from "#destinations/types";
 
 const RE_TEMPLATE_VARIABLE = /\{\{\s*([^{}]+?)\s*\}\}/g;
 const RE_LABEL_PATH = /^event\.labels\.([a-zA-Z0-9_.-]+)$/;

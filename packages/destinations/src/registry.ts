@@ -1,17 +1,17 @@
 import type { DestinationKind } from "@vane/core";
 
-import { emailAdapter } from "#/email/index.ts";
-import { feishuAdapter } from "#/feishu/index.ts";
-import { genericWebhookAdapter } from "#/generic-webhook/index.ts";
-import { slackAdapter } from "#/slack/index.ts";
+import { emailAdapter } from "#destinations/email/index";
+import { feishuAdapter } from "#destinations/feishu/index";
+import { genericWebhookAdapter } from "#destinations/generic-webhook/index";
+import { slackAdapter } from "#destinations/slack/index";
 import type {
   DestinationAdapter,
   DestinationCatalogItem,
   DestinationSendContext,
   DestinationSendInput,
   DestinationSendResult,
-} from "#/types.ts";
-import { DestinationCatalogItemSchema, DestinationManifestSchema } from "#/types.ts";
+} from "#destinations/types";
+import { DestinationCatalogItemSchema, DestinationManifestSchema } from "#destinations/types";
 
 export class DestinationRegistry {
   private readonly adapters = new Map<DestinationKind, DestinationAdapter>();

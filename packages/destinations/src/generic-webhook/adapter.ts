@@ -1,7 +1,7 @@
-import { genericWebhookManifest } from "#/generic-webhook/manifest.ts";
-import { renderGenericWebhookPayload } from "#/generic-webhook/payload.ts";
-import { GenericWebhookConfigSchema } from "#/generic-webhook/schema.ts";
-import { Adapter, R, Send } from "#/utils.ts";
+import { genericWebhookManifest } from "#destinations/generic-webhook/manifest";
+import { renderGenericWebhookPayload } from "#destinations/generic-webhook/payload";
+import { GenericWebhookConfigSchema } from "#destinations/generic-webhook/schema";
+import { Adapter, R, Send } from "#destinations/utils";
 
 export const genericWebhookAdapter = Adapter.define({
   manifest: genericWebhookManifest,

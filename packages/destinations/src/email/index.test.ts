@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { emailSender } from "#/email/index.ts";
-import type { EmailConfig } from "#/email/index.ts";
-import { createDefaultDestinationRegistry } from "#/registry.ts";
-import type { DestinationSendInput, FetchLike } from "#/types.ts";
+import { emailSender } from "#destinations/email/index";
+import type { EmailConfig } from "#destinations/email/index";
+import { createDefaultDestinationRegistry } from "#destinations/registry";
+import type { DestinationSendInput, FetchLike } from "#destinations/types";
 
 const input: DestinationSendInput<EmailConfig> = {
   eventId: "event-1",

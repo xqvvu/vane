@@ -1,8 +1,8 @@
-import { Adapter, R, Send } from "#/utils.ts";
+import { Adapter, R, Send } from "#destinations/utils";
 
-import { emailManifest } from "#/email/manifest.ts";
-import { renderEmailPayload, renderEmailRequestPayload } from "#/email/payload.ts";
-import { EmailConfigSchema } from "#/email/schema.ts";
+import { emailManifest } from "#destinations/email/manifest";
+import { renderEmailPayload, renderEmailRequestPayload } from "#destinations/email/payload";
+import { EmailConfigSchema } from "#destinations/email/schema";
 
 export const emailAdapter = Adapter.define({
   manifest: emailManifest,

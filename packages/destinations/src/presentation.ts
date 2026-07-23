@@ -1,7 +1,7 @@
 import type { AlertSeverity, AlertStatus } from "@vane/core";
 import { DEFAULT_VANE_LOCALE, DEFAULT_VANE_TIME_ZONE } from "@vane/core/presentation";
 
-import type { DestinationPresentation } from "#/types.ts";
+import type { DestinationPresentation } from "#destinations/types";
 
 const copy = {
   "en-US": {

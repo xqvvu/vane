@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { genericWebhookSender } from "#/generic-webhook/index.ts";
-import type { GenericWebhookConfig } from "#/generic-webhook/index.ts";
-import type { DestinationSendInput, FetchLike } from "#/types.ts";
+import { genericWebhookSender } from "#destinations/generic-webhook/index";
+import type { GenericWebhookConfig } from "#destinations/generic-webhook/index";
+import type { DestinationSendInput, FetchLike } from "#destinations/types";
 
 const input: DestinationSendInput<GenericWebhookConfig> = {
   eventId: "event-1",

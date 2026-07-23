@@ -6,7 +6,7 @@ import type {
   DestinationTransportContext,
   FetchLike,
   FetchLikeResponse,
-} from "#/types.ts";
+} from "#destinations/types";
 import type { DestinationKind, JsonValue } from "@vane/core";
 import type { z } from "zod";
 

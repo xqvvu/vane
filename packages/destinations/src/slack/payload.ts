@@ -5,11 +5,11 @@ import {
   displaySeverity,
   displayStatus,
   formatDestinationDateTime,
-} from "#/presentation.ts";
-import { DestinationTemplateEngine } from "#/template.ts";
-import type { DestinationSendInput } from "#/types.ts";
+} from "#destinations/presentation";
+import { DestinationTemplateEngine } from "#destinations/template";
+import type { DestinationSendInput } from "#destinations/types";
 
-import type { SlackConfig } from "#/slack/schema.ts";
+import type { SlackConfig } from "#destinations/slack/schema";
 
 export function renderSlackPayload(input: DestinationSendInput<SlackConfig>): JsonValue {
   const event = input.normalizedEvent;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultDestinationRegistry } from "#/registry.ts";
-import { slackSender } from "#/slack/index.ts";
-import type { SlackConfig } from "#/slack/index.ts";
-import type { DestinationSendInput, FetchLike } from "#/types.ts";
+import { createDefaultDestinationRegistry } from "#destinations/registry";
+import { slackSender } from "#destinations/slack/index";
+import type { SlackConfig } from "#destinations/slack/index";
+import type { DestinationSendInput, FetchLike } from "#destinations/types";
 
 const input: DestinationSendInput<SlackConfig> = {
   eventId: "event-1",

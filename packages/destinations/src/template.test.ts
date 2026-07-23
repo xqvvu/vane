@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { feishuSender } from "#/feishu/index.ts";
+import { feishuSender } from "#destinations/feishu/index";
 import {
   DestinationTemplateEngine,
   DestinationTemplateSchema,
   type TemplateBindings,
-} from "#/template.ts";
-import type { DestinationSendInput } from "#/types.ts";
+} from "#destinations/template";
+import type { DestinationSendInput } from "#destinations/types";
 
 const input: DestinationSendInput<unknown> = {
   eventId: "event-1",

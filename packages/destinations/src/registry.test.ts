@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultDestinationRegistry } from "#/registry.ts";
+import { createDefaultDestinationRegistry } from "#destinations/registry";
 
 describe("destination registry", () => {
   it("projects adapters to a client-safe catalog", () => {
