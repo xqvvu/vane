@@ -4,6 +4,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { DestinationPreviewResult, DestinationTestResult } from "@vane/core";
+
 import { VaneIntlProvider } from "#/i18n/provider";
 
 import { DestinationPreviewDialog, showDestinationTestToast } from "./destination-notices";
@@ -27,43 +29,93 @@ describe("destination notices", () => {
   });
 
   it("shows rendered payload in the preview dialog", () => {
+    const notice: DestinationPreviewResult = {
+      destination: {
+        id: "destination-1",
+        name: "Ops Slack",
+        kind: "slack",
+        enabled: true,
+      },
+      renderedPayload: {
+        text: "disk full",
+        labels: {
+          service: "api",
+        },
+      },
+      sample: {
+        kind: "built_in",
+        eventId: "preview-event",
+        source: {
+          id: "preview-source",
+          name: "Vane preview",
+          provider: "generic",
+          enabled: true,
+        },
+        receivedAt: null,
+      },
+      normalizedEvent: {
+        title: "Disk full",
+        message: "disk is full",
+        severity: "critical",
+        status: "firing",
+        fingerprint: "disk:api",
+        labels: {
+          service: "api",
+        },
+        occurredAt: "2026-01-01T00:00:00.000Z",
+      },
+      context: {
+        event: {
+          id: "preview-event",
+          title: "Disk full",
+          message: "disk is full",
+          severity: "critical",
+          severityDisplay: "Critical",
+          status: "firing",
+          statusDisplay: "Firing",
+          fingerprint: "disk:api",
+          occurredAt: "2026-01-01T00:00:00.000Z",
+          occurredAtDisplay: "Jan 1, 2026",
+          labels: {
+            service: "api",
+          },
+        },
+        source: {
+          id: "preview-source",
+          name: "Vane preview",
+          provider: "generic",
+        },
+        destination: {
+          id: "destination-1",
+          name: "Ops Slack",
+          kind: "slack",
+        },
+        presentation: {
+          locale: "en-US",
+          timeZone: "UTC",
+          labels: {
+            summary: "Alert summary",
+          },
+        },
+        vane: {
+          eventUrl: "",
+        },
+        payload: {},
+        bindings: {},
+      },
+      rawPayloadReference: {
+        eventId: "event-1",
+        payload: {
+          token: "[REDACTED]",
+        },
+        headers: {},
+      },
+      diagnostics: [],
+    };
+
     render(
       <VaneIntlProvider locale="en-US">
-        <DestinationPreviewDialog
-          open
-          onOpenChange={() => {}}
-          notice={{
-            destination: {
-              id: "destination-1",
-              name: "Ops Slack",
-              kind: "slack",
-              enabled: true,
-            },
-            renderedPayload: {
-              text: "disk full",
-              labels: {
-                service: "api",
-              },
-            },
-            normalizedEvent: {
-              title: "Disk full",
-              labels: {
-                service: "api",
-              },
-            },
-            context: {
-              event: {
-                title: "Disk full",
-              },
-            },
-            rawPayloadReference: {
-              payload: {
-                token: "[REDACTED]",
-              },
-            },
-            diagnostics: [],
-          }}
-        />
+        <DestinationPreviewDialog open onOpenChange={() => {}} notice={notice} />
       </VaneIntlProvider>,
     );
 
@@ -89,21 +141,21 @@ describe("destination notices", () => {
       return key;
     }) as Parameters<typeof showDestinationTestToast>[1];
 
-    showDestinationTestToast(
-      {
-        success: false,
-        destination: {
-          id: "destination-1",
-          name: "Ops Webhook",
-          kind: "generic_webhook",
-          enabled: true,
-        },
-        statusCode: 502,
-        error: "Downstream rejected the request",
-        responseBody: "bad gateway token=[REDACTED]",
+    const notice: DestinationTestResult = {
+      success: false,
+      destination: {
+        id: "destination-1",
+        name: "Ops Webhook",
+        kind: "generic_webhook",
+        enabled: true,
       },
-      t,
-    );
+      statusCode: 502,
+      error: "Downstream rejected the request",
+      responseBody: "bad gateway token=[REDACTED]",
+      renderedPayload: { message: "Vane destination test" },
+    };
+
+    showDestinationTestToast(notice, t);
 
     expect(testState.toast.error).toHaveBeenCalledWith(
       "Test Ops Webhook: failed",

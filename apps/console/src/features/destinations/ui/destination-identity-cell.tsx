@@ -1,8 +1,8 @@
 import { DestinationKindIcon } from "#/features/destinations/ui/destination-kind-icon";
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import type { DestinationListItem } from "#/features/destinations/ui/destination-ui-types";
 import { useTranslations } from "#/i18n/use-i18n";
 
-export function DestinationIdentityCell({ destination }: { destination: DestinationSummary }) {
+export function DestinationIdentityCell({ destination }: { destination: DestinationListItem }) {
   const t = useTranslations();
 
   return (

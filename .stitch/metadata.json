@@ -1,451 +1,55 @@
 {
-  "projectId": "8189408707632940093",
+  "projectId": "14367431876163121064",
   "title": "Vane Console UI",
-  "createdAt": "2026-06-11",
+  "createdAt": "2026-07-23",
   "sourceDocs": [
     "AGENTS.md",
     "docs/prd/self-hosted-alert-hub-mvp.md",
     "docs/architecture/frontend-architecture.md",
-    "docs/architecture/application-container.md",
-    "docs/architecture/sqlite-store.md"
+    ".stitch/DESIGN.md"
   ],
   "designSystem": {
-    "status": "uploaded",
+    "status": "created",
     "file": ".stitch/DESIGN.md",
-    "summary": "shadcn base-lyra, neutral, Remix Icon, compact SRE operations console",
-    "stitchAsset": "assets/c53b2ce16f154fe6a124ffea9d67f066",
-    "uploadedScreenInstance": {
-      "id": "15882026163223598060",
-      "sourceScreen": "projects/8189408707632940093/screens/15882026163223598060"
-    },
-    "confirmationRequired": false
-  },
-  "prompts": {
-    "main": ".stitch/prompts/vane-console.md",
-    "implementationMap": ".stitch/prompts/implementation-map.md",
-    "implementationBacklog": ".stitch/prompts/implementation-backlog.md",
-    "readyToRun": ".stitch/prompts/ready-to-run.md",
-    "designQa": ".stitch/prompts/design-qa.md"
+    "summary": "shadcn base-lyra, neutral, compact SRE operations console, toolbar filters",
+    "stitchAsset": "assets/14406620042168177148"
   },
   "screens": [
     {
-      "id": "f8d94b652fd647f3b613374c53447622",
-      "name": "projects/8189408707632940093/screens/f8d94b652fd647f3b613374c53447622",
-      "title": "Vane Console - Application Error (Standardized)",
-      "promptFile": ".stitch/prompts/application-error.md",
-      "localScreenshot": ".stitch/designs/application-error.png",
-      "localHtml": ".stitch/designs/application-error.html",
-      "status": "standardized-to-current-ui",
-      "qaNotes": [
-        "Screenshot now matches the current DashboardErrorPage shape: compact top navigation, centered fallback area, destructive alert, redacted summary, and concise recovery actions.",
-        "Recovery actions are limited to retry, reload, and existing console routes: Events, Sources, Routes, and Settings.",
-        "Error summary is intentionally redacted and does not show stack traces, source tokens, provider secrets, webhook URLs, raw payloads, or credentials.",
-        "No incident-management, on-call, billing, organization, SaaS, right checklist rail, or Create Alert actions are present."
-      ]
-    },
-    {
-      "id": "1c4290d71822470f9e3a2801f635b537",
-      "name": "projects/8189408707632940093/screens/1c4290d71822470f9e3a2801f635b537",
-      "title": "Vane Console - 404 Not Found (Standardized)",
-      "promptFile": ".stitch/prompts/not-found-page.md",
-      "localScreenshot": ".stitch/designs/not-found-404.png",
-      "localHtml": ".stitch/designs/not-found-404.html",
-      "status": "standardized-to-current-ui",
-      "qaNotes": [
-        "Screenshot now matches the current DashboardNotFoundPage direction: compact top navigation, centered fallback panel, redacted request context, and route recovery links.",
-        "Recovery actions are limited to existing console routes: Events, Deliveries, Sources, Routes, Destinations, and Settings.",
-        "Implementation reuses the existing DashboardLayout and top navigation rather than introducing a second sidebar shell.",
-        "No incident, on-call, billing, organization, SaaS, or Create Alert actions are present."
-      ]
-    },
-    {
-      "id": "60b4bb2074854c3c8d0fdc7f53daad97",
-      "name": "projects/8189408707632940093/screens/60b4bb2074854c3c8d0fdc7f53daad97",
-      "title": "Vane Console - Settings (Refined Workspace)",
-      "promptFile": ".stitch/prompts/settings-page.md",
-      "localScreenshot": ".stitch/designs/settings-configuration-page.png",
-      "localHtml": ".stitch/designs/settings-configuration-page.html",
-      "status": "stitch-refined-ui-toml-json-workspace",
-      "qaNotes": [
-        "Stitch redesign uses a three-mode UI/TOML/JSON workspace with the tabs and Refresh action in one compact header.",
-        "The UI tab uses one segmented operational summary band instead of nested metric cards.",
-        "Raw payload retention and dashboard language share one Preferences panel with an aligned control baseline.",
-        "TOML and JSON tabs use matching editable CodeMirror workspaces with identical gutters, editor geometry, and footer import/export actions.",
-        "Product boundaries are preserved: no profile, billing, organization, incident, on-call, workflow, worker tuning, plaintext secret export, or unredacted secret controls."
-      ]
-    },
-    {
-      "id": "3370816d2bf3427d83ea0357c585887f",
-      "name": "projects/8189408707632940093/screens/3370816d2bf3427d83ea0357c585887f",
-      "title": "Vane Console - Settings (Compact UI Workspace)",
-      "promptFile": ".stitch/prompts/settings-page.md",
-      "localScreenshot": ".stitch/designs/settings-configuration-page.png",
-      "localHtml": ".stitch/designs/settings-configuration-page.html",
-      "status": "implemented-compact-settings-matrix",
-      "qaNotes": [
-        "Stitch replaced the sparse full-width form with a constrained vertical settings matrix.",
-        "Language and time zone are grouped as Presentation preferences; raw payload retention is grouped as Storage policy.",
-        "The implementation preserves the independently scrolling form body and fixed bottom action bar.",
-        "TOML and JSON workspaces remain unchanged, and no out-of-scope account, worker, incident, or secret controls were added."
-      ]
-    },
-    {
-      "id": "33c7792dc8fc4833864c9080862e05e4",
-      "name": "projects/8189408707632940093/screens/33c7792dc8fc4833864c9080862e05e4",
-      "title": "Vane Console - Destinations (Standardized)",
-      "promptFile": ".stitch/prompts/destinations-page.md",
-      "localScreenshot": ".stitch/designs/destinations-configuration-page.png",
-      "localHtml": ".stitch/designs/destinations-configuration-page.html",
-      "status": "standardized-to-current-ui",
-      "qaNotes": [
-        "Screenshot passes product boundary: no Create Alert action and no incident, silence, workflow, tenant, or billing controls.",
-        "Screenshot keeps the current Destinations toolbar, test and preview notices, compact table, explicit test/preview/edit/toggle actions, and right rail creation form.",
-        "Standardized design removed the prior AES-256-GCM claim because the current code does not expose or document that specific storage algorithm.",
-        "No destination webhook URLs, signing secrets, headers, SMTP passwords, token hashes, or raw sensitive payloads are shown."
-      ]
-    },
-    {
-      "id": "766cd534f892454d961081339e9f1e76",
-      "name": "projects/8189408707632940093/screens/766cd534f892454d961081339e9f1e76",
-      "title": "Vane Console - Routes (Standardized)",
-      "promptFile": ".stitch/prompts/routes-page.md",
-      "localScreenshot": ".stitch/designs/routes-configuration-page.png",
-      "localHtml": ".stitch/designs/routes-configuration-page.html",
-      "status": "standardized-to-current-ui",
-      "qaNotes": [
-        "Screenshot passes the main product boundary: no Create Alert action and no incident, silence, workflow, tenant, or billing controls.",
-        "Screenshot keeps the current Routes toolbar, compact routes table, readable match chips, right rail creation form, and explicit enable/disable row actions.",
-        "Standardized design removed the prior HTTP Status / Code field; the route form uses normalized alert status values: any, firing, resolved, and unknown.",
-        "No source tokens, token hashes, destination secrets, provider signing secrets, or raw sensitive payloads are shown."
-      ]
-    },
-    {
-      "id": "3d94047d74e54fca9defba28d43da3b5",
-      "name": "projects/8189408707632940093/screens/3d94047d74e54fca9defba28d43da3b5",
-      "title": "Vane Console - Sources (Standardized)",
-      "promptFile": ".stitch/prompts/sources-page.md",
-      "localScreenshot": ".stitch/designs/sources-configuration-page.png",
-      "localHtml": ".stitch/designs/sources-configuration-page.html",
-      "status": "standardized-to-current-ui",
-      "qaNotes": [
-        "Initial Sources generation included a global Create Alert action; the standardized screen has no Create Alert action.",
-        "Standardized design uses the current top navigation shell, compact source table, right rail Create Source form, quick tip, and one-time token notice.",
-        "Photographic avatar assets were removed in favor of a compact user menu placeholder.",
-        "Implementation must not fake last-received or provider-secret state because SourceSummary currently exposes only id, name, provider, and enabled."
-      ]
-    },
-    {
-      "id": "a40a5b3c6a8f4879b279f67460d5061d",
-      "name": "projects/8189408707632940093/screens/a40a5b3c6a8f4879b279f67460d5061d",
-      "title": "Vane Console - Deliveries (Standardized)",
-      "promptFile": ".stitch/prompts/deliveries-page.md",
-      "localScreenshot": ".stitch/designs/deliveries-operations-page.png",
-      "localHtml": ".stitch/designs/deliveries-operations-page.html",
-      "status": "standardized-to-current-ui",
-      "qaNotes": [
-        "Screenshot matches Events shell direction with active Deliveries navigation, compact table, right filter rail, worker notice, and detail tabs.",
-        "No manual delivery creation, incident management, on-call scheduling, silence, or suppression controls are present.",
-        "Standardized design removed the prior Apply Filters button; implementation keeps current URL-backed filters."
-      ]
-    },
-    {
-      "id": "137cd912ef404cb5804d64fa0fb5902d",
-      "name": "projects/8189408707632940093/screens/137cd912ef404cb5804d64fa0fb5902d",
-      "title": "Vane Console - Events (Standardized)",
-      "promptFile": ".stitch/prompts/ready-to-run.md",
+      "id": "17aab16449e1422e9b5388cf95e86c8f",
+      "name": "projects/14367431876163121064/screens/17aab16449e1422e9b5388cf95e86c8f",
+      "title": "Vane Events Console",
       "localScreenshot": ".stitch/designs/events-operations-page.png",
-      "localHtml": ".stitch/designs/events-operations-page.html",
-      "status": "standardized-to-current-ui",
+      "status": "filter-ux-redesign-2026-07-23",
       "qaNotes": [
-        "Screenshot passes product boundary: header uses Refresh and Reset filters, not Create Alert.",
-        "Two-column layout, events table, filter rail, and detail tabs are visible.",
-        "Raw debug and secret-like fields are redacted.",
-        "Standardized design removed the prior Apply Filters button and keeps URL-backed filter behavior as the implementation reference."
+        "Primary filters moved out of right rail into toolbar: search + Filters popover + removable chips.",
+        "URL-backed live filters with no Apply button.",
+        "Right rail reserved for operational summary only."
       ]
     },
     {
-      "id": "3b7c694a52d34bf3aef2d7526cb338bd",
-      "name": "projects/8189408707632940093/screens/3b7c694a52d34bf3aef2d7526cb338bd",
-      "title": "Vane Console - Events",
-      "status": "rejected-product-drift",
+      "id": "adcc7fea12724eb182540fe6eb09c950",
+      "name": "projects/14367431876163121064/screens/adcc7fea12724eb182540fe6eb09c950",
+      "title": "Vane Deliveries Console",
+      "localScreenshot": ".stitch/designs/deliveries-operations-page.png",
+      "status": "filter-ux-redesign-2026-07-23",
       "qaNotes": [
-        "Initial generation included Create Alert, which conflicts with Vane's inbound-webhook Events scope."
+        "Same filter interaction model as Events.",
+        "Worker run remains toolbar action; no Create Delivery / incident chrome."
       ]
     }
   ],
   "workflow": {
-    "externalStateCheckedAt": "2026-07-14",
-    "stitchDesignSystems": ["assets/c53b2ce16f154fe6a124ffea9d67f066"],
-    "stitchScreens": [
-      "3370816d2bf3427d83ea0357c585887f",
-      "60b4bb2074854c3c8d0fdc7f53daad97",
-      "51d204938b0b4e5ebba372d1b19bb42c",
-      "33c7792dc8fc4833864c9080862e05e4",
-      "766cd534f892454d961081339e9f1e76",
-      "3d94047d74e54fca9defba28d43da3b5",
-      "a40a5b3c6a8f4879b279f67460d5061d",
-      "137cd912ef404cb5804d64fa0fb5902d",
-      "1c4290d71822470f9e3a2801f635b537",
-      "f8d94b652fd647f3b613374c53447622",
-      "3b7c694a52d34bf3aef2d7526cb338bd",
-      "375ab2b7e9e14fa691770e82e442d7b4"
-    ],
-    "stitchUiUnification": {
-      "status": "completed",
-      "completedAt": "2026-06-12",
-      "sourceOfTruth": "Current apps/console dashboard UI: 48px top navigation shell, split dashboard layout, compact shadcn base-lyra controls, neutral light theme, right rail forms/filters, redacted sensitive data.",
-      "appliedDesignSystem": "assets/c53b2ce16f154fe6a124ffea9d67f066",
-      "standardizedScreens": {
-        "events": "137cd912ef404cb5804d64fa0fb5902d",
-        "deliveries": "a40a5b3c6a8f4879b279f67460d5061d",
-        "sources": "3d94047d74e54fca9defba28d43da3b5",
-        "routes": "766cd534f892454d961081339e9f1e76",
-        "destinations": "33c7792dc8fc4833864c9080862e05e4",
-        "settings": "60b4bb2074854c3c8d0fdc7f53daad97",
-        "notFound": "1c4290d71822470f9e3a2801f635b537",
-        "applicationError": "f8d94b652fd647f3b613374c53447622"
-      },
-      "localAssets": [
-        ".stitch/designs/events-operations-page.html",
-        ".stitch/designs/events-operations-page.png",
-        ".stitch/designs/deliveries-operations-page.html",
-        ".stitch/designs/deliveries-operations-page.png",
-        ".stitch/designs/sources-configuration-page.html",
-        ".stitch/designs/sources-configuration-page.png",
-        ".stitch/designs/routes-configuration-page.html",
-        ".stitch/designs/routes-configuration-page.png",
-        ".stitch/designs/destinations-configuration-page.html",
-        ".stitch/designs/destinations-configuration-page.png",
-        ".stitch/designs/settings-configuration-page.html",
-        ".stitch/designs/settings-configuration-page.png",
-        ".stitch/designs/not-found-404.html",
-        ".stitch/designs/not-found-404.png",
-        ".stitch/designs/application-error.html",
-        ".stitch/designs/application-error.png"
-      ],
-      "notes": [
-        "Stitch apply_design_system updated the project theme and current canvas instance sources.",
-        "Follow-up edit_screens calls generated standardized screen resources that are tracked here and downloaded locally as the implementation reference.",
-        "A final edit_screens pass standardized the shared 48px DashboardHeader shell, navigation order, and initials-only user menu across the accepted screens.",
-        "Local .stitch/designs HTML and PNG mirrors were normalized to remove cached remote avatar assets and match the current console shell.",
-        "No application code was changed during this design unification pass."
-      ]
-    },
-    "implementedTracerBullet": {
-      "screenId": "aa110c6e81b9402ca9c1784f8074a231",
+    "replacedProject": "8189408707632940093",
+    "note": "Old Stitch project assets were cleared; local .stitch/designs reset and recreated for filter UX redesign.",
+    "implementedFilterUx": {
       "status": "implemented",
       "files": [
-        "apps/console/src/features/events/ui/events-page.tsx",
-        "apps/console/src/features/events/ui/events-table.tsx",
-        "apps/console/src/features/events/ui/event-detail-view.tsx",
         "apps/console/src/features/operations/ui/operation-filters.tsx",
-        "apps/console/src/features/configuration/ui/operational-summary.tsx",
-        "apps/console/src/shell/dashboard-table.tsx",
-        "apps/console/src/components/ui/alert.tsx",
-        "apps/console/src/components/ui/empty.tsx",
-        "apps/console/src/components/ui/skeleton.tsx",
-        "apps/console/src/components/ui/tabs.tsx"
-      ],
-      "validation": [
-        "npx shadcn@latest info --json",
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build",
-        "Browser check: /events redirects to /login?redirect=%2Fevents without console warnings or errors because dashboard auth is required."
-      ]
-    },
-    "implementedDeliveriesFollowOn": {
-      "screenId": "c3d296d573e343beb20988389a29ac02",
-      "status": "implemented",
-      "files": [
+        "apps/console/src/features/events/ui/events-page.tsx",
         "apps/console/src/features/deliveries/ui/deliveries-page.tsx",
-        "apps/console/src/features/deliveries/ui/deliveries-table.tsx",
-        "apps/console/src/features/deliveries/ui/delivery-detail-view.tsx",
-        "apps/console/src/features/operations/ui/worker-notice-panel.tsx",
-        "apps/console/src/features/operations/ui/operation-filters.tsx"
-      ],
-      "validation": [
-        "npx shadcn@latest info --json",
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build",
-        "Browser check: /deliveries redirects to /login?redirect=%2Fdeliveries without console warnings or errors because dashboard auth is required."
-      ],
-      "implementationNotes": [
-        "Did not implement Stitch suggestion for Retry All Failed because current client/server boundary exposes single-delivery retry only.",
-        "Kept existing URL-backed select filters instead of Stitch's visual Apply Filters checkbox rail."
-      ]
-    },
-    "implementedSourcesFollowOn": {
-      "screenId": "b3e5e550bc6949b2b320c82e57501c8b",
-      "status": "implemented",
-      "files": [
-        "apps/console/src/features/sources/ui/sources-page.tsx",
-        "apps/console/src/features/sources/ui/sources-section.tsx",
-        "apps/console/src/features/sources/ui/source-forms.tsx",
-        "apps/console/src/features/sources/ui/source-token-notice-panel.tsx",
-        "apps/console/src/features/sources/ui/source-webhook-cell.tsx",
-        "apps/console/src/features/configuration/ui/configuration-state-badge.tsx",
-        "apps/console/src/shell/dashboard-table.tsx",
-        "apps/console/src/shell/copyable-code-line.tsx"
-      ],
-      "validation": [
-        "npx shadcn@latest info --json",
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build",
-        "Browser check attempted for /sources, but Browser Use URL policy blocked localhost:6180 access in this session."
-      ],
-      "implementationNotes": [
-        "Did not implement Stitch suggestion for Test Connection because current Sources client/server boundary does not expose a source test action.",
-        "Kept Source auth display generic and safe because source list DTO does not expose token, token hash, provider secret, or secret presence.",
-        "Did not implement last-received column because SourceSummary does not currently include activity timestamps."
-      ]
-    },
-    "implementedRoutesFollowOn": {
-      "screenId": "c4f88749d59843e7ac6c18535fecc0fc",
-      "status": "implemented",
-      "files": [
-        "apps/console/src/features/routes/ui/routes-page.tsx",
-        "apps/console/src/features/routes/ui/routes-section.tsx",
-        "apps/console/src/features/routes/ui/route-forms.tsx",
-        "apps/console/src/features/configuration/ui/configuration-state-badge.tsx",
-        "apps/console/src/shell/dashboard-table.tsx"
-      ],
-      "validation": [
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build"
-      ],
-      "implementationNotes": [
-        "Kept route matching limited to existing normalized fields: source, severity, status, label equals/contains, title contains, and message contains.",
-        "Did not implement workflow graphs, expression editors, code editors, schedules, silences, or incident management controls.",
-        "Used destination names/counts from existing configuration query data; no destination secret data is displayed.",
-        "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
-      ]
-    },
-    "implementedDestinationsFollowOn": {
-      "screenId": "23196e4036204b93bf868347b4c75834",
-      "status": "implemented",
-      "files": [
-        "apps/console/src/features/destinations/ui/destinations-page.tsx",
-        "apps/console/src/features/destinations/ui/destinations-section.tsx",
-        "apps/console/src/features/destinations/ui/destination-forms.tsx",
-        "apps/console/src/features/destinations/ui/destination-notices.tsx"
-      ],
-      "validation": [
-        "npx shadcn@latest docs alert empty field badge table button",
-        "npx shadcn@latest info --json",
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build"
-      ],
-      "implementationNotes": [
-        "Kept destination create/edit behavior on the existing TanStack Form model and patch helpers; empty secret fields in edit mode keep stored values.",
-        "Used safe configuration summaries instead of showing destination config, secret refs, webhook URLs, signing secrets, or headers.",
-        "Used shadcn Alert, Empty, Badge, Field, Button, and Table composition under the existing base-lyra preset.",
-        "Browser verification was not retried because Browser Use URL policy blocked localhost access earlier in this session."
-      ]
-    },
-    "implementedSettingsFollowOn": {
-      "screenId": "60b4bb2074854c3c8d0fdc7f53daad97",
-      "status": "implemented-from-refined-ui-toml-json-stitch-design",
-      "files": [
-        "apps/console/src/features/configuration/ui/settings-page.tsx",
-        "apps/console/src/features/configuration/ui/operational-summary.tsx",
-        "apps/console/src/features/configuration/ui/app-settings-form.tsx",
-        "apps/console/src/features/configuration/ui/portable-config-form.tsx",
-        "apps/console/src/features/configuration/ui/import-notice-panel.tsx",
-        "apps/console/src/components/codemirror/toml-editor.tsx",
-        "apps/console/src/components/codemirror/toml-editor-impl.tsx",
-        "apps/console/src/components/codemirror/json-editor.tsx",
-        "apps/console/src/components/codemirror/json-editor-impl.tsx",
-        "apps/console/src/components/codemirror/code-editor-theme.ts",
-        "apps/console/src/components/codemirror/code-fold-gutter.ts",
-        "apps/console/src/shell/dashboard-layout.tsx",
-        ".stitch/prompts/settings-page.md",
-        ".stitch/designs/settings-configuration-page.html",
-        ".stitch/designs/settings-configuration-page.png"
-      ],
-      "validation": [
-        "npx shadcn@latest info --json",
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build"
-      ],
-      "implementationNotes": [
-        "Settings now uses UI/TOML/JSON tabs at the top of the workspace with the Refresh action on the same control row.",
-        "The Settings page header no longer renders descriptive text under the title.",
-        "The UI tab uses a segmented summary band and one unified Preferences panel for retention and language.",
-        "The TOML and JSON tabs lazy-load matching editable CodeMirror workspaces and share import confirmation behavior.",
-        "Exports still request includeSecrets=false; plaintext secret export remains unsupported.",
-        "Stitch suggestions for Test Connection and worker threads were rejected because those settings are outside the current product contract."
-      ]
-    },
-    "nextActionAfterConfirmation": "Application error page implemented from Stitch design and verified locally.",
-    "implementedApplicationErrorPage": {
-      "screenId": "375ab2b7e9e14fa691770e82e442d7b4",
-      "status": "implemented",
-      "files": [
-        "apps/console/src/shell/dashboard-error.tsx",
-        "apps/console/src/shell/dashboard-error.test.tsx",
-        "apps/console/src/routes/__root.tsx",
-        "apps/console/src/routes/_dashboard.tsx",
-        ".stitch/prompts/application-error.md",
-        ".stitch/designs/application-error.html",
-        ".stitch/designs/application-error.png"
-      ],
-      "validation": [
-        "npx shadcn@latest docs button badge alert separator",
-        "pnpm --filter @vane/console fmt",
-        "pnpm --filter @vane/console lint",
-        "pnpm --filter @vane/console test",
-        "pnpm --filter @vane/console build",
-        "Browser check: /routes renders the Routes page on localhost:6180 with no browser error logs after wiring the router error boundary."
-      ],
-      "implementationNotes": [
-        "Used the Stitch two-column error boundary layout while mapping Material Symbols to Remix Icon and shadcn primitives.",
-        "Configured root and dashboard TanStack Router error components so runtime and loader failures use the custom console fallback.",
-        "Displayed only safe error class summaries; raw error messages and stack traces are not rendered in the UI."
-      ]
-    },
-    "settingsTabbedWorkspace": {
-      "status": "implemented-from-stitch-compact-ui-workspace",
-      "designedAt": "2026-07-14",
-      "screenId": "3370816d2bf3427d83ea0357c585887f",
-      "sourcePrompt": ".stitch/prompts/settings-page.md",
-      "localHtml": ".stitch/designs/settings-configuration-page.html",
-      "localScreenshot": ".stitch/designs/settings-configuration-page.png",
-      "outputSummary": [
-        "Tabbed architecture separates routine UI configuration from raw portable TOML and JSON editing.",
-        "UI/TOML/JSON tabs sit at the top of the workspace on the same row as Refresh, with Settings description text removed.",
-        "UI tab uses a segmented summary band and a constrained settings matrix instead of stretched full-width controls.",
-        "Language and time zone are grouped as Presentation preferences, while raw payload retention is grouped as Storage policy.",
-        "The form body scrolls independently and the Save settings action remains fixed at the bottom.",
-        "TOML and JSON tabs use matching CodeMirror workspaces with footer import/export actions."
-      ],
-      "suggestions": [
-        "A mobile follow-up can inspect the stacked form layout.",
-        "JSON summary export was rejected because it is outside this layout-only change.",
-        "A TOML editor follow-up was rejected because the existing TOML and JSON modes were intentionally preserved."
-      ]
-    },
-    "implementedSettingsCompactLayout": {
-      "screenId": "3370816d2bf3427d83ea0357c585887f",
-      "status": "implemented",
-      "files": [
-        "apps/console/src/features/configuration/ui/app-settings-form.tsx",
         "apps/console/src/i18n/messages/en-US.json",
-        "apps/console/src/i18n/messages/zh-Hans.json",
-        ".stitch/prompts/settings-page.md",
-        ".stitch/designs/settings-configuration-page.html",
-        ".stitch/designs/settings-configuration-page.png"
-      ],
-      "implementationNotes": [
-        "Mapped the Stitch settings matrix to shadcn FieldSet, FieldLegend, FieldGroup, Select, Combobox, and InputGroup primitives.",
-        "Constrained the desktop form matrix to 512px while allowing it to shrink without horizontal overflow.",
-        "Kept the existing TanStack Form behavior, validation, mutation flow, independent scrolling, and fixed footer.",
-        "Rejected Stitch suggestions that would change JSON export behavior or redesign the existing TOML workspace."
+        "apps/console/src/i18n/messages/zh-Hans.json"
       ]
     }
   }

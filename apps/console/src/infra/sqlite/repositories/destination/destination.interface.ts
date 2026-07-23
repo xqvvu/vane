@@ -15,12 +15,13 @@ export interface DestinationRow {
 }
 
 export interface DestinationRepository {
-  list(): Promise<DestinationSummary[]>;
+  /** Full runtime rows for server-side projection into secret-safe list DTOs. */
+  list(): Promise<DestinationRuntimeConfig[]>;
   listEnabled(): Promise<DestinationSummary[]>;
   get(id: string): Promise<DestinationRuntimeConfig | null>;
-  create(input: CreateDestinationInput): Promise<DestinationSummary>;
-  update(id: string, input: UpdateDestinationInput): Promise<DestinationSummary>;
-  setEnabled(id: string, enabled: boolean): Promise<DestinationSummary>;
+  create(input: CreateDestinationInput): Promise<DestinationRuntimeConfig>;
+  update(id: string, input: UpdateDestinationInput): Promise<DestinationRuntimeConfig>;
+  setEnabled(id: string, enabled: boolean): Promise<DestinationRuntimeConfig>;
   delete(id: string): Promise<void>;
 }
 

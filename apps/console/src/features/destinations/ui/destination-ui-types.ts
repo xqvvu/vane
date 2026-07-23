@@ -1,11 +1,19 @@
-import type { AlertStatus, JsonObject } from "@vane/core";
+import type {
+  AlertStatus,
+  DestinationListItem,
+  DestinationPreviewResult,
+  DestinationTestResult,
+  JsonObject,
+} from "@vane/core";
 
 import type {
   DestinationFormKind,
   DestinationTemplateFormState,
 } from "#/features/destinations/model/destination-form";
+
 export type {
   DestinationCatalog,
+  DestinationListItem,
   DestinationSummary,
 } from "#/features/destinations/model/destination-types";
 
@@ -46,4 +54,21 @@ export type EditDestinationFormInput = DestinationFormSubmitInput & {
   id: string;
 };
 
-export type DestinationSubmitResult = unknown;
+/**
+ * Form action return values.
+ * - DTO results come from server functions / `@vane/core`
+ * - `false` keeps create forms open after a handled failure
+ * - `null` / `undefined` / `void` are treated as non-blocking completion
+ */
+export type DestinationSubmitResult =
+  | DestinationListItem
+  | DestinationPreviewResult
+  | DestinationTestResult
+  | false
+  | null
+  | undefined
+  | void;
+
+export type DestinationSubmitHandler<TInput> = (
+  input: TInput,
+) => DestinationSubmitResult | Promise<DestinationSubmitResult>;

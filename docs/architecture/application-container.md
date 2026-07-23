@@ -163,17 +163,25 @@ provider/destination adapter 继续只返回稳定结构化结果，不接收 lo
 
 ---
 
-## 5. 禁止暴露到客户端的内容
+## 5. 客户端可见性边界（私有部署）
 
-以下内容只能留在 server-only 模块、SQLite、Better Auth adapter 或服务端响应前的局部变量里，不能出现在 client components、route loader serialized data、query data 或 server function 返回值中：
+Vane 是 self-hosted 产品。已认证 dashboard 操作者应能看到排障所需的运维配置；只有真正的密钥与
+进程内部句柄必须留在 server-only 模块、SQLite、Better Auth adapter 或服务端响应前的局部变量里。
 
-- Source token 原文、`tokenHash`、provider signing secret。
-- Destination secret、webhook URL secret、签名密钥、raw sensitive config。
+**不得进入 client components、route loader serialized data、query data 或 server function 返回值：**
+
+- Source token 原文、`tokenHash`、额外 shared secret / provider signing secret。
+- Destination `signSecret`、SMTP/网关密码、敏感 Authorization/header 值。
 - Better Auth secret、session token、password hash、auth database handle。
 - SQLite database handle、filesystem path、migration/runtime internals。
-- 未脱敏 raw headers/raw payload 中的敏感字段。
+- raw headers/raw payload 中按敏感 key 判定的字段（token、password、authorization 等）。
 
-可以返回给客户端的是受控投影，例如 Source/Destination summary、Route definition、Event normalized fields、Delivery state、脱敏后的 response body 或 raw debug data。
+**可以进入已认证 dashboard 投影的运维信息：**
+
+- Destination operational config：endpoint URL、host、HTTP method、收件人、模板 mode/source、
+  header 名称列表、是否已配置签名密钥（不含值）。
+- Source / Destination summary、Route definition、Event normalized fields、Delivery state。
+- 按敏感 key 脱敏后的 response body 或 raw debug data。
 
 ---
 

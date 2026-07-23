@@ -6,7 +6,6 @@ import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
   destinationRuntimeFromRow,
   destinationSummaryFromRow,
-  destinationSummaryFromRuntime,
   requireDestination,
 } from "#/infra/sqlite/repositories/destination/destination.helpers";
 import type {
@@ -19,7 +18,7 @@ import type {
 export class SqliteDestinationRepository implements DestinationRepository {
   constructor(private readonly context: SqliteRepositoryContext) {}
 
-  async list(): Promise<DestinationSummary[]> {
+  async list(): Promise<DestinationRuntimeConfig[]> {
     const rows = await this.context.db
       .selectFrom("destinations")
       .selectAll()
@@ -27,7 +26,7 @@ export class SqliteDestinationRepository implements DestinationRepository {
       .orderBy("id", "desc")
       .execute();
 
-    return rows.map((row) => destinationSummaryFromRow(row));
+    return rows.map((row) => destinationRuntimeFromRow(row));
   }
 
   async listEnabled(): Promise<DestinationSummary[]> {
@@ -52,7 +51,7 @@ export class SqliteDestinationRepository implements DestinationRepository {
     return row ? destinationRuntimeFromRow(row) : null;
   }
 
-  async create(input: CreateDestinationInput): Promise<DestinationSummary> {
+  async create(input: CreateDestinationInput): Promise<DestinationRuntimeConfig> {
     const now = this.context.now();
     const id = input.id ?? this.context.ids.destination();
     const createdAt = input.createdAt ?? now;
@@ -72,10 +71,10 @@ export class SqliteDestinationRepository implements DestinationRepository {
       })
       .execute();
 
-    return destinationSummaryFromRuntime(requireDestination(await this.get(id)));
+    return requireDestination(await this.get(id));
   }
 
-  async update(id: string, input: UpdateDestinationInput): Promise<DestinationSummary> {
+  async update(id: string, input: UpdateDestinationInput): Promise<DestinationRuntimeConfig> {
     const current = requireDestination(await this.get(id));
     const updatedAt = input.updatedAt ?? this.context.now();
 
@@ -92,10 +91,10 @@ export class SqliteDestinationRepository implements DestinationRepository {
       .where("id", "=", id)
       .execute();
 
-    return destinationSummaryFromRuntime(requireDestination(await this.get(id)));
+    return requireDestination(await this.get(id));
   }
 
-  setEnabled(id: string, enabled: boolean): Promise<DestinationSummary> {
+  setEnabled(id: string, enabled: boolean): Promise<DestinationRuntimeConfig> {
     return this.update(id, { enabled });
   }
 

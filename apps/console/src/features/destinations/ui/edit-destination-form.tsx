@@ -1,6 +1,6 @@
 import { RiEditLine } from "@remixicon/react";
 
-import type { JsonObject } from "@vane/core";
+import type { DestinationEditorDraftResult } from "@vane/core";
 
 import { Skeleton } from "#/components/ui/skeleton";
 import { destinationTemplateFormStateFromDraft } from "#/features/destinations/model/destination-form";
@@ -10,8 +10,8 @@ import {
 } from "#/features/destinations/ui/destination-form";
 import type {
   DestinationCatalog,
-  DestinationSubmitResult,
-  DestinationSummary,
+  DestinationListItem,
+  DestinationSubmitHandler,
   EditDestinationFormInput,
   PreviewEditDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types";
@@ -23,7 +23,7 @@ export function EditDestinationForm({
   framed = true,
   layout = "panel",
   destination,
-  templateDraft,
+  editorDraft,
   pending,
   onCancel,
   onPreview,
@@ -33,12 +33,14 @@ export function EditDestinationForm({
   showHeader?: boolean;
   framed?: boolean;
   layout?: "panel" | "dialog";
-  destination: DestinationSummary;
-  templateDraft: JsonObject | null;
+  destination:
+    | DestinationListItem
+    | { id: string; name: string; kind: DestinationListItem["kind"] };
+  editorDraft: DestinationEditorDraftResult;
   pending: boolean;
   onCancel: () => void;
-  onPreview: (input: PreviewEditDestinationFormInput) => DestinationSubmitResult;
-  onSubmit: (input: EditDestinationFormInput) => DestinationSubmitResult;
+  onPreview: DestinationSubmitHandler<PreviewEditDestinationFormInput>;
+  onSubmit: DestinationSubmitHandler<EditDestinationFormInput>;
 }) {
   const t = useTranslations();
 
@@ -62,10 +64,19 @@ export function EditDestinationForm({
         destinationCatalog={destinationCatalog}
         defaultValues={{
           ...createDestinationDefaults(),
-          ...destinationTemplateFormStateFromDraft(templateDraft),
+          ...destinationTemplateFormStateFromDraft(editorDraft.template),
           name: destination.name,
           kind: destination.kind,
-          method: "",
+          endpointUrl: editorDraft.form.endpointUrl,
+          to: editorDraft.form.to,
+          from: editorDraft.form.from,
+          replyTo: editorDraft.form.replyTo,
+          subjectPrefix: editorDraft.form.subjectPrefix,
+          headers: editorDraft.form.headers,
+          url: editorDraft.form.url,
+          webhookUrl: editorDraft.form.webhookUrl,
+          method: editorDraft.form.method,
+          signSecret: "",
         }}
         onCancel={onCancel}
         onPreview={(input) =>

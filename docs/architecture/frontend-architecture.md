@@ -132,7 +132,7 @@ feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
   webhook URL 展示与复制 UI。
 - `features/routes`：Route rule form model、query/mutation、规则摘要、启停、Routes 表格与
   表单。这里的 Routes 指 Vane 的告警路由规则，不是 TanStack Router 文件路由。
-- `features/destinations`：Destination form model、preview/test mutations、secret-safe
+- `features/destinations`：Destination form model、preview/test mutations、operator-visible
   config DTO、Destinations 表格、测试结果与预览 UI。
 - `features/events`：Events 页面/详情 UI、normalized fields 展示、raw debug data 的脱敏展示、
   route match 表格。
@@ -352,10 +352,10 @@ Vane 是重复使用的 SRE 运维工具，前端默认选择密集、冷静、�
 - Sources、Routes、Destinations 的启停、删除、测试、轮换 token 等动作必须显式且可复核。
 - Sources 与 Destinations 这类配置列表应共享表格外壳、分页、状态 badge、row height 和动作密度；
   具体列内容、route coverage 和 actions 仍由各自 feature 拥有。
-- Destinations 表格默认展示安全且能指导操作的事实：目标 identity（包含 adapter kind）、启停状态、
-  启用路由覆盖，以及 test / preview / edit / toggle actions。不要在表格或普通 query data 中展示
-  plaintext endpoint、signing secret、token、password 或 raw config。只有在服务端提供
-  secret-safe metadata DTO 后，才把配置摘要作为独立列或详情内容展示。
+- Destinations 表格默认展示能指导操作的事实：目标 identity（包含 adapter kind）、启停状态、
+  启用路由覆盖、运维配置摘要（endpoint URL、method、收件人、模板 mode），以及 test / preview /
+  edit / toggle actions。Vane 是私有部署产品，已登录的 dashboard 操作者应能直接看到排障所需
+  配置；签名密钥、密码、Source token 与敏感 Header 值仍不得进入 list/query DTO。
 - Destinations 的“最近 delivery 健康度”应作为后续服务端安全汇总 DTO 接入，例如最近成功/失败时间、
   失败计数、最后错误摘要和 pending/running job 数；不要在前端从 raw payload、secret config 或完整
   delivery detail 临时拼装。
@@ -388,8 +388,9 @@ Dashboard mega-route 拆分已经完成：`routes/index.tsx` 现在只负责把�
 4. Server state 统一通过 feature query/mutation 文件访问 server functions；route loader 只用同一组
    `queryOptions` 并行预取，不直接 import store、container 或 service。配置页面按能力组合
    Settings、Sources、Destinations 与 Routes query，不恢复全量 configuration snapshot。
-5. 每次新增 client-visible DTO 或 detail/debug 展示，都同步检查 secret-safe projection：Source token、
-   token hash、Destination secret、raw sensitive config 和未脱敏 raw payload/header 不进入 query data。
+5. 每次新增 client-visible DTO 或 detail/debug 展示，都同步检查投影边界：Source token、token hash、
+   签名密钥、密码、敏感 header 值不得进入 query data；运维配置（endpoint、method、收件人、模板
+   元数据）可以进入已认证 dashboard DTO。raw payload/header 继续按敏感 key 脱敏后供 detail 调试。
 
 如果后续新增 dashboard landing page，应创建明确的 `_dashboard.index.tsx`，并让它像其他 route
 一样只组合 feature query 与 feature UI，不把业务逻辑重新堆回 `routes/index.tsx`。

@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 import { JsonObjectSchema, redactJsonValue } from "@vane/core";
-import type { DestinationSummary, JsonObject, JsonValue, SourceSummary } from "@vane/core";
+import type {
+  DestinationSummary,
+  DestinationTemplateContext,
+  JsonObject,
+  JsonValue,
+  SourceSummary,
+  TemplateDiagnostic as CoreTemplateDiagnostic,
+} from "@vane/core";
 
 import {
   destinationCopy,
@@ -210,48 +217,8 @@ export type FeishuCardDestinationTemplate = z.infer<typeof FeishuCardDestination
 export type DestinationTemplate = z.infer<typeof DestinationTemplateSchema>;
 export type DestinationTemplateMode = DestinationTemplate["mode"];
 
-export interface TemplateContext {
-  event: {
-    id: string;
-    title: string;
-    message: string;
-    severity: string;
-    severityDisplay: string;
-    status: string;
-    statusDisplay: string;
-    fingerprint: string;
-    occurredAt: string;
-    occurredAtDisplay: string;
-    labels: Record<string, string>;
-  };
-  source: {
-    id: string;
-    name: string;
-    provider: string;
-  };
-  destination: {
-    id: string;
-    name: string;
-    kind: string;
-  };
-  presentation: {
-    locale: string;
-    timeZone: string;
-    labels: ReturnType<typeof destinationCopy>["labels"];
-  };
-  vane: {
-    eventUrl: string;
-  };
-  payload: JsonValue;
-  bindings: Record<string, string>;
-}
-
-export interface TemplateDiagnostic {
-  severity: "error" | "warning";
-  path?: string;
-  variable?: string;
-  message: string;
-}
+export type TemplateContext = DestinationTemplateContext;
+export type TemplateDiagnostic = CoreTemplateDiagnostic;
 
 export interface RenderTemplateResult<T extends JsonValue | string = JsonValue | string> {
   ok: boolean;

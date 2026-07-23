@@ -295,18 +295,36 @@ describe("configuration capabilities", () => {
         name: "Slack SRE",
         kind: "slack",
         enabled: true,
+        operationalConfig: {
+          endpoint: "https://hooks.slack.com/services/secret",
+          host: "hooks.slack.com",
+          templateConfigured: false,
+          templateMode: null,
+          templateSource: null,
+          signingConfigured: false,
+          method: null,
+          to: null,
+          from: null,
+          replyTo: null,
+          subjectPrefix: null,
+          headerNames: null,
+          secretFieldPaths: ["webhookUrl"],
+        },
       },
     ]);
     const listedConfiguration = JSON.stringify({ sources, destinations });
+    // Self-hosted: operational endpoints are visible to dashboard operators.
+    expect(listedConfiguration).toContain("https://hooks.slack.com/services/secret");
+    // True secrets still stay out of list DTOs.
     expect(listedConfiguration).not.toContain("vane_src_test_token");
     expect(listedConfiguration).not.toContain(hashSourceToken("vane_src_test_token"));
-    expect(listedConfiguration).not.toContain("https://hooks.slack.com/services/secret");
     expect(listedConfiguration).not.toContain("SLACK_WEBHOOK_URL");
+    expect(listedConfiguration).not.toContain("signSecret");
 
     await store.close();
   });
 
-  it("returns an authenticated template draft without destination secrets", async () => {
+  it("returns an authenticated editor draft with operational fields but without signing secrets", async () => {
     const { store, services } = await createTestContext();
     const destination = await services.destinations.createDestination({
       name: "Feishu SRE",
@@ -324,6 +342,15 @@ describe("configuration capabilities", () => {
     expect(draft).toMatchObject({
       destinationId: destination.id,
       kind: "feishu",
+      form: {
+        webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/private-token",
+      },
+      operationalConfig: {
+        endpoint: "https://open.feishu.cn/open-apis/bot/v2/hook/private-token",
+        host: "open.feishu.cn",
+        signingConfigured: true,
+        secretFieldPaths: ["webhookUrl", "signSecret"],
+      },
       template: {
         source: "builtin",
         id: "feishu.alert-card",
@@ -341,8 +368,10 @@ describe("configuration capabilities", () => {
         },
       },
     });
-    expect(JSON.stringify(draft)).not.toContain("private-token");
+    // Operational webhook is visible; signing secret value is not.
+    expect(JSON.stringify(draft)).toContain("private-token");
     expect(JSON.stringify(draft)).not.toContain("private-signing-secret");
+    expect(JSON.stringify(draft)).not.toMatch(/"signSecret"\s*:\s*"/);
 
     await store.close();
   });
@@ -432,13 +461,19 @@ describe("configuration capabilities", () => {
 
     const result = await services.destinations.testDestination({ id: destination.id });
 
-    expect(result).toEqual({
-      destination,
+    expect(result).toMatchObject({
+      destination: {
+        id: destination.id,
+        name: destination.name,
+        kind: destination.kind,
+        enabled: destination.enabled,
+      },
       success: true,
       statusCode: 202,
       responseBody: "accepted token=[REDACTED] password: [REDACTED]",
       error: null,
     });
+    expect(result.renderedPayload).toBeDefined();
     expect(JSON.stringify(result)).not.toContain("downstream-token");
     expect(JSON.stringify(result)).not.toContain("downstream-password");
     expect(calls[0]?.url).toBe("https://example.test/webhook");
@@ -449,7 +484,6 @@ describe("configuration capabilities", () => {
         severity: "info",
       },
     });
-    expect(result).not.toHaveProperty("renderedPayload");
 
     await store.close();
   });
@@ -467,7 +501,12 @@ describe("configuration capabilities", () => {
 
     const result = await services.destinations.previewDestination({ id: destination.id });
 
-    expect(result.destination).toEqual(destination);
+    expect(result.destination).toEqual({
+      id: destination.id,
+      name: destination.name,
+      kind: destination.kind,
+      enabled: destination.enabled,
+    });
     expect(result.sample).toEqual({
       kind: "built_in",
       eventId: "preview-event",

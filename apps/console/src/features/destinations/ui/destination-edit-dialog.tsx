@@ -11,8 +11,8 @@ import { useDestinationMutations } from "#/features/destinations/api/destination
 import { destinationTemplateDraftQueryOptions } from "#/features/destinations/api/destination.queries";
 import type {
   DestinationCatalog,
-  DestinationSubmitResult,
-  DestinationSummary,
+  DestinationListItem,
+  DestinationSubmitHandler,
   PreviewEditDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types";
 import { EditDestinationForm } from "#/features/destinations/ui/edit-destination-form";
@@ -27,11 +27,11 @@ export function DestinationEditDialog({
   onPreview,
 }: {
   destinationCatalog: DestinationCatalog;
-  destination: DestinationSummary | null;
+  destination: DestinationListItem | null;
   open: boolean;
   disabled?: boolean;
   onOpenChange: (open: boolean) => void;
-  onPreview: (input: PreviewEditDestinationFormInput) => DestinationSubmitResult;
+  onPreview: DestinationSubmitHandler<PreviewEditDestinationFormInput>;
 }) {
   const t = useTranslations();
   const [pending, setPending] = React.useState(false);
@@ -64,7 +64,7 @@ export function DestinationEditDialog({
             framed={false}
             layout="dialog"
             destination={destination}
-            templateDraft={templateDraftQuery.data.template}
+            editorDraft={templateDraftQuery.data}
             pending={disabled || pending}
             onCancel={() => onOpenChange(false)}
             onPreview={onPreview}

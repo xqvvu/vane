@@ -72,12 +72,7 @@ export class ConfigPortabilityService {
     const sources = (
       await Promise.all(sourceSummaries.map((source) => this.store.sources.get(source.id)))
     ).filter((source): source is NonNullable<typeof source> => source !== null);
-    const destinationSummaries = await this.store.destinations.list();
-    const destinations = (
-      await Promise.all(
-        destinationSummaries.map((destination) => this.store.destinations.get(destination.id)),
-      )
-    ).filter((destination): destination is NonNullable<typeof destination> => destination !== null);
+    const destinations = await this.store.destinations.list();
     const routes = await this.store.routes.list();
 
     return createPortableConfiguration(

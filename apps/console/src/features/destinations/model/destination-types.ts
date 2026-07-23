@@ -1,29 +1,20 @@
-import type { DestinationSummary, JsonValue, SourceSummary } from "@vane/core";
+import type {
+  DestinationListItem,
+  DestinationPreviewResult,
+  DestinationSummary,
+  DestinationTestResult,
+} from "@vane/core";
 import type { DestinationCatalogItem } from "@vane/destinations";
 
-export type { DestinationSummary };
+export type { DestinationListItem, DestinationSummary };
 
 export type DestinationCatalog = DestinationCatalogItem[];
 
-export interface DestinationTestNotice {
-  destination: DestinationSummary;
-  success: boolean;
-  statusCode: number | null;
-  responseBody: string | null;
-  error: string | null;
-}
+/** Dashboard list/query surface — always includes secret-safe config summary. */
+export type DestinationRow = DestinationListItem;
 
-export interface DestinationPreviewNotice {
-  destination: DestinationSummary;
-  renderedPayload: JsonValue;
-  sample?: {
-    kind: "built_in" | "historical_event";
-    eventId: string;
-    source: SourceSummary;
-    receivedAt: string | null;
-  };
-  context?: unknown;
-  normalizedEvent?: unknown;
-  diagnostics?: unknown;
-  rawPayloadReference?: unknown;
-}
+/** Test mutation notice — same contract as `@vane/core` DestinationTestResult. */
+export type DestinationTestNotice = DestinationTestResult;
+
+/** Preview mutation notice — same contract as `@vane/core` DestinationPreviewResult. */
+export type DestinationPreviewNotice = DestinationPreviewResult;

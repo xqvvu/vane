@@ -340,12 +340,15 @@ Keep the visual system compact and utilitarian:
   shells, pagination, status presentation, row height, and action density
   through `components/common`; keep the column content itself in the owning
   feature.
-- Destinations tables should surface safe operational facts first: target
+- Destinations tables should surface operator-visible facts first: target
   identity, adapter kind, enabled/disabled status, enabled route coverage,
-  secret-safe configuration metadata, and explicit test/preview/edit/toggle
-  actions. Do not show plaintext endpoints, signing secrets, tokens, passwords,
-  or raw config. Recent delivery health belongs in the Destinations table only
-  after a server-side, secret-safe summary DTO exists.
+  operational configuration (endpoint URL, method, recipients, template mode),
+  and explicit test/preview/edit/toggle actions. Vane is a private self-hosted
+  product: authenticated dashboard operators should see the config they need to
+  run on-call workflows. Still never return signing secrets, passwords, Source
+  tokens, token hashes, or sensitive header values into list/query data. Recent
+  delivery health belongs in the Destinations table only after a server-side
+  summary DTO exists.
 - Make destructive, delivery, test, retry, secret, and token-related actions
   explicit.
 - Do not introduce one-off styling systems, icon sets, chart libraries, or
@@ -402,12 +405,21 @@ Use shadcn for shared UI primitives and app composition.
 
 ## Security And Data Exposure
 
-- Keep source tokens, token hashes, additional shared secrets, destination secrets,
-  signing secrets, SMTP passwords, webhook URLs with embedded secrets, and raw
-  sensitive config server-side.
-- Redact raw payloads and headers before ordinary UI display or logging.
-- Do not expose secrets through route loader data, client components, query
-  data, route context, serialized route data, TOML exports, or console logs.
+Vane is self-hosted, not multi-tenant SaaS. Prefer operational visibility for
+authenticated dashboard operators; only true secrets stay out of browser state.
+
+- Keep Source tokens, token hashes, additional shared secrets, destination
+  signing secrets, SMTP/gateway passwords, and sensitive Authorization header
+  values server-side (or empty on edit with preserve/replace/clear semantics).
+- Operational destination fields (endpoint URL, method, recipients, template
+  mode/source, header names) may appear in authenticated dashboard list/detail
+  DTOs so SRE can verify configuration without opening the database.
+- Redact sensitive keys inside raw provider payloads/headers and transport
+  response bodies before ordinary debug UI display or logging.
+- Do not expose Source tokens, signing secrets, passwords, token hashes, or
+  sensitive header values through route loader data, client components, query
+  data, route context, serialized route data, default TOML exports, or console
+  logs.
 - Mark the modules that directly touch secrets or server-exclusive APIs
   (`node:*`, the SQLite driver, filesystem, `process.env` / secret config,
   `better-auth` server runtime) with `import "@tanstack/react-start/server-only";`

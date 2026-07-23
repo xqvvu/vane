@@ -17,7 +17,6 @@ import { showWorkerRunToast } from "#/features/operations/ui/worker-notice-panel
 import { sourcesQueryOptions } from "#/features/sources/api/source.queries";
 import { useTranslations } from "#/i18n/use-i18n";
 import { DashboardContentLayout } from "#/shell/dashboard-layout";
-import { DashboardSidebar } from "#/shell/dashboard-sidebar";
 
 export interface DeliveriesPageProps {
   search: DashboardOperationSearch;
@@ -88,6 +87,13 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             }
             onResetFilters={resetFilters}
           />
+          <OperationFilters
+            configuration={operationConfiguration}
+            search={search}
+            pending={pending}
+            onChange={onSearchChange}
+            layout="toolbar"
+          />
           <DeliveriesTable
             deliveries={operations.deliveries.items}
             nextCursor={operations.deliveries.nextCursor}
@@ -113,17 +119,6 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             onLatest={() => onSearchChange({ deliveryCursor: "" })}
           />
         </>
-      }
-      sidebar={
-        <DashboardSidebar variant="split">
-          <OperationFilters
-            configuration={operationConfiguration}
-            search={search}
-            pending={pending}
-            onChange={onSearchChange}
-            layout="rail"
-          />
-        </DashboardSidebar>
       }
     />
   );

@@ -83,7 +83,11 @@ density without cramped line-height.
 - Use a max-width work area where helpful, but allow dense tables to span the
   available width.
 - Prefer a two-column operational layout on desktop: primary table/list on the
-  left, filters/forms/summary on the right.
+  left, forms/summary on the right.
+- For Events/Deliveries filters: use a horizontal toolbar pattern — primary
+  search input, Filters popover with dimension selects, removable active filter
+  chips, and a filter count badge. Do not stack six labeled selects in the right
+  rail as the primary filter surface.
 - On narrow screens, stack the right rail under the main content and keep actions
   reachable.
 - Use 1px semantic borders and flat surfaces. Use subtle background contrast for

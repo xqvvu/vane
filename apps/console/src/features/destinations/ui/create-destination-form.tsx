@@ -8,7 +8,7 @@ import {
 import type {
   CreateDestinationFormInput,
   DestinationCatalog,
-  DestinationSubmitResult,
+  DestinationSubmitHandler,
   PreviewDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types";
 import { useTranslations } from "#/i18n/use-i18n";
@@ -25,8 +25,8 @@ export function CreateDestinationForm({
   showHeader?: boolean;
   layout?: "panel" | "dialog";
   pending: boolean;
-  onPreview: (input: PreviewDestinationFormInput) => DestinationSubmitResult;
-  onSubmit: (input: CreateDestinationFormInput) => DestinationSubmitResult;
+  onPreview: DestinationSubmitHandler<PreviewDestinationFormInput>;
+  onSubmit: DestinationSubmitHandler<CreateDestinationFormInput>;
 }) {
   const t = useTranslations();
 

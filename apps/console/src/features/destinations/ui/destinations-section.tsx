@@ -6,22 +6,23 @@ import type { RouteDefinition } from "@vane/core";
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
 import { OperationsTable } from "#/components/common/operations-table";
 import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage";
-import type { DestinationSummary } from "#/features/destinations/model/destination-types";
+import type { DestinationListItem } from "#/features/destinations/model/destination-types";
 import { DestinationActions } from "#/features/destinations/ui/destination-actions";
 import { DestinationIdentityCell } from "#/features/destinations/ui/destination-identity-cell";
+import { DestinationOperationalConfigCell } from "#/features/destinations/ui/destination-operational-config-cell";
 import { DestinationRouteCoverageCell } from "#/features/destinations/ui/destination-route-coverage-cell";
 import { DestinationsEmptyState } from "#/features/destinations/ui/destinations-empty-state";
 import { useTranslations } from "#/i18n/use-i18n";
 
 export interface DestinationsSectionProps {
-  destinations: DestinationSummary[];
+  destinations: DestinationListItem[];
   routes: RouteDefinition[];
   pending: boolean;
-  onTest: (destination: DestinationSummary) => void;
-  onPreview: (destination: DestinationSummary) => void;
+  onTest: (destination: DestinationListItem) => void;
+  onPreview: (destination: DestinationListItem) => void;
   onEdit: (destinationId: string) => void;
-  onToggle: (destination: DestinationSummary) => void;
-  onDelete: (destination: DestinationSummary) => void;
+  onToggle: (destination: DestinationListItem) => void;
+  onDelete: (destination: DestinationListItem) => void;
 }
 
 export function DestinationsSection({
@@ -36,12 +37,17 @@ export function DestinationsSection({
 }: DestinationsSectionProps) {
   const t = useTranslations();
   const data = React.useMemo(() => destinations, [destinations]);
-  const columns = React.useMemo<Array<ColumnDef<DestinationSummary>>>(
+  const columns = React.useMemo<Array<ColumnDef<DestinationListItem>>>(
     () => [
       {
         id: "destination",
         header: t("destinations.table.headers.destination"),
         cell: ({ row }) => <DestinationIdentityCell destination={row.original} />,
+      },
+      {
+        id: "operationalConfig",
+        header: t("destinations.table.headers.operationalConfig"),
+        cell: ({ row }) => <DestinationOperationalConfigCell destination={row.original} />,
       },
       {
         id: "routing",
@@ -99,13 +105,15 @@ export function DestinationsSection({
 function destinationsColumnClassName(columnId: string): string | null {
   switch (columnId) {
     case "destination":
-      return "w-[35%]";
+      return "w-[24%]";
+    case "operationalConfig":
+      return "w-[24%]";
     case "routing":
-      return "w-[18%]";
-    case "status":
       return "w-[14%]";
+    case "status":
+      return "w-[10%]";
     case "actions":
-      return "w-[33%]";
+      return "w-[28%]";
     default:
       return null;
   }

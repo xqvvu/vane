@@ -34,6 +34,37 @@ describe("dashboard server function auth gates", () => {
     },
   );
 
+  it("keeps destination configuration RPCs on the dashboard auth path", () => {
+    const configuration = readFileSync(
+      path.join(functionsDir, "configuration.functions.ts"),
+      "utf8",
+    );
+    const webhookRoute = readFileSync(
+      path.join(routesDir, "api/sources/$sourceId/webhook.ts"),
+      "utf8",
+    );
+
+    for (const name of [
+      "listDestinationsFn",
+      "createDestinationFn",
+      "updateDestinationFn",
+      "testDestinationFn",
+      "previewDestinationFn",
+      "previewDestinationDraftFn",
+      "previewDestinationUpdateFn",
+      "deleteDestinationFn",
+    ]) {
+      expect(configuration).toContain(`export const ${name}`);
+    }
+
+    expect(configuration).toContain("requireDashboardContextMiddleware");
+    expect(configuration).not.toContain("sourceToken");
+    expect(configuration).not.toContain("verifySource");
+    expect(webhookRoute).not.toContain("requireDashboardContextMiddleware");
+    expect(webhookRoute).not.toContain("listDestinationsFn");
+    expect(webhookRoute).not.toContain("createDestinationFn");
+  });
+
   it("protects the dashboard route loader with a login redirect", () => {
     const indexRoute = readFileSync(path.join(routesDir, "index.tsx"), "utf8");
     const dashboardRoute = readFileSync(path.join(routesDir, "_dashboard.tsx"), "utf8");

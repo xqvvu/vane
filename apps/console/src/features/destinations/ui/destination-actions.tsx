@@ -21,7 +21,7 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import type { DestinationListItem } from "#/features/destinations/ui/destination-ui-types";
 import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationActions({
@@ -33,13 +33,13 @@ export function DestinationActions({
   onToggle,
   onDelete,
 }: {
-  destination: DestinationSummary;
+  destination: DestinationListItem;
   pending: boolean;
-  onTest: (destination: DestinationSummary) => void;
-  onPreview: (destination: DestinationSummary) => void;
+  onTest: (destination: DestinationListItem) => void;
+  onPreview: (destination: DestinationListItem) => void;
   onEdit: (destinationId: string) => void;
-  onToggle: (destination: DestinationSummary) => void;
-  onDelete: (destination: DestinationSummary) => void;
+  onToggle: (destination: DestinationListItem) => void;
+  onDelete: (destination: DestinationListItem) => void;
 }) {
   const t = useTranslations();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);

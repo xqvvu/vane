@@ -72,6 +72,13 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
             onRefresh={() => void refreshOperations()}
             onResetFilters={resetFilters}
           />
+          <OperationFilters
+            configuration={operationConfiguration}
+            search={search}
+            pending={pending}
+            onChange={onSearchChange}
+            layout="toolbar"
+          />
           <EventsTable
             events={operations.events.items}
             page={operations.events.page}
@@ -92,13 +99,6 @@ export function EventsPage({ search, filters, onSearchChange }: EventsPageProps)
       }
       sidebar={
         <DashboardSidebar variant="split">
-          <OperationFilters
-            configuration={operationConfiguration}
-            search={search}
-            pending={pending}
-            onChange={onSearchChange}
-            layout="rail"
-          />
           <OperationalSummary
             sources={sources}
             destinations={destinations}

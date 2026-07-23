@@ -24,6 +24,18 @@ import {
 
 import { requireDashboardContextMiddleware } from "#/middlewares/dashboard-context.middleware";
 
+/**
+ * Dashboard configuration RPCs.
+ *
+ * Auth boundary: every export below uses `requireDashboardContextMiddleware`
+ * (session cookie / Better Auth). Webhook intake must never call these; it uses
+ * Source token auth on `routes/api/sources/$sourceId/webhook` instead.
+ *
+ * Contract boundary: command schemas and secret-safe result DTOs live in
+ * `@vane/core`. Handlers only validate (via `.validator`), establish dashboard
+ * context, call a capability service, and return the service DTO.
+ */
+
 export const listSourcesFn = createServerFn({ method: "GET" })
   .middleware([requireDashboardContextMiddleware])
   .handler(async ({ context }) =>

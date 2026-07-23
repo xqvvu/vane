@@ -9,26 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root";
-import { Route as SetupRouteImport } from "./routes/setup";
-import { Route as LoginRouteImport } from "./routes/login";
-import { Route as DashboardRouteImport } from "./routes/_dashboard";
 import { Route as IndexRouteImport } from "./routes/index";
-import { Route as ApiReadyRouteImport } from "./routes/api/ready";
-import { Route as ApiHealthRouteImport } from "./routes/api/health";
-import { Route as DashboardSourcesRouteImport } from "./routes/_dashboard.sources";
-import { Route as DashboardSettingsRouteImport } from "./routes/_dashboard.settings";
-import { Route as DashboardRoutesRouteImport } from "./routes/_dashboard.routes";
-import { Route as DashboardEventsRouteImport } from "./routes/_dashboard.events";
-import { Route as DashboardDestinationsRouteImport } from "./routes/_dashboard.destinations";
+import { Route as DashboardRouteImport } from "./routes/_dashboard";
+import { Route as LoginRouteImport } from "./routes/login";
+import { Route as SetupRouteImport } from "./routes/setup";
 import { Route as DashboardDeliveriesRouteImport } from "./routes/_dashboard.deliveries";
-import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
-import { Route as DashboardEventsEventIdRouteImport } from "./routes/_dashboard.events_.$eventId";
+import { Route as DashboardDestinationsRouteImport } from "./routes/_dashboard.destinations";
+import { Route as DashboardEventsRouteImport } from "./routes/_dashboard.events";
+import { Route as DashboardRoutesRouteImport } from "./routes/_dashboard.routes";
+import { Route as DashboardSettingsRouteImport } from "./routes/_dashboard.settings";
+import { Route as DashboardSourcesRouteImport } from "./routes/_dashboard.sources";
+import { Route as ApiHealthRouteImport } from "./routes/api/health";
+import { Route as ApiReadyRouteImport } from "./routes/api/ready";
 import { Route as DashboardDeliveriesDeliveryIdRouteImport } from "./routes/_dashboard.deliveries_.$deliveryId";
+import { Route as DashboardEventsEventIdRouteImport } from "./routes/_dashboard.events_.$eventId";
+import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
 import { Route as ApiSourcesSourceIdWebhookRouteImport } from "./routes/api/sources/$sourceId/webhook";
 
-const SetupRoute = SetupRouteImport.update({
-  id: "/setup",
-  path: "/setup",
+const IndexRoute = IndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const DashboardRoute = DashboardRouteImport.update({
+  id: "/_dashboard",
   getParentRoute: () => rootRouteImport,
 } as any);
 const LoginRoute = LoginRouteImport.update({
@@ -36,43 +40,14 @@ const LoginRoute = LoginRouteImport.update({
   path: "/login",
   getParentRoute: () => rootRouteImport,
 } as any);
-const DashboardRoute = DashboardRouteImport.update({
-  id: "/_dashboard",
+const SetupRoute = SetupRouteImport.update({
+  id: "/setup",
+  path: "/setup",
   getParentRoute: () => rootRouteImport,
 } as any);
-const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiReadyRoute = ApiReadyRouteImport.update({
-  id: "/api/ready",
-  path: "/api/ready",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiHealthRoute = ApiHealthRouteImport.update({
-  id: "/api/health",
-  path: "/api/health",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const DashboardSourcesRoute = DashboardSourcesRouteImport.update({
-  id: "/sources",
-  path: "/sources",
-  getParentRoute: () => DashboardRoute,
-} as any);
-const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
-  id: "/settings",
-  path: "/settings",
-  getParentRoute: () => DashboardRoute,
-} as any);
-const DashboardRoutesRoute = DashboardRoutesRouteImport.update({
-  id: "/routes",
-  path: "/routes",
-  getParentRoute: () => DashboardRoute,
-} as any);
-const DashboardEventsRoute = DashboardEventsRouteImport.update({
-  id: "/events",
-  path: "/events",
+const DashboardDeliveriesRoute = DashboardDeliveriesRouteImport.update({
+  id: "/deliveries",
+  path: "/deliveries",
   getParentRoute: () => DashboardRoute,
 } as any);
 const DashboardDestinationsRoute = DashboardDestinationsRouteImport.update({
@@ -80,20 +55,35 @@ const DashboardDestinationsRoute = DashboardDestinationsRouteImport.update({
   path: "/destinations",
   getParentRoute: () => DashboardRoute,
 } as any);
-const DashboardDeliveriesRoute = DashboardDeliveriesRouteImport.update({
-  id: "/deliveries",
-  path: "/deliveries",
+const DashboardEventsRoute = DashboardEventsRouteImport.update({
+  id: "/events",
+  path: "/events",
   getParentRoute: () => DashboardRoute,
 } as any);
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: "/api/auth/$",
-  path: "/api/auth/$",
+const DashboardRoutesRoute = DashboardRoutesRouteImport.update({
+  id: "/routes",
+  path: "/routes",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: "/settings",
+  path: "/settings",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardSourcesRoute = DashboardSourcesRouteImport.update({
+  id: "/sources",
+  path: "/sources",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: "/api/health",
+  path: "/api/health",
   getParentRoute: () => rootRouteImport,
 } as any);
-const DashboardEventsEventIdRoute = DashboardEventsEventIdRouteImport.update({
-  id: "/events_/$eventId",
-  path: "/events/$eventId",
-  getParentRoute: () => DashboardRoute,
+const ApiReadyRoute = ApiReadyRouteImport.update({
+  id: "/api/ready",
+  path: "/api/ready",
+  getParentRoute: () => rootRouteImport,
 } as any);
 const DashboardDeliveriesDeliveryIdRoute =
   DashboardDeliveriesDeliveryIdRouteImport.update({
@@ -101,6 +91,16 @@ const DashboardDeliveriesDeliveryIdRoute =
     path: "/deliveries/$deliveryId",
     getParentRoute: () => DashboardRoute,
   } as any);
+const DashboardEventsEventIdRoute = DashboardEventsEventIdRouteImport.update({
+  id: "/events_/$eventId",
+  path: "/events/$eventId",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: "/api/auth/$",
+  path: "/api/auth/$",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ApiSourcesSourceIdWebhookRoute =
   ApiSourcesSourceIdWebhookRouteImport.update({
     id: "/api/sources/$sourceId/webhook",
@@ -229,18 +229,11 @@ export interface RootRouteChildren {
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    "/setup": {
-      id: "/setup";
-      path: "/setup";
-      fullPath: "/setup";
-      preLoaderRoute: typeof SetupRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/login": {
-      id: "/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof LoginRouteImport;
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/_dashboard": {
@@ -250,53 +243,25 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof DashboardRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
+    "/login": {
+      id: "/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof LoginRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/api/ready": {
-      id: "/api/ready";
-      path: "/api/ready";
-      fullPath: "/api/ready";
-      preLoaderRoute: typeof ApiReadyRouteImport;
+    "/setup": {
+      id: "/setup";
+      path: "/setup";
+      fullPath: "/setup";
+      preLoaderRoute: typeof SetupRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/api/health": {
-      id: "/api/health";
-      path: "/api/health";
-      fullPath: "/api/health";
-      preLoaderRoute: typeof ApiHealthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_dashboard/sources": {
-      id: "/_dashboard/sources";
-      path: "/sources";
-      fullPath: "/sources";
-      preLoaderRoute: typeof DashboardSourcesRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/_dashboard/settings": {
-      id: "/_dashboard/settings";
-      path: "/settings";
-      fullPath: "/settings";
-      preLoaderRoute: typeof DashboardSettingsRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/_dashboard/routes": {
-      id: "/_dashboard/routes";
-      path: "/routes";
-      fullPath: "/routes";
-      preLoaderRoute: typeof DashboardRoutesRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/_dashboard/events": {
-      id: "/_dashboard/events";
-      path: "/events";
-      fullPath: "/events";
-      preLoaderRoute: typeof DashboardEventsRouteImport;
+    "/_dashboard/deliveries": {
+      id: "/_dashboard/deliveries";
+      path: "/deliveries";
+      fullPath: "/deliveries";
+      preLoaderRoute: typeof DashboardDeliveriesRouteImport;
       parentRoute: typeof DashboardRoute;
     };
     "/_dashboard/destinations": {
@@ -306,19 +271,54 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof DashboardDestinationsRouteImport;
       parentRoute: typeof DashboardRoute;
     };
-    "/_dashboard/deliveries": {
-      id: "/_dashboard/deliveries";
-      path: "/deliveries";
-      fullPath: "/deliveries";
-      preLoaderRoute: typeof DashboardDeliveriesRouteImport;
+    "/_dashboard/events": {
+      id: "/_dashboard/events";
+      path: "/events";
+      fullPath: "/events";
+      preLoaderRoute: typeof DashboardEventsRouteImport;
       parentRoute: typeof DashboardRoute;
     };
-    "/api/auth/$": {
-      id: "/api/auth/$";
-      path: "/api/auth/$";
-      fullPath: "/api/auth/$";
-      preLoaderRoute: typeof ApiAuthSplatRouteImport;
+    "/_dashboard/routes": {
+      id: "/_dashboard/routes";
+      path: "/routes";
+      fullPath: "/routes";
+      preLoaderRoute: typeof DashboardRoutesRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/settings": {
+      id: "/_dashboard/settings";
+      path: "/settings";
+      fullPath: "/settings";
+      preLoaderRoute: typeof DashboardSettingsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/sources": {
+      id: "/_dashboard/sources";
+      path: "/sources";
+      fullPath: "/sources";
+      preLoaderRoute: typeof DashboardSourcesRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/api/health": {
+      id: "/api/health";
+      path: "/api/health";
+      fullPath: "/api/health";
+      preLoaderRoute: typeof ApiHealthRouteImport;
       parentRoute: typeof rootRouteImport;
+    };
+    "/api/ready": {
+      id: "/api/ready";
+      path: "/api/ready";
+      fullPath: "/api/ready";
+      preLoaderRoute: typeof ApiReadyRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_dashboard/deliveries_/$deliveryId": {
+      id: "/_dashboard/deliveries_/$deliveryId";
+      path: "/deliveries/$deliveryId";
+      fullPath: "/deliveries/$deliveryId";
+      preLoaderRoute: typeof DashboardDeliveriesDeliveryIdRouteImport;
+      parentRoute: typeof DashboardRoute;
     };
     "/_dashboard/events_/$eventId": {
       id: "/_dashboard/events_/$eventId";
@@ -327,12 +327,12 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof DashboardEventsEventIdRouteImport;
       parentRoute: typeof DashboardRoute;
     };
-    "/_dashboard/deliveries_/$deliveryId": {
-      id: "/_dashboard/deliveries_/$deliveryId";
-      path: "/deliveries/$deliveryId";
-      fullPath: "/deliveries/$deliveryId";
-      preLoaderRoute: typeof DashboardDeliveriesDeliveryIdRouteImport;
-      parentRoute: typeof DashboardRoute;
+    "/api/auth/$": {
+      id: "/api/auth/$";
+      path: "/api/auth/$";
+      fullPath: "/api/auth/$";
+      preLoaderRoute: typeof ApiAuthSplatRouteImport;
+      parentRoute: typeof rootRouteImport;
     };
     "/api/sources/$sourceId/webhook": {
       id: "/api/sources/$sourceId/webhook";

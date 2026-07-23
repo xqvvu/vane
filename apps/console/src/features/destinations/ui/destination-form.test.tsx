@@ -12,6 +12,7 @@ import {
 import type {
   DestinationCatalog,
   DestinationFormPreviewInput,
+  DestinationSubmitResult,
 } from "#/features/destinations/ui/destination-ui-types";
 import { VaneIntlProvider } from "#/i18n/provider";
 
@@ -128,7 +129,7 @@ describe("destination form", () => {
   });
 
   it("previews the selected resolved status", async () => {
-    const onPreview = vi.fn<(input: DestinationFormPreviewInput) => unknown>();
+    const onPreview = vi.fn<(input: DestinationFormPreviewInput) => DestinationSubmitResult>();
 
     renderDestinationForm(
       {
@@ -168,7 +169,7 @@ function renderDestinationForm(
   overrides: Partial<ReturnType<typeof createDestinationDefaults>> = {},
   options: {
     destinationCatalog?: DestinationCatalog;
-    onPreview?: (input: DestinationFormPreviewInput) => unknown;
+    onPreview?: (input: DestinationFormPreviewInput) => DestinationSubmitResult;
   } = {},
 ) {
   render(
@@ -181,8 +182,11 @@ function renderDestinationForm(
           ...createDestinationDefaults(),
           ...overrides,
         }}
-        onPreview={options.onPreview ?? vi.fn<() => unknown>()}
-        onSubmit={vi.fn<() => unknown>()}
+        onPreview={
+          options.onPreview ??
+          vi.fn<(input: DestinationFormPreviewInput) => DestinationSubmitResult>()
+        }
+        onSubmit={vi.fn<() => DestinationSubmitResult>()}
       />
     </VaneIntlProvider>,
   );

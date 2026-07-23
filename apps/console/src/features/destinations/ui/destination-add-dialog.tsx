@@ -15,7 +15,7 @@ import { useDestinationMutations } from "#/features/destinations/api/destination
 import { CreateDestinationForm } from "#/features/destinations/ui/create-destination-form";
 import type {
   DestinationCatalog,
-  DestinationSubmitResult,
+  DestinationSubmitHandler,
   PreviewDestinationFormInput,
 } from "#/features/destinations/ui/destination-ui-types";
 import { useTranslations } from "#/i18n/use-i18n";
@@ -27,7 +27,7 @@ export function DestinationAddDialog({
 }: {
   destinationCatalog: DestinationCatalog;
   disabled?: boolean;
-  onPreview: (input: PreviewDestinationFormInput) => DestinationSubmitResult;
+  onPreview: DestinationSubmitHandler<PreviewDestinationFormInput>;
 }) {
   const t = useTranslations();
   const [open, setOpen] = React.useState(false);

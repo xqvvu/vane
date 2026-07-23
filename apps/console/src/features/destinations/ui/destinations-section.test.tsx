@@ -7,11 +7,11 @@ import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?ur
 import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";
 import webhookIconUrl from "@vane/destinations/assets/destination-icons/webhook.svg?url";
 
-import type { DestinationSummary } from "#/features/destinations/ui/destination-ui-types";
+import type { DestinationListItem } from "#/features/destinations/ui/destination-ui-types";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section";
 import { VaneIntlProvider } from "#/i18n/provider";
 
-type DestinationActionHandler = (destination: DestinationSummary) => void;
+type DestinationActionHandler = (destination: DestinationListItem) => void;
 type DestinationEditHandler = (destinationId: string) => void;
 
 describe("destinations section table", () => {
@@ -38,12 +38,13 @@ describe("destinations section table", () => {
     );
 
     expect(screen.getByText("Destination")).toBeTruthy();
+    expect(screen.getByText("Configuration")).toBeTruthy();
     expect(screen.getByText("Routing")).toBeTruthy();
     expect(screen.getByText("Status")).toBeTruthy();
     expect(screen.getByText("Actions")).toBeTruthy();
     expect(screen.queryByText("Kind")).toBeNull();
-    expect(screen.queryByText("Safe configuration")).toBeNull();
     expect(screen.getByText("11 destinations")).toBeTruthy();
+    expect(screen.getAllByText("https://example.test/hook").length).toBeGreaterThan(0);
     expect(screen.getByText("Destination 10")).toBeTruthy();
     expect(screen.queryByText("Destination 11")).toBeNull();
 
@@ -177,13 +178,28 @@ describe("destinations section table", () => {
 
 function destinationFixture(
   index: number,
-  kind: DestinationSummary["kind"] = index % 2 === 0 ? "feishu" : "generic_webhook",
-): DestinationSummary {
+  kind: DestinationListItem["kind"] = index % 2 === 0 ? "feishu" : "generic_webhook",
+): DestinationListItem {
   return {
     id: `destination-${index}`,
     name: `Destination ${index}`,
     kind,
     enabled: index % 2 === 0,
+    operationalConfig: {
+      endpoint: kind === "email" ? null : "https://example.test/hook",
+      host: kind === "email" ? null : "example.test",
+      templateConfigured: false,
+      templateMode: null,
+      templateSource: null,
+      signingConfigured: kind === "feishu",
+      method: kind === "generic_webhook" ? "POST" : null,
+      to: null,
+      from: null,
+      replyTo: null,
+      subjectPrefix: null,
+      headerNames: null,
+      secretFieldPaths: kind === "email" ? [] : ["webhookUrl"],
+    },
   };
 }
 

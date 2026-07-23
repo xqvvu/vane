@@ -13,6 +13,11 @@ import {
   updateDestinationFn,
 } from "#/server/functions/configuration.functions";
 
+/**
+ * Destinations mutation surface.
+ * Components should call these hooks instead of importing server functions
+ * directly, so invalidation and typed DTOs stay next to the Query layer.
+ */
 export function useDestinationMutations() {
   const queryClient = useQueryClient();
   const createDestination = useServerFn(createDestinationFn);

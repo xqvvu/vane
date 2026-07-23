@@ -1,5 +1,7 @@
-import type { DestinationKind } from "#core/destination/destination";
-import type { JsonObject } from "#core/json";
+import {
+  DestinationEditorDraftResultSchema,
+  type DestinationEditorDraftResult,
+} from "#core/destination/destination";
 import type { VaneLocale } from "#core/presentation";
 
 export interface AppSettings {
@@ -8,11 +10,9 @@ export interface AppSettings {
   rawPayloadRetentionDays: number;
 }
 
-export interface DestinationTemplateDraftResult {
-  destinationId: string;
-  kind: DestinationKind;
-  template: JsonObject | null;
-}
+/** Template-only alias kept for older call sites; prefer DestinationEditorDraftResult. */
+export const DestinationTemplateDraftResultSchema = DestinationEditorDraftResultSchema;
+export type DestinationTemplateDraftResult = DestinationEditorDraftResult;
 
 export interface ImportConfigurationResult {
   generatedSourceTokens: Array<{
@@ -21,3 +21,5 @@ export interface ImportConfigurationResult {
     token: string;
   }>;
 }
+
+export { DestinationEditorDraftResultSchema, type DestinationEditorDraftResult };

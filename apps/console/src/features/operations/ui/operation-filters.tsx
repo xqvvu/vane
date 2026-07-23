@@ -1,7 +1,19 @@
+import { RiCloseLine, RiFilter3Line, RiSearchLine } from "@remixicon/react";
+
 import type { DestinationSummary, SourceSummary } from "@vane/core";
 
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import { Field as UiField, FieldGroup, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "#/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -14,12 +26,14 @@ import type { DashboardOperationSearch } from "#/features/operations/model/opera
 import { useTranslations } from "#/i18n/use-i18n";
 import { cn } from "#/lib/utils";
 
+type TranslationFn = ReturnType<typeof useTranslations>;
+
 export function OperationFilters({
   configuration,
   search,
   pending,
   onChange,
-  layout = "grid",
+  layout = "toolbar",
 }: {
   configuration: {
     sources: SourceSummary[];
@@ -28,10 +42,144 @@ export function OperationFilters({
   search: DashboardOperationSearch;
   pending: boolean;
   onChange: (next: Partial<DashboardOperationSearch>) => void;
-  layout?: "grid" | "rail";
+  /** @deprecated Prefer toolbar; rail is kept for transitional layouts. */
+  layout?: "grid" | "rail" | "toolbar";
 }) {
   const t = useTranslations();
+  const chips = activeFilterChips(search, configuration, t);
+  const activeCount = chips.length;
+  const resolvedLayout = layout === "grid" ? "toolbar" : layout;
 
+  if (resolvedLayout === "rail") {
+    return (
+      <OperationFiltersPanel
+        configuration={configuration}
+        search={search}
+        pending={pending}
+        onChange={onChange}
+        className="border-border bg-background border p-2"
+      />
+    );
+  }
+
+  return (
+    <div className="border-border bg-background flex flex-col gap-2 border p-2">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <RiSearchLine
+            aria-hidden
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2"
+          />
+          <Input
+            id="operation-search"
+            value={search.q ?? ""}
+            disabled={pending}
+            placeholder={t("operations.filters.searchPlaceholder")}
+            className="h-8 pl-7"
+            onChange={(event) => onChange({ q: event.currentTarget.value })}
+            aria-label={t("operations.filters.search")}
+          />
+        </div>
+
+        <Popover>
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pending}
+                className="shrink-0"
+              />
+            }
+          >
+            <RiFilter3Line data-icon="inline-start" aria-hidden />
+            {t("operations.filters.panelTitle")}
+            {activeCount > 0 ? (
+              <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-[10px]">
+                {activeCount}
+              </Badge>
+            ) : null}
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-3">
+            <PopoverHeader className="mb-1">
+              <PopoverTitle>{t("operations.filters.panelTitle")}</PopoverTitle>
+              <PopoverDescription>{t("operations.filters.panelDescription")}</PopoverDescription>
+            </PopoverHeader>
+            <OperationFiltersPanel
+              configuration={configuration}
+              search={search}
+              pending={pending}
+              onChange={onChange}
+              compact
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {chips.length > 0 ? (
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          {chips.map((chip) => (
+            <button
+              key={chip.key}
+              type="button"
+              disabled={pending}
+              onClick={() => onChange(chip.clear)}
+              className={cn(
+                "border-border bg-muted/50 text-foreground hover:bg-muted inline-flex h-6 max-w-full items-center gap-1 border px-1.5 text-[11px]",
+                pending ? "pointer-events-none opacity-60" : null,
+              )}
+              title={t("operations.filters.clearChip", { label: chip.label })}
+            >
+              <span className="text-muted-foreground shrink-0">{chip.label}</span>
+              <span className="min-w-0 truncate font-medium">{chip.valueLabel}</span>
+              <RiCloseLine aria-hidden className="size-3 shrink-0 opacity-70" />
+            </button>
+          ))}
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            disabled={pending}
+            className="h-6 px-1.5 text-[11px]"
+            onClick={() =>
+              onChange({
+                sourceId: "",
+                severity: "",
+                status: "",
+                destinationId: "",
+                deliveryState: "",
+                q: "",
+              })
+            }
+          >
+            {t("common.actions.resetFilters")}
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function OperationFiltersPanel({
+  configuration,
+  search,
+  pending,
+  onChange,
+  compact = false,
+  className,
+}: {
+  configuration: {
+    sources: SourceSummary[];
+    destinations: DestinationSummary[];
+  };
+  search: DashboardOperationSearch;
+  pending: boolean;
+  onChange: (next: Partial<DashboardOperationSearch>) => void;
+  compact?: boolean;
+  className?: string;
+}) {
+  const t = useTranslations();
   const sourceItems = [
     { value: null, label: t("operations.filters.anySource") },
     ...configuration.sources.map((source) => ({ value: source.id, label: source.name })),
@@ -47,8 +195,9 @@ export function OperationFilters({
   return (
     <FieldGroup
       className={cn(
-        "border-border bg-background grid gap-2 border p-2",
-        layout === "grid" ? "md:grid-cols-3 xl:grid-cols-6" : null,
+        "grid gap-2",
+        compact ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1",
+        className,
       )}
     >
       <UiField>
@@ -163,7 +312,7 @@ export function OperationFilters({
           </SelectContent>
         </Select>
       </UiField>
-      <UiField>
+      <UiField className={compact ? "sm:col-span-2" : undefined}>
         <FieldLabel htmlFor="operation-delivery-state">
           {t("operations.filters.deliveryState")}
         </FieldLabel>
@@ -198,16 +347,82 @@ export function OperationFilters({
           </SelectContent>
         </Select>
       </UiField>
-      <UiField>
-        <FieldLabel htmlFor="operation-search">{t("operations.filters.search")}</FieldLabel>
-        <Input
-          id="operation-search"
-          value={search.q ?? ""}
-          disabled={pending}
-          placeholder={t("operations.filters.searchPlaceholder")}
-          onChange={(event) => onChange({ q: event.currentTarget.value })}
-        />
-      </UiField>
     </FieldGroup>
   );
+}
+
+interface ActiveFilterChip {
+  key: string;
+  label: string;
+  valueLabel: string;
+  clear: Partial<DashboardOperationSearch>;
+}
+
+function activeFilterChips(
+  search: DashboardOperationSearch,
+  configuration: {
+    sources: SourceSummary[];
+    destinations: DestinationSummary[];
+  },
+  t: TranslationFn,
+): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = [];
+
+  if (search.q?.trim()) {
+    chips.push({
+      key: "q",
+      label: t("operations.filters.search"),
+      valueLabel: search.q.trim(),
+      clear: { q: "" },
+    });
+  }
+
+  if (search.sourceId) {
+    const source = configuration.sources.find((item) => item.id === search.sourceId);
+    chips.push({
+      key: "sourceId",
+      label: t("operations.filters.source"),
+      valueLabel: source?.name ?? search.sourceId,
+      clear: { sourceId: "" },
+    });
+  }
+
+  if (search.severity) {
+    chips.push({
+      key: "severity",
+      label: t("operations.filters.severity"),
+      valueLabel: t(`common.severity.${search.severity}`),
+      clear: { severity: "" },
+    });
+  }
+
+  if (search.status) {
+    chips.push({
+      key: "status",
+      label: t("operations.filters.status"),
+      valueLabel: t(`common.alertStatus.${search.status}`),
+      clear: { status: "" },
+    });
+  }
+
+  if (search.destinationId) {
+    const destination = configuration.destinations.find((item) => item.id === search.destinationId);
+    chips.push({
+      key: "destinationId",
+      label: t("operations.filters.destination"),
+      valueLabel: destination?.name ?? search.destinationId,
+      clear: { destinationId: "" },
+    });
+  }
+
+  if (search.deliveryState) {
+    chips.push({
+      key: "deliveryState",
+      label: t("operations.filters.deliveryState"),
+      valueLabel: t(`common.deliveryState.${search.deliveryState}`),
+      clear: { deliveryState: "" },
+    });
+  }
+
+  return chips;
 }

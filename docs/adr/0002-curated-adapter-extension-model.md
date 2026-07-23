@@ -36,7 +36,10 @@ Manifest primitives 放在 `@vane/core`，包括配置字段、secret 字段、�
 
 `@vane/core` 中的 manifest primitives 必须保持 JSON-safe 和可序列化，只包含数据 schema、字段描述、catalog DTO、lifecycle 与 config version 等契约。它们不能包含函数、class、React component、RegExp、fetch、parse/send、transport context 或任何运行时 adapter 行为。
 
-安全配置摘要默认由 manifest 字段描述生成，adapter 可在服务端提供 override。默认摘要只展示非敏感字段、secret 是否已配置、URL host 等安全信息；复杂 adapter 可以返回更贴近目标系统语义的 `JsonObject`，但 console 不展示 raw config。
+运维配置摘要默认由 console 从 runtime config 投影生成，adapter 可在服务端提供 override。Vane 是
+私有部署产品：摘要应对已认证操作者展示 endpoint URL、method、收件人、模板 mode 等运维事实；签名
+密钥、密码与敏感 header 值不进入摘要。复杂 adapter 可以返回更贴近目标系统语义的 `JsonObject`，
+但不得把 signing secret / password 放进 list 或 ordinary query DTO。
 
 MVP 中 provider adapter 每次 parse 仍返回单个规范化告警，对应一个入站 Webhook 形成的告警事件。包含多个 alert item 的上游载荷先由 adapter 归并为一个规范化告警，并在 metadata 中记录 `alertCount`、group key 等信息。未来如要支持 batch fan-out，必须重新讨论 Event 语义、raw payload 归属、request-level 与 item-level idempotency、delivery dedupe、route match 和 UI 详情模型，而不能只把 parse 返回值改成数组。
 

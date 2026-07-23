@@ -50,7 +50,7 @@ import type {
   DestinationFormPreviewInput,
   DestinationFormSubmitInput,
   DestinationFormValues,
-  DestinationSubmitResult,
+  DestinationSubmitHandler,
 } from "#/features/destinations/ui/destination-ui-types";
 import { FeishuDynamicPropertiesField } from "#/features/destinations/ui/feishu-dynamic-properties-field";
 import { useTranslations } from "#/i18n/use-i18n";
@@ -71,8 +71,8 @@ export function DestinationForm({
   pending: boolean;
   destinationCatalog: DestinationCatalog;
   defaultValues: DestinationFormValues;
-  onPreview: (input: DestinationFormPreviewInput) => DestinationSubmitResult;
-  onSubmit: (input: DestinationFormSubmitInput) => DestinationSubmitResult;
+  onPreview: DestinationSubmitHandler<DestinationFormPreviewInput>;
+  onSubmit: DestinationSubmitHandler<DestinationFormSubmitInput>;
   onCancel?: () => void;
 }) {
   const t = useTranslations();

@@ -908,11 +908,14 @@ describe("sqlite store", () => {
     });
     expect(deliveryDetail?.destination).not.toHaveProperty("config");
     expect(deliveryDetail?.destinationMetadata).toEqual({
+      endpoint: "https://example.test/webhook",
+      host: "example.test",
       method: "POST",
       templateConfigured: false,
       headerNames: ["Authorization", "X-Team"],
     });
-    expect(JSON.stringify(deliveryDetail)).not.toContain("https://example.test/webhook");
+    // Header values stay out of delivery metadata (names only).
+    expect(JSON.stringify(deliveryDetail?.destinationMetadata)).not.toContain("Bearer");
     expect(JSON.stringify(deliveryDetail)).not.toContain("Bearer destination-secret");
     expect(deliveryDetail?.renderedPayload).toBeNull();
     expect(deliveryDetail?.attempts).toMatchObject([

@@ -13,7 +13,12 @@ import {
   type CreateDestinationCommand,
   type DeleteDestinationCommand,
   type GetDestinationTemplateDraftCommand,
+  type DestinationDeleteResult,
+  type DestinationListItem,
+  type DestinationPreviewResult,
+  type DestinationPreviewSample,
   type DestinationSummary,
+  type DestinationTestResult,
   type JsonObject,
   type PreviewDestinationDraftCommand,
   type PreviewDestinationCommand,
@@ -28,17 +33,20 @@ import { DestinationTemplateEngine } from "@vane/destinations";
 import type { TemplateDiagnostic } from "@vane/destinations";
 
 import {
+  destinationEditorFormDraftFromRuntime,
+  destinationListItemFromRuntime,
+  destinationOperationalConfigFromRuntime,
+  destinationSummaryFromRuntime,
+} from "#/infra/sqlite/repositories/destination/destination.helpers";
+import {
   createTestNormalizedEvent,
   mergeJsonObjects,
   parseDestinationConfig,
   redactNullableText,
 } from "#/server/configuration/configuration-support";
 import type {
-  DestinationPreviewResult,
-  DestinationPreviewSample,
   DestinationServiceOptions,
   DestinationTemplateDraft,
-  DestinationTestResult,
 } from "#/server/destinations/destination.service.types";
 
 export class DestinationService {
@@ -56,23 +64,26 @@ export class DestinationService {
     return this.destinations.toCatalog();
   }
 
-  async listDestinations(): Promise<DestinationSummary[]> {
-    return this.store.destinations.list();
+  async listDestinations(): Promise<DestinationListItem[]> {
+    const destinations = await this.store.destinations.list();
+
+    return destinations.map((destination) => destinationListItemFromRuntime(destination));
   }
 
-  async createDestination(command: CreateDestinationCommand): Promise<DestinationSummary> {
+  async createDestination(command: CreateDestinationCommand): Promise<DestinationListItem> {
     const input = CreateDestinationCommandSchema.parse(command);
-
-    return this.store.destinations.create({
+    const created = await this.store.destinations.create({
       name: input.name,
       kind: input.kind,
       enabled: input.enabled,
       config: parseDestinationConfig(this.destinations, input.kind, input.config),
       secretRefs: input.secretRefs,
     });
+
+    return destinationListItemFromRuntime(created);
   }
 
-  async updateDestination(command: UpdateDestinationCommand): Promise<DestinationSummary> {
+  async updateDestination(command: UpdateDestinationCommand): Promise<DestinationListItem> {
     const input = UpdateDestinationCommandSchema.parse(command);
     const current = await this.store.destinations.get(input.id);
     const kind = input.kind ?? current?.kind;
@@ -81,16 +92,18 @@ export class DestinationService {
         ? mergeJsonObjects(current.config, input.config ?? {})
         : input.config;
 
-    return this.store.destinations.update(input.id, {
+    const updated = await this.store.destinations.update(input.id, {
       name: input.name,
       kind: input.kind,
       enabled: input.enabled,
       config: config && kind ? parseDestinationConfig(this.destinations, kind, config) : config,
       secretRefs: input.secretRefs,
     });
+
+    return destinationListItemFromRuntime(updated);
   }
 
-  async deleteDestination(command: DeleteDestinationCommand): Promise<{ id: string }> {
+  async deleteDestination(command: DeleteDestinationCommand): Promise<DestinationDeleteResult> {
     const input = DeleteDestinationCommandSchema.parse(command);
 
     await this.store.transaction(async (tx) => {
@@ -118,6 +131,8 @@ export class DestinationService {
       destinationId: destination.id,
       kind: destination.kind,
       template: parsedTemplate.success ? parsedTemplate.data : null,
+      operationalConfig: destinationOperationalConfigFromRuntime(destination),
+      form: destinationEditorFormDraftFromRuntime(destination),
     };
   }
 
@@ -135,12 +150,7 @@ export class DestinationService {
       provider: "generic",
       enabled: true,
     };
-    const summary: DestinationSummary = {
-      id: destination.id,
-      name: destination.name,
-      kind: destination.kind,
-      enabled: destination.enabled,
-    };
+    const summary = destinationSummaryFromRuntime(destination);
     const normalizedEvent = createTestNormalizedEvent();
     const result = await this.destinations.send(
       destination.kind,
@@ -160,6 +170,7 @@ export class DestinationService {
       statusCode: result.statusCode,
       responseBody: redactNullableText(result.responseBody),
       error: redactNullableText(result.ok ? null : result.errorMessage),
+      renderedPayload: result.renderedPayload,
     };
   }
 
@@ -171,16 +182,14 @@ export class DestinationService {
       throw new Error(`Destination not found: ${input.id}`);
     }
 
-    const summary: DestinationSummary = {
-      id: destination.id,
-      name: destination.name,
-      kind: destination.kind,
-      enabled: destination.enabled,
-    };
-
-    return this.previewDestinationConfig(summary, destination.config, input.sampleEventId, {
-      sampleStatus: input.sampleStatus,
-    });
+    return this.previewDestinationConfig(
+      destinationSummaryFromRuntime(destination),
+      destination.config,
+      input.sampleEventId,
+      {
+        sampleStatus: input.sampleStatus,
+      },
+    );
   }
 
   async previewDestinationDraft(
@@ -377,7 +386,7 @@ function templateDiagnosticsFromConfigParseError(
     }
 
     return error.issues.map((issue) => ({
-      severity: "error",
+      severity: "error" as const,
       path: issue.path.join("."),
       variable: templateVariableFromMessage(issue.message),
       message: issue.message,

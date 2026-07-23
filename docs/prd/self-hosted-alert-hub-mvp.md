@@ -84,7 +84,7 @@ separate worker service, or SaaS-style tenancy.
 22. As an SRE, I want to create a generic webhook Destination, so that I can relay alerts to internal systems.
 23. As an SRE, I want to disable a Destination, so that I can stop outbound notifications without deleting config or history.
 24. As an SRE, I want to test a Destination from the UI, so that I can verify credentials and message formatting before routing real alerts.
-25. As an SRE, I want destination secrets to stay server-side, so that webhook URLs and signing secrets are not exposed to browser code.
+25. As an SRE, I want destination signing secrets and passwords to stay server-side, while operational endpoints and recipients remain visible in the authenticated dashboard, so that I can verify private-deploy configuration without leaking credentials into browser state or logs.
 26. As an open-source contributor, I want destination integrations to use a shared sender interface, so that Feishu, Slack, email, and webhook senders can be added consistently.
 27. As an SRE, I want to create Routes that match Sources, so that different upstream systems can notify different teams.
 28. As an SRE, I want to create Routes that match severity, so that critical alerts can go to urgent channels while lower-severity alerts go elsewhere.
