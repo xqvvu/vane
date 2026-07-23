@@ -442,14 +442,21 @@ Use shadcn for shared UI primitives and app composition.
 ## Imports
 
 - In `apps/console`, import console source through the configured alias: `#/*`.
-  Example: `import { cn } from "#/lib/utils.ts";`
+  Example: `import { cn } from "#/lib/utils";`
 - Use relative imports only for same-directory package internals, generated
   route-tree files, or colocated tests where an alias would make ownership less
   clear.
 - Import workspace packages through their package names, such as `@vane/core`,
   `@vane/providers`, and `@vane/destinations`.
-- Include `.ts` or `.tsx` extensions on local TypeScript imports, matching the
-  current compiler settings.
+- Inside workspace packages, use the package-specific internal aliases
+  `#core/*`, `#providers/*`, and `#destinations/*`; reserve `#/*` for the
+  console so aliases remain unambiguous when TypeScript follows workspace
+  package source.
+- Omit `.ts` and `.tsx` extensions from TypeScript import specifiers. Keep
+  semantic filename suffixes such as `.server`, `.client`, and `.functions`.
+  TanStack Start currently generates two extension-bearing type imports in
+  `route-tree.gen.ts`; treat that generated file as the only exception and do
+  not hand-edit it.
 - Keep server-only imports out of client components, feature UI, route loaders,
   query option files, and serialized route data.
 - Keep environment-specific imports out of shared contracts and out of the

@@ -8,7 +8,7 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "#/*": ["./src/*"]
+      "#providers/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts"]
