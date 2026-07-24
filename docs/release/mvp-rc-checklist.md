@@ -60,7 +60,8 @@ Docker runtime 形态。
 ### Route builder
 
 Route matching 层支持完整 `RouteRule` schema，但当前可视化编辑器仍偏向常见单条件编辑。导入或已有规则里
-出现多个同类条件时，编辑体验需要继续增强，避免用户在 UI 中误以为所有条件都被完全表单化表达。
+出现多个同类条件时，编辑表单会展示明确的受限编辑提示，并在保存时只改每类第一条、保留其余条件。完整
+多条件可视化编辑仍可作为后续增强。
 
 ### 模板
 
@@ -109,7 +110,7 @@ provider/destination。
 
 ### C. 产品与 UI 收尾
 
-- [ ] Route rule editor 对多 source、多 severity/status、多 label、多 title/message 条件提供完整编辑或明确的受限编辑提示。
+- [x] Route rule editor 对多 source、多 severity/status、多 label、多 title/message 条件提供完整编辑或明确的受限编辑提示。
 - [ ] Route summary / explain 文案继续打磨为运维人员容易理解的中文。
 - [x] Event detail 展示 normalized fields、raw debug data、route matches、deliveries。
 - [x] Delivery detail 展示 rendered payload、attempts、last error、next attempt、retry 操作。

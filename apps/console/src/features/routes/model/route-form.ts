@@ -70,6 +70,54 @@ export function routeFormDefaultsFromRule(rule: RouteRule): RouteFormDefaults {
   };
 }
 
+/**
+ * The visual route editor only exposes the first condition of each kind.
+ * Matching still honors full multi-value RouteRule arrays (import/TOML/API).
+ * Callers should surface a restricted-edit notice when `restricted` is true.
+ */
+export type RouteRuleFormRestrictionField =
+  | "sourceIds"
+  | "severities"
+  | "statuses"
+  | "labels"
+  | "titleContains"
+  | "messageContains";
+
+export interface RouteRuleFormRestriction {
+  field: RouteRuleFormRestrictionField;
+  total: number;
+  preserved: number;
+}
+
+export interface RouteRuleFormRestrictions {
+  restricted: boolean;
+  fields: RouteRuleFormRestriction[];
+}
+
+export function getRouteRuleFormRestrictions(rule: RouteRule): RouteRuleFormRestrictions {
+  const candidates: Array<{ field: RouteRuleFormRestrictionField; total: number }> = [
+    { field: "sourceIds", total: rule.sourceIds.length },
+    { field: "severities", total: rule.severities.length },
+    { field: "statuses", total: rule.statuses.length },
+    { field: "labels", total: rule.labels.length },
+    { field: "titleContains", total: rule.titleContains.length },
+    { field: "messageContains", total: rule.messageContains.length },
+  ];
+
+  const fields = candidates
+    .filter((candidate) => candidate.total > 1)
+    .map((candidate) => ({
+      field: candidate.field,
+      total: candidate.total,
+      preserved: candidate.total - 1,
+    }));
+
+  return {
+    restricted: fields.length > 0,
+    fields,
+  };
+}
+
 export function routeRulePatchFromForm(baseRule: RouteRule, data: FormData): RouteRule {
   return routeRulePatchFromValues(baseRule, routeFormValuesFromForm(data));
 }

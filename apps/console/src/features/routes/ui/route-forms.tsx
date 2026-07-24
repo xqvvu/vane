@@ -36,6 +36,7 @@ import {
   routeRulePatchFromValues,
   type RouteRuleFormValues,
 } from "#/features/routes/model/route-form";
+import { RouteEditRestrictedNotice } from "#/features/routes/ui/route-edit-restricted-notice";
 import { useTranslations } from "#/i18n/use-i18n";
 import { cn } from "#/lib/utils";
 
@@ -138,6 +139,7 @@ export function EditRouteForm({
       <p className="text-muted-foreground mt-1 mb-3 text-xs">
         {t("routing.form.edit.description")}
       </p>
+      <RouteEditRestrictedNotice rule={route.rule} />
       <RouteForm
         sources={sources}
         destinations={destinations}

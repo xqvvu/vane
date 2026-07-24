@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getRouteRuleFormRestrictions,
   routeFormDefaultsFromRule,
   routeRuleFromForm,
   routeRuleFromValues,
@@ -166,6 +167,44 @@ describe("route form helpers", () => {
       ],
       titleContains: ["LatencyHigh", "VolumeFull"],
       messageContains: ["timeout", "filesystem"],
+    });
+  });
+
+  it("detects multi-value conditions that the visual editor cannot fully edit", () => {
+    expect(
+      getRouteRuleFormRestrictions({
+        sourceIds: ["source-grafana"],
+        severities: ["critical"],
+        statuses: [],
+        labels: [],
+        titleContains: [],
+        messageContains: [],
+      }),
+    ).toEqual({
+      restricted: false,
+      fields: [],
+    });
+
+    expect(
+      getRouteRuleFormRestrictions({
+        sourceIds: ["source-grafana", "source-alertmanager"],
+        severities: ["warning", "critical"],
+        statuses: ["firing"],
+        labels: [
+          { key: "team", operator: "equals", value: "sre" },
+          { key: "cluster", operator: "contains", value: "prod" },
+        ],
+        titleContains: ["DiskFull"],
+        messageContains: ["volume", "filesystem"],
+      }),
+    ).toEqual({
+      restricted: true,
+      fields: [
+        { field: "sourceIds", total: 2, preserved: 1 },
+        { field: "severities", total: 2, preserved: 1 },
+        { field: "labels", total: 2, preserved: 1 },
+        { field: "messageContains", total: 2, preserved: 1 },
+      ],
     });
   });
 });
