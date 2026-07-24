@@ -70,8 +70,9 @@ post-MVP 结构化模板设计。
 
 ### 发布硬化
 
-仓库已有 Docker runtime 和 health/readiness endpoint，但仍缺少 root CI workflow、关键浏览器 E2E
-workflow、compose smoke automation、正式发布 checklist、生产部署/备份/升级/回滚文档。
+仓库已有 Docker runtime、health/readiness endpoint 和 root CI workflow（fmt-check / lint / test /
+console build），但仍缺少关键浏览器 E2E workflow、compose smoke automation、正式发布 checklist、
+生产部署/备份/升级/回滚文档。
 
 ### 运行时策略
 
@@ -88,7 +89,7 @@ provider/destination。
 
 ### A. 发布工程
 
-- [ ] 增加 root/workspace CI workflow，至少运行 fmt-check、lint、test、console build。
+- [x] 增加 root/workspace CI workflow，至少运行 fmt-check、lint、test、console build。
 - [ ] 增加关键浏览器 E2E workflow：setup/login、创建 Source、复制 webhook URL、创建/测试 Destination、
       创建 Route、发送 webhook、查看 Event/Delivery、过滤历史、失败 retry。
 - [ ] 增加 Docker build/compose smoke automation。
