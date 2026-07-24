@@ -1,8 +1,6 @@
-import { RiNotification3Line, RiQuestionLine } from "@remixicon/react";
 import { ClientOnly, Link } from "@tanstack/react-router";
 import * as React from "react";
 
-import { Button } from "#/components/ui/button";
 import { useTranslations } from "#/i18n/use-i18n";
 import { DashboardUserMenu } from "#/shell/dashboard-user-menu";
 
@@ -43,12 +41,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <Button type="button" variant="ghost" size="icon-sm" title={t("shell.nav.notifications")}>
-            <RiNotification3Line aria-hidden />
-          </Button>
-          <Button type="button" variant="ghost" size="icon-sm" title={t("shell.nav.help")}>
-            <RiQuestionLine aria-hidden />
-          </Button>
           <ClientOnly fallback={<DashboardUserMenu.Skeleton />}>
             <React.Suspense fallback={<DashboardUserMenu.Skeleton />}>
               <DashboardUserMenu user={user} />

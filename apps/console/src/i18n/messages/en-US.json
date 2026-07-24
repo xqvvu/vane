@@ -71,8 +71,6 @@
   "locale.en-US": "English",
   "locale.zh-Hans": "Simplified Chinese",
   "shell.nav.ariaLabel": "Dashboard",
-  "shell.nav.notifications": "Notifications",
-  "shell.nav.help": "Help",
   "shell.userMenu.loading": "Loading profile menu",
   "shell.userMenu.open": "Open profile menu",
   "shell.userMenu.fallbackInitial": "U",

@@ -114,7 +114,7 @@ provider/destination。
 - [x] Delivery detail 展示 rendered payload、attempts、last error、next attempt、retry 操作。
 - [x] Raw/debug JSON 至少具备可读的代码块展示；复制/折叠/search 可作为后续体验增强。
 - [x] Sources、Routes、Destinations、Events、Deliveries 已采用紧凑运维型页面与表格形态。
-- [ ] Header 中 inert notification/help buttons 删除、隐藏或接上真实入口。
+- [x] Header 中 inert notification/help buttons 删除、隐藏或接上真实入口。
 
 ### D. 运行时与数据策略
 

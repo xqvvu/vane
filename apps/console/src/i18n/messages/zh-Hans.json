@@ -71,8 +71,6 @@
   "locale.en-US": "English",
   "locale.zh-Hans": "简体中文",
   "shell.nav.ariaLabel": "Dashboard",
-  "shell.nav.notifications": "通知",
-  "shell.nav.help": "帮助",
   "shell.userMenu.loading": "正在加载用户菜单",
   "shell.userMenu.open": "打开用户菜单",
   "shell.userMenu.fallbackInitial": "U",

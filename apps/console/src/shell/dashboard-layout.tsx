@@ -143,8 +143,6 @@ function DashboardHeaderSkeleton() {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-          <Skeleton className="size-7" />
-          <Skeleton className="size-7" />
           <Skeleton className="size-7 rounded-full" />
         </div>
       </div>
