@@ -35,6 +35,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "#/components/ui/empty";
+import {
+  buildRouteRuleChips,
+  describeRouteRule,
+  type RouteRuleSummaryCopy,
+} from "#/features/routes/model/route-rule-summary";
 import { EditRouteForm } from "#/features/routes/ui/route-forms";
 import { useTranslations } from "#/i18n/use-i18n";
 
@@ -279,7 +284,12 @@ function RouteIdentityCell({ route }: { route: RouteSummary }) {
 
 function RouteRuleCell({ route, sources }: { route: RouteSummary; sources: SourceSummary[] }) {
   const t = useTranslations();
-  const chips = routeRuleChips(route.rule, sources, t);
+  const copy = routeRuleSummaryCopy(t);
+  const chips = buildRouteRuleChips(
+    route.rule,
+    (sourceId) => sourceNameForId(sourceId, sources),
+    copy,
+  );
 
   if (chips.length === 0) {
     return (
@@ -288,7 +298,7 @@ function RouteRuleCell({ route, sources }: { route: RouteSummary; sources: Sourc
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap gap-1" title={describeRuleForUi(route.rule, t)}>
+    <div className="flex min-w-0 flex-wrap gap-1" title={describeRouteRule(route.rule, copy)}>
       {chips.map((chip) => (
         <Badge key={chip} variant="outline" className="max-w-full truncate font-mono text-[11px]">
           {chip}
@@ -341,52 +351,23 @@ function RoutesEmptyState({ hasDestinations }: { hasDestinations: boolean }) {
   );
 }
 
-function routeRuleChips(
-  rule: RouteSummary["rule"],
-  sources: SourceSummary[],
-  t: ReturnType<typeof useTranslations>,
-): string[] {
-  return [
-    ...rule.sourceIds.map(
-      (sourceId) => `${t("routing.table.rulePrefix.source")}:${sourceNameForId(sourceId, sources)}`,
-    ),
-    ...rule.severities.map((severity) => `${t("routing.table.rulePrefix.severity")}:${severity}`),
-    ...rule.statuses.map((status) => `${t("routing.table.rulePrefix.status")}:${status}`),
-    ...rule.labels.map(
-      (label) => `${label.key}${label.operator === "equals" ? "=" : "~"}${label.value}`,
-    ),
-    ...rule.titleContains.map((value) => `${t("routing.table.rulePrefix.title")}:${value}`),
-    ...rule.messageContains.map((value) => `${t("routing.table.rulePrefix.message")}:${value}`),
-  ];
-}
-
-function describeRuleForUi(
-  rule: RouteSummary["rule"],
-  t: ReturnType<typeof useTranslations>,
-): string {
-  const labels = rule.labels.map(
-    (label) => `${label.key}${label.operator === "equals" ? "=" : "~"}${label.value}`,
-  );
-  const parts = [
-    rule.sourceIds.length > 0
-      ? `${t("routing.table.rulePrefix.sources")}:${rule.sourceIds.length}`
-      : null,
-    rule.severities.length > 0
-      ? `${t("routing.table.rulePrefix.severity")}:${rule.severities.join(",")}`
-      : null,
-    rule.statuses.length > 0
-      ? `${t("routing.table.rulePrefix.status")}:${rule.statuses.join(",")}`
-      : null,
-    labels.length > 0 ? `${t("routing.table.rulePrefix.labels")}:${labels.join(",")}` : null,
-    rule.titleContains.length > 0
-      ? `${t("routing.table.rulePrefix.title")}:${rule.titleContains.join(",")}`
-      : null,
-    rule.messageContains.length > 0
-      ? `${t("routing.table.rulePrefix.message")}:${rule.messageContains.join(",")}`
-      : null,
-  ].filter(Boolean);
-
-  return parts.length > 0 ? parts.join(" · ") : t("routing.table.allEvents");
+function routeRuleSummaryCopy(t: ReturnType<typeof useTranslations>): RouteRuleSummaryCopy {
+  return {
+    allEvents: t("routing.table.allEvents"),
+    source: t("routing.table.rulePrefix.source"),
+    severity: t("routing.table.rulePrefix.severity"),
+    status: t("routing.table.rulePrefix.status"),
+    labels: t("routing.table.rulePrefix.labels"),
+    title: t("routing.table.rulePrefix.title"),
+    message: t("routing.table.rulePrefix.message"),
+    sourcesCount: (count) => t("routing.table.ruleSummary.sourcesCount", { count }),
+    titleContains: t("routing.table.ruleSummary.titleContains"),
+    messageContains: t("routing.table.ruleSummary.messageContains"),
+    partSeparator: t("routing.table.ruleSummary.partSeparator"),
+    listSeparator: t("routing.table.ruleSummary.listSeparator"),
+    severityLabel: (severity) => t(`common.severity.${severity}`),
+    statusLabel: (status) => t(`common.alertStatus.${status}`),
+  };
 }
 
 function sourceNameForId(sourceId: string, sources: SourceSummary[]): string {

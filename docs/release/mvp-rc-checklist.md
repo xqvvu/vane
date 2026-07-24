@@ -111,7 +111,7 @@ provider/destination。
 ### C. 产品与 UI 收尾
 
 - [x] Route rule editor 对多 source、多 severity/status、多 label、多 title/message 条件提供完整编辑或明确的受限编辑提示。
-- [ ] Route summary / explain 文案继续打磨为运维人员容易理解的中文。
+- [x] Route summary / explain 文案继续打磨为运维人员容易理解的中文。
 - [x] Event detail 展示 normalized fields、raw debug data、route matches、deliveries。
 - [x] Delivery detail 展示 rendered payload、attempts、last error、next attempt、retry 操作。
 - [x] Raw/debug JSON 至少具备可读的代码块展示；复制/折叠/search 可作为后续体验增强。
