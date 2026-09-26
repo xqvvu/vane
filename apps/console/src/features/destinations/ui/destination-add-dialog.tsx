@@ -74,7 +74,7 @@ export function DestinationAddDialog({
           onSubmit={async (data) => {
             setPending(true);
             try {
-              await createDestination({ data });
+              await createDestination(data);
               await invalidateDestinations();
               setOpen(false);
             } catch (error) {

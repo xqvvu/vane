@@ -1,0 +1,26 @@
+import * as z from "zod";
+
+export type { NumberedPage, Page } from "@vane/core";
+
+/** Result of a delete-style command: the identifier that was removed. */
+export const IdOutputSchema = z.object({
+  id: z.string().min(1),
+});
+
+/** Schema mirror of the `Page<T>` cursor page type in `@vane/core`. */
+export function PageSchema<const T extends z.ZodType>(item: T) {
+  return z.object({
+    items: z.array(item),
+    nextCursor: z.string().nullable(),
+  });
+}
+
+/** Schema mirror of the `NumberedPage<T>` page type in `@vane/core`. */
+export function NumberedPageSchema<const T extends z.ZodType>(item: T) {
+  return z.object({
+    items: z.array(item),
+    total: z.number().int().min(0),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(0),
+  });
+}

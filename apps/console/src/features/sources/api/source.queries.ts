@@ -1,6 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
-
-import { listSourcesFn } from "#/server/functions/configuration.functions";
+import { orpc } from "#/lib/orpc";
 
 export const sourceQueryKeys = {
   all: ["sources"] as const,
@@ -8,8 +6,7 @@ export const sourceQueryKeys = {
 };
 
 export function sourcesQueryOptions() {
-  return queryOptions({
+  return orpc.sources.list.queryOptions({
     queryKey: sourceQueryKeys.list(),
-    queryFn: () => listSourcesFn(),
   });
 }

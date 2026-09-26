@@ -54,7 +54,7 @@ export function SourcesEditDialog({
             onSubmit={async (input) => {
               setPending(true);
               try {
-                await updateSource({ data: input });
+                await updateSource(input);
                 await invalidateSources();
                 onOpenChange(false);
               } catch (error) {

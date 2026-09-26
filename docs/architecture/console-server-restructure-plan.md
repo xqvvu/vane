@@ -1,8 +1,12 @@
 # Console 服务端重构迁移记录
 
-> 状态（2026-06-17）：本文件是历史迁移记录，不再是待执行计划。当前服务端结构以
+> 状态（2026-06-17，后附补充）：本文件是历史迁移记录，不再是待执行计划。当前服务端结构以
 > `docs/adr/0004-console-plain-layered-structure.md`、`docs/architecture/application-container.md`、
 > `docs/architecture/frontend-architecture.md` 和 `AGENTS.md` 为准。
+>
+> 补充：`docs/adr/0007-console-orpc-api-boundary.md` 之后，client/server 边界已从
+> `server/functions/*.functions.ts` 换成 `server/orpc/` 的 oRPC procedures，本记录中
+> 涉及 `server/functions/` 的目录与步骤描述均为当时的历史状态。
 
 本记录对应 `docs/adr/0003-console-server-capability-architecture.md` 的落地过程。0003 解决了
 早期 console 服务端目录混杂、server-only 类型与实现混放、server function 为绕导入边界而使用

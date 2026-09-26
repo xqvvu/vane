@@ -8,34 +8,34 @@ import { VaneIntlProvider } from "#/i18n/provider";
 
 describe("settings time zone combobox", () => {
   beforeEach(() => {
-    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(
-      function (this: HTMLElement) {
-        return this.dataset.slot === "time-zone-virtualized-list" ? 288 : 32;
-      },
-    );
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.dataset.slot === "time-zone-virtualized-list" ? 288 : 32;
+    });
     vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(320);
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function (this: HTMLElement) {
-        const height =
-          this.dataset.slot === "time-zone-virtualized-list"
-            ? 288
-            : this.getAttribute("role") === "option"
-              ? 32
-              : 0;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      const height =
+        this.dataset.slot === "time-zone-virtualized-list"
+          ? 288
+          : this.getAttribute("role") === "option"
+            ? 32
+            : 0;
 
-        return {
-          bottom: height,
-          height,
-          left: 0,
-          right: 320,
-          top: 0,
-          width: 320,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        };
-      },
-    );
+      return {
+        bottom: height,
+        height,
+        left: 0,
+        right: 320,
+        top: 0,
+        width: 320,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      };
+    });
   });
 
   afterEach(() => {

@@ -1,0 +1,26 @@
+{
+  "name": "@vane/api",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./contract": "./src/contract/index.ts",
+    "./errors": "./src/errors/index.ts",
+    "./schemas": "./src/schemas/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@orpc/contract": "catalog:orpc",
+    "@orpc/openapi": "catalog:orpc",
+    "@orpc/zod": "catalog:orpc",
+    "@vane/core": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:toolchain",
+    "typescript": "catalog:toolchain"
+  }
+}

@@ -51,10 +51,8 @@ export function RouteReplayPrompt({
 
     try {
       const result = await replayRouteEvents({
-        data: {
-          routeId,
-          eventIds: candidateEventIds,
-        },
+        routeId,
+        eventIds: candidateEventIds,
       });
 
       if (!result) {

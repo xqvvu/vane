@@ -1,0 +1,15 @@
+{
+  "name": "@vane/typings",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@orpc/server": "catalog:orpc"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:toolchain",
+    "typescript": "catalog:toolchain"
+  }
+}

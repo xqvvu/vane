@@ -75,9 +75,7 @@ export function RoutesPage() {
             sources={sources}
             destinations={destinations}
             onCreate={(input) =>
-              void submitAction("create-route", () => createRoute({ data: input })).then(
-                maybeOpenRouteReplay,
-              )
+              void submitAction("create-route", () => createRoute(input)).then(maybeOpenRouteReplay)
             }
             onRefresh={() => void refreshConfiguration()}
           />
@@ -93,25 +91,21 @@ export function RoutesPage() {
             onToggle={(route) =>
               void submitAction(`toggle-route-${route.id}`, () =>
                 updateRoute({
-                  data: {
-                    id: route.id,
-                    enabled: !route.enabled,
-                  },
+                  id: route.id,
+                  enabled: !route.enabled,
                 }),
               ).then(maybeOpenRouteReplay)
             }
             onDelete={(route) =>
               void submitAction(`delete-route-${route.id}`, () =>
                 deleteRoute({
-                  data: {
-                    id: route.id,
-                  },
+                  id: route.id,
                 }),
               )
             }
             onSubmitEdit={(input) =>
               void submitAction(`edit-route-${input.id}`, async () => {
-                const result = await updateRoute({ data: input });
+                const result = await updateRoute(input);
                 setEditingRouteId(null);
                 return result;
               }).then(maybeOpenRouteReplay)

@@ -71,7 +71,7 @@ export function DestinationEditDialog({
             onSubmit={async (input) => {
               setPending(true);
               try {
-                await updateDestination({ data: input });
+                await updateDestination(input);
                 await invalidateDestinations();
                 onOpenChange(false);
               } catch (error) {

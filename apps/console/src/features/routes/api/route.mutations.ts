@@ -1,23 +1,15 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 
 import { routeQueryKeys } from "#/features/routes/api/route.queries";
-import {
-  createRouteFn,
-  deleteRouteFn,
-  updateRouteFn,
-} from "#/server/functions/configuration.functions";
+import { orpc } from "#/lib/orpc";
 
 export function useRouteMutations() {
   const queryClient = useQueryClient();
-  const createRoute = useServerFn(createRouteFn);
-  const deleteRoute = useServerFn(deleteRouteFn);
-  const updateRoute = useServerFn(updateRouteFn);
 
   return {
-    createRoute,
-    deleteRoute,
-    updateRoute,
+    createRoute: orpc.routes.create.call,
+    deleteRoute: orpc.routes.delete.call,
+    updateRoute: orpc.routes.update.call,
     invalidateRoutes: () =>
       queryClient.invalidateQueries({
         queryKey: routeQueryKeys.all,

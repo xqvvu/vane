@@ -1,6 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
-
-import { listRoutesFn } from "#/server/functions/configuration.functions";
+import { orpc } from "#/lib/orpc";
 
 export const routeQueryKeys = {
   all: ["routes"] as const,
@@ -8,8 +6,7 @@ export const routeQueryKeys = {
 };
 
 export function routesQueryOptions() {
-  return queryOptions({
+  return orpc.routes.list.queryOptions({
     queryKey: routeQueryKeys.list(),
-    queryFn: () => listRoutesFn(),
   });
 }

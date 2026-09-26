@@ -17,33 +17,33 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQueryClient: () => ({ invalidateQueries: testState.invalidateQueries }),
 }));
 
-vi.mock("@tanstack/react-start", () => ({
-  useServerFn: (serverFn: unknown) => serverFn,
-}));
+vi.mock("#/lib/orpc", () => {
+  const call = vi.fn<() => void>();
+  const procedure = { call };
+  const namespace = {
+    create: procedure,
+    delete: procedure,
+    exportJson: procedure,
+    exportToml: procedure,
+    importJson: procedure,
+    importToml: procedure,
+    preview: procedure,
+    previewDraft: procedure,
+    previewUpdate: procedure,
+    rotateToken: procedure,
+    test: procedure,
+    update: procedure,
+  };
 
-vi.mock("#/server/functions/configuration.functions", () => {
-  const serverFn = vi.fn<() => void>();
-
+  // The mutation hooks read procedures at render time; only invalidation
+  // behavior is under test here, so a shared stub procedure is enough.
   return {
-    createDestinationFn: serverFn,
-    createRouteFn: serverFn,
-    createSourceFn: serverFn,
-    deleteDestinationFn: serverFn,
-    deleteRouteFn: serverFn,
-    deleteSourceFn: serverFn,
-    exportConfigurationJsonFn: serverFn,
-    exportConfigurationTomlFn: serverFn,
-    importConfigurationJsonFn: serverFn,
-    importConfigurationTomlFn: serverFn,
-    previewDestinationDraftFn: serverFn,
-    previewDestinationFn: serverFn,
-    previewDestinationUpdateFn: serverFn,
-    rotateSourceTokenFn: serverFn,
-    testDestinationFn: serverFn,
-    updateAppSettingsFn: serverFn,
-    updateDestinationFn: serverFn,
-    updateRouteFn: serverFn,
-    updateSourceFn: serverFn,
+    orpc: {
+      destinations: namespace,
+      portability: namespace,
+      routes: namespace,
+      sources: namespace,
+    },
   };
 });
 

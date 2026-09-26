@@ -1,13 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
-
-import type { DestinationEditorDraftResult, DestinationListItem } from "@vane/core";
-import type { DestinationCatalogItem } from "@vane/destinations";
-
-import {
-  getDestinationTemplateDraftFn,
-  listDestinationCatalogFn,
-  listDestinationsFn,
-} from "#/server/functions/configuration.functions";
+import { orpc } from "#/lib/orpc";
 
 /**
  * Destinations client data surface.
@@ -21,17 +12,15 @@ export const destinationQueryKeys = {
 };
 
 export function destinationsQueryOptions() {
-  return queryOptions({
+  return orpc.destinations.list.queryOptions({
     queryKey: destinationQueryKeys.list(),
-    queryFn: async (): Promise<DestinationListItem[]> => listDestinationsFn(),
   });
 }
 
 export function destinationTemplateDraftQueryOptions(id: string) {
-  return queryOptions({
+  return orpc.destinations.getTemplateDraft.queryOptions({
+    input: { id },
     queryKey: destinationQueryKeys.templateDraft(id),
-    queryFn: async (): Promise<DestinationEditorDraftResult> =>
-      getDestinationTemplateDraftFn({ data: { id } }),
   });
 }
 
@@ -41,9 +30,8 @@ export const destinationCatalogQueryKeys = {
 };
 
 export function destinationCatalogQueryOptions() {
-  return queryOptions({
+  return orpc.destinations.listCatalog.queryOptions({
     queryKey: destinationCatalogQueryKeys.list(),
-    queryFn: async (): Promise<DestinationCatalogItem[]> => listDestinationCatalogFn(),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

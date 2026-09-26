@@ -2,6 +2,8 @@
 
 状态：接受。本 ADR 在 `0003-console-server-capability-architecture.md` 之后，**取代**其中关于"顶层 `contracts/` 目录"和"`ConfigurationService` 聚合门面"的两项决定；保留 0003 的其余结论（顶层运行环境边界优先、`server/` 按能力分目录、dynamic import 只作边界适配、跨边界 DTO 单一定义）。
 
+> 部分被取代：`0007-console-orpc-api-boundary.md` 取代了本 ADR 中"用 `*.functions.ts` 作为 controller 入口"的边界实现方式——client/server 边界已换成 contract-first 的 oRPC，`server/functions/*.functions.ts` 与 `middlewares/dashboard-context.middleware.ts` 已删除。本 ADR 的其余结论（朴素分层、共享契约 env-neutral、`server/` 按能力分目录、dynamic import 只作边界适配、跨边界 DTO 单一定义）仍然有效。
+
 ## 背景
 
 0003 落地后，维护者反馈整套结构"太像领域模型 / 整洁架构 / 六边形架构，看不懂"。复核代码发现：Vane 实际上**并没有**使用领域模型——`packages/core` 只是 Zod schema + 纯函数，`*Service` 是贫血服务，`infra/sqlite/*` 是仓储。真正落地的形状本就是 `route/server function → service → repository` 的朴素分层，只是被一层"能力/契约/门面"的词汇和额外目录包裹，显得比实际复杂。
