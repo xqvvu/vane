@@ -1,4 +1,5 @@
 import alertmanagerIconUrl from "@vane/providers/assets/provider-icons/alertmanager.svg";
+import fastgptIconUrl from "@vane/providers/assets/provider-icons/fastgpt.svg";
 import grafanaIconUrl from "@vane/providers/assets/provider-icons/grafana.svg";
 import signozIconUrl from "@vane/providers/assets/provider-icons/signoz.svg";
 import uptimeKumaIconUrl from "@vane/providers/assets/provider-icons/uptime-kuma.svg";
@@ -21,6 +22,8 @@ function sourceProviderIconUrl(provider: SourceSummary["provider"]): string {
   switch (provider) {
     case "alertmanager":
       return alertmanagerIconUrl;
+    case "fastgpt":
+      return fastgptIconUrl;
     case "grafana":
       return grafanaIconUrl;
     case "signoz":

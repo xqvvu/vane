@@ -61,6 +61,7 @@ export function SourceForm({
       { value: "signoz", label: t("sources.providers.signoz") },
       { value: "uptime_kuma", label: t("sources.providers.uptime_kuma") },
       { value: "alertmanager", label: t("sources.providers.alertmanager") },
+      { value: "fastgpt", label: t("sources.providers.fastgpt") },
     ],
     [t],
   );
@@ -154,6 +155,7 @@ export function SourceForm({
                     <SelectItem value="alertmanager">
                       {t("sources.providers.alertmanager")}
                     </SelectItem>
+                    <SelectItem value="fastgpt">{t("sources.providers.fastgpt")}</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>

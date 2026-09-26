@@ -32,6 +32,11 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 
 - [设置页 JSON 配置导入导出](./configuration-json-export.md)：复用 TOML 的可移植配置快照、
   schema、事务导入和 secret 脱敏规则，增加 JSON 编辑、导入与下载。
+- FastGPT 模型探测 provider：新增 `fastgpt` Source 解析器，接收 FastGPT 模型状态探测 webhook
+  （`model_status_error` / `model_status_recovered`），把 red/yellow/green 探测状态映射为
+  critical/warning/info severity 与 firing/resolved status，并以 `modelId` 作为 fingerprint。
+  接入方式沿用告警源接入 Token：FastGPT 侧 `webhookToken` 填 Vane 的接入 Token，
+  以 `Authorization: Bearer` 发送。
 
 ## 当前内测配置删除策略
 

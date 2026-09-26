@@ -14,7 +14,8 @@ export function formSourceProviderValue(value: FormDataEntryValue | string | nul
     case "signoz":
     case "grafana":
     case "uptime_kuma":
-    case "alertmanager": {
+    case "alertmanager":
+    case "fastgpt": {
       return value;
     }
     default: {
