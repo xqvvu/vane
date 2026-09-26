@@ -186,6 +186,7 @@
   "sources.providers.signoz": "SigNoz",
   "sources.providers.uptime_kuma": "Uptime Kuma",
   "sources.providers.alertmanager": "Alertmanager",
+  "sources.providers.fastgpt": "FastGPT 模型探测",
   "sources.table.headers.source": "告警源",
   "sources.table.headers.intake": "接入",
   "sources.table.headers.routes": "命中路由",

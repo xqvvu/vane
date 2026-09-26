@@ -6,6 +6,7 @@ export const SourceProviderSchema = z.enum([
   "grafana",
   "uptime_kuma",
   "alertmanager",
+  "fastgpt",
 ]);
 export type SourceProvider = z.infer<typeof SourceProviderSchema>;
 

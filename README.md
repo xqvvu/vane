@@ -1,6 +1,6 @@
 # Vane
 
-Vane 是一个面向 SRE 和运维团队的开源、自托管 Alert Hub。它接收来自 SigNoz、Grafana、Uptime Kuma、Alertmanager 或自定义系统的告警 webhook，将 payload 规范化为统一事件，再按简单、可审计的规则路由到 Feishu、Slack、Email 或通用 webhook 等通知目标。
+Vane 是一个面向 SRE 和运维团队的开源、自托管 Alert Hub。它接收来自 SigNoz、Grafana、Uptime Kuma、Alertmanager、FastGPT 或自定义系统的告警 webhook，将 payload 规范化为统一事件，再按简单、可审计的规则路由到 Feishu、Slack、Email 或通用 webhook 等通知目标。
 
 Vane 的目标不是做 SaaS 平台，也不是做通用工作流引擎。它更接近一个可以私有部署的运维基础设施组件：一个进程、一个 SQLite 数据库、一个数据卷，清楚记录告警从进入、规范化、匹配、投递、重试到失败的完整路径。
 
@@ -30,7 +30,8 @@ Vane 把这些能力集中到一个私有部署里：
 - TanStack Start 控制台，包含登录、首次 setup、dashboard shell、Sources、Routes、Destinations、Events、Deliveries 和 Settings 页面。
 - Better Auth dashboard 登录；首次注册用户可成为 owner。
 - SQLite-first 持久化层，显式 migrations，仓储位于 `apps/console/src/infra/sqlite/repositories/`，按 Sources、Destinations、Routes、Intake、Deliveries、History、Settings 切分。
-- Provider parser registry：`generic`、`signoz`、`grafana`、`uptime_kuma`、`alertmanager`。
+- Provider parser registry：`generic`、`signoz`、`grafana`、`uptime_kuma`、`alertmanager`、`fastgpt`。
+- FastGPT 模型探测 Source：接收 FastGPT 模型状态探测 webhook（`model_status_error` / `model_status_recovered`），把探测状态 red/yellow/green 规范化为 firing/resolved 告警，并以 `modelId` 作为 fingerprint；FastGPT 侧的 `webhookUrl` 填 Vane 的接入 URL，`webhookToken` 填 Vane 的接入 Token。
 - Destination sender registry：`generic_webhook`、`feishu`、`slack`、`email`。
 - Route rule、normalized event、delivery job、portable config 等核心 schema 位于 `@vane/core`。
 - SQLite-backed in-process delivery worker，支持异步投递、状态记录、失败重试和手动运行。
@@ -159,7 +160,7 @@ BETTER_AUTH_SECRET="$(openssl rand -hex 32)" docker compose up --build
 
 ### 3. 集成扩展
 
-- 为常见 provider 增加更多真实 fixture：SigNoz、Grafana、Uptime Kuma、Alertmanager 的多版本 payload。
+- 为常见 provider 增加更多真实 fixture：SigNoz、Grafana、Uptime Kuma、Alertmanager、FastGPT 的多版本 payload。
 - 为 Feishu、Slack、Email、Generic webhook 增强模板与卡片格式。
 - 增加更多 destination adapter，例如 Discord、Telegram、Teams 或企业内部 webhook 规范。
 - 增加 provider/destination contributor guide，让外部贡献者可以只实现 adapter、fixtures 和 tests。

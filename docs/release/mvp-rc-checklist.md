@@ -23,8 +23,8 @@ Docker runtime 形态。
   Deliveries、Settings 页面。
 - Auth 边界：Dashboard 使用 Better Auth；Webhook intake 使用告警源接入 Token 与可选额外共享密钥，
   不依赖浏览器 session。
-- Source 与 Provider：支持 generic、SigNoz、Grafana、Uptime Kuma、Alertmanager 解析器，
-  通过 registry/catalog 暴露 client-safe 能力。
+- Source 与 Provider：支持 generic、SigNoz、Grafana、Uptime Kuma、Alertmanager、FastGPT 模型探测解析器，
+ 通过 registry/catalog 暴露 client-safe 能力。
 - Webhook intake：payload size limit、raw payload 保存、敏感字段脱敏、provider parse failure
   记录、idempotency dedupe、快速 accepted response。
 - Event：保存不可变入站事件，展示规范化字段、脱敏 raw debug data、route matches 和关联
@@ -132,7 +132,7 @@ provider/destination。
 ### E. Fixtures 与贡献体验
 
 - [ ] 将 provider inline payload tests 扩展为 fixture 文件。
-- [ ] 覆盖 SigNoz、Grafana、Uptime Kuma、Alertmanager 的多版本/代表性 payload。
+- [ ] 覆盖 SigNoz、Grafana、Uptime Kuma、Alertmanager、FastGPT 的多版本/代表性 payload。
 - [ ] 增加 adapter 开发贡献指南：manifest、schema、preview/send、secret handling、tests、registry。
 
 ## 下一轮 PRD 候选

@@ -28,7 +28,7 @@ import { useTranslations } from "#/i18n/use-i18n";
 export const BindingSelectorCases = {
   "event.status": ["firing", "resolved", "unknown"],
   "event.severity": ["critical", "warning", "info", "unknown"],
-  "source.provider": ["generic", "signoz", "grafana", "uptime_kuma", "alertmanager"],
+  "source.provider": ["generic", "signoz", "grafana", "uptime_kuma", "alertmanager", "fastgpt"],
   "destination.kind": ["generic_webhook", "feishu", "slack", "email"],
 } as const satisfies Record<TemplateBindingSelector, readonly string[]>;
 
@@ -50,6 +50,7 @@ const DefaultSelectorColors: Record<TemplateBindingSelector, Record<string, Feis
     grafana: "orange",
     uptime_kuma: "green",
     alertmanager: "red",
+    fastgpt: "blue",
   },
   "destination.kind": {
     generic_webhook: "grey",

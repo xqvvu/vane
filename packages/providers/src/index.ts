@@ -1,4 +1,5 @@
 export * from "#providers/alertmanager/index";
+export * from "#providers/fastgpt/index";
 export * from "#providers/generic/index";
 export * from "#providers/grafana/index";
 export * from "#providers/registry";

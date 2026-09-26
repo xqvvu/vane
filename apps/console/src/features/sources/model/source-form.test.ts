@@ -17,6 +17,7 @@ describe("source form helpers", () => {
     expect(formSourceProviderValue("signoz")).toBe("signoz");
     expect(formSourceProviderValue("uptime_kuma")).toBe("uptime_kuma");
     expect(formSourceProviderValue("alertmanager")).toBe("alertmanager");
+    expect(formSourceProviderValue("fastgpt")).toBe("fastgpt");
   });
 
   it("falls back unknown provider values to generic", () => {

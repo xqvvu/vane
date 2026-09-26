@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./alertmanager": "./src/alertmanager/index.ts",
+    "./fastgpt": "./src/fastgpt/index.ts",
     "./generic": "./src/generic/index.ts",
     "./grafana": "./src/grafana/index.ts",
     "./signoz": "./src/signoz/index.ts",

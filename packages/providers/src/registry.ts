@@ -1,6 +1,7 @@
 import { SourceProviderSchema, type SourceProvider } from "@vane/core";
 
 import { alertmanagerProviderAdapter } from "#providers/alertmanager/index";
+import { fastgptProviderAdapter } from "#providers/fastgpt/index";
 import { genericProviderAdapter } from "#providers/generic/index";
 import { grafanaProviderAdapter } from "#providers/grafana/index";
 import { signozProviderAdapter } from "#providers/signoz/index";
@@ -186,6 +187,7 @@ export function createDefaultProviderRegistry(): ProviderRegistry {
     [
       genericProviderAdapter,
       signozProviderAdapter,
+      fastgptProviderAdapter,
       grafanaProviderAdapter,
       uptimeKumaProviderAdapter,
       alertmanagerProviderAdapter,

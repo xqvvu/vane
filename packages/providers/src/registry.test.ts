@@ -14,6 +14,7 @@ describe("provider registry", () => {
 
     expect(catalog.map((item) => item.provider).sort()).toEqual([
       "alertmanager",
+      "fastgpt",
       "generic",
       "grafana",
       "signoz",
