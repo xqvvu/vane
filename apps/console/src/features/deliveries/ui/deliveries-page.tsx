@@ -77,9 +77,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             onRunWorker={() =>
               void submitAction("run-worker", async () => {
                 const result = await runDeliveryWorker({
-                  data: {
-                    limit: 10,
-                  },
+                  limit: 10,
                 });
                 showWorkerRunToast(result, t);
                 return result;
@@ -109,9 +107,7 @@ export function DeliveriesPage({ search, filters, onSearchChange }: DeliveriesPa
             onRetry={(deliveryId) =>
               void submitAction(`retry-delivery-${deliveryId}`, () =>
                 retryDelivery({
-                  data: {
-                    id: deliveryId,
-                  },
+                  id: deliveryId,
                 }),
               )
             }

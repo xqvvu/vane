@@ -1,6 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
-
-import { getAuthBootstrapFn, getDashboardSessionFn } from "#/server/functions/auth.functions";
+import { orpc } from "#/lib/orpc";
 
 export const authQueryKeys = {
   all: ["auth"] as const,
@@ -9,15 +7,13 @@ export const authQueryKeys = {
 };
 
 export function dashboardSessionQueryOptions() {
-  return queryOptions({
+  return orpc.auth.getDashboardSession.queryOptions({
     queryKey: authQueryKeys.dashboardSession(),
-    queryFn: () => getDashboardSessionFn(),
   });
 }
 
 export function authBootstrapQueryOptions() {
-  return queryOptions({
+  return orpc.auth.getAuthBootstrap.queryOptions({
     queryKey: authQueryKeys.bootstrap(),
-    queryFn: () => getAuthBootstrapFn(),
   });
 }

@@ -1,13 +1,5 @@
-import { queryOptions } from "@tanstack/react-query";
-
 import type { OperationFilterData } from "#/features/operations/model/operation-search";
-import {
-  getDeliveryDetailFn,
-  getEventDetailFn,
-  listOperationsFn,
-  previewEventReplayFn,
-  previewRouteReplayFn,
-} from "#/server/functions/operations.functions";
+import { orpc } from "#/lib/orpc";
 
 export const operationsQueryKeys = {
   all: ["operations"] as const,
@@ -37,65 +29,44 @@ export const operationsQueryKeys = {
 export function operationsQueryOptions(filters: OperationFilterData) {
   const normalizedFilters = normalizeOperationFilters(filters);
 
-  return queryOptions({
+  return orpc.operations.list.queryOptions({
+    input: {
+      limit: 20,
+      eventPage: normalizedFilters.eventPage ?? 1,
+      ...normalizedFilters,
+    },
     queryKey: operationsQueryKeys.list(normalizedFilters),
-    queryFn: () =>
-      listOperationsFn({
-        data: {
-          limit: 20,
-          eventPage: normalizedFilters.eventPage ?? 1,
-          ...normalizedFilters,
-        },
-      }),
   });
 }
 
 export function eventDetailQueryOptions(eventId: string) {
-  return queryOptions({
+  return orpc.operations.getEventDetail.queryOptions({
+    input: { id: eventId },
     queryKey: operationsQueryKeys.eventDetail(eventId),
-    queryFn: () =>
-      getEventDetailFn({
-        data: {
-          id: eventId,
-        },
-      }),
   });
 }
 
 export function eventReplayPreviewQueryOptions(eventId: string) {
-  return queryOptions({
+  return orpc.operations.previewEventReplay.queryOptions({
+    input: { eventId },
     queryKey: operationsQueryKeys.eventReplayPreview(eventId),
-    queryFn: () =>
-      previewEventReplayFn({
-        data: {
-          eventId,
-        },
-      }),
   });
 }
 
 export function routeReplayPreviewQueryOptions(routeId: string) {
-  return queryOptions({
+  return orpc.operations.previewRouteReplay.queryOptions({
+    input: {
+      routeId,
+      limit: 20,
+    },
     queryKey: operationsQueryKeys.routeReplayPreview(routeId),
-    queryFn: () =>
-      previewRouteReplayFn({
-        data: {
-          routeId,
-          limit: 20,
-        },
-      }),
   });
 }
 
 export function deliveryDetailQueryOptions(deliveryId: string) {
-  return queryOptions({
+  return orpc.operations.getDeliveryDetail.queryOptions({
+    input: { id: deliveryId },
     queryKey: operationsQueryKeys.deliveryDetail(deliveryId),
-    queryFn: () =>
-      getDeliveryDetailFn({
-        data: {
-          id: deliveryId,
-        },
-      }),
   });
 }
 

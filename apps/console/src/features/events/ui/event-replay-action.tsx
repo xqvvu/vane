@@ -54,9 +54,7 @@ export function EventReplayAction({
 
     try {
       const result = await replayEvent({
-        data: {
-          eventId,
-        },
+        eventId,
       });
 
       if (!result) {

@@ -1,26 +1,16 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 
 import { operationsQueryKeys } from "#/features/operations/api/operations.queries";
-import {
-  replayEventFn,
-  replayRouteEventsFn,
-  retryDeliveryFn,
-  runDeliveryWorkerFn,
-} from "#/server/functions/operations.functions";
+import { orpc } from "#/lib/orpc";
 
 export function useOperationMutations() {
   const queryClient = useQueryClient();
-  const retryDelivery = useServerFn(retryDeliveryFn);
-  const replayEvent = useServerFn(replayEventFn);
-  const replayRouteEvents = useServerFn(replayRouteEventsFn);
-  const runDeliveryWorker = useServerFn(runDeliveryWorkerFn);
 
   return {
-    retryDelivery,
-    replayEvent,
-    replayRouteEvents,
-    runDeliveryWorker,
+    retryDelivery: orpc.operations.retryDelivery.call,
+    replayEvent: orpc.operations.replayEvent.call,
+    replayRouteEvents: orpc.operations.replayRouteEvents.call,
+    runDeliveryWorker: orpc.operations.runDeliveryWorker.call,
     invalidateOperations: () =>
       queryClient.invalidateQueries({
         queryKey: operationsQueryKeys.all,

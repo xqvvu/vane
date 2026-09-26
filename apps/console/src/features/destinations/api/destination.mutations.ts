@@ -1,17 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 
 import { destinationQueryKeys } from "#/features/destinations/api/destination.queries";
 import { routeQueryKeys } from "#/features/routes/api/route.queries";
-import {
-  createDestinationFn,
-  deleteDestinationFn,
-  previewDestinationDraftFn,
-  previewDestinationFn,
-  previewDestinationUpdateFn,
-  testDestinationFn,
-  updateDestinationFn,
-} from "#/server/functions/configuration.functions";
+import { orpc } from "#/lib/orpc";
 
 /**
  * Destinations mutation surface.
@@ -20,22 +11,15 @@ import {
  */
 export function useDestinationMutations() {
   const queryClient = useQueryClient();
-  const createDestination = useServerFn(createDestinationFn);
-  const deleteDestination = useServerFn(deleteDestinationFn);
-  const previewDestination = useServerFn(previewDestinationFn);
-  const previewDestinationDraft = useServerFn(previewDestinationDraftFn);
-  const previewDestinationUpdate = useServerFn(previewDestinationUpdateFn);
-  const testDestination = useServerFn(testDestinationFn);
-  const updateDestination = useServerFn(updateDestinationFn);
 
   return {
-    createDestination,
-    deleteDestination,
-    previewDestination,
-    previewDestinationDraft,
-    previewDestinationUpdate,
-    testDestination,
-    updateDestination,
+    createDestination: orpc.destinations.create.call,
+    deleteDestination: orpc.destinations.delete.call,
+    previewDestination: orpc.destinations.preview.call,
+    previewDestinationDraft: orpc.destinations.previewDraft.call,
+    previewDestinationUpdate: orpc.destinations.previewUpdate.call,
+    testDestination: orpc.destinations.test.call,
+    updateDestination: orpc.destinations.update.call,
     invalidateDestinations: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: destinationQueryKeys.all }),

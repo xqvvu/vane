@@ -95,7 +95,7 @@ export function DestinationsPage() {
 
   function previewDraft(input: PreviewDestinationFormInput) {
     return runAction("preview-destination-draft", async () => {
-      const result = await previewDestinationDraft({ data: input });
+      const result = await previewDestinationDraft(input);
       setDestinationPreviewNotice(result);
       setPreviewDialogOpen(true);
       return result;
@@ -105,12 +105,10 @@ export function DestinationsPage() {
   function previewEdit(input: PreviewEditDestinationFormInput) {
     return runAction(`preview-destination-update-${input.id}`, async () => {
       const result = await previewDestinationUpdate({
-        data: {
-          id: input.id,
-          name: input.name,
-          config: input.config,
-          sampleStatus: input.sampleStatus,
-        },
+        id: input.id,
+        name: input.name,
+        config: input.config,
+        sampleStatus: input.sampleStatus,
       });
       setDestinationPreviewNotice(result);
       setPreviewDialogOpen(true);
@@ -160,9 +158,7 @@ export function DestinationsPage() {
             onTest={(destination) =>
               void runAction(`test-destination-${destination.id}`, async () => {
                 const result = await testDestination({
-                  data: {
-                    id: destination.id,
-                  },
+                  id: destination.id,
                 });
                 showDestinationTestToast(result, t);
                 return result;
@@ -171,9 +167,7 @@ export function DestinationsPage() {
             onPreview={(destination) =>
               void runAction(`preview-destination-${destination.id}`, async () => {
                 const result = await previewDestination({
-                  data: {
-                    id: destination.id,
-                  },
+                  id: destination.id,
                 });
                 setDestinationPreviewNotice(result);
                 setPreviewDialogOpen(true);
@@ -187,19 +181,15 @@ export function DestinationsPage() {
             onToggle={(destination) =>
               void submitAction(`toggle-destination-${destination.id}`, () =>
                 updateDestination({
-                  data: {
-                    id: destination.id,
-                    enabled: !destination.enabled,
-                  },
+                  id: destination.id,
+                  enabled: !destination.enabled,
                 }),
               )
             }
             onDelete={(destination) =>
               void submitAction(`delete-destination-${destination.id}`, () =>
                 deleteDestination({
-                  data: {
-                    id: destination.id,
-                  },
+                  id: destination.id,
                 }),
               )
             }

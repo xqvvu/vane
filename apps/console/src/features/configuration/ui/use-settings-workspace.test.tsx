@@ -8,17 +8,12 @@ import type { ImportConfigurationResult } from "@vane/core";
 import { useSettingsWorkspace } from "#/features/configuration/ui/use-settings-workspace";
 
 const testState = vi.hoisted(() => ({
-  exportConfigurationJson:
-    vi.fn<(input: { data: { includeSecrets: false } }) => Promise<{ json: string }>>(),
-  exportConfigurationToml:
-    vi.fn<(input: { data: { includeSecrets: false } }) => Promise<{ toml: string }>>(),
-  importConfigurationJson:
-    vi.fn<(input: { data: { json: string } }) => Promise<ImportConfigurationResult>>(),
-  importConfigurationToml:
-    vi.fn<(input: { data: { toml: string } }) => Promise<ImportConfigurationResult>>(),
+  exportConfigurationJson: vi.fn<(input: { includeSecrets: false }) => Promise<{ json: string }>>(),
+  exportConfigurationToml: vi.fn<(input: { includeSecrets: false }) => Promise<{ toml: string }>>(),
+  importConfigurationJson: vi.fn<(input: { json: string }) => Promise<ImportConfigurationResult>>(),
+  importConfigurationToml: vi.fn<(input: { toml: string }) => Promise<ImportConfigurationResult>>(),
   invalidateConfiguration: vi.fn<() => Promise<void>>(),
-  updateAppSettings:
-    vi.fn<(input: { data: { rawPayloadRetentionDays: number } }) => Promise<unknown>>(),
+  updateAppSettings: vi.fn<(input: { rawPayloadRetentionDays: number }) => Promise<unknown>>(),
   downloadTextFile: vi.fn<(input: { filename: string; text: string; type: string }) => void>(),
   toast: {
     error: vi.fn<(title: string, options?: { description?: string }) => void>(),
@@ -143,7 +138,7 @@ describe("settings workspace", () => {
     });
 
     expect(testState.importConfigurationJson).toHaveBeenCalledWith({
-      data: { json: '{"state":"draft"}' },
+      json: '{"state":"draft"}',
     });
     expect(testState.invalidateConfiguration).toHaveBeenCalledTimes(1);
     expect(testState.exportConfigurationJson).toHaveBeenCalledTimes(2);

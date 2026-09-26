@@ -5,6 +5,7 @@ import type { RouteDefinition, SourceSummary } from "@vane/core";
 
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
 import { OperationsTable } from "#/components/common/operations-table";
+import type { ConsoleTableFeatures } from "#/components/common/table-features";
 import { sourceRouteCoverage } from "#/features/sources/model/source-route-coverage";
 import { SourceActions } from "#/features/sources/ui/source-actions";
 import { SourceIdentityCell } from "#/features/sources/ui/source-identity-cell";
@@ -34,7 +35,7 @@ export function SourcesSection({
 }: SourcesSectionProps) {
   const t = useTranslations();
   const data = React.useMemo(() => sources, [sources]);
-  const columns = React.useMemo<Array<ColumnDef<SourceSummary>>>(
+  const columns = React.useMemo<Array<ColumnDef<ConsoleTableFeatures, SourceSummary>>>(
     () => [
       {
         id: "source",

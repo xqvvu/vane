@@ -67,7 +67,7 @@ export function SourcesAddDialog({
           onSubmit={async (data) => {
             setPending(true);
             try {
-              const result = await createSource({ data });
+              const result = await createSource(data);
               await invalidateSources();
               onCreated({
                 sourceName: result.source.name,

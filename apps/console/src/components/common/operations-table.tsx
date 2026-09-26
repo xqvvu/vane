@@ -1,13 +1,16 @@
 import {
   flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
+  useTable,
   type ColumnDef,
   type PaginationState,
+  type RowData,
 } from "@tanstack/react-table";
 import * as React from "react";
 
+import {
+  type ConsoleTableFeatures,
+  consoleTableFeatures,
+} from "#/components/common/table-features";
 import { TablePagination } from "#/components/common/table-pagination";
 import {
   Table,
@@ -19,9 +22,9 @@ import {
 } from "#/components/ui/table";
 import { cn } from "#/lib/utils";
 
-export interface OperationsTableProps<TData> {
+export interface OperationsTableProps<TData extends RowData> {
   data: TData[];
-  columns: Array<ColumnDef<TData>>;
+  columns: Array<ColumnDef<ConsoleTableFeatures, TData>>;
   pageSize: number;
   showPagination?: boolean;
   minWidthClassName?: string;
@@ -36,7 +39,7 @@ export interface OperationsTableProps<TData> {
   nextLabel: string;
 }
 
-export function OperationsTable<TData>({
+export function OperationsTable<TData extends RowData>({
   data,
   columns,
   pageSize,
@@ -76,7 +79,8 @@ export function OperationsTable<TData>({
     });
   }, [data.length, showPagination]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: consoleTableFeatures,
     data,
     columns,
     ...(showPagination
@@ -85,16 +89,14 @@ export function OperationsTable<TData>({
             pagination,
           },
           onPaginationChange: setPagination,
-          getPaginationRowModel: getPaginationRowModel(),
         }
-      : {}),
+      : { manualPagination: true }),
     getRowId,
-    getCoreRowModel: getCoreRowModel(),
   });
   const visibleRows = table.getRowModel().rows;
   const isEmpty = visibleRows.length === 0;
   const pageCount = showPagination ? table.getPageCount() : 1;
-  const pageIndex = showPagination ? table.getState().pagination.pageIndex : 0;
+  const pageIndex = showPagination ? table.state.pagination.pageIndex : 0;
   const pageStart =
     data.length === 0 ? 0 : Math.min(pageIndex * pagination.pageSize + 1, data.length);
   const pageEnd =

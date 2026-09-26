@@ -82,7 +82,7 @@ parse/send 函数、测试同源维护。TOML 与 JSON 使用同一份 Vane 用�
 每个 adapter 必须显式声明 lifecycle status 和 `configVersion`。Lifecycle 不默认 stable；
 `configVersion` 从 `1` 开始，只描述该 adapter config 的形状演进。
 
-完整 adapter 只存在于服务端 registry。浏览器 UI 通过 server function 获取 client-safe
+完整 adapter 只存在于服务端 registry。浏览器 UI 通过 oRPC procedure 获取 client-safe
 adapter catalog DTO，只包含：
 
 - kind/provider。
@@ -298,7 +298,7 @@ Destination `preview` 和 `send` 共享同一个 render input。`preview` 不接
 2. 选择一个 destination adapter 打通 `Adapter.define`、字段描述、secret 声明、
    config version、结构化错误、retry hint、transport context 和 registry/catalog 投影测试。
 3. 将每个第三方 adapter 迁移为目录模块，并暴露 package 子路径导出。
-4. 增加 console catalog server function。
+4. 增加 console catalog oRPC procedure（contract + `server/orpc/features/<capability>/router.ts`）。
 5. 迁移剩余 destinations。
 6. 迁移 providers。
 7. 最后逐步替换为 manifest-driven 表单渲染，复杂交互保留 feature override。

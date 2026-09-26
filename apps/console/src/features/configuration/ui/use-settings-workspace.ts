@@ -73,12 +73,12 @@ export function useSettingsWorkspace() {
         format === "toml"
           ? (
               await exportConfigurationToml({
-                data: { includeSecrets: false },
+                includeSecrets: false,
               })
             ).toml
           : (
               await exportConfigurationJson({
-                data: { includeSecrets: false },
+                includeSecrets: false,
               })
             ).json;
 
@@ -199,8 +199,8 @@ export function useSettingsWorkspace() {
         async () => {
           const result =
             format === "toml"
-              ? await importConfigurationToml({ data: { toml: value } })
-              : await importConfigurationJson({ data: { json: value } });
+              ? await importConfigurationToml({ toml: value })
+              : await importConfigurationJson({ json: value });
 
           setImportNotice(result);
           return result;

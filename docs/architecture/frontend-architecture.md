@@ -1,13 +1,14 @@
 # 前端架构（TanStack Start Console）
 
 本文档定义 Vane console 的前端分层规则。目标不是抽象地描述 React 项目，而是为当前
-TanStack Start 单体应用提供可执行的迁移方向：**route-first + feature modules + server
-function boundary + query cache + shadcn primitives**。
+TanStack Start 单体应用提供可执行的迁移方向：**route-first + feature modules + oRPC
+boundary + query cache + shadcn primitives**。
 
 适用范围：`apps/console/src/`。产品范围、领域语言和 MVP 约束以
 `docs/prd/self-hosted-alert-hub-mvp.md` 为准；后端依赖组装以
 `docs/architecture/application-container.md` 为准；SQLite 持久化边界以
-`docs/architecture/sqlite-store.md` 为准。
+`docs/architecture/sqlite-store.md` 为准；oRPC 契约、implementer 与 client 访问方式以
+`docs/architecture/orpc-api-layer.md` 为准。
 
 ---
 
@@ -20,7 +21,7 @@ Settings 的页面路由；新增前端代码应继续沿用 route-first 形状�
 1. `routes` 决定 URL、layout、search params、loader、beforeLoad 和薄渲染入口。
 2. `features` 按业务对象纵切 Sources、Routes、Destinations、Events、Deliveries。
 3. `features/operations` 仍暂时承载 Events/Deliveries 共享 query、filter、DTO re-export 和 worker mutation；Events/Deliveries 的页面 UI 正在向各自 feature 收敛。
-4. `server` 是 server-only 的分层后端：`*.functions.ts` 充当 controller 入口，按能力组织的 `*.service.ts` 承载业务逻辑；跨 client/server 的共享契约（命令 schema、DTO）放在 `@vane/core` 包。
+4. `server` 是 server-only 的分层后端：`server/orpc/` 提供 oRPC implementer 和按能力拆分的 procedure router，`*.service.ts` 承载业务逻辑；跨 client/server 的共享契约（oRPC contract、命令 schema、DTO）放在 `@vane/api` 与 `@vane/core` 包，浏览器统一通过 `#/lib/orpc` 调用 procedure。
 5. `components/ui` 只保留 shadcn primitives，不知道 Vane 的领域。
 6. `components/common` 承载跨 feature 复用的 console UI 组合，但不拥有业务规则。
 7. `infra` 是 SQLite 与 server-only 基础设施，前端代码不可导入。
@@ -79,16 +80,22 @@ apps/console/src/
     ui/
     common/
   middlewares/
-    dashboard-context.middleware.ts
+    request-logging.middleware.ts   # 全局 request middleware，仅剩这一项
   server/
-    functions/                # *.functions.ts controller 入口
+    orpc/                     # oRPC implementer、feature router、middleware、handler
+      os.ts, router.ts, handler.ts, openapi.ts
+      features/<capability>/router.ts
+      middlewares/            # request-id、require-dashboard
     runtime/                  # container、request context、dashboard session 类型
     configuration/            # *.service.ts/*.service.types.ts + config portability
     sources/                  # source.service.ts, source.service.types.ts
     destinations/             # destination.service.ts, destination.service.types.ts
     routes/                   # route.service.ts, route.service.types.ts
+    operations/               # event-replay.service.ts, event-replay.service.types.ts
     deliveries/               # delivery-worker.service.ts, delivery-worker.service.types.ts
     intake/                   # intake.service.ts, intake.service.types.ts
+  lib/
+    orpc.ts                   # isomorphic oRPC client：SSR 走 createRouterClient，浏览器走 RPCLink
   infra/
     sqlite/                   # connection, migrations, codecs, store assembly
       repositories/
@@ -101,7 +108,8 @@ apps/console/src/
         settings/
 ```
 
-> 共享命令 schema、操作 DTO 等 client/server 契约放在 `@vane/core` 包；
+> 共享命令 schema、操作 DTO 等 client/server 契约放在 `@vane/core` 包，oRPC contract
+> 放在 `@vane/api` 包；
 > 仅后端使用的类型（如 dashboard session 类型）就近放在 `server/runtime/`。
 > 不再保留 console 级的 `contracts/` 目录。
 
@@ -113,15 +121,15 @@ apps/console/src/
 - 用 `validateSearch` 校验 URL search params，再把它们转成 feature query 所需的 typed
   filters、pagination、selected tab 等输入。
 - 用 `loaderDeps` 明确 loader 依赖哪些 search params 或 route params。
-- 用 `loader` 预取 route 级数据，但只通过 feature 暴露的 `queryOptions` 或 server
-  functions 间接取数。
+- 用 `loader` 预取 route 级数据，但只通过 feature 暴露的 `queryOptions` 间接取数，那些
+  query 函数内部走 oRPC procedure。
 - 用 `beforeLoad` 做导航体验相关的 guard，例如未登录时提前跳到 `/login`。
 - 渲染薄入口：把 loader/search/params 交给 feature screen 或 app shell，不在 route 文件里写
   大型表单、表格、详情面板和业务状态机。
 
 `routes` 不直接导入 `#/infra/*`、`#/server/runtime/container.ts`、SQLite store、仓储、
-worker、secret helper 或任何 server-only 基础设施。route 文件可以导入 server functions 和
-feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
+worker、secret helper 或任何 server-only 基础设施。route 文件可以导入 feature 的
+`queryOptions`，但不能越过这些边界去读持久化层，也不直接 import `#/server/orpc/*`。
 
 ### `features`
 
@@ -142,9 +150,11 @@ feature 的 `queryOptions`，但不能越过这些边界去读持久化层。
   api/model。
 
 每个 feature 可以拥有自己的 `api/`、`model/`、`ui/` 和测试。feature 层可以组合 shadcn
-primitives、TanStack Form、TanStack Table、TanStack Query hooks，也可以调 server functions；
+primitives、TanStack Form、TanStack Table、TanStack Query hooks，也可以调 oRPC procedure；
 但它不能导入 `infra`、SQLite store、application container 或 server-only runtime。需要服务端
-数据时，feature 通过自己的 query/mutation 文件集中调用 server functions。
+数据时，feature 通过自己的 query/mutation 文件集中使用 `#/lib/orpc` 暴露的
+`orpc.<namespace>.<procedure>` 工具，把 query key、`queryOptions`、mutation 和 invalidation
+封装在 feature 内。
 
 ### `shell`
 
@@ -171,7 +181,7 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 这一层必须保持领域无知：
 
 - 不出现 Source、Destination、Delivery、Event、Route 等 Vane 领域词。
-- 不调用 server functions、TanStack Query hooks、TanStack Router hooks。
+- 不调用 oRPC procedure、TanStack Query hooks、TanStack Router hooks。
 - 不放业务 badge、业务表格、业务空状态或业务 form model。
 - 不读取 auth session、SQLite、env、secret 或 raw payload。
 
@@ -190,7 +200,7 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 无知：
 
 - 不出现 Source、Destination、Event、Delivery、Route 等特定业务规则。
-- 不调用 server functions、TanStack Query hooks、mutation hooks 或 TanStack Router hooks。
+- 不调用 oRPC procedure、TanStack Query hooks、mutation hooks 或 TanStack Router hooks。
 - 不导入 `infra`、application container、server-only runtime 或 secret helper。
 - 不承载 feature 专属 actions、empty state、route coverage、provider/destination kind、delivery
   state 等领域组件。
@@ -199,29 +209,34 @@ Events、Deliveries 导航项，但不实现这些 feature 的表单、表格、
 `components/common`；如果组件表达的是“某个 Vane 业务对象应该展示哪些字段或动作”，放 owning
 feature。
 
-### 共享契约（`@vane/core`）
+### 共享契约（`@vane/api` 与 `@vane/core`）
 
-client 与 server 之间的共享契约放在 `@vane/core` 包，必须保持 env-neutral：只包含类型、Zod
-schema、DTO 与命令/结果投影，不导入 `#/server/*`、`#/infra/*`、`node:*` 或带 TanStack Start
-import protection 的模块。相关文件：
+client 与 server 之间的共享契约分成两层，都必须保持 env-neutral：只包含类型、Zod schema、
+DTO 与命令/结果投影，不导入 `#/server/*`、`#/infra/*`、`node:*` 或带 TanStack Start import
+protection 的模块。相关文件：
 
+- `@vane/api`：oRPC contract（`contract/`）、共享 error map（`errors/`）、procedure input/output
+  schema（`schemas/`）与 client 类型（`client.ts` 的 `RPCClient`）。契约是 client/server
+  共享的 API 形状，也是类型漂移的守卫。
 - `@vane/core` 的 `configuration-commands.ts`：Source/Destination/Route/Settings/导入导出的
-  server function command schema。
+  command schema。
 - `@vane/core` 的 `operations.ts`：Events/Deliveries 列表与详情 DTO、worker 健康投影等跨边界形状。
 - `server/runtime/dashboard-session.ts`：`DashboardSession` 与 dashboard auth 错误类型；仅后端
   消费，因此不放进共享包，而是就近放在 runtime。
 
 实现私有的 option/input/row-mapping 类型仍贴近实现文件，不强制外置。详见
-`docs/adr/0004-console-plain-layered-structure.md`。
+`docs/adr/0004-console-plain-layered-structure.md`；oRPC 边界细节见
+`docs/architecture/orpc-api-layer.md`。
 
 ### `server`
 
-`server` 是 server-only 的分层后端：`*.functions.ts` 是 controller 入口，`*.service.ts` 是
-按能力组织的服务层实现，导出的 service option/result 类型放在相邻的
+`server` 是 server-only 的分层后端：`server/orpc/` 的 procedure router 是 controller 入口，
+`*.service.ts` 是按能力组织的服务层实现，导出的 service option/result 类型放在相邻的
 `*.service.types.ts`。它**按能力分目录**，不是按技术种类堆放：
 
-- `server/functions`：TanStack Start server functions 与 function middleware（controller 层 /
-  client/server 边界适配）。
+- `server/orpc`：oRPC implementer（`os.ts`）、root router（`router.ts`）、RPC/OpenAPI handler
+  （`handler.ts`、`openapi.ts`）、按能力拆分的 `features/<capability>/router.ts`
+  和 procedure middleware（controller 层 / client/server 边界适配）。
 - `server/runtime`：application container、request context、dashboard session/auth 类型、
   delivery worker runner 等跨能力运行时基础设施。
 - `server/configuration`：Source/Destination/Route/Settings 配置管理、TOML import/export 与 JSON
@@ -231,12 +246,12 @@ import protection 的模块。相关文件：
 - `server/sources`、`server/destinations`、`server/routes`：各能力的服务端 `*.service.ts` /
   `*.service.types.ts`，与 `features/<同名>` 左右对称。
 - `server/intake`：webhook 接入解析与 `intake.service.ts`（`WebhookIntakeService`）。
-- `server/deliveries`：`delivery-worker.service.ts`、delivery execution、operations server functions。
+- `server/deliveries`：`delivery-worker.service.ts` 与 delivery execution。
 
-server functions 是浏览器进入服务端业务能力的默认边界。它们负责 schema validation、认证、
-建立 request context、调用 service、返回 secret-safe DTO。新增 dashboard 数据读写不要绕过
-server functions 直接从 client/route loader 访问 store。service 依赖 `server/runtime`，runtime
-不反向依赖具体 service；`server/*` 不依赖 `features/*`。
+oRPC procedure 是浏览器进入服务端业务能力的默认边界。procedure 由 contract 约束
+validation，负责认证、建立 request context、调用 service、返回 secret-safe DTO。新增 dashboard
+数据读写不要绕过 procedure 直接从 client/route loader 访问 store。service 依赖
+`server/runtime`，runtime 不反向依赖具体 service；`server/*` 不依赖 `features/*`。
 
 ### `infra`
 
@@ -251,7 +266,7 @@ data 或 feature UI 中的数据，都必须先经过 `server` 投影成安全 D
 
 ---
 
-## 3. Loader、Server Functions 与 Query Cache
+## 3. Loader、oRPC 与 Query Cache
 
 Vane console 的数据流固定为：
 
@@ -259,10 +274,16 @@ Vane console 的数据流固定为：
 route validateSearch/params
   -> feature queryOptions
   -> TanStack Query cache
-  -> server function
+  -> #/lib/orpc（SSR: createRouterClient / 浏览器: RPCLink -> POST /api/rpc/$procedure）
+  -> server/orpc/features/<capability>/router.ts
   -> service
   -> infra SQLite / provider registry / destination registry
 ```
+
+浏览器侧 `#/lib/orpc` 通过 `createIsomorphicFn` 分叉：SSR 用 `createRouterClient` 在进程内直接
+调用 router，浏览器用 `RPCLink` 打到 `/api/rpc`。因此 procedure 的 context 必须从请求 headers
+解析（`context.reqHeaders`），保证两条路径都拿到同一份 session。细节见
+`docs/architecture/orpc-api-layer.md`。
 
 route loader 的职责是把 URL 状态转成 query 输入，并通过 QueryClient
 `ensureQueryData(queryOptions(...))` 预取需要的数据。loader 不直接读
@@ -278,18 +299,21 @@ server-only infra 模块。
   query，并在 feature page 内组合只读投影；不要为组合方便重新引入聚合 service 或聚合 query。
 - 列表与详情拆成不同 query key，例如 `["events", "list", filters]` 与
   `["events", "detail", eventId]`。
-- route loader 使用 feature `queryOptions` 保持 SSR/预取/客户端 hook 同源。
+- route loader 使用 feature `queryOptions` 保持 SSR/预取/客户端 hook 同源；query 函数内的
+  procedure 调用与客户端 hook 是同一条 oRPC 路径。
 - mutation 成功后由 feature mutation 做定向 invalidation，不在 route 文件里散落
   `router.invalidate()` 作为主要刷新机制。
 - 删除告警源或投递目标会清理路由引用，因此对应 mutation 同时失效自身列表与 Routes；配置
   import 会改写 Settings、Sources、Destinations 与 Routes，因此 portability 工作流失效四类 query。
 - 非缓存型一次性动作，例如复制文本、打开详情面板本地状态，可以留在组件本地；改变服务端状态
-  的动作必须走 mutation/server function。
+  的动作必须走 mutation/oRPC procedure。
 
-server function 规则：
+oRPC procedure 规则：
 
 - 所有输入用 schema 校验。
-- 每个 dashboard server function 都重新建立 dashboard request context 并验证 session/角色。
+- 每个 private dashboard procedure 在 contract 上声明 `dashboardAuth.error`，并在实现处
+  `.use(requireDashboard())` 重新建立 dashboard request context、验证 session/角色。public
+  procedure（`health`、`i18n`、`auth.getDashboardSession`）不挂该 middleware。
 - 每个 webhook API route 都用 Source token 或 Vane 侧额外共享密钥认证，不依赖 dashboard session。
 - 返回值是 client-safe DTO，不返回 repository row、raw secret config、database object 或
   service 实例。
@@ -303,15 +327,15 @@ dashboard route 的 `beforeLoad` 可以存在，但它只是 UX guard：提前�
 
 真实授权必须发生在服务端边界内：
 
-- dashboard server functions 内调用 dashboard request context，确认 Better Auth session 与
-  owner/admin 权限。
+- dashboard oRPC procedure 通过 `requireDashboard()` 调用 dashboard request context，确认
+  Better Auth session 与 owner/admin 权限。
 - 触碰 user-owned data、runtime config、Source/Destination/Route/Event/Delivery 的 API route
   必须在 handler 内鉴权。
 - webhook intake API route 用 Source token 或 Vane 侧额外共享密钥鉴权，不能因为 dashboard
   `beforeLoad` 已经保护了 UI 就跳过服务端认证。
 
-原因很简单：`beforeLoad` 保护的是浏览器导航体验，不保护 server function URL、API route、
-脚本调用、过期 hydration data 或绕过 UI 的请求。
+原因很简单：`beforeLoad` 保护的是浏览器导航体验，不保护 `/api/rpc`、`/api/openapi`、
+API route、脚本调用、过期 hydration data 或绕过 UI 的请求。
 
 ---
 
@@ -339,8 +363,8 @@ client component props、TOML/JSON 默认导出或浏览器日志：
 - normalized Event fields、Delivery state、attempt metadata。
 - 脱敏后的 raw debug view，且只在 detail/debug UI 中展示。
 
-测试应覆盖“server function 返回值不包含 token hash、destination secret、raw sensitive
-config”这类边界。
+测试应覆盖“procedure 返回值不包含 token hash、destination secret、raw sensitive config”
+这类边界。
 
 ---
 
@@ -385,7 +409,7 @@ Dashboard mega-route 拆分已经完成：`routes/index.tsx` 现在只负责把�
 3. 可复用的表格外壳、分页、复制控件、通用 enabled/disabled badge 和通用面板放进
    `components/common`；业务列、业务 badge、route coverage、provider/destination kind、delivery
    state 仍留在 feature。
-4. Server state 统一通过 feature query/mutation 文件访问 server functions；route loader 只用同一组
+4. Server state 统一通过 feature query/mutation 文件访问 oRPC procedure；route loader 只用同一组
    `queryOptions` 并行预取，不直接 import store、container 或 service。配置页面按能力组合
    Settings、Sources、Destinations 与 Routes query，不恢复全量 configuration snapshot。
 5. 每次新增 client-visible DTO 或 detail/debug 展示，都同步检查投影边界：Source token、token hash、
@@ -403,7 +427,7 @@ Dashboard mega-route 拆分已经完成：`routes/index.tsx` 现在只负责把�
 
 - route search params 的 schema validation：非法 severity/status/deliveryState 不进入 query。
 - route loader 使用 feature `queryOptions`，不直接导入 `infra`、store、container。
-- dashboard server functions 与 API routes 在服务端重新鉴权。
+- dashboard oRPC procedure 与 API routes 在服务端重新鉴权。
 - feature query data 不包含 Source token、`tokenHash`、Destination secret、raw sensitive
   config。
 - shadcn primitives 保持领域无知；业务 badge/table/form 不放进 `components/ui`。

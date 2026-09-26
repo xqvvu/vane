@@ -1,6 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
-
-import { getAppSettingsFn } from "#/server/functions/configuration.functions";
+import { orpc } from "#/lib/orpc";
 
 export const appSettingsQueryKeys = {
   all: ["app-settings"] as const,
@@ -8,8 +6,7 @@ export const appSettingsQueryKeys = {
 };
 
 export function appSettingsQueryOptions() {
-  return queryOptions({
+  return orpc.settings.get.queryOptions({
     queryKey: appSettingsQueryKeys.detail(),
-    queryFn: () => getAppSettingsFn(),
   });
 }

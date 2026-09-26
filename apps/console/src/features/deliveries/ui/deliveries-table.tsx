@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { HistoryPagination } from "#/components/common/history-pagination";
 import { OperationsTable } from "#/components/common/operations-table";
+import type { ConsoleTableFeatures } from "#/components/common/table-features";
 import { DeliveriesEmptyState } from "#/features/deliveries/ui/deliveries-empty-state";
 import {
   deliveriesColumnClassName,
@@ -36,7 +37,9 @@ export function DeliveriesTable({
 }) {
   const t = useTranslations();
   const data = React.useMemo(() => deliveries, [deliveries]);
-  const columns = React.useMemo<Array<ColumnDef<Operations["deliveries"]["items"][number]>>>(
+  const columns = React.useMemo<
+    Array<ColumnDef<ConsoleTableFeatures, Operations["deliveries"]["items"][number]>>
+  >(
     () => [
       {
         id: "target",

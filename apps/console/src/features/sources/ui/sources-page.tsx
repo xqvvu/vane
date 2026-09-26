@@ -103,19 +103,15 @@ export function SourcesPage() {
             onToggle={(source) =>
               void submitAction(`toggle-source-${source.id}`, () =>
                 updateSource({
-                  data: {
-                    id: source.id,
-                    enabled: !source.enabled,
-                  },
+                  id: source.id,
+                  enabled: !source.enabled,
                 }),
               )
             }
             onRotateToken={(source) =>
               void submitAction(`rotate-source-${source.id}`, async () => {
                 const result = await rotateSourceToken({
-                  data: {
-                    id: source.id,
-                  },
+                  id: source.id,
                 });
                 setTokenNotice({
                   sourceName: result.source.name,
@@ -128,9 +124,7 @@ export function SourcesPage() {
             onDelete={(source) =>
               void submitAction(`delete-source-${source.id}`, () =>
                 deleteSource({
-                  data: {
-                    id: source.id,
-                  },
+                  id: source.id,
                 }),
               )
             }
