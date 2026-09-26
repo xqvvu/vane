@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
 import { OperationsTable } from "#/components/common/operations-table";
+import type { ConsoleTableFeatures } from "#/components/common/table-features";
 import { TablePagination } from "#/components/common/table-pagination";
 import { EventActions } from "#/features/events/ui/event-actions";
 import { EventDeliveryCountsCell } from "#/features/events/ui/event-delivery-counts-cell";
@@ -39,7 +40,9 @@ export function EventsTable({
   const normalizedPageSize = Math.max(pageSize, 1);
   const pageCount = Math.max(Math.ceil(total / normalizedPageSize), 1);
   const pageIndex = Math.min(Math.max(page - 1, 0), pageCount - 1);
-  const columns = React.useMemo<Array<ColumnDef<Operations["events"]["items"][number]>>>(
+  const columns = React.useMemo<
+    Array<ColumnDef<ConsoleTableFeatures, Operations["events"]["items"][number]>>
+  >(
     () => [
       {
         id: "event",

@@ -1,6 +1,10 @@
-import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
+import { flexRender, useTable, type ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
 
+import {
+  type ConsoleTableFeatures,
+  consoleTableFeatures,
+} from "#/components/common/table-features";
 import {
   Table,
   TableBody,
@@ -26,7 +30,7 @@ export function SimpleTable({
   columnClassNames = [],
   variant = "default",
 }: SimpleTableProps) {
-  const columns = React.useMemo<Array<ColumnDef<(typeof rows)[number]>>>(
+  const columns = React.useMemo<Array<ColumnDef<ConsoleTableFeatures, (typeof rows)[number]>>>(
     () =>
       headers.map((header, index) => ({
         id: `${index}-${header}`,
@@ -35,11 +39,11 @@ export function SimpleTable({
       })),
     [headers],
   );
-  const table = useReactTable({
+  const table = useTable({
+    features: consoleTableFeatures,
     data: rows,
     columns,
     getRowId: (row) => row.key,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (

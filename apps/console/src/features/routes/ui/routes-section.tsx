@@ -14,6 +14,7 @@ import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
 import { IconTooltip } from "#/components/common/icon-tooltip";
 import { OperationsTable } from "#/components/common/operations-table";
 import { powerActionButtonClassName } from "#/components/common/power-action-button";
+import type { ConsoleTableFeatures } from "#/components/common/table-features";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,7 +80,7 @@ export function RoutesSection({
 }: RoutesSectionProps) {
   const t = useTranslations();
   const data = React.useMemo(() => routes, [routes]);
-  const columns = React.useMemo<Array<ColumnDef<RouteSummary>>>(
+  const columns = React.useMemo<Array<ColumnDef<ConsoleTableFeatures, RouteSummary>>>(
     () => [
       {
         id: "name",

@@ -5,6 +5,7 @@ import type { RouteDefinition } from "@vane/core";
 
 import { EnabledStateBadge } from "#/components/common/enabled-state-badge";
 import { OperationsTable } from "#/components/common/operations-table";
+import type { ConsoleTableFeatures } from "#/components/common/table-features";
 import { destinationRouteCoverage } from "#/features/destinations/model/destination-route-coverage";
 import type { DestinationListItem } from "#/features/destinations/model/destination-types";
 import { DestinationActions } from "#/features/destinations/ui/destination-actions";
@@ -37,7 +38,7 @@ export function DestinationsSection({
 }: DestinationsSectionProps) {
   const t = useTranslations();
   const data = React.useMemo(() => destinations, [destinations]);
-  const columns = React.useMemo<Array<ColumnDef<DestinationListItem>>>(
+  const columns = React.useMemo<Array<ColumnDef<ConsoleTableFeatures, DestinationListItem>>>(
     () => [
       {
         id: "destination",
