@@ -23,6 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install system deps for native modules
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3
+
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
@@ -40,3 +45,4 @@ jobs:
 
       - name: Build
         run: vp run -r build
+
