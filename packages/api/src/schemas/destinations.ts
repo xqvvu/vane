@@ -1,5 +1,3 @@
-import * as z from "zod";
-
 import {
   AdapterCatalogBaseSchema,
   DestinationDeleteResultSchema,
@@ -9,6 +7,7 @@ import {
   DestinationPreviewResultSchema,
   DestinationTestResultSchema,
 } from "@vane/core";
+import * as z from "zod";
 
 export const DestinationListOutputSchema = z.array(DestinationListItemSchema);
 

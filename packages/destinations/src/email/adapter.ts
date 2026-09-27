@@ -1,8 +1,7 @@
-import { Adapter, R, Send } from "#destinations/utils";
-
 import { emailManifest } from "#destinations/email/manifest";
 import { renderEmailPayload, renderEmailRequestPayload } from "#destinations/email/payload";
 import { EmailConfigSchema } from "#destinations/email/schema";
+import { Adapter, R, Send } from "#destinations/utils";
 
 export const emailAdapter = Adapter.define({
   manifest: emailManifest,

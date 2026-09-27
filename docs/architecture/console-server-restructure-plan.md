@@ -77,10 +77,10 @@ apps/console/src/
 服务端结构或导入边界发生变化时，至少运行：
 
 ```sh
-pnpm --filter @vane/console fmt:check
-pnpm --filter @vane/console lint
-pnpm --filter @vane/console test
-pnpm --filter @vane/console build
+vp -C apps/console fmt:check
+vp -C apps/console lint
+vp -C apps/console test run
+vp -C apps/console build
 ```
 
 触碰 provider/destination/core 共享契约时，再补对应 package 的测试。

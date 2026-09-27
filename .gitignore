@@ -35,5 +35,8 @@ dist-ssr
 # MCP
 .playwright-mcp
 
+# Vite+ hooks
+.vite-hooks/_
+
 # Stitch generated design artifacts
 .stitch/designs/

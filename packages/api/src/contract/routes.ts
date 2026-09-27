@@ -1,6 +1,5 @@
 import { oc } from "@orpc/contract";
 import { openapi } from "@orpc/openapi";
-
 import {
   CreateRouteCommandSchema,
   DeleteRouteCommandSchema,
@@ -8,13 +7,20 @@ import {
 } from "@vane/core";
 
 import { dashboardAuth } from "../errors/dashboard-auth";
-import { RouteDeleteOutputSchema, RouteListOutputSchema, RouteOutputSchema } from "../schemas/routes";
+import {
+  RouteDeleteOutputSchema,
+  RouteListOutputSchema,
+  RouteOutputSchema,
+} from "../schemas/routes";
 
 const dashboardErrors = dashboardAuth.error;
 
 /** Route rule administration. */
 export const routes = {
-  list: oc.meta(openapi({ method: "GET" })).errors(dashboardErrors).output(RouteListOutputSchema),
+  list: oc
+    .meta(openapi({ method: "GET" }))
+    .errors(dashboardErrors)
+    .output(RouteListOutputSchema),
 
   create: oc
     .meta(openapi({ method: "POST" }))

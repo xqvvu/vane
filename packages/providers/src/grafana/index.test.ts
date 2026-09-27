@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
-import { createDefaultProviderRegistry } from "#providers/registry";
 import { parseGrafanaProvider } from "#providers/grafana/index";
+import { createDefaultProviderRegistry } from "#providers/registry";
 
 const receivedAt = "2026-06-09T08:00:00.000Z";
 

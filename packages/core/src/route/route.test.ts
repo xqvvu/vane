@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import type { NormalizedEvent } from "#core/event/normalized-event";
 import type { RouteDefinitionInput } from "#core/route/route";

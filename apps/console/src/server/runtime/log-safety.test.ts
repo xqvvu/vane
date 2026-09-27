@@ -1,5 +1,5 @@
 import type { LogRecord } from "@logtape/logtape";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import {
   redactLogRecord,

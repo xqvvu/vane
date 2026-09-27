@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { genericWebhookSender } from "#destinations/generic-webhook/index";
 import type { GenericWebhookConfig } from "#destinations/generic-webhook/index";

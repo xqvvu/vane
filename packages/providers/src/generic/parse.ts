@@ -1,12 +1,11 @@
 import { NormalizedEventSchema, createStableHash, isJsonObject, stableStringify } from "@vane/core";
 import type { JsonObject, Labels } from "@vane/core";
 
+import type { GenericProviderConfig } from "#providers/generic/schema";
 import { normalizeSeverity, normalizeStatus } from "#providers/shared/normalization";
 import { firstString, firstValue, normalizeDate } from "#providers/shared/object";
 import type { ProviderParseInput, ProviderParseResult } from "#providers/types";
 import { ParseResult } from "#providers/utils";
-
-import type { GenericProviderConfig } from "#providers/generic/schema";
 
 export function parseGenericProviderResult(
   input: ProviderParseInput<GenericProviderConfig>,

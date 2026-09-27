@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { sql } from "kysely";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createSqliteDatabase } from "#/infra/sqlite/connection";
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { InvalidDeliveryStateError } from "#/infra/sqlite/repositories/delivery/delivery.interface";
 import { openSqliteStore } from "#/infra/sqlite/store";

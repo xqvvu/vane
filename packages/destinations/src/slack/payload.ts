@@ -6,10 +6,9 @@ import {
   displayStatus,
   formatDestinationDateTime,
 } from "#destinations/presentation";
+import type { SlackConfig } from "#destinations/slack/schema";
 import { DestinationTemplateEngine } from "#destinations/template";
 import type { DestinationSendInput } from "#destinations/types";
-
-import type { SlackConfig } from "#destinations/slack/schema";
 
 export function renderSlackPayload(input: DestinationSendInput<SlackConfig>): JsonValue {
   const event = input.normalizedEvent;

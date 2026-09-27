@@ -1,5 +1,5 @@
 import { APIError } from "better-auth/api";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { assignOwnerRoleBeforeUserCreate } from "#/lib/auth-owner-bootstrap";
 

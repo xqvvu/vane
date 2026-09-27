@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import type { DeliveryJob } from "@vane/core";
 import type { DestinationRegistry, DestinationSendContext } from "@vane/destinations";

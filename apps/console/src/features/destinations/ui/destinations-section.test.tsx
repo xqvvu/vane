@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import larkIconUrl from "@vane/destinations/assets/destination-icons/lark.svg?url";
 import slackIconUrl from "@vane/destinations/assets/destination-icons/slack.svg?url";

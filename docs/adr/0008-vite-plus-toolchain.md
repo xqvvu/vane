@@ -1,0 +1,30 @@
+# 0008 --- Migrate to Vite+ Unified Toolchain
+
+## Status
+
+Accepted (2026-09-27)
+
+## Context
+
+The previous toolchain (oxlint, oxfmt, vitest, tsdown) required separate configuration files and
+per-tool invocations via pnpm scripts. Vite+ (vite-plus) wraps formatting, linting, testing,
+building, type checking, and package management under a single CLI (`vp`), reducing toolchain
+complexity in a monorepo workspace.
+
+## Decision
+
+- Replace oxlint, oxfmt, vitest, and tsdown with `vite-plus@1.0.0-rc.1`.
+- All lint and format configuration lives in workspace-root `vite.config.ts`; nested lint/format
+  configs are disabled.
+- CI uses `voidzero-dev/setup-vp@v1.21.1` instead of `actions/setup-node` + `pnpm/action-setup`.
+- Docker builds use `ghcr.io/voidzero-dev/vite-plus:1.0.0-rc.1` as the toolchain image.
+- `apps/console/vitest.config.ts` is retained because TanStack Start tests require a Vite config.
+- Lint rules are scoped per workspace package via `lint.overrides` in the root `vite.config.ts`.
+
+## Consequences
+
+- CI no longer needs separate Node.js and pnpm setup steps; setup-vp handles both.
+- Developers run `vp install`, `vp check`, `vp run -r test`, and `vp -C apps/console dev`.
+- Old `.oxlintrc.json` and `.oxfmtrc.json` files have been deleted.
+- The Docker build stage uses the vp image, which provisions the exact Node.js version from
+  `.node-version` automatically.

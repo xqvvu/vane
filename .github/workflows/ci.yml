@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   quality:
-    name: fmt · lint · test · build
+    name: check · test · build
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -23,27 +23,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 python-is-python3 node-gyp
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          # engines.node is 24.x; workspace pins 24.18.0.
-          node-version: 24
-          cache: pnpm
+          node-version-file: ".node-version"
+          cache: true
+          run-install: false
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          vp exec npm install -g node-gyp
+          vp install --frozen-lockfile
 
-      - name: Check formatting
-        run: pnpm -r --if-present fmt:check
-
-      - name: Lint
-        run: pnpm -r --if-present lint
+      - name: Check formatting, lint, and types
+        run: vp check
 
       - name: Test
-        run: pnpm -r --if-present test
+        run: vp run -r test
 
-      - name: Build console
-        run: pnpm --filter @vane/console build
+      - name: Build
+        run: vp run -r build

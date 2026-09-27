@@ -6,14 +6,16 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 
+// Lint and format settings live in the workspace-root vite.config.ts, because
+// Vite+ disables nested lint/fmt configs and resolves them from the root.
 const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
 
-  plugins: [
+  plugins: lazyPlugins(() => [
     devtools(),
     tailwindcss(),
     tanstackStart({
@@ -35,7 +37,7 @@ const config = defineConfig({
     babel({
       presets: [reactCompilerPreset()],
     }),
-  ],
+  ]),
 
   build: {
     chunkSizeWarningLimit: 1024,

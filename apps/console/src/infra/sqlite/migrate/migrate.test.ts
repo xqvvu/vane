@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createSqliteDatabase } from "#/infra/sqlite/connection";
 import { SqliteRepositoryContext } from "#/infra/sqlite/context";

@@ -1,13 +1,12 @@
 import type { JsonValue } from "@vane/core";
 import { z } from "zod";
 
-import { DestinationTemplateEngine } from "#destinations/template";
-import { Adapter, R, Send } from "#destinations/utils";
-
 import { feishuManifest } from "#destinations/feishu/manifest";
 import { renderFeishuPreviewPayload, renderFeishuWirePayload } from "#destinations/feishu/payload";
 import { feishuCode, isFeishuSuccess, parseFeishuResult } from "#destinations/feishu/result";
 import { FeishuConfigSchema } from "#destinations/feishu/schema";
+import { DestinationTemplateEngine } from "#destinations/template";
+import { Adapter, R, Send } from "#destinations/utils";
 
 export const feishuAdapter = Adapter.define({
   manifest: feishuManifest,

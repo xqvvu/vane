@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parseAlertmanagerProvider } from "#providers/alertmanager/index";
 import { createDefaultProviderRegistry } from "#providers/registry";

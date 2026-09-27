@@ -1,6 +1,5 @@
 import { oc } from "@orpc/contract";
 import { openapi } from "@orpc/openapi";
-
 import {
   CreateDestinationCommandSchema,
   DeleteDestinationCommandSchema,

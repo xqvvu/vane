@@ -294,8 +294,8 @@ export const sourceMutations = {
 - `apps/console/src/server/orpc/server-orpc-auth.test.ts`：断言每个 router 的 procedure 清单与
   契约一致，且 private procedure 都挂了 `requireDashboard()`、public 的都没挂；同时确认 webhook
   路由不在 oRPC 面上。
-- `pnpm --filter @vane/console exec tsc --noEmit`：契约与实现是否对齐由类型检查兜底。
-- `pnpm --filter @vane/console build`：验证 import protection 仍然成立，client bundle 不含 SQLite。
+- `vp -C apps/console run typecheck`：契约与实现是否对齐由类型检查兜底。
+- `vp -C apps/console build`：验证 import protection 仍然成立，client bundle 不含 SQLite。
 - 手工验证：登录后访问 dashboard 各页面，确认浏览器发出 `POST /api/rpc/<ns>/<proc>` 且无 console
   报错；`GET /api/openapi/spec.json` 应返回生成的 spec。
 

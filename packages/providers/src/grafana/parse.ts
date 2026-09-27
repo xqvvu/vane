@@ -1,6 +1,7 @@
 import { NormalizedEventSchema, createStableHash, isJsonObject, stableStringify } from "@vane/core";
 import type { JsonObject, Labels } from "@vane/core";
 
+import type { GrafanaProviderConfig } from "#providers/grafana/schema";
 import { normalizeSeverity, normalizeStatus } from "#providers/shared/normalization";
 import {
   firstString,
@@ -17,8 +18,6 @@ import {
   type ProviderStandaloneParseInput,
 } from "#providers/types";
 import { ParseInput, ParseResult } from "#providers/utils";
-
-import type { GrafanaProviderConfig } from "#providers/grafana/schema";
 
 export function parseGrafanaProviderResult(
   input: ProviderParseInput<GrafanaProviderConfig>,

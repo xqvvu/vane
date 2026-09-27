@@ -1,5 +1,5 @@
 import { getConfig, reset } from "@logtape/logtape";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { logger } from "#/server/runtime/logging";
 

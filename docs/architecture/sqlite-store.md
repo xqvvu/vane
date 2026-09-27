@@ -311,13 +311,13 @@ Vane 的 SQLite 物理列使用 snake_case。Better Auth 的模型字段在 Type
 运行：
 
 ```bash
-pnpm --filter @vane/console auth:schema
+vp -C apps/console run auth:schema
 ```
 
 会执行 Better Auth CLI：
 
 ```bash
-pnpm dlx auth@latest generate \
+vp exec auth@latest generate \
   --config src/lib/auth-cli.ts \
   --adapter kysely \
   --dialect sqlite \
@@ -417,14 +417,14 @@ raw driver 的 unknown row 返回；这些 helper 只作为低层兼容工具保
 修改 SQLite 层后至少运行：
 
 ```bash
-pnpm --filter @vane/console exec tsc --noEmit --pretty false
-pnpm --filter @vane/console test
+vp -C apps/console run typecheck
+vp -C apps/console test run
 ```
 
 触碰 import boundary 或 TanStack Start server/runtime 时，再运行：
 
 ```bash
-pnpm --filter @vane/console build
+vp -C apps/console build
 ```
 
 ---

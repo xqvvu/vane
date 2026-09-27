@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { useConfigurationMutations } from "#/features/configuration/api/configuration.mutations";
 import { useDestinationMutations } from "#/features/destinations/api/destination.mutations";

@@ -3,10 +3,22 @@
   "version": "0.1.0-beta.8",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "vp run -r build",
+    "dev": "vp -C apps/console dev",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "prepare": "vp config",
+    "ready": "vp check && vp run -r test && vp run -r build",
+    "test": "vp run -r test",
+    "typecheck": "vp run -r typecheck"
+  },
   "devDependencies": {
-    "oxfmt": "catalog:toolchain",
-    "oxlint": "catalog:toolchain",
-    "oxlint-tsgolint": "catalog:toolchain"
+    "@tanstack/eslint-plugin-router": "^1.162.0",
+    "vite": "catalog:toolchain",
+    "vite-plus": "catalog:toolchain"
   },
   "packageManager": "pnpm@12.6.0"
 }
