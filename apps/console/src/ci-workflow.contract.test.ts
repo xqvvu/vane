@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const ciWorkflowPath = resolve(workspaceRoot, ".github/workflows/ci.yml");
+const packageJsonPath = resolve(workspaceRoot, "package.json");
 
 describe("root CI workflow contract", () => {
   it("declares the RC quality gates for the monorepo", () => {
@@ -27,6 +28,18 @@ describe("root CI workflow contract", () => {
 
     // Runtime pins that match package.json engines / packageManager.
     expect(workflow).toMatch(/node-version:\s*24\b/);
-    expect(workflow).toMatch(/version:\s*11\.15\.1/);
+
+    // pnpm/action-setup must defer to package.json packageManager. Pinning a
+    // second version here aborts the action with "Multiple versions of pnpm
+    // specified" as soon as the two drift apart.
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+    expect(packageJson.packageManager).toMatch(/^pnpm@\d+\./);
+
+    const pnpmSetupStep = workflow.slice(
+      workflow.indexOf("Setup pnpm"),
+      workflow.indexOf("Setup Node.js"),
+    );
+    expect(pnpmSetupStep).toMatch(/uses:\s*pnpm\/action-setup@/);
+    expect(pnpmSetupStep).not.toMatch(/^\s*version:/m);
   });
 });
