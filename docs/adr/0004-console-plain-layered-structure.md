@@ -30,7 +30,7 @@
 
 ## 迁移
 
-行为不变的小步迁移，每步通过 `pnpm -r test` 与 `pnpm --filter @vane/console build`：
+行为不变的小步迁移，每步通过 `vp run -r test` 与 `vp -C apps/console build`：
 
 1. 折叠契约：command schema 与 operations DTO 迁入 `@vane/core`，dashboard session 类型迁入 `server/runtime`，删除 `contracts/`。
 2. 移除 `ConfigurationService` 门面，container 改为按能力暴露工厂，重接 server function 与测试。

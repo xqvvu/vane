@@ -71,13 +71,15 @@ docs
 
 要求：
 
-- Node.js `24.x`
-- pnpm `11.7.0`
+- Node.js `26.x`（以仓库根目录的 `.node-version` 为准）
+- pnpm `12.6.0`（由 `package.json` 的 `packageManager` 声明）
+
+工程化统一由 [Vite+](https://vite.plus) 的 `vp` CLI 提供：Vite、Vitest、Oxlint、Oxfmt 和任务编排都在一个入口下。`vite-plus` 是仓库根目录的 devDependency，用 `vp` 前先在根目录安装一次依赖。
 
 安装依赖：
 
 ```bash
-pnpm install
+vp install
 ```
 
 准备 console 环境变量：
@@ -89,17 +91,20 @@ cp apps/console/.env.example apps/console/.env.local
 启动开发服务器：
 
 ```bash
-pnpm --filter @vane/console dev
+vp -C apps/console dev
 ```
 
 运行检查：
 
 ```bash
-pnpm --filter @vane/console fmt
-pnpm --filter @vane/console lint
-pnpm --filter @vane/console test
-pnpm --filter @vane/console build
+vp check            # 格式化 + lint + 类型检查
+vp fmt --check      # 只检查格式化
+vp lint             # 只做 lint
+vp run -r test      # 跑全部包的测试
+vp run -r build     # 构建全部包
 ```
+
+只针对某个包工作时，用 `vp -C <dir> <command>`，例如 `vp -C apps/console test run`。
 
 常用环境变量：
 

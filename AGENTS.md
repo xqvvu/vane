@@ -1,3 +1,28 @@
+<!--VITE PLUS START-->
+
+# Using Vite+, the Unified Toolchain for the Web
+
+This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
+
+Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
+
+## Built-in Commands vs Scripts
+
+`vp <name>` runs a built-in command. `vp run <name>` runs a `package.json` script or a `vite.config.ts` task. Scripts cannot overwrite built-ins, so `vp dev` and `vp run dev` may do different things. Check `package.json` and `vite.config.ts` first, and run `vp run <name>` when the project defines a script or task with that name.
+
+## Tool Versions
+
+Run `vp toolchain` to show versions and relationships in the active Vite+ release. Add a tool name to select part of the graph. For example, run `vp toolchain vite`. Use `--global` to ignore the local `vite-plus` package. Use `vp why <package>` to show the package-manager dependency graph.
+
+## Review Checklist
+
+- [ ] Run `vp install` after pulling remote changes and before getting started.
+- [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
+- [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
+- [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
+
+<!--VITE PLUS END-->
+
 # AGENTS.md
 
 This file is the working contract for agents changing Vane. Keep it focused on
@@ -481,17 +506,34 @@ authenticated dashboard operators; only true secrets stay out of browser state.
 
 ## Toolchain
 
-Use pnpm and the existing workspace scripts.
+The workspace runs on the Vite+ CLI (`vp`). Vite, Vitest, Oxlint, Oxfmt, and
+task orchestration all go through that one entrypoint, so do not call
+`oxlint`, `oxfmt`, or `vitest` directly and do not add a second toolchain
+runner. `vite-plus` is a root devDependency; run `vp install` once from the
+workspace root before using it.
 
-- Runtime: Node `24.x`.
-- Package manager: `pnpm@11.7.0`.
-- Formatting: `pnpm --filter <package> fmt` or `fmt:check`.
-- Linting: `pnpm --filter <package> lint`.
-- Tests: `pnpm --filter <package> test`.
-- Dev server: `pnpm --filter @vane/console dev`.
+- Runtime: Node `26.x`, pinned by the committed `.node-version`.
+- Package manager: `pnpm@12.6.0`, declared in root `package.json`.
+- Install: `vp install` (or `vp install --frozen-lockfile` in CI).
+- Format: `vp fmt --write` to fix, `vp fmt --check` to verify.
+- Lint: `vp lint` (add `--fix` to write fixes).
+- Tests: `vp run -r test` for the workspace, `vp -C <dir> test run` for one
+  package.
+- Build: `vp run -r build` for the workspace, `vp -C <dir> build` for one
+  package.
+- Full check: `vp check` runs formatting, lint, and type checks together.
+- Dev server: `vp -C apps/console dev`.
+
+Lint and format settings live only in the workspace-root `vite.config.ts`.
+Vite+ disables nested lint and format configs, so package-specific rules and
+format options belong in the root `lint.overrides` and `fmt.overrides`
+blocks, keyed by workspace globs such as `apps/console/**`. A package
+`vite.config.ts` should only carry Vite, framework, and runtime settings.
 
 Prefer package-scoped commands while working on a focused area. Run broader
-checks when touching shared packages or cross-package contracts.
+checks when touching shared packages or cross-package contracts, and run
+`vp check` plus `vp run -r test` before handing work back. The pre-commit
+hook runs `vp staged` from `.vite-hooks/`.
 
 ## Local Browser Preview
 

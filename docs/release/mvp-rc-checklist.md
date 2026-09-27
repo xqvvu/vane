@@ -106,7 +106,7 @@ provider/destination。
 - [ ] 补充备份/恢复/升级/回滚文档。
 - [ ] 增加 provider/destination contributor guide 或 README 贡献切片。
 - [x] 清理 `apps/console/README.md` starter 内容。
-- [x] 对齐 README、package metadata、workspace 中的 Node/pnpm 版本说明。
+- [x] 对齐 README、package metadata、workspace 中的 Node/vp 版本说明。
 
 ### C. 产品与 UI 收尾
 

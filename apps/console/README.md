@@ -7,9 +7,9 @@
 从仓库根目录执行：
 
 ```bash
-pnpm install
+vp install
 cp apps/console/.env.example apps/console/.env.local
-pnpm --filter @vane/console dev
+vp -C apps/console dev
 ```
 
 默认 `.env.example` 使用 `http://localhost:6180`。如果 dev server 端口变了，需要同步更新 `BETTER_AUTH_URL` 和 `SERVER_URL`。
@@ -28,12 +28,12 @@ SERVER_URL=https://vane.example.test
 ## 常用脚本
 
 ```bash
-pnpm --filter @vane/console fmt
-pnpm --filter @vane/console fmt:check
-pnpm --filter @vane/console lint
-pnpm --filter @vane/console test
-pnpm --filter @vane/console build
-pnpm --filter @vane/console auth:schema
+vp -C apps/console fmt
+vp -C apps/console fmt:check
+vp -C apps/console lint
+vp -C apps/console test run
+vp -C apps/console build
+vp -C apps/console run auth:schema
 ```
 
 `auth:schema` 使用 Better Auth CLI 的 Kysely/SQLite 生成模式，把当前 auth 表结构写到
