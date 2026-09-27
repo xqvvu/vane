@@ -2,22 +2,28 @@ FROM node:24-trixie-slim AS deps
 
 WORKDIR /app
 
-RUN corepack enable \
-  && apt-get update \
+RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && npm install -g pnpm@12.6.0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/console/package.json apps/console/package.json
 COPY packages/core/package.json packages/core/package.json
 COPY packages/destinations/package.json packages/destinations/package.json
 COPY packages/providers/package.json packages/providers/package.json
+COPY packages/api/package.json packages/api/package.json
+COPY packages/typings/package.json packages/typings/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=vane-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
+  pnpm install --frozen-lockfile
 
 FROM deps AS build
 
 COPY . .
+
+RUN --mount=type=cache,id=vane-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
+  pnpm install --frozen-lockfile
 
 RUN pnpm --filter @vane/console build
 
