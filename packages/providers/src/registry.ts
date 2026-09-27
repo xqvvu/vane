@@ -13,8 +13,8 @@ import type {
   ProviderParseResult,
 } from "#providers/types";
 import { ProviderCatalogItemSchema, ProviderManifestSchema } from "#providers/types";
-import { ParseResult } from "#providers/utils";
 import { uptimeKumaProviderAdapter } from "#providers/uptime-kuma/index";
+import { ParseResult } from "#providers/utils";
 
 export interface ProviderRegistryAuditOptions {
   messageKeys?: ReadonlySet<string>;

@@ -1,3 +1,4 @@
+import type { AlertmanagerProviderConfig } from "#providers/alertmanager/schema";
 import { parseAlertmanagerCompatibleProvider } from "#providers/shared/alertmanager-compatible";
 import {
   type ProviderParseInput,
@@ -5,8 +6,6 @@ import {
   type ProviderStandaloneParseInput,
 } from "#providers/types";
 import { ParseInput, ParseResult } from "#providers/utils";
-
-import type { AlertmanagerProviderConfig } from "#providers/alertmanager/schema";
 
 export function parseAlertmanagerProviderResult(
   input: ProviderParseInput<AlertmanagerProviderConfig>,

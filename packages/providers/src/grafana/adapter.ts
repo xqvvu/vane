@@ -1,8 +1,7 @@
-import { Adapter } from "#providers/utils";
-
 import { grafanaProviderManifest } from "#providers/grafana/manifest";
 import { parseGrafanaProviderResult } from "#providers/grafana/parse";
 import { GrafanaProviderConfigSchema } from "#providers/grafana/schema";
+import { Adapter } from "#providers/utils";
 
 export const grafanaProviderAdapter = Adapter.define({
   manifest: grafanaProviderManifest,

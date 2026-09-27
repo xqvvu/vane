@@ -1,9 +1,8 @@
 import type { JsonValue } from "@vane/core";
 
+import type { GenericWebhookConfig } from "#destinations/generic-webhook/schema";
 import { DestinationTemplateEngine } from "#destinations/template";
 import type { DestinationSendInput } from "#destinations/types";
-
-import type { GenericWebhookConfig } from "#destinations/generic-webhook/schema";
 
 export function renderGenericWebhookPayload(
   input: DestinationSendInput<GenericWebhookConfig>,

@@ -1,6 +1,5 @@
 import { oc } from "@orpc/contract";
 import { openapi } from "@orpc/openapi";
-
 import { UpdateAppSettingsCommandSchema } from "@vane/core";
 
 import { dashboardAuth } from "../errors/dashboard-auth";

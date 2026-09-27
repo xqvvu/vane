@@ -16,9 +16,8 @@ import {
   type ProviderParseResult,
   type ProviderStandaloneParseInput,
 } from "#providers/types";
-import { ParseInput, ParseResult } from "#providers/utils";
-
 import type { UptimeKumaProviderConfig } from "#providers/uptime-kuma/schema";
+import { ParseInput, ParseResult } from "#providers/utils";
 
 export function parseUptimeKumaProviderResult(
   input: ProviderParseInput<UptimeKumaProviderConfig>,

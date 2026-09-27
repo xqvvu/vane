@@ -3,8 +3,8 @@ import { z } from "zod";
 import type { DeliveryJob, DeliveryState } from "#core/delivery/delivery";
 import type { DestinationSummary } from "#core/destination/destination";
 import type { EventRecord } from "#core/event/event";
-import type { JsonObject, JsonValue } from "#core/json";
 import type { NormalizedEvent } from "#core/event/normalized-event";
+import type { JsonObject, JsonValue } from "#core/json";
 import type { RouteDefinition, RouteMatchResult } from "#core/route/route";
 import type { SourceSummary } from "#core/source/source";
 

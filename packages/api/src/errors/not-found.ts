@@ -6,7 +6,11 @@
  * key so contracts and implementers agree on one message.
  */
 export const notFound = {
-  end(res: { statusCode: number; setHeader(name: string, value: string): void; end(body?: string): void }) {
+  end(res: {
+    statusCode: number;
+    setHeader(name: string, value: string): void;
+    end(body?: string): void;
+  }) {
     const data = JSON.stringify({
       code: "NOT_FOUND",
       message: "the route not found",
@@ -22,4 +26,3 @@ export const notFound = {
     },
   },
 };
-

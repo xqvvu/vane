@@ -1,5 +1,6 @@
 import type { JsonValue } from "@vane/core";
 
+import type { EmailConfig } from "#destinations/email/schema";
 import {
   destinationCopy,
   displaySeverity,
@@ -8,8 +9,6 @@ import {
 } from "#destinations/presentation";
 import { DestinationTemplateEngine } from "#destinations/template";
 import type { DestinationSendInput } from "#destinations/types";
-
-import type { EmailConfig } from "#destinations/email/schema";
 
 export function renderEmailPayload(
   input: DestinationSendInput<EmailConfig>,

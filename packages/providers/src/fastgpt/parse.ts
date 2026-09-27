@@ -1,6 +1,7 @@
 import { createStableHash, isJsonObject, NormalizedEventSchema, redactText } from "@vane/core";
 import type { AlertSeverity, JsonObject, Labels } from "@vane/core";
 
+import type { FastgptProviderConfig } from "#providers/fastgpt/schema";
 import { normalizeSeverity } from "#providers/shared/normalization";
 import {
   firstScalarString,
@@ -18,8 +19,6 @@ import type {
   ProviderStandaloneParseInput,
 } from "#providers/types";
 import { ParseInput, ParseResult } from "#providers/utils";
-
-import type { FastgptProviderConfig } from "#providers/fastgpt/schema";
 
 const supportedEvents = ["model_status_error", "model_status_recovered"] as const;
 type FastgptModelStatusEvent = (typeof supportedEvents)[number];

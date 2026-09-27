@@ -1,12 +1,11 @@
 import { parseAlertmanagerCompatibleProvider } from "#providers/shared/alertmanager-compatible";
+import type { SignozProviderConfig } from "#providers/signoz/schema";
 import {
   type ProviderParseInput,
   type ProviderParseOutput,
   type ProviderStandaloneParseInput,
 } from "#providers/types";
 import { ParseInput, ParseResult } from "#providers/utils";
-
-import type { SignozProviderConfig } from "#providers/signoz/schema";
 
 export function parseSignozProviderResult(input: ProviderParseInput<SignozProviderConfig>) {
   return ParseResult.ok(

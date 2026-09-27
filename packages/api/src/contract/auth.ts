@@ -12,9 +12,7 @@ import { AuthBootstrapOutputSchema, DashboardSessionOutputSchema } from "../sche
  * an error, so neither procedure declares auth error keys.
  */
 export const auth = {
-  getDashboardSession: oc
-    .meta(openapi({ method: "GET" }))
-    .output(DashboardSessionOutputSchema),
+  getDashboardSession: oc.meta(openapi({ method: "GET" })).output(DashboardSessionOutputSchema),
 
   getAuthBootstrap: oc.meta(openapi({ method: "GET" })).output(AuthBootstrapOutputSchema),
 };

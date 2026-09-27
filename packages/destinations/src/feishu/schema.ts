@@ -1,13 +1,12 @@
 import { z } from "zod";
 
-import { DestinationTemplateSchema, TemplateBindingsSchema } from "#destinations/template";
-
 import { defaultFeishuCardBindings, FeishuCardColors } from "#destinations/feishu/appearance";
 import {
   BUILT_IN_FEISHU_ALERT_CARD_ID,
   BUILT_IN_FEISHU_ALERT_CARD_VERSION,
   resolveBuiltInFeishuCardTemplate,
 } from "#destinations/feishu/default-card";
+import { DestinationTemplateSchema, TemplateBindingsSchema } from "#destinations/template";
 
 const FeishuCardColorSet: ReadonlySet<string> = new Set(FeishuCardColors);
 

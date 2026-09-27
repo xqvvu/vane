@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { JsonObjectSchema, redactJsonValue } from "@vane/core";
 import type {
   DestinationSummary,
@@ -9,6 +7,7 @@ import type {
   SourceSummary,
   TemplateDiagnostic as CoreTemplateDiagnostic,
 } from "@vane/core";
+import { z } from "zod";
 
 import {
   destinationCopy,

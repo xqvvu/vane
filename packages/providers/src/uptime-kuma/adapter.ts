@@ -1,8 +1,7 @@
-import { Adapter } from "#providers/utils";
-
 import { uptimeKumaProviderManifest } from "#providers/uptime-kuma/manifest";
 import { parseUptimeKumaProviderResult } from "#providers/uptime-kuma/parse";
 import { UptimeKumaProviderConfigSchema } from "#providers/uptime-kuma/schema";
+import { Adapter } from "#providers/utils";
 
 export const uptimeKumaProviderAdapter = Adapter.define({
   manifest: uptimeKumaProviderManifest,

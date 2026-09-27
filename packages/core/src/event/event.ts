@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { JsonObjectSchema, JsonValueSchema } from "#core/json";
 import { IsoDateTimeSchema, NormalizedEventSchema } from "#core/event/normalized-event";
+import { JsonObjectSchema, JsonValueSchema } from "#core/json";
 import { RouteMatchResultsSchema } from "#core/route/route";
 
 export const EventRecordSchema = z.object({

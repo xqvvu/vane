@@ -1,9 +1,8 @@
-import type { ProviderParseOutput, ProviderStandaloneParseInput } from "#providers/types";
-import { Adapter, ParseInput, ParseResult } from "#providers/utils";
-
 import { genericProviderManifest } from "#providers/generic/manifest";
 import { parseGenericProviderResult } from "#providers/generic/parse";
 import { GenericProviderConfigSchema, type GenericProviderConfig } from "#providers/generic/schema";
+import type { ProviderParseOutput, ProviderStandaloneParseInput } from "#providers/types";
+import { Adapter, ParseInput, ParseResult } from "#providers/utils";
 
 export const genericProviderAdapter = Adapter.define({
   manifest: genericProviderManifest,

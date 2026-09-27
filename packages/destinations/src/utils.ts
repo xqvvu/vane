@@ -1,3 +1,6 @@
+import type { DestinationKind, JsonValue } from "@vane/core";
+import type { z } from "zod";
+
 import type {
   DestinationAdapter,
   DestinationAdapterDefinition,
@@ -7,8 +10,6 @@ import type {
   FetchLike,
   FetchLikeResponse,
 } from "#destinations/types";
-import type { DestinationKind, JsonValue } from "@vane/core";
-import type { z } from "zod";
 
 type Ok = Extract<DestinationSendResult, { ok: true }>;
 type Fail = Extract<DestinationSendResult, { ok: false }>;

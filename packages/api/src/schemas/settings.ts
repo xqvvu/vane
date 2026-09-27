@@ -1,6 +1,5 @@
-import * as z from "zod";
-
 import { IanaTimeZoneSchema, VaneLocaleSchema } from "@vane/core";
+import * as z from "zod";
 
 /** Console runtime settings owned by the dashboard operator. */
 export const AppSettingsOutputSchema = z.object({
@@ -8,4 +7,3 @@ export const AppSettingsOutputSchema = z.object({
   timeZone: IanaTimeZoneSchema,
   rawPayloadRetentionDays: z.number().int().min(0),
 });
-
