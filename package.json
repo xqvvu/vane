@@ -16,6 +16,7 @@
     "typecheck": "vp run -r typecheck"
   },
   "devDependencies": {
+    "@tanstack/eslint-plugin-router": "^1.162.0",
     "vite": "catalog:toolchain",
     "vite-plus": "catalog:toolchain"
   },

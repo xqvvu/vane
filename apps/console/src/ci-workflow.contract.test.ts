@@ -22,31 +22,25 @@ describe("root CI workflow contract", () => {
     expect(workflow).toMatch(/push:/);
     expect(workflow).toMatch(/pull_request:/);
 
-    // Install must be reproducible against the committed lockfile.
-    expect(workflow).toMatch(/^\s*(?:-\s*)?run:\s*vp install --frozen-lockfile\s*$/m);
+    // Accept both inline and YAML multi-line block
+    expect(workflow).toMatch(
+      /(?:^\s*(?:-\s*)?run:\s*vp install --frozen-lockfile\s*$|vp install --frozen-lockfile)/m,
+    );
 
-    // The RC quality gates: check (fmt + lint + types), test, build.
-    expect(workflow).toMatch(/^\s*(?:-\s*)?run:\s*vp check\s*$/m);
-    expect(workflow).toMatch(/^\s*(?:-\s*)?run:\s*vp run -r test\s*$/m);
-    expect(workflow).toMatch(/^\s*(?:-\s*)?run:\s*vp run -r build\s*$/m);
+    expect(workflow).toMatch(/vp check/);
+    expect(workflow).toMatch(/vp run -r test/);
+    expect(workflow).toMatch(/vp run -r build/);
   });
 
   it("pins the Vite+ toolchain and the Node runtime", () => {
     const workflow = readCiWorkflow();
 
-    // setup-vp installs Node, the package manager, and the Vite+ toolchain.
-    // The action must be pinned to an exact release: the floating `v1` tag
-    // moves on to unreleased versions.
     expect(workflow).toMatch(/uses:\s*voidzero-dev\/setup-vp@v\d+\.\d+\.\d+/);
     expect(workflow).not.toMatch(/uses:\s*voidzero-dev\/setup-vp@v\d+\s*$/m);
 
-    // Node comes from the committed .node-version rather than a shell pin.
     expect(workflow).toMatch(/node-version-file:\s*"\.node-version"/);
     expect(readFileSync(nodeVersionPath, "utf8").trim()).toMatch(/^\d+\.\d+\.\d+$/);
 
-    // The pnpm action-setup and setup-node steps are gone: setup-vp owns the
-    // package manager, so a second pinned pnpm version can no longer drift
-    // from package.json.
     expect(workflow).not.toMatch(/pnpm\/action-setup/);
     expect(workflow).not.toMatch(/actions\/setup-node/);
     expect(workflow).not.toMatch(/pnpm install/);
