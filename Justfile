@@ -13,56 +13,58 @@ groups:
 # Start the TanStack Start console dev server.
 [group('Development')]
 dev:
-    pnpm --filter @vane/console dev
+    vp -C apps/console dev
 
 # Build the console app.
 [group('Development')]
 build:
-    pnpm --filter @vane/console build
+    vp -C apps/console build
 
 # Run every package's test suite.
 [group('Quality')]
 test:
-    pnpm -r --if-present test
+    vp run -r test
 
-# Run every package's linter.
+# Run the workspace linter.
 [group('Quality')]
 lint:
-    pnpm -r --if-present lint
+    vp lint
 
 # Check formatting across packages.
 [group('Quality')]
 fmt-check:
-    pnpm -r --if-present fmt:check
+    vp fmt --check
 
-# Format all packages.
+# Format the workspace.
 [group('Quality')]
 fmt:
-    pnpm -r --if-present fmt
+    vp fmt --write
 
-# Run the normal local handoff checks.
+# Run the normal local handoff checks (fmt, lint, typecheck, test).
 [group('Quality')]
-check: fmt-check lint test
+check:
+    vp check
+    vp run -r test
 
 # Run console tests.
 [group('Packages')]
 test-console:
-    pnpm --filter @vane/console test
+    vp -C apps/console test run
 
 # Run core package tests.
 [group('Packages')]
 test-core:
-    pnpm --filter @vane/core test
+    vp -C packages/core test run
 
 # Run provider package tests.
 [group('Packages')]
 test-providers:
-    pnpm --filter @vane/providers test
+    vp -C packages/providers test run
 
 # Run destination package tests.
 [group('Packages')]
 test-destinations:
-    pnpm --filter @vane/destinations test
+    vp -C packages/destinations test run
 
 # Build and push a multi-platform image.
 [group('Docker')]
