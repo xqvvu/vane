@@ -1,5 +1,5 @@
 import { parse as parseToml } from "smol-toml";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createDefaultDestinationRegistry } from "@vane/destinations";
 import type { DestinationSendContext } from "@vane/destinations";

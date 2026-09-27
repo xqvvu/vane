@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { SourceSummary } from "#/features/sources/ui/source-ui-types";
 import { SourcesSection } from "#/features/sources/ui/sources-section";

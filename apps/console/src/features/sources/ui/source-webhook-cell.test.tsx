@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { CopyableCodeLineProps } from "#/components/common/copyable-code-line";
 import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell";

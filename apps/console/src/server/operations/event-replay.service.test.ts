@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { openSqliteStore } from "#/infra/sqlite/store";
 import { EventReplayService } from "#/server/operations/event-replay.service";

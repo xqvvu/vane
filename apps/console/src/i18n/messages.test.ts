@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { getMessages } from "#/i18n/messages";
 import enUsMessages from "#/i18n/messages/en-US.json";

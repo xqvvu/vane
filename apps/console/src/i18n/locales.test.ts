@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { localeCookieValue, readLocaleCookie } from "#/i18n/locale-cookie";
 import { normalizeLocale, parseAcceptLanguage, resolveLocale } from "#/i18n/locales";

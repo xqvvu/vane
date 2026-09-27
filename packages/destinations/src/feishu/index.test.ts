@@ -1,7 +1,4 @@
-import { describe, expect, it } from "vitest";
-
-import signozTemplate from "../../../../examples/feishu/signoz-template.json" with { type: "json" };
-import uptimeKumaTemplate from "../../../../examples/feishu/uptime-kuma-template.json" with { type: "json" };
+import { describe, expect, it } from "vite-plus/test";
 
 import {
   createFeishuSign,
@@ -14,6 +11,9 @@ import {
 import type { FeishuConfig } from "#destinations/feishu/index";
 import { createDefaultDestinationRegistry } from "#destinations/registry";
 import type { DestinationSendInput, FetchLike } from "#destinations/types";
+
+import signozTemplate from "../../../../examples/feishu/signoz-template.json" with { type: "json" };
+import uptimeKumaTemplate from "../../../../examples/feishu/uptime-kuma-template.json" with { type: "json" };
 
 const input: DestinationSendInput<FeishuConfig> = {
   eventId: "event-1",

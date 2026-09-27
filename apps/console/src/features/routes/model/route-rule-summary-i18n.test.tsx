@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { describeRouteRule, type RouteRule } from "#/features/routes/model/route-rule-summary";
 import { VaneIntlProvider } from "#/i18n/provider";
