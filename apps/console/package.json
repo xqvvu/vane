@@ -6,15 +6,15 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "vp dev",
+    "build": "vp build",
+    "preview": "vp preview",
     "auth:schema": "pnpm dlx auth@latest generate --config src/lib/auth-cli.ts --adapter kysely --dialect sqlite --output src/infra/sqlite/migrate/better-auth.generated.sql --yes",
-    "test": "vitest run",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt --write",
-    "fmt:check": "oxfmt --check"
+    "test": "vp test run",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "fmt": "vp fmt --write",
+    "fmt:check": "vp fmt --check"
   },
   "dependencies": {
     "@base-ui/react": "catalog:ui",
@@ -95,6 +95,6 @@
     "jsdom": "catalog:testing",
     "typescript": "catalog:toolchain",
     "vite": "catalog:toolchain",
-    "vitest": "catalog:toolchain"
+    "vite-plus": "catalog:toolchain"
   }
 }

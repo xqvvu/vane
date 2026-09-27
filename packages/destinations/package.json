@@ -17,10 +17,10 @@
     "./assets/destination-icons/*": "./assets/destination-icons/*"
   },
   "scripts": {
-    "test": "vitest run",
-    "lint": "oxlint",
-    "fmt": "oxfmt --write",
-    "fmt:check": "oxfmt --check"
+    "test": "vp test run",
+    "lint": "vp lint",
+    "fmt": "vp fmt --write",
+    "fmt:check": "vp fmt --check"
   },
   "dependencies": {
     "@vane/core": "workspace:*",
@@ -28,6 +28,6 @@
   },
   "devDependencies": {
     "typescript": "catalog:toolchain",
-    "vitest": "catalog:toolchain"
+    "vite-plus": "catalog:toolchain"
   }
 }
