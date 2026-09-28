@@ -8,8 +8,6 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
-// Lint and format settings live in the workspace-root vite.config.ts, because
-// Vite+ disables nested lint/fmt configs and resolves them from the root.
 const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
@@ -47,6 +45,10 @@ const config = defineConfig({
     port: 6180,
     strictPort: true,
     host: true,
+  },
+
+  ssr: {
+    noExternal: ["@vane/api", "@vane/core", "@vane/destinations", "@vane/providers"],
   },
 });
 

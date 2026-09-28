@@ -89,8 +89,8 @@ catalogs:
     babel-plugin-react-compiler: ^1.0.0
     nitro: 3.0.260610-beta
     vite: npm:@voidzero-dev/vite-plus-core@1.0.0-rc.1
-    typescript: ^7.0.2
     vite-plus: 1.0.0-rc.1
+    typescript: ^7.0.2
 
   ui:
     "@base-ui/react": ^1.8.0

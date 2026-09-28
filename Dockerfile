@@ -3,7 +3,18 @@
 # --- Build stage: use the official Vite+ toolchain image ---
 # vp provisions Node.js from .node-version automatically during install
 FROM ghcr.io/voidzero-dev/vite-plus:1.0.0-rc.1 AS build
+
+# Install native build toolchain (required by better-sqlite3 node-gyp rebuild)
+USER root
+RUN apt-get update  && apt-get install -y --no-install-recommends build-essential python3  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+
+# Pre-install node-gyp globally so lifecycle scripts find it on PATH
+RUN echo '{"name":"build"}' > package.json && echo "26" > .node-version  && vp exec npm install -g node-gyp  && ln -s "$(vp exec npm root -g)/node-gyp/bin/node-gyp.js" /usr/local/bin/node-gyp  && rm package.json .node-version
+
+# Use vp's bundled Node.js headers instead of downloading from nodejs.org
+ENV npm_config_nodedir=/home/vp/.vite-plus/js_runtime/node/26.10.0
 
 # Install dependencies first (cache layer across source changes)
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version ./
