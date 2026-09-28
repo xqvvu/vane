@@ -2,8 +2,6 @@ packages:
   - apps/*
   - packages/*
 
-injectWorkspacePackages: true
-
 catalogMode: prefer
 
 catalog:

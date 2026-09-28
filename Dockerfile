@@ -1,22 +1,15 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage: use the official Vite+ toolchain image ---
-# vp provisions Node.js from .node-version automatically during install
 FROM ghcr.io/voidzero-dev/vite-plus:1.0.0-rc.1 AS build
 
-# Install native build toolchain (required by better-sqlite3 node-gyp rebuild)
+# Native build toolchain for better-sqlite3's node-gyp rebuild
 USER root
 RUN apt-get update  && apt-get install -y --no-install-recommends build-essential python3  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Pre-install node-gyp globally so lifecycle scripts find it on PATH
-RUN echo '{"name":"build"}' > package.json && echo "26" > .node-version  && vp exec npm install -g node-gyp  && ln -s "$(vp exec npm root -g)/node-gyp/bin/node-gyp.js" /usr/local/bin/node-gyp  && rm package.json .node-version
-
-# Use vp's bundled Node.js headers instead of downloading from nodejs.org
-ENV npm_config_nodedir=/home/vp/.vite-plus/js_runtime/node/26.10.0
-
-# Install dependencies first (cache layer across source changes)
+# Copy manifests first so the dependency layer stays cached across source edits
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version ./
 COPY --chown=vp:vp apps/console/package.json apps/console/package.json
 COPY --chown=vp:vp packages/core/package.json packages/core/package.json
@@ -24,13 +17,24 @@ COPY --chown=vp:vp packages/destinations/package.json packages/destinations/pack
 COPY --chown=vp:vp packages/providers/package.json packages/providers/package.json
 COPY --chown=vp:vp packages/api/package.json packages/api/package.json
 COPY --chown=vp:vp packages/typings/package.json packages/typings/package.json
-RUN vp install --frozen-lockfile
+
+# Provision the pinned Node.js runtime, then install dependencies.
+# - `vp env install` reads .node-version, so the runtime never drifts from it.
+# - node-gyp is installed globally because better-sqlite3's install script needs it on PATH.
+# - node-gyp reuses the provisioned runtime headers, so it never downloads from nodejs.org.
+RUN --mount=type=cache,id=vane-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
+    vp env install \
+ && vp exec npm install -g node-gyp \
+ && ln -sf "$(vp exec npm root -g)/node-gyp/bin/node-gyp.js" /usr/local/bin/node-gyp \
+ && NODEDIR="$(dirname "$(dirname "$(vp env which node | head -1)")")" \
+ && test -f "$NODEDIR/include/node/node.h" \
+ && npm_config_nodedir="$NODEDIR" vp install --frozen-lockfile
 
 # Build the console app
 COPY --chown=vp:vp . .
 RUN vp -C apps/console build
 
-# Export the exact resolved Node.js binary (from .node-version) for the runtime stage
+# Export the resolved Node.js binary for the runtime stage
 RUN cp "$(vp env which node | head -1)" /tmp/node
 
 # --- Runtime stage: slim glibc, no vp toolchain ---
