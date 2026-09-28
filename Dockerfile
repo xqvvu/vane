@@ -34,7 +34,7 @@ RUN vp -C apps/console build
 RUN cp "$(vp env which node | head -1)" /tmp/node
 
 # --- Runtime stage: slim glibc, no vp toolchain ---
-FROM node:24-trixie-slim AS runtime
+FROM node:26-trixie-slim AS runtime
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

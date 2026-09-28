@@ -23,6 +23,11 @@
     "editor.formatOnSaveMode": "file",
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
+  "yaml.format.enable": false,
+  "[yaml]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
 
   "i18n-ally.enabledFrameworks": ["next-intl"],
   "i18n-ally.displayLanguage": "zh-Hans",
