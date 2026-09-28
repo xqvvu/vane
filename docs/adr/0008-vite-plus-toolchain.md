@@ -18,7 +18,9 @@ complexity in a monorepo workspace.
   configs are disabled.
 - CI uses `voidzero-dev/setup-vp@v1.21.1` instead of `actions/setup-node` + `pnpm/action-setup`.
 - Docker builds use `ghcr.io/voidzero-dev/vite-plus:1.0.0-rc.1` as the toolchain image.
-- `apps/console/vitest.config.ts` is retained because TanStack Start tests require a Vite config.
+- Tests read the package `vite.config.ts`; there is no separate `vitest.config.ts`. `apps/console`
+  gates the TanStack Start, nitro, and devtools plugins behind `mode !== "test"`, so `vp test`
+  runs with the same tailwind/react/babel pipeline as before without booting app-only plugins.
 - Lint rules are scoped per workspace package via `lint.overrides` in the root `vite.config.ts`.
 
 ## Consequences

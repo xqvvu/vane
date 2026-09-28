@@ -8,44 +8,54 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
-const config = defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
+const config = defineConfig((env) => {
+  const isTest = env.mode === "test";
 
-  plugins: lazyPlugins(() => [
-    devtools(),
-    tailwindcss(),
-    tanstackStart({
-      router: {
-        semicolons: true,
-        quoteStyle: "double",
-        generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
-      },
-      importProtection: {
-        behavior: "error",
-      },
-    }),
-    nitro({
-      wasm: {
-        silent: true,
-      },
-    }),
-    viteReact(),
-    babel({
-      presets: [reactCompilerPreset()],
-    }),
-  ]),
+  // `vp test` runs with mode=test. TanStack Start, nitro, and devtools assume a
+  // real app build (they externalize React and spin up extra Vite servers), so
+  // they stay out of test runs. tailwind/react/babel match the previous vitest
+  // config, and plugin order is preserved for dev and build.
+  return {
+    resolve: {
+      tsconfigPaths: true,
+    },
 
-  build: {
-    chunkSizeWarningLimit: 1024,
-  },
+    plugins: lazyPlugins(() => [
+      !isTest && devtools(),
+      tailwindcss(),
+      !isTest &&
+        tanstackStart({
+          router: {
+            semicolons: true,
+            quoteStyle: "double",
+            generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
+          },
+          importProtection: {
+            behavior: "error",
+          },
+        }),
+      !isTest &&
+        nitro({
+          wasm: {
+            silent: true,
+          },
+        }),
+      viteReact(),
+      babel({
+        presets: [reactCompilerPreset()],
+      }),
+    ]),
 
-  server: {
-    port: 6180,
-    strictPort: true,
-    host: true,
-  },
+    build: {
+      chunkSizeWarningLimit: 1024,
+    },
+
+    server: {
+      port: 6180,
+      strictPort: true,
+      host: true,
+    },
+  };
 });
 
 export default config;
