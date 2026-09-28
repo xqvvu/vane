@@ -16,7 +16,9 @@ const config = defineConfig({
     alias: {
       "@vane/api": path.resolve(__dirname, "../../packages/api/src"),
       "@vane/core": path.resolve(__dirname, "../../packages/core/src"),
+      "@vane/destinations/assets": path.resolve(__dirname, "../../packages/destinations/assets"),
       "@vane/destinations": path.resolve(__dirname, "../../packages/destinations/src"),
+      "@vane/providers/assets": path.resolve(__dirname, "../../packages/providers/assets"),
       "@vane/providers": path.resolve(__dirname, "../../packages/providers/src"),
     },
   },
@@ -55,8 +57,11 @@ const config = defineConfig({
     host: true,
   },
 
+  // Workspace packages resolve to TypeScript source through the aliases above.
+  // Keep them bundled into the SSR output instead of being externalized as bare
+  // `@vane/*` imports that a production runtime cannot resolve.
   ssr: {
-    noExternal: ["@vane/api", "@vane/core", "@vane/destinations", "@vane/providers"],
+    noExternal: [/^@vane\//],
   },
 });
 
