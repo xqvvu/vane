@@ -46,13 +46,6 @@ const config = defineConfig({
     strictPort: true,
     host: true,
   },
-
-  // Workspace packages are consumed from linked source. Keep them bundled into
-  // the SSR output so the runtime image (which ships only `.output`) never has
-  // to resolve bare `@vane/*` imports.
-  ssr: {
-    noExternal: [/^@vane\//],
-  },
 });
 
 export default config;
