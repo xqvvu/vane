@@ -8,9 +8,17 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
+const __dirname = import.meta.dirname;
+
 const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      "@vane/api": path.resolve(__dirname, "../../packages/api/src"),
+      "@vane/core": path.resolve(__dirname, "../../packages/core/src"),
+      "@vane/destinations": path.resolve(__dirname, "../../packages/destinations/src"),
+      "@vane/providers": path.resolve(__dirname, "../../packages/providers/src"),
+    },
   },
 
   plugins: lazyPlugins(() => [
