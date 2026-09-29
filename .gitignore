@@ -40,3 +40,5 @@ dist-ssr
 
 # Stitch generated design artifacts
 .stitch/designs/
+
+.zcodeignore
