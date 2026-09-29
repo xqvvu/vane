@@ -7,13 +7,13 @@ import process from "node:process";
 import Sqlite from "better-sqlite3";
 import { Kysely, SqliteDialect } from "kysely";
 
-import type { VaneSqliteDatabaseSchema, VaneSqliteKysely } from "#/infra/sqlite/schema";
+import type { SqliteDatabaseSchema, SqliteDatabase } from "#/infra/sqlite/schema";
 
 export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;
 }
 
-export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): VaneSqliteKysely {
+export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): SqliteDatabase {
   const databasePath = String(options.databasePath ?? path.join(process.cwd(), "data.sqlite"));
 
   if (databasePath !== ":memory:") {
@@ -31,7 +31,7 @@ export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}):
     sqlite.pragma("busy_timeout = 5000");
   }
 
-  return new Kysely<VaneSqliteDatabaseSchema>({
+  return new Kysely<SqliteDatabaseSchema>({
     dialect: new SqliteDialect({
       database: sqlite,
     }),

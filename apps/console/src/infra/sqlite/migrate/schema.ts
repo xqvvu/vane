@@ -1,8 +1,8 @@
 import { sql, type Kysely } from "kysely";
 
-import type { VaneSqliteDatabaseSchema } from "#/infra/sqlite/schema";
+import type { SqliteDatabaseSchema } from "#/infra/sqlite/schema";
 
-export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Promise<void> {
+export async function createAppTables(db: Kysely<SqliteDatabaseSchema>): Promise<void> {
   await db.schema
     .createTable("settings")
     .addColumn("key", "text", (column) => column.primaryKey())
@@ -173,7 +173,7 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
     .execute();
 }
 
-export async function createVaneIndexes(db: Kysely<VaneSqliteDatabaseSchema>): Promise<void> {
+export async function createAppIndexes(db: Kysely<SqliteDatabaseSchema>): Promise<void> {
   await db.schema
     .createIndex("idx_events_source_received_at")
     .on("events")

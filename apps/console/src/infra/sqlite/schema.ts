@@ -13,7 +13,7 @@ import type { SqliteBoolean, SqliteJsonText } from "#/infra/sqlite/codecs";
 
 export type SqliteGenerated<T> = ColumnType<T, T | undefined, T>;
 
-export interface VaneSqliteDatabaseSchema {
+export interface SqliteDatabaseSchema {
   account: BetterAuthAccountTable;
   deliveries: DeliveriesTable;
   delivery_attempts: DeliveryAttemptsTable;
@@ -29,9 +29,9 @@ export interface VaneSqliteDatabaseSchema {
   verification: BetterAuthVerificationTable;
 }
 
-export type VaneSqliteKysely = Kysely<VaneSqliteDatabaseSchema>;
-export type VaneSqliteTransaction = Transaction<VaneSqliteDatabaseSchema>;
-export type VaneSqliteExecutor = VaneSqliteKysely | VaneSqliteTransaction;
+export type SqliteDatabase = Kysely<SqliteDatabaseSchema>;
+export type SqliteTransaction = Transaction<SqliteDatabaseSchema>;
+export type SqliteExecutor = SqliteDatabase | SqliteTransaction;
 
 export interface SettingsTable {
   key: string;

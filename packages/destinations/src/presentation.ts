@@ -1,5 +1,5 @@
 import type { AlertSeverity, AlertStatus } from "@vane/core";
-import { DEFAULT_VANE_LOCALE, DEFAULT_VANE_TIME_ZONE } from "@vane/core/presentation";
+import { DEFAULT_APP_LOCALE, DEFAULT_APP_TIME_ZONE } from "@vane/core/presentation";
 
 import type { DestinationPresentation } from "#destinations/types";
 
@@ -70,8 +70,8 @@ export function resolveDestinationPresentation(
   presentation?: DestinationPresentation,
 ): DestinationPresentation {
   return {
-    locale: presentation?.locale ?? DEFAULT_VANE_LOCALE,
-    timeZone: presentation?.timeZone ?? DEFAULT_VANE_TIME_ZONE,
+    locale: presentation?.locale ?? DEFAULT_APP_LOCALE,
+    timeZone: presentation?.timeZone ?? DEFAULT_APP_TIME_ZONE,
   };
 }
 

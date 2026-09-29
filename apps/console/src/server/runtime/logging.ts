@@ -12,9 +12,9 @@ import {
 } from "@logtape/logtape";
 
 import { env } from "#/env";
-import { withVaneLogRedaction } from "#/server/runtime/log-safety";
+import { withLogRedaction } from "#/server/runtime/log-safety";
 
-type VaneLogFormat = "json" | "text";
+type LogFormat = "json" | "text";
 
 let configured: Promise<void> | undefined;
 
@@ -37,7 +37,7 @@ async function configureLogging(): Promise<void> {
   const level = resolveLogLevel(env.VANE_LOG_LEVEL);
   const formatter =
     format === "json" ? getJsonLinesFormatter() : getAnsiColorFormatter({ timestamp: "rfc3339" });
-  const consoleSink = withVaneLogRedaction(getConsoleSink({ formatter }));
+  const consoleSink = withLogRedaction(getConsoleSink({ formatter }));
 
   await configure({
     sinks: {
@@ -65,7 +65,7 @@ async function configureLogging(): Promise<void> {
   });
 }
 
-function resolveLogFormat(format: typeof env.VANE_LOG_FORMAT, production: boolean): VaneLogFormat {
+function resolveLogFormat(format: typeof env.VANE_LOG_FORMAT, production: boolean): LogFormat {
   if (format === "auto") {
     return production ? "json" : "text";
   }

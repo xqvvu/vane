@@ -2,14 +2,14 @@ import "@tanstack/react-start/server-only";
 import { SqliteMigrationError } from "#/infra/sqlite/errors";
 import { sqliteSchemaPlan } from "#/infra/sqlite/migrate/plan";
 import type { MigrationResult, SqliteMigration } from "#/infra/sqlite/migrate/types";
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
+import type { SqliteDatabase } from "#/infra/sqlite/schema";
 
 export interface MigrateSqliteDatabaseOptions {
   plan?: readonly SqliteMigration[];
 }
 
 export async function migrateSqliteDatabase(
-  db: VaneSqliteKysely,
+  db: SqliteDatabase,
   options: MigrateSqliteDatabaseOptions = {},
 ): Promise<MigrationResult> {
   const plan = readSqliteSchemaPlan(options.plan);
@@ -74,7 +74,7 @@ export function normalizeSqliteSchemaPlan(plan: readonly SqliteMigration[]): Sql
   return normalized;
 }
 
-export async function getAppliedMigrationVersions(db: VaneSqliteKysely): Promise<Set<string>> {
+export async function getAppliedMigrationVersions(db: SqliteDatabase): Promise<Set<string>> {
   const rows = await db
     .selectFrom("schema_migrations")
     .select("version")
@@ -84,7 +84,7 @@ export async function getAppliedMigrationVersions(db: VaneSqliteKysely): Promise
   return new Set(rows.map((row) => row.version));
 }
 
-async function ensureMigrationLedger(db: VaneSqliteKysely): Promise<void> {
+async function ensureMigrationLedger(db: SqliteDatabase): Promise<void> {
   await db.schema
     .createTable("schema_migrations")
     .ifNotExists()

@@ -9,7 +9,7 @@ import webhookIconUrl from "@vane/destinations/assets/destination-icons/webhook.
 
 import type { DestinationListItem } from "#/features/destinations/ui/destination-ui-types";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 type DestinationActionHandler = (destination: DestinationListItem) => void;
 type DestinationEditHandler = (destinationId: string) => void;
@@ -23,7 +23,7 @@ describe("destinations section table", () => {
     const destinations = Array.from({ length: 11 }, (_, index) => destinationFixture(index + 1));
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DestinationsSection
           destinations={destinations}
           routes={[]}
@@ -34,7 +34,7 @@ describe("destinations section table", () => {
           onToggle={vi.fn<DestinationActionHandler>()}
           onDelete={vi.fn<DestinationActionHandler>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText("Destination")).toBeTruthy();
@@ -57,7 +57,7 @@ describe("destinations section table", () => {
 
   it("renders an operational empty state", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DestinationsSection
           destinations={[]}
           routes={[]}
@@ -68,7 +68,7 @@ describe("destinations section table", () => {
           onToggle={vi.fn<DestinationActionHandler>()}
           onDelete={vi.fn<DestinationActionHandler>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText("No destinations configured")).toBeTruthy();
@@ -77,7 +77,7 @@ describe("destinations section table", () => {
 
   it("summarizes enabled route usage for each destination", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DestinationsSection
           destinations={[destinationFixture(1), destinationFixture(2)]}
           routes={[
@@ -92,7 +92,7 @@ describe("destinations section table", () => {
           onToggle={vi.fn<DestinationActionHandler>()}
           onDelete={vi.fn<DestinationActionHandler>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getAllByText("1 active")).toHaveLength(2);
@@ -102,7 +102,7 @@ describe("destinations section table", () => {
 
   it("uses destination kind assets in the identity column", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DestinationsSection
           destinations={[
             destinationFixture(1, "generic_webhook"),
@@ -118,7 +118,7 @@ describe("destinations section table", () => {
           onToggle={vi.fn<DestinationActionHandler>()}
           onDelete={vi.fn<DestinationActionHandler>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     const images = Array.from(document.querySelectorAll("tbody td:first-child img"));
@@ -141,7 +141,7 @@ describe("destinations section table", () => {
     const destination = destinationFixture(2);
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DestinationsSection
           destinations={[destination]}
           routes={[]}
@@ -152,7 +152,7 @@ describe("destinations section table", () => {
           onToggle={onToggle}
           onDelete={onDelete}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.queryByText("Test")).toBeNull();

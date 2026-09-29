@@ -2,10 +2,10 @@ import {
   DestinationEditorDraftResultSchema,
   type DestinationEditorDraftResult,
 } from "#core/destination/destination";
-import type { VaneLocale } from "#core/presentation";
+import type { AppLocale } from "#core/presentation";
 
 export interface AppSettings {
-  locale: VaneLocale;
+  locale: AppLocale;
   timeZone: string;
   rawPayloadRetentionDays: number;
 }

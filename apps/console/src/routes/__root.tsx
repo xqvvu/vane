@@ -8,7 +8,7 @@ import { Toaster } from "#/components/ui/sonner";
 import { TooltipProvider } from "#/components/ui/tooltip";
 import { dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
 import { requestLocaleQueryOptions } from "#/i18n/i18n.queries";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 import { DashboardErrorPage } from "#/shell/dashboard-error";
 import { DashboardLayout } from "#/shell/dashboard-layout";
 import { DashboardNotFoundPage } from "#/shell/dashboard-not-found";
@@ -47,9 +47,9 @@ function Root({ children }: { children: React.ReactNode }) {
       </head>
 
       <body className="h-dvh">
-        <VaneIntlProvider locale={data.locale} timeZone={data.timeZone}>
+        <AppIntlProvider locale={data.locale} timeZone={data.timeZone}>
           <TooltipProvider>{children}</TooltipProvider>
-        </VaneIntlProvider>
+        </AppIntlProvider>
 
         <Toaster position="top-right" />
 

@@ -1,7 +1,9 @@
-export const defaultLocale = "en-US";
-export const supportedLocales = ["en-US", "zh-Hans"] as const;
+import type { AppLocale } from "@vane/core/presentation";
 
-export type AppLocale = (typeof supportedLocales)[number];
+export const defaultLocale = "en-US";
+export const supportedLocales = ["en-US", "zh-Hans"] as const satisfies readonly AppLocale[];
+
+export type { AppLocale };
 
 const supportedLocaleSet = new Set<string>(supportedLocales);
 

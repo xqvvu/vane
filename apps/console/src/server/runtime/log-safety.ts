@@ -5,7 +5,7 @@ import { REDACTED_VALUE, isSensitiveKey, redactText } from "@vane/core";
 const MAX_LOG_VALUE_DEPTH = 8;
 const PLACEHOLDER_PATTERN = /\{([^{}]+)\}/g;
 
-export function withVaneLogRedaction(sink: Sink): Sink {
+export function withLogRedaction(sink: Sink): Sink {
   return (record) => sink(redactLogRecord(record));
 }
 

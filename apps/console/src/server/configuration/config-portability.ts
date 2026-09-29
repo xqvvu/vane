@@ -2,26 +2,22 @@ import { parse, stringify } from "smol-toml";
 
 import {
   isSensitiveKey,
-  isSafeVaneSecretPath,
-  VANE_CONFIG_SCHEMA_VERSION,
-  VaneConfigurationSchema,
-  vaneConfigurationToTomlDocument,
-  vaneTomlDocumentToConfiguration,
+  isSafeSecretPath,
+  configurationToTomlDocument,
+  tomlDocumentToConfiguration,
+  PORTABLE_CONFIG_SCHEMA_VERSION,
+  PortableConfigurationSchema,
   type JsonObject,
   type JsonValue,
+  type PortableConfiguration,
+  type PortableDestination,
+  type PortableSource,
   type RouteDefinition,
-  type VaneConfigDestination,
-  type VaneConfigSource,
-  type VaneConfiguration,
-  type VaneSecretReferences,
+  type SecretReferences,
 } from "@vane/core";
 
 import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface";
 import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
-
-export type PortableConfiguration = VaneConfiguration;
-export type PortableDestination = VaneConfigDestination;
-export type PortableSource = VaneConfigSource;
 
 export interface ExportConfigurationOptions {
   includeSecrets?: boolean;
@@ -32,15 +28,13 @@ export interface ImportConfigurationOptions {
   env?: Record<string, string | undefined>;
 }
 
-export const PortableConfigurationSchema = VaneConfigurationSchema;
-
 export function createPortableConfiguration(
   input: {
     sources: SourceRuntimeConfig[];
     destinations: DestinationRuntimeConfig[];
     routes: RouteDefinition[];
     settings: {
-      locale: VaneConfiguration["settings"]["locale"];
+      locale: PortableConfiguration["settings"]["locale"];
       timeZone: string;
       rawPayloadRetentionDays: number;
     };
@@ -51,9 +45,9 @@ export function createPortableConfiguration(
     throw new Error("Plaintext secret export is not supported");
   }
 
-  return VaneConfigurationSchema.parse({
+  return PortableConfigurationSchema.parse({
     settings: {
-      schemaVersion: VANE_CONFIG_SCHEMA_VERSION,
+      schemaVersion: PORTABLE_CONFIG_SCHEMA_VERSION,
       exportedAt: options.now?.() ?? new Date().toISOString(),
       includeSecrets: false,
       locale: input.settings.locale,
@@ -87,21 +81,21 @@ export function serializePortableConfigurationToml(config: PortableConfiguration
   return [
     "# Vane portable configuration",
     "# Secrets are omitted by default; secret_refs entries point to environment variables.",
-    stringify(vaneConfigurationToTomlDocument(config)).trimEnd(),
+    stringify(configurationToTomlDocument(config)).trimEnd(),
     "",
   ].join("\n");
 }
 
 export function serializePortableConfigurationJson(config: PortableConfiguration): string {
-  return `${JSON.stringify(vaneConfigurationToTomlDocument(config), null, 2)}\n`;
+  return `${JSON.stringify(configurationToTomlDocument(config), null, 2)}\n`;
 }
 
 export function parsePortableConfigurationToml(toml: string): PortableConfiguration {
-  return vaneTomlDocumentToConfiguration(parse(toml));
+  return tomlDocumentToConfiguration(parse(toml));
 }
 
 export function parsePortableConfigurationJson(json: string): PortableConfiguration {
-  return vaneTomlDocumentToConfiguration(JSON.parse(json));
+  return tomlDocumentToConfiguration(JSON.parse(json));
 }
 
 export function resolveDestinationSecretRefs(
@@ -118,9 +112,11 @@ export function resolveSourceSecretRefs(
   return resolvePortableSecretRefs(source, options, "source");
 }
 
-function resolvePortableSecretRefs<
-  T extends { config: JsonObject; secretRefs: VaneSecretReferences },
->(entry: T, options: ImportConfigurationOptions, resource: "source" | "destination"): T {
+function resolvePortableSecretRefs<T extends { config: JsonObject; secretRefs: SecretReferences }>(
+  entry: T,
+  options: ImportConfigurationOptions,
+  resource: "source" | "destination",
+): T {
   const config = structuredClone(entry.config);
   const env = options.env ?? {};
 
@@ -169,7 +165,7 @@ function sanitizeSourceConfig(source: SourceRuntimeConfig): PortableSource {
 
 function sanitizeDestinationConfig(destination: DestinationRuntimeConfig): {
   config: JsonObject;
-  secretRefs: VaneSecretReferences;
+  secretRefs: SecretReferences;
 } {
   const secretPaths = destinationSecretPaths(destination);
   const config = omitJsonPaths(omitSensitiveJson(destination.config), secretPaths);
@@ -265,7 +261,7 @@ function getJsonPath(input: JsonObject, path: string): JsonValue | undefined {
 }
 
 function setJsonPath(input: JsonObject, path: string, value: JsonValue): void {
-  if (!isSafeVaneSecretPath(path)) {
+  if (!isSafeSecretPath(path)) {
     throw new Error(`Unsafe destination secret reference path: ${path}`);
   }
 
@@ -326,8 +322,8 @@ function secretRefEnvName(ref: JsonValue): string | null {
   return null;
 }
 
-function normalizeSecretRefs(secretRefs: JsonObject): VaneSecretReferences {
-  const normalized: VaneSecretReferences = {};
+function normalizeSecretRefs(secretRefs: JsonObject): SecretReferences {
+  const normalized: SecretReferences = {};
 
   for (const [path, ref] of Object.entries(secretRefs)) {
     const env =

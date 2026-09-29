@@ -11,7 +11,7 @@ import { DeliveryWorker } from "#/server/deliveries/delivery-worker.service";
 import { WebhookIntakeService, hashSourceToken } from "#/server/intake/intake.service";
 import { createApplicationContainer } from "#/server/runtime/container";
 import type { DeliveryWorkerRunnerOptions } from "#/server/runtime/delivery-worker-runner";
-import { withVaneLogRedaction } from "#/server/runtime/log-safety";
+import { withLogRedaction } from "#/server/runtime/log-safety";
 
 const now = "2026-07-10T08:00:00.000Z";
 const records: LogRecord[] = [];
@@ -22,7 +22,7 @@ describe("operational logging", () => {
     await reset();
     await configure({
       sinks: {
-        recorder: withVaneLogRedaction((record) => records.push(record)),
+        recorder: withLogRedaction((record) => records.push(record)),
       },
       loggers: [
         {

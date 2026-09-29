@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { CopyableCodeLineProps } from "#/components/common/copyable-code-line";
 import { SourceWebhookCell } from "#/features/sources/ui/source-webhook-cell";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 vi.mock("#/components/common/copyable-code-line", () => ({
   CopyableCodeLine: ({ value, copyValue, copyLabel, tooltipValue }: CopyableCodeLineProps) => (
@@ -32,9 +32,9 @@ describe("source webhook cell", () => {
 
   it("shows the short intake path and exposes the full webhook URL for hover and copy", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <SourceWebhookCell sourceId="source-1" />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     const codeLine = screen.getByTestId("copyable-code-line");

@@ -3,7 +3,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 import { DashboardHeader } from "#/shell/dashboard-header";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -46,7 +46,7 @@ describe("dashboard header", () => {
 
   it("renders operational nav and user menu without inert notification or help controls", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DashboardHeader
           user={{
             name: "Ops Owner",
@@ -55,7 +55,7 @@ describe("dashboard header", () => {
             role: "owner",
           }}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByRole("navigation", { name: "Dashboard" })).toBeTruthy();

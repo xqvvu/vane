@@ -4,7 +4,7 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { describeRouteRule, type RouteRule } from "#/features/routes/model/route-rule-summary";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 import { useTranslations } from "#/i18n/use-i18n";
 
 const multiSourceRule: RouteRule = {
@@ -49,23 +49,23 @@ describe("route rule summary i18n wiring", () => {
     let zhSummary = "";
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <CaptureSummary
           onSummary={(value) => {
             enSummary = value;
           }}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     render(
-      <VaneIntlProvider locale="zh-Hans">
+      <AppIntlProvider locale="zh-Hans">
         <CaptureSummary
           onSummary={(value) => {
             zhSummary = value;
           }}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(enSummary).toContain("Sources: 2");

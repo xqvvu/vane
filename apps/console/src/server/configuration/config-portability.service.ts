@@ -7,6 +7,7 @@ import {
   type ImportConfigurationResult,
   type ImportConfigurationCommand,
   type ImportConfigurationJsonCommand,
+  type PortableConfiguration,
 } from "@vane/core";
 
 import {
@@ -19,7 +20,6 @@ import {
   serializePortableConfigurationToml,
   type ExportConfigurationOptions,
   type ImportConfigurationOptions,
-  type PortableConfiguration,
 } from "#/server/configuration/config-portability";
 import type { ConfigPortabilityServiceOptions } from "#/server/configuration/config-portability.service.types";
 import {

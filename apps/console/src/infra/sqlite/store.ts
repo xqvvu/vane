@@ -20,7 +20,7 @@ import type { SettingsRepository } from "#/infra/sqlite/repositories/settings/se
 import { SqliteSettingsRepository } from "#/infra/sqlite/repositories/settings/settings.repository";
 import type { SourceRepository } from "#/infra/sqlite/repositories/source/source.interface";
 import { SqliteSourceRepository } from "#/infra/sqlite/repositories/source/source.repository";
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
+import type { SqliteDatabase } from "#/infra/sqlite/schema";
 
 export interface OpenSqliteStoreOptions {
   databasePath?: string;
@@ -81,7 +81,7 @@ export class OpenedSqliteStore implements SqliteStore {
   private readonly repositories: SqliteRepositorySet;
 
   constructor(
-    private readonly db: VaneSqliteKysely,
+    private readonly db: SqliteDatabase,
     private readonly context: SqliteRepositoryContext,
   ) {
     this.repositories = createSqliteRepositories(context);

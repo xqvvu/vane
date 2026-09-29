@@ -7,7 +7,7 @@ import type {
   DeliveryDedupeKeyRow,
   DeliveryRow,
 } from "#/infra/sqlite/repositories/delivery/delivery.interface";
-import type { VaneSqliteExecutor } from "#/infra/sqlite/schema";
+import type { SqliteExecutor } from "#/infra/sqlite/schema";
 
 export function deliveryFromRow(row: DeliveryRow): DeliveryJob {
   return DeliveryJobSchema.parse({
@@ -61,7 +61,7 @@ export function requireAttempt(attempt: DeliveryAttempt | null): DeliveryAttempt
 }
 
 export async function reserveDedupeKey(
-  db: VaneSqliteExecutor,
+  db: SqliteExecutor,
   row: DeliveryDedupeKeyRow,
 ): Promise<DeliveryDedupeKeyRow | null> {
   const existing = await db
@@ -82,7 +82,7 @@ export async function reserveDedupeKey(
   return null;
 }
 
-export async function pruneDedupeKeys(db: VaneSqliteExecutor, startsAt: string): Promise<void> {
+export async function pruneDedupeKeys(db: SqliteExecutor, startsAt: string): Promise<void> {
   await db.deleteFrom("delivery_dedupe_keys").where("created_at", "<", startsAt).execute();
 }
 

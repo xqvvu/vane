@@ -5,17 +5,17 @@ import type { AppLocale } from "#/i18n/locales";
 import { getMessages } from "#/i18n/messages";
 import { fallbackTimeZone } from "#/i18n/time-zone";
 
-export interface VaneIntlProviderProps {
+export interface AppIntlProviderProps {
   children: React.ReactNode;
   locale: AppLocale;
   timeZone?: string;
 }
 
-export function VaneIntlProvider({
+export function AppIntlProvider({
   children,
   locale,
   timeZone = fallbackTimeZone,
-}: VaneIntlProviderProps) {
+}: AppIntlProviderProps) {
   return (
     <IntlProvider locale={locale} messages={getMessages(locale)} timeZone={timeZone}>
       {children}

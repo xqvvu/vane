@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import {
   redactLogRecord,
   safeErrorProperties,
-  withVaneLogRedaction,
+  withLogRedaction,
 } from "#/server/runtime/log-safety";
 
 describe("log safety", () => {
@@ -52,7 +52,7 @@ describe("log safety", () => {
   it("redacts before forwarding a record to its sink", () => {
     const sink = vi.fn<(record: LogRecord) => void>();
 
-    withVaneLogRedaction(sink)(
+    withLogRedaction(sink)(
       createRecord({
         properties: {
           authorization: "Bearer credential",

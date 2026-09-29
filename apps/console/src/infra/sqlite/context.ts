@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 
 import type { IsoDateTimeString } from "@vane/core";
 
-import type { VaneSqliteExecutor, VaneSqliteTransaction } from "#/infra/sqlite/schema";
+import type { SqliteExecutor, SqliteTransaction } from "#/infra/sqlite/schema";
 import { transaction } from "#/infra/sqlite/transaction";
 
 export interface SqliteRepositoryContextOptions {
-  db: VaneSqliteExecutor;
+  db: SqliteExecutor;
   now?: () => IsoDateTimeString;
   ids?: Partial<{
     source: () => string;
@@ -20,7 +20,7 @@ export interface SqliteRepositoryContextOptions {
 }
 
 export class SqliteRepositoryContext {
-  readonly db: VaneSqliteExecutor;
+  readonly db: SqliteExecutor;
   readonly now: () => IsoDateTimeString;
   readonly ids: {
     source: () => string;
@@ -52,7 +52,7 @@ export class SqliteRepositoryContext {
     return transaction(this.db, async (tx) => fn(this.withDb(tx)));
   }
 
-  private withDb(db: VaneSqliteTransaction): SqliteRepositoryContext {
+  private withDb(db: SqliteTransaction): SqliteRepositoryContext {
     return new SqliteRepositoryContext({
       db,
       now: this.now,

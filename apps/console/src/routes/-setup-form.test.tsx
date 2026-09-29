@@ -9,7 +9,7 @@ import {
   authQueryKeys,
   dashboardSessionQueryOptions,
 } from "#/features/auth/api/auth.queries";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 import { SetupForm } from "#/routes/-setup-form";
 import { SetupFormClient } from "#/routes/-setup-form-impl";
 
@@ -63,9 +63,9 @@ describe("setup form", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <VaneIntlProvider locale="en-US">
+        <AppIntlProvider locale="en-US">
           <SetupFormClient redirectTo="/" />
-        </VaneIntlProvider>
+        </AppIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -116,9 +116,9 @@ describe("setup form", () => {
     });
     render(
       <QueryClientProvider client={queryClient}>
-        <VaneIntlProvider locale="en-US">
+        <AppIntlProvider locale="en-US">
           <SetupFormClient redirectTo="/" />
-        </VaneIntlProvider>
+        </AppIntlProvider>
       </QueryClientProvider>,
     );
 

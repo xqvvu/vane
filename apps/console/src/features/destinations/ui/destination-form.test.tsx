@@ -14,7 +14,7 @@ import type {
   DestinationFormPreviewInput,
   DestinationSubmitResult,
 } from "#/features/destinations/ui/destination-ui-types";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 const defaultDestinationCatalog = createDefaultDestinationRegistry().toCatalog();
 
@@ -173,7 +173,7 @@ function renderDestinationForm(
   } = {},
 ) {
   render(
-    <VaneIntlProvider locale="en-US">
+    <AppIntlProvider locale="en-US">
       <DestinationForm
         mode="create"
         pending={false}
@@ -188,7 +188,7 @@ function renderDestinationForm(
         }
         onSubmit={vi.fn<() => DestinationSubmitResult>()}
       />
-    </VaneIntlProvider>,
+    </AppIntlProvider>,
   );
 }
 
