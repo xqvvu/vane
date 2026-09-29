@@ -85,9 +85,9 @@ catalogs:
     "@types/node": ^26.6.2
     "@vitejs/plugin-react": ^6.1.1
     babel-plugin-react-compiler: ^1.0.0
-    nitro: 3.0.260610-beta
-    vite: npm:@voidzero-dev/vite-plus-core@1.0.0-rc.1
-    vite-plus: 1.0.0-rc.1
+    nitro: 3.0.260903-beta
+    vite: npm:@voidzero-dev/vite-plus-core@1.0.0
+    vite-plus: 1.0.0
     typescript: ^7.0.2
 
   ui:
@@ -113,3 +113,14 @@ peerDependencyRules:
     - vite
   allowedVersions:
     vite: "*"
+minimumReleaseAgeExclude:
+  - "@voidzero-dev/vite-plus-core@1.0.0"
+  - "@voidzero-dev/vite-plus-darwin-arm64@1.0.0"
+  - "@voidzero-dev/vite-plus-darwin-x64@1.0.0"
+  - "@voidzero-dev/vite-plus-linux-arm64-gnu@1.0.0"
+  - "@voidzero-dev/vite-plus-linux-arm64-musl@1.0.0"
+  - "@voidzero-dev/vite-plus-linux-x64-gnu@1.0.0"
+  - "@voidzero-dev/vite-plus-linux-x64-musl@1.0.0"
+  - "@voidzero-dev/vite-plus-win32-arm64-msvc@1.0.0"
+  - "@voidzero-dev/vite-plus-win32-x64-msvc@1.0.0"
+  - vite-plus@1.0.0

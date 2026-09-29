@@ -1,44 +1,40 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage: use the official Vite+ toolchain image ---
-FROM ghcr.io/voidzero-dev/vite-plus:1.0.0-rc.1 AS build
+FROM ghcr.io/voidzero-dev/vite-plus:1.0.0 AS build
 
-# Native build toolchain for better-sqlite3's node-gyp rebuild
+# The vp image already ships the C/C++ toolchain (`gcc`, `make`, `python3`), so
+# no extra packages are needed for native addons. node-gyp is not in the image,
+# but better-sqlite3 ships a `binding.gyp` with no `install` script, and npm and
+# pnpm both run the implicit `node-gyp rebuild` for that case. It does not
+# actually compile: `binding.gyp` shells out to `node lib/binding.js`, sees the
+# bundled prebuilt binary, and takes the empty branch.
 USER root
-RUN apt-get update  && apt-get install -y --no-install-recommends build-essential python3  && rm -rf /var/lib/apt/lists/*
+RUN npm install -g node-gyp
 
 WORKDIR /app
 
-# Copy manifests first so the dependency layer stays cached across source edits
-COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version ./
-COPY --chown=vp:vp apps/console/package.json apps/console/package.json
-COPY --chown=vp:vp packages/core/package.json packages/core/package.json
-COPY --chown=vp:vp packages/destinations/package.json packages/destinations/package.json
-COPY --chown=vp:vp packages/providers/package.json packages/providers/package.json
-COPY --chown=vp:vp packages/api/package.json packages/api/package.json
-COPY --chown=vp:vp packages/typings/package.json packages/typings/package.json
+# Copy manifests first so the dependency layer stays cached across source edits.
+# `--parents` keeps the workspace layout, so every package manifest comes from
+# one instruction instead of one per package.
+COPY --parents --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version ./apps/console/package.json ./packages/*/package.json /app/
 
 # Provision the pinned Node.js runtime, then install dependencies.
-# - `vp env install` reads .node-version, so the runtime never drifts from it.
-# - node-gyp is installed globally because better-sqlite3's install script needs it on PATH.
-# - node-gyp reuses the provisioned runtime headers, so it never downloads from nodejs.org.
+# `vp env install` reads .node-version, so the runtime never drifts from it.
 RUN --mount=type=cache,id=vane-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
     vp env install \
- && vp exec npm install -g node-gyp \
- && ln -sf "$(vp exec npm root -g)/node-gyp/bin/node-gyp.js" /usr/local/bin/node-gyp \
- && NODEDIR="$(dirname "$(dirname "$(vp env which node | head -1)")")" \
- && test -f "$NODEDIR/include/node/node.h" \
- && npm_config_nodedir="$NODEDIR" vp install --frozen-lockfile
+ && vp install --frozen-lockfile
 
 # Build the console app
 COPY --chown=vp:vp . .
-RUN vp -C apps/console build
-
-# Export the resolved Node.js binary for the runtime stage
-RUN cp "$(vp env which node | head -1)" /tmp/node
+RUN vp -C apps/console build \
+ && cp "$(vp env which node | head -1)" /tmp/node
 
 # --- Runtime stage: slim glibc, no vp toolchain ---
-FROM node:26-trixie-slim AS runtime
+# A bare Debian base plus the resolved Node.js binary is smaller than any
+# `node:*` image, which also carries npm. Stay on glibc: the copied binary is
+# built against it, so a musl image cannot run it.
+FROM debian:trixie-slim AS runtime
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
@@ -47,10 +43,20 @@ ENV VANE_DATABASE_PATH=/data/vane.sqlite
 
 WORKDIR /app
 
-# Install runtime utilities (gosu for user drop, curl for healthcheck)
-RUN apt-get update   && apt-get install -y --no-install-recommends gosu curl   && rm -rf /var/lib/apt/lists/*   && mkdir -p /data /app   && chown -R node:node /data /app
+# gosu drops privileges in the entrypoint, curl backs the healthcheck.
+# libatomic1 is required by the Node.js binary and is absent from a bare Debian,
+# so the container fails to boot without it. The `node` user is created at uid
+# 1000 to match the previous `node:*` base image, which is what the entrypoint
+# and existing data volumes expect.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gosu curl libatomic1 ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd --gid 1000 node \
+ && useradd --uid 1000 --gid 1000 --create-home --shell /usr/sbin/nologin node \
+ && mkdir -p /data /app \
+ && chown -R node:node /data /app
 
-# The vp-provisioned Node.js, matching .node-version exactly
+# The Node.js release pinned by `.node-version`, as provisioned during the build.
 COPY --from=build /tmp/node /usr/local/bin/node
 
 # Build output (includes vendored production deps — server is a single bundle)

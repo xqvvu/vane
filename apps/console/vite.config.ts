@@ -8,54 +8,46 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
-const config = defineConfig((env) => {
-  const isTest = env.mode === "test";
+const config = defineConfig(() => ({
+  resolve: {
+    tsconfigPaths: true,
+  },
 
-  // `vp test` runs with mode=test. TanStack Start, nitro, and devtools assume a
-  // real app build (they externalize React and spin up extra Vite servers), so
-  // they stay out of test runs. tailwind/react/babel match the previous vitest
-  // config, and plugin order is preserved for dev and build.
-  return {
-    resolve: {
-      tsconfigPaths: true,
-    },
+  plugins: lazyPlugins(() => [
+    devtools(),
+    tailwindcss(),
+    tanstackStart({
+      router: {
+        semicolons: true,
+        quoteStyle: "double",
+        generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
+      },
+      importProtection: {
+        behavior: "error",
+      },
+    }),
+    // nitro produces the `.output/server` that Docker runs. Its Vite plugin also
+    // activates for every `serve` command, which is what Vitest reports, so a
+    // test run would load nitro's environments and dev middleware for nothing
+    // and log a `ReferenceError: module is not defined` from React's CJS entry.
+    // `VITEST` is set by the runner itself, so this holds for
+    // `vp test --mode <anything>`. Upstream: nitrojs/nitro#3659, #4144.
+    !process.env.VITEST && nitro({ wasm: { silent: true } }),
+    viteReact(),
+    babel({
+      presets: [reactCompilerPreset()],
+    }),
+  ]),
 
-    plugins: lazyPlugins(() => [
-      !isTest && devtools(),
-      tailwindcss(),
-      !isTest &&
-        tanstackStart({
-          router: {
-            semicolons: true,
-            quoteStyle: "double",
-            generatedRouteTree: path.join(import.meta.dirname, "src/route-tree.gen.ts"),
-          },
-          importProtection: {
-            behavior: "error",
-          },
-        }),
-      !isTest &&
-        nitro({
-          wasm: {
-            silent: true,
-          },
-        }),
-      viteReact(),
-      babel({
-        presets: [reactCompilerPreset()],
-      }),
-    ]),
+  build: {
+    chunkSizeWarningLimit: 1024,
+  },
 
-    build: {
-      chunkSizeWarningLimit: 1024,
-    },
-
-    server: {
-      port: 6180,
-      strictPort: true,
-      host: true,
-    },
-  };
-});
+  server: {
+    port: 6180,
+    strictPort: true,
+    host: true,
+  },
+}));
 
 export default config;
