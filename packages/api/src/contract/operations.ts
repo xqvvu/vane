@@ -3,6 +3,7 @@ import { openapi } from "@orpc/openapi";
 import { ReplayEventCommandSchema } from "@vane/core";
 
 import { dashboardAuth } from "../errors/dashboard-auth";
+import { resourceErrors } from "../errors/resources";
 import {
   DeliveryDetailSchema,
   EventReplayPreviewSchema,
@@ -22,6 +23,7 @@ import {
 import { RunDeliveryWorkerOutputSchema } from "../schemas/worker";
 
 const dashboardErrors = dashboardAuth.error;
+const resource = resourceErrors.error;
 
 /**
  * Event, delivery, and replay operations.
@@ -54,6 +56,7 @@ export const operations = {
     .meta(openapi({ method: "POST" }))
     .input(OperationDetailInputSchema)
     .errors(dashboardErrors)
+    .errors(resource)
     .output(RetryDeliveryOutputSchema),
 
   previewEventReplay: oc

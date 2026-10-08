@@ -32,6 +32,7 @@ import type { DestinationCatalogItem } from "@vane/destinations";
 import { DestinationTemplateEngine } from "@vane/destinations";
 import type { TemplateDiagnostic } from "@vane/destinations";
 
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
 import {
   destinationEditorFormDraftFromRuntime,
   destinationListItemFromRuntime,
@@ -121,7 +122,7 @@ export class DestinationService {
     const destination = await this.store.destinations.get(input.id);
 
     if (!destination) {
-      throw new Error(`Destination not found: ${input.id}`);
+      throw new RecordNotFoundError("Destination", input.id);
     }
 
     const config = parseDestinationConfig(this.destinations, destination.kind, destination.config);
@@ -141,7 +142,7 @@ export class DestinationService {
     const destination = await this.store.destinations.get(input.id);
 
     if (!destination) {
-      throw new Error(`Destination not found: ${input.id}`);
+      throw new RecordNotFoundError("Destination", input.id);
     }
 
     const source: SourceSummary = {
@@ -179,7 +180,7 @@ export class DestinationService {
     const destination = await this.store.destinations.get(input.id);
 
     if (!destination) {
-      throw new Error(`Destination not found: ${input.id}`);
+      throw new RecordNotFoundError("Destination", input.id);
     }
 
     return this.previewDestinationConfig(
@@ -227,7 +228,7 @@ export class DestinationService {
     const current = await this.store.destinations.get(input.id);
 
     if (!current) {
-      throw new Error(`Destination not found: ${input.id}`);
+      throw new RecordNotFoundError("Destination", input.id);
     }
 
     const mergedConfig = mergeJsonObjects(current.config, input.config);
@@ -351,7 +352,7 @@ export class DestinationService {
     const detail = await this.store.history.getEventDetail(sampleEventId);
 
     if (!detail) {
-      throw new Error(`Preview sample Event not found: ${sampleEventId}`);
+      throw new RecordNotFoundError("Preview sample Event", sampleEventId);
     }
 
     const payload = redactJsonValue(detail.event.rawPayload);

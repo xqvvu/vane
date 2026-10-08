@@ -148,6 +148,9 @@ function createFakeContainer(): ApplicationContainer {
     createEventReplayService: async () => {
       throw new Error("Event replay service is not used by request context tests");
     },
+    createOperationsService: async () => {
+      throw new Error("Operations service is not used by request context tests");
+    },
     ensureDeliveryWorkerRunner: async () => ({
       runNow: async () => null,
       getHealth: () => ({

@@ -8,6 +8,7 @@ import {
 } from "@vane/core";
 
 import { dashboardAuth } from "../errors/dashboard-auth";
+import { resourceErrors } from "../errors/resources";
 import {
   SourceDeleteOutputSchema,
   SourceListOutputSchema,
@@ -23,6 +24,9 @@ const dashboardErrors = dashboardAuth.error;
  * Every procedure requires a dashboard session; webhook intake authenticates
  * with a Source token on `/api/sources/$sourceId/webhook` instead and never
  * reaches these procedures.
+ *
+ * Mutations declare `NOT_FOUND` because the source repository raises
+ * `RecordNotFoundError` when the target row is gone.
  */
 export const sources = {
   list: oc
@@ -40,6 +44,7 @@ export const sources = {
     .meta(openapi({ method: "POST" }))
     .input(UpdateSourceCommandSchema)
     .errors(dashboardErrors)
+    .errors(resourceErrors.error)
     .output(SourceOutputSchema),
 
   // Returns the new intake token exactly once; only its hash is persisted.
@@ -47,11 +52,13 @@ export const sources = {
     .meta(openapi({ method: "POST" }))
     .input(RotateSourceTokenCommandSchema)
     .errors(dashboardErrors)
+    .errors(resourceErrors.error)
     .output(SourceTokenOutputSchema),
 
   delete: oc
     .meta(openapi({ method: "POST" }))
     .input(DeleteSourceCommandSchema)
     .errors(dashboardErrors)
+    .errors(resourceErrors.error)
     .output(SourceDeleteOutputSchema),
 };

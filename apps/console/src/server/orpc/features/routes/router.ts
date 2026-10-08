@@ -1,29 +1,21 @@
-import { requireDashboard } from "#/server/orpc/middlewares/require-dashboard";
+import { withDashboardService } from "#/server/orpc/middlewares/require-dashboard";
 import { os } from "#/server/orpc/os";
 
 /** Route rule administration. */
+const withRouteService = withDashboardService((container) => container.createRouteService());
+
 export const routesRouter = os.routes.router({
-  list: os.routes.list
-    .use(requireDashboard())
-    .handler(async ({ context }) =>
-      (await context.dashboardRequest!.container.createRouteService()).listRoutes(),
-    ),
+  list: os.routes.list.use(withRouteService).handler(({ context }) => context.service.listRoutes()),
 
   create: os.routes.create
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createRouteService()).createRoute(input),
-    ),
+    .use(withRouteService)
+    .handler(({ context, input }) => context.service.createRoute(input)),
 
   update: os.routes.update
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createRouteService()).updateRoute(input),
-    ),
+    .use(withRouteService)
+    .handler(({ context, input }) => context.service.updateRoute(input)),
 
   delete: os.routes.delete
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createRouteService()).deleteRoute(input),
-    ),
+    .use(withRouteService)
+    .handler(({ context, input }) => context.service.deleteRoute(input)),
 });

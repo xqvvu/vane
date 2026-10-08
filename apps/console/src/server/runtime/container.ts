@@ -27,6 +27,8 @@ import { WebhookIntakeService } from "#/server/intake/intake.service";
 import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types";
 import { EventReplayService } from "#/server/operations/event-replay.service";
 import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types";
+import { OperationsService } from "#/server/operations/operations.service";
+import type { OperationsServiceOptions } from "#/server/operations/operations.service.types";
 import { RouteService } from "#/server/routes/route.service";
 import type { DashboardSession } from "#/server/runtime/dashboard-session";
 import {
@@ -71,6 +73,7 @@ export interface ApplicationContainer {
   createEventReplayService(
     options?: Partial<Omit<EventReplayServiceOptions, "store">>,
   ): Promise<EventReplayService>;
+  createOperationsService(): Promise<OperationsService>;
   ensureDeliveryWorkerRunner(): Promise<DeliveryWorkerRunner>;
   getBetterAuthDatabase(): Promise<VaneSqliteKysely>;
   hasRegisteredUsers(): Promise<boolean>;
@@ -212,6 +215,14 @@ export function createApplicationContainer(
         store: await container.getSqliteStore(),
         ...serviceOptions,
       });
+    },
+
+    async createOperationsService() {
+      const options: OperationsServiceOptions = {
+        store: await container.getSqliteStore(),
+      };
+
+      return new OperationsService(options);
     },
 
     ensureDeliveryWorkerRunner() {

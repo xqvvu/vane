@@ -1,4 +1,4 @@
-import { requireDashboard } from "#/server/orpc/middlewares/require-dashboard";
+import { withDashboardService } from "#/server/orpc/middlewares/require-dashboard";
 import { os } from "#/server/orpc/os";
 
 /**
@@ -7,36 +7,28 @@ import { os } from "#/server/orpc/os";
  * Handlers return the service DTOs unchanged: exports carry no secrets, and an
  * import returns the freshly minted Source tokens exactly once.
  */
+const withConfigPortabilityService = withDashboardService((container) =>
+  container.createConfigPortabilityService(),
+);
+
 export const portabilityRouter = os.portability.router({
   exportToml: os.portability.exportToml
-    .use(requireDashboard())
+    .use(withConfigPortabilityService)
     .handler(async ({ context, input }) => ({
-      toml: await (
-        await context.dashboardRequest.container.createConfigPortabilityService()
-      ).exportTomlFromCommand(input),
+      toml: await context.service.exportTomlFromCommand(input),
     })),
 
   exportJson: os.portability.exportJson
-    .use(requireDashboard())
+    .use(withConfigPortabilityService)
     .handler(async ({ context, input }) => ({
-      json: await (
-        await context.dashboardRequest.container.createConfigPortabilityService()
-      ).exportJsonFromCommand(input),
+      json: await context.service.exportJsonFromCommand(input),
     })),
 
   importToml: os.portability.importToml
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (
-        await context.dashboardRequest.container.createConfigPortabilityService()
-      ).importTomlFromCommand(input),
-    ),
+    .use(withConfigPortabilityService)
+    .handler(({ context, input }) => context.service.importTomlFromCommand(input)),
 
   importJson: os.portability.importJson
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (
-        await context.dashboardRequest.container.createConfigPortabilityService()
-      ).importJsonFromCommand(input),
-    ),
+    .use(withConfigPortabilityService)
+    .handler(({ context, input }) => context.service.importJsonFromCommand(input)),
 });

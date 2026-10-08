@@ -1,4 +1,5 @@
 import { parse, stringify } from "smol-toml";
+import { z } from "zod";
 
 import {
   isSensitiveKey,
@@ -18,6 +19,7 @@ import {
 
 import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface";
 import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
+import { DomainValidationError } from "#/server/runtime/domain-errors";
 
 export type PortableConfiguration = VaneConfiguration;
 export type PortableDestination = VaneConfigDestination;
@@ -48,7 +50,7 @@ export function createPortableConfiguration(
   options: ExportConfigurationOptions = {},
 ): PortableConfiguration {
   if (options.includeSecrets) {
-    throw new Error("Plaintext secret export is not supported");
+    throw new DomainValidationError("Plaintext secret export is not supported");
   }
 
   return VaneConfigurationSchema.parse({
@@ -97,11 +99,43 @@ export function serializePortableConfigurationJson(config: PortableConfiguration
 }
 
 export function parsePortableConfigurationToml(toml: string): PortableConfiguration {
-  return vaneTomlDocumentToConfiguration(parse(toml));
+  return parsePortableDocument(() => parse(toml), "TOML");
 }
 
 export function parsePortableConfigurationJson(json: string): PortableConfiguration {
-  return vaneTomlDocumentToConfiguration(JSON.parse(json));
+  return parsePortableDocument(() => JSON.parse(json), "JSON");
+}
+
+/**
+ * Wraps document decoding and schema validation so malformed operator input is a
+ * `DomainValidationError` instead of a raw `TomlError` / `SyntaxError` / `ZodError`
+ * bubbling up as an opaque 500. The message is shown in the console, so it
+ * describes the offending construct without echoing the whole payload.
+ */
+function parsePortableDocument(
+  decode: () => unknown,
+  format: "TOML" | "JSON",
+): PortableConfiguration {
+  try {
+    return vaneTomlDocumentToConfiguration(decode());
+  } catch (error) {
+    throw new DomainValidationError(
+      `Invalid ${format} configuration: ${describeParseFailure(error)}`,
+      {
+        cause: error,
+      },
+    );
+  }
+}
+
+function describeParseFailure(error: unknown): string {
+  if (error instanceof z.ZodError) {
+    const [issue] = error.issues;
+
+    return issue ? `${issue.path.join(".") || "(root)"}: ${issue.message}` : error.message;
+  }
+
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function resolveDestinationSecretRefs(
@@ -134,7 +168,9 @@ function resolvePortableSecretRefs<
     const value = env[envName];
 
     if (value === undefined) {
-      throw new Error(`Missing environment variable for ${resource} secret: ${envName}`);
+      throw new DomainValidationError(
+        `Missing environment variable for ${resource} secret: ${envName}`,
+      );
     }
 
     setJsonPath(config, path, value);
@@ -266,7 +302,7 @@ function getJsonPath(input: JsonObject, path: string): JsonValue | undefined {
 
 function setJsonPath(input: JsonObject, path: string, value: JsonValue): void {
   if (!isSafeVaneSecretPath(path)) {
-    throw new Error(`Unsafe destination secret reference path: ${path}`);
+    throw new DomainValidationError(`Unsafe destination secret reference path: ${path}`);
   }
 
   const segments = path.split(".");
