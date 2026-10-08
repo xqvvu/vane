@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage: use the official Vite+ toolchain image ---
-FROM ghcr.io/voidzero-dev/vite-plus:1.0.0 AS build
+FROM ghcr.io/voidzero-dev/vite-plus:1.1.0 AS build
 
 # The vp image already ships the C/C++ toolchain (`gcc`, `make`, `python3`), so
 # no extra packages are needed for native addons. node-gyp is not in the image,

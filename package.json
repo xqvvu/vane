@@ -20,5 +20,5 @@
     "vite": "catalog:toolchain",
     "vite-plus": "catalog:toolchain"
   },
-  "packageManager": "pnpm@12.6.0"
+  "packageManager": "pnpm@12.10.1"
 }
