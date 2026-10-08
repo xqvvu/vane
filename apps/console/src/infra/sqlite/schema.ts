@@ -102,6 +102,8 @@ export interface DeliveriesTable {
   next_attempt_at: string | null;
   last_error: string | null;
   rendered_payload_json: string | null;
+  provider_ref_type: string | null;
+  provider_ref_value: string | null;
   created_at: string;
   updated_at: string;
   finished_at: string | null;

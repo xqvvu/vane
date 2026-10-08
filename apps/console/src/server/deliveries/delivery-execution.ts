@@ -75,6 +75,7 @@ export class DeliveryExecution {
           deliveryId: delivery.job.id,
           attemptId: delivery.attempt.id,
           renderedPayload: sendResult.renderedPayload,
+          providerReference: sendResult.providerReference,
           responseStatus: sendResult.statusCode ?? undefined,
           responseBody: redactOptionalText(sendResult.responseBody),
           finishedAt: now,

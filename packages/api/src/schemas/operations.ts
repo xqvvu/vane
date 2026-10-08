@@ -9,6 +9,7 @@ import {
   JsonObjectSchema,
   JsonValueSchema,
   PreviewRouteReplayCommandSchema,
+  ProviderReferenceSchema,
   ReplayEventCommandSchema,
   ReplayRouteEventsCommandSchema,
   RouteDefinitionSchema,
@@ -88,6 +89,9 @@ export const DeliveryDetailSchema = z.object({
   destinationMetadata: JsonObjectSchema,
   route: RouteDefinitionSchema.nullable(),
   renderedPayload: JsonValueSchema.nullable(),
+  // Target-system handle for the delivered message, for example a Feishu
+  // message_id. An operational identifier, never a secret.
+  providerReference: ProviderReferenceSchema.nullable(),
   attempts: z.array(DeliveryAttemptSchema),
 });
 

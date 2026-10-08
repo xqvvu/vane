@@ -21,3 +21,11 @@ export const DeliveryJobSchema = z.object({
 });
 
 export type DeliveryJob = z.infer<typeof DeliveryJobSchema>;
+
+/** 目标系统里可反向操作的资产句柄，例如飞书消息的 message_id。 */
+export const ProviderReferenceSchema = z.object({
+  type: z.string().min(1),
+  value: z.string().min(1),
+});
+
+export type ProviderReference = z.infer<typeof ProviderReferenceSchema>;

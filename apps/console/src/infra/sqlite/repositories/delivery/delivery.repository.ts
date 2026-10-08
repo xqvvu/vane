@@ -8,6 +8,7 @@ import {
   attemptFromRow,
   decodeRenderedPayload,
   deliveryFromRow,
+  providerReferenceFromRow,
   pruneDedupeKeys,
   redactNullableText,
   requireAttempt,
@@ -118,6 +119,8 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
               next_attempt_at: null,
               last_error: null,
               rendered_payload_json: null,
+              provider_ref_type: null,
+              provider_ref_value: null,
               created_at: now,
               updated_at: now,
               finished_at: null,
@@ -275,6 +278,8 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
             input.renderedPayload === undefined
               ? eb.ref("rendered_payload_json")
               : encodeJson(input.renderedPayload),
+          provider_ref_type: input.providerReference?.type ?? null,
+          provider_ref_value: input.providerReference?.value ?? null,
           updated_at: finishedAt,
           finished_at: finishedAt,
         }))
@@ -379,7 +384,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     ).map((row) => attemptFromRow(row));
     const row = await this.context.db
       .selectFrom("deliveries")
-      .select("rendered_payload_json")
+      .select(["rendered_payload_json", "provider_ref_type", "provider_ref_value"])
       .where("id", "=", id)
       .executeTakeFirst();
 
@@ -391,6 +396,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
       destinationMetadata,
       route,
       renderedPayload: row ? decodeRenderedPayload(row.rendered_payload_json) : null,
+      providerReference: row ? providerReferenceFromRow(row) : null,
       attempts,
     };
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { DeliveryJob, DeliveryState } from "#core/delivery/delivery";
+import type { DeliveryJob, DeliveryState, ProviderReference } from "#core/delivery/delivery";
 import type { DestinationSummary } from "#core/destination/destination";
 import type { EventRecord } from "#core/event/event";
 import type { NormalizedEvent } from "#core/event/normalized-event";
@@ -85,6 +85,7 @@ export interface DeliveryDetail {
   destinationMetadata: JsonObject;
   route: RouteDefinition | null;
   renderedPayload: JsonValue | null;
+  providerReference: ProviderReference | null;
   attempts: DeliveryAttempt[];
 }
 

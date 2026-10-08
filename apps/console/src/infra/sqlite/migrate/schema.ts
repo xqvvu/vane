@@ -113,6 +113,8 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
     .addColumn("next_attempt_at", "text")
     .addColumn("last_error", "text")
     .addColumn("rendered_payload_json", "text")
+    .addColumn("provider_ref_type", "text")
+    .addColumn("provider_ref_value", "text")
     .addColumn("created_at", "text", (column) => column.notNull())
     .addColumn("updated_at", "text", (column) => column.notNull())
     .addColumn("finished_at", "text")
