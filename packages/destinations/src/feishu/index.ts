@@ -1,4 +1,5 @@
 export * from "#destinations/feishu/adapter";
+export * from "#destinations/feishu/app-client";
 export * from "#destinations/feishu/appearance";
 export type * from "#destinations/feishu/card.types";
 export * from "#destinations/feishu/default-card";

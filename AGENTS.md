@@ -160,9 +160,9 @@ Recommended shape inside `apps/console/src`:
 shell               dashboard layout, sidebar, header, user menu
 components/ui       shadcn primitives only; no Vane domain knowledge
 components/common   reusable console UI, no feature ownership or server state
-features            Sources, Routes, Destinations, Events, Deliveries, Settings
+features            Sources, Routes, Destinations, Events, Deliveries, Integrations, Settings
 routes              file routes, layouts, validateSearch, loaders, thin screens
-server              server-only: orpc/ implementer + routers, per-capability *.service.ts/*.service.types.ts, runtime wiring, intake, deliveries
+server              server-only: orpc/ implementer + routers, per-capability *.service.ts/*.service.types.ts, runtime wiring, intake, deliveries, integrations
 infra               SQLite connection, migrations, codecs, store assembly, repositories, and server-only runtime infrastructure
 lib                 small shared helpers; split same-name .server/.client pairs only when needed
 ```

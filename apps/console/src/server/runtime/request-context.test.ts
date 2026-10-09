@@ -133,6 +133,9 @@ function createFakeContainer(): ApplicationContainer {
     createRouteService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },
+    createFeishuAppService: async () => {
+      throw new Error("Configuration services are not used by request context tests");
+    },
     createAppSettingsService: async () => {
       throw new Error("Configuration services are not used by request context tests");
     },

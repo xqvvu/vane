@@ -510,6 +510,9 @@ function createTestContainer(): ApplicationContainer {
     createRouteService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },
+    createFeishuAppService: async () => {
+      throw new Error("Configuration services are not used by webhook tests");
+    },
     createAppSettingsService: async () => {
       throw new Error("Configuration services are not used by webhook tests");
     },

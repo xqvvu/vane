@@ -25,6 +25,8 @@ import { DestinationService } from "#/server/destinations/destination.service";
 import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types";
 import { WebhookIntakeService } from "#/server/intake/intake.service";
 import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types";
+import { FeishuAppService } from "#/server/integrations/feishu-app.service";
+import type { FeishuAppServiceOptions } from "#/server/integrations/feishu-app.service.types";
 import { EventReplayService } from "#/server/operations/event-replay.service";
 import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types";
 import { OperationsService } from "#/server/operations/operations.service";
@@ -60,6 +62,9 @@ export interface ApplicationContainer {
     options?: Partial<Omit<DestinationServiceOptions, "store" | "destinations">>,
   ): Promise<DestinationService>;
   createRouteService(): Promise<RouteService>;
+  createFeishuAppService(
+    options?: Partial<Omit<FeishuAppServiceOptions, "store">>,
+  ): Promise<FeishuAppService>;
   createAppSettingsService(): Promise<AppSettingsService>;
   createConfigPortabilityService(
     options?: Partial<Omit<ConfigPortabilityServiceOptions, "store" | "destinations">>,
@@ -179,6 +184,13 @@ export function createApplicationContainer(
 
     async createRouteService() {
       return new RouteService({ store: await container.getSqliteStore() });
+    },
+
+    async createFeishuAppService(serviceOptions = {}) {
+      return new FeishuAppService({
+        store: await container.getSqliteStore(),
+        ...serviceOptions,
+      });
     },
 
     async createAppSettingsService() {

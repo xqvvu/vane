@@ -28,6 +28,9 @@ const fakeContainer = {
   createRouteService: async () => {
     throw new Error("routes procedures must not run without a dashboard session");
   },
+  createFeishuAppService: async () => {
+    throw new Error("integrations procedures must not run without a dashboard session");
+  },
   createAppSettingsService: async () => ({
     getAppSettings: async () => ({
       locale: "zh-CN",
@@ -93,6 +96,16 @@ const expectedProcedures: Record<
   },
   health: { public: ["check"], private: [] },
   i18n: { public: ["getRequestLocale"], private: [] },
+  integrations: {
+    public: [],
+    private: [
+      "listFeishuApps",
+      "createFeishuApp",
+      "updateFeishuApp",
+      "deleteFeishuApp",
+      "testFeishuApp",
+    ],
+  },
   operations: {
     public: [],
     private: [
@@ -142,6 +155,11 @@ const procedureArgs: Record<string, unknown> = {
   update: { id: "destination-missing", rawPayloadRetentionDays: 1 },
   delete: { id: "destination-missing" },
   rotateToken: { id: "source-missing" },
+  listFeishuApps: undefined,
+  createFeishuApp: { name: "probe", appId: "cli_probe", appSecret: "probe-secret" },
+  updateFeishuApp: { id: "feishu-app-missing" },
+  deleteFeishuApp: { id: "feishu-app-missing" },
+  testFeishuApp: { id: "feishu-app-missing" },
   test: { id: "destination-missing" },
   preview: { id: "destination-missing" },
   previewDraft: { name: "probe", kind: "feishu", config: {} },

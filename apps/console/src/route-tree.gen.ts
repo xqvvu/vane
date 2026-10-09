@@ -16,6 +16,7 @@ import { Route as SetupRouteImport } from "./routes/setup";
 import { Route as DashboardDeliveriesRouteImport } from "./routes/_dashboard.deliveries";
 import { Route as DashboardDestinationsRouteImport } from "./routes/_dashboard.destinations";
 import { Route as DashboardEventsRouteImport } from "./routes/_dashboard.events";
+import { Route as DashboardIntegrationsRouteImport } from "./routes/_dashboard.integrations";
 import { Route as DashboardRoutesRouteImport } from "./routes/_dashboard.routes";
 import { Route as DashboardSettingsRouteImport } from "./routes/_dashboard.settings";
 import { Route as DashboardSourcesRouteImport } from "./routes/_dashboard.sources";
@@ -60,6 +61,11 @@ const DashboardDestinationsRoute = DashboardDestinationsRouteImport.update({
 const DashboardEventsRoute = DashboardEventsRouteImport.update({
   id: "/events",
   path: "/events",
+  getParentRoute: () => DashboardRoute,
+} as any);
+const DashboardIntegrationsRoute = DashboardIntegrationsRouteImport.update({
+  id: "/integrations",
+  path: "/integrations",
   getParentRoute: () => DashboardRoute,
 } as any);
 const DashboardRoutesRoute = DashboardRoutesRouteImport.update({
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   "/deliveries": typeof DashboardDeliveriesRoute;
   "/destinations": typeof DashboardDestinationsRoute;
   "/events": typeof DashboardEventsRoute;
+  "/integrations": typeof DashboardIntegrationsRoute;
   "/routes": typeof DashboardRoutesRoute;
   "/settings": typeof DashboardSettingsRoute;
   "/sources": typeof DashboardSourcesRoute;
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   "/deliveries": typeof DashboardDeliveriesRoute;
   "/destinations": typeof DashboardDestinationsRoute;
   "/events": typeof DashboardEventsRoute;
+  "/integrations": typeof DashboardIntegrationsRoute;
   "/routes": typeof DashboardRoutesRoute;
   "/settings": typeof DashboardSettingsRoute;
   "/sources": typeof DashboardSourcesRoute;
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   "/_dashboard/deliveries": typeof DashboardDeliveriesRoute;
   "/_dashboard/destinations": typeof DashboardDestinationsRoute;
   "/_dashboard/events": typeof DashboardEventsRoute;
+  "/_dashboard/integrations": typeof DashboardIntegrationsRoute;
   "/_dashboard/routes": typeof DashboardRoutesRoute;
   "/_dashboard/settings": typeof DashboardSettingsRoute;
   "/_dashboard/sources": typeof DashboardSourcesRoute;
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | "/deliveries"
     | "/destinations"
     | "/events"
+    | "/integrations"
     | "/routes"
     | "/settings"
     | "/sources"
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | "/deliveries"
     | "/destinations"
     | "/events"
+    | "/integrations"
     | "/routes"
     | "/settings"
     | "/sources"
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | "/_dashboard/deliveries"
     | "/_dashboard/destinations"
     | "/_dashboard/events"
+    | "/_dashboard/integrations"
     | "/_dashboard/routes"
     | "/_dashboard/settings"
     | "/_dashboard/sources"
@@ -302,6 +314,13 @@ declare module "@tanstack/react-router" {
       path: "/events";
       fullPath: "/events";
       preLoaderRoute: typeof DashboardEventsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/_dashboard/integrations": {
+      id: "/_dashboard/integrations";
+      path: "/integrations";
+      fullPath: "/integrations";
+      preLoaderRoute: typeof DashboardIntegrationsRouteImport;
       parentRoute: typeof DashboardRoute;
     };
     "/_dashboard/routes": {
@@ -388,6 +407,7 @@ interface DashboardRouteChildren {
   DashboardDeliveriesRoute: typeof DashboardDeliveriesRoute;
   DashboardDestinationsRoute: typeof DashboardDestinationsRoute;
   DashboardEventsRoute: typeof DashboardEventsRoute;
+  DashboardIntegrationsRoute: typeof DashboardIntegrationsRoute;
   DashboardRoutesRoute: typeof DashboardRoutesRoute;
   DashboardSettingsRoute: typeof DashboardSettingsRoute;
   DashboardSourcesRoute: typeof DashboardSourcesRoute;
@@ -399,6 +419,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardDeliveriesRoute: DashboardDeliveriesRoute,
   DashboardDestinationsRoute: DashboardDestinationsRoute,
   DashboardEventsRoute: DashboardEventsRoute,
+  DashboardIntegrationsRoute: DashboardIntegrationsRoute,
   DashboardRoutesRoute: DashboardRoutesRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardSourcesRoute: DashboardSourcesRoute,

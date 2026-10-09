@@ -2,6 +2,7 @@ import { authRouter } from "#/server/orpc/features/auth/router";
 import { destinationsRouter } from "#/server/orpc/features/destinations/router";
 import { healthRouter } from "#/server/orpc/features/health/router";
 import { i18nRouter } from "#/server/orpc/features/i18n/router";
+import { integrationsRouter } from "#/server/orpc/features/integrations/router";
 import { operationsRouter } from "#/server/orpc/features/operations/router";
 import { portabilityRouter } from "#/server/orpc/features/portability/router";
 import { routesRouter } from "#/server/orpc/features/routes/router";
@@ -14,6 +15,7 @@ export const router = os.router({
   destinations: destinationsRouter,
   health: healthRouter,
   i18n: i18nRouter,
+  integrations: integrationsRouter,
   operations: operationsRouter,
   portability: portabilityRouter,
   routes: routesRouter,

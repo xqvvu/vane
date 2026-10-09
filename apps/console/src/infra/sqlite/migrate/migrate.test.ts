@@ -56,6 +56,7 @@ describe("sqlite schema plan", () => {
         "delivery_dedupe_keys",
         "destinations",
         "events",
+        "feishu_apps",
         "routes",
         "schema_migrations",
         "session",
