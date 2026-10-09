@@ -2,10 +2,10 @@ import {
   DestinationEditorDraftResultSchema,
   type DestinationEditorDraftResult,
 } from "#core/destination/destination";
-import type { AppLocale } from "#core/presentation";
+import type { Locale } from "#core/presentation";
 
 export interface AppSettings {
-  locale: AppLocale;
+  locale: Locale;
   timeZone: string;
   rawPayloadRetentionDays: number;
 }

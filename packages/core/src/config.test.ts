@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  PortableTomlDocumentSchema,
+  TomlDocumentSchema,
   configurationToTomlDocument,
   tomlDocumentToConfiguration,
-  type PortableConfiguration,
+  type Configuration,
 } from "#core/config";
 
-const portableConfig: PortableConfiguration = {
+const portableConfig: Configuration = {
   settings: {
     schemaVersion: "vane.config.v1",
     exportedAt: "2026-06-09T08:00:00.000Z",
@@ -124,7 +124,7 @@ describe("Vane portable configuration", () => {
 
   it("rejects unknown provider, destination kind, route rule, and invalid secret refs", () => {
     expect(() =>
-      PortableTomlDocumentSchema.parse({
+      TomlDocumentSchema.parse({
         settings: {
           schema_version: "vane.config.v1",
           include_secrets: false,
@@ -142,7 +142,7 @@ describe("Vane portable configuration", () => {
     ).toThrow("Invalid option");
 
     expect(() =>
-      PortableTomlDocumentSchema.parse({
+      TomlDocumentSchema.parse({
         settings: {
           schema_version: "vane.config.v1",
           include_secrets: false,
@@ -160,7 +160,7 @@ describe("Vane portable configuration", () => {
     ).toThrow("Invalid option");
 
     expect(() =>
-      PortableTomlDocumentSchema.parse({
+      TomlDocumentSchema.parse({
         settings: {
           schema_version: "vane.config.v1",
           include_secrets: false,
@@ -181,7 +181,7 @@ describe("Vane portable configuration", () => {
     ).toThrow("Unrecognized key");
 
     expect(() =>
-      PortableTomlDocumentSchema.parse({
+      TomlDocumentSchema.parse({
         settings: {
           schema_version: "vane.config.v1",
           include_secrets: false,
@@ -204,7 +204,7 @@ describe("Vane portable configuration", () => {
     ).toThrow("Secret environment references must be valid env names");
 
     expect(() =>
-      PortableTomlDocumentSchema.parse({
+      TomlDocumentSchema.parse({
         settings: {
           schema_version: "vane.config.v1",
           include_secrets: false,
@@ -227,7 +227,7 @@ describe("Vane portable configuration", () => {
     ).toThrow("Secret reference paths must not use prototype-polluting keys");
 
     expect(() =>
-      PortableTomlDocumentSchema.parse({
+      TomlDocumentSchema.parse({
         settings: {
           schema_version: "vane.config.v1",
           include_secrets: false,

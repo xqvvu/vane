@@ -14,7 +14,7 @@ import type {
   ProviderReference,
   SourceSummary,
 } from "@vane/core";
-import type { AppLocale } from "@vane/core/presentation";
+import type { Locale } from "@vane/core/presentation";
 import { z } from "zod";
 
 export interface FetchLikeResponse {
@@ -26,7 +26,7 @@ export interface FetchLikeResponse {
 export type FetchLike = (url: string, init: RequestInit) => Promise<FetchLikeResponse>;
 
 export interface DestinationPresentation {
-  locale: AppLocale;
+  locale: Locale;
   timeZone: string;
 }
 

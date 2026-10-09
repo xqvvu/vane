@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { createDefaultDestinationRegistry, createDefaultUrgencyRegistry } from "@vane/destinations";
 import { createDefaultProviderRegistry } from "@vane/providers";
 
-import type { ApplicationContainer, AuthRuntime } from "#/server/runtime/container";
+import type { ApplicationContainer, AuthServer } from "#/server/runtime/container";
 import {
   DashboardAuthError,
   DashboardAuthorizationError,
@@ -30,7 +30,7 @@ const fakeGetSession = vi.fn<(input: { headers: HeadersInit }) => Promise<Dashbo
   async () => null,
 );
 
-const fakeAuth: AuthRuntime = {
+const fakeAuth: AuthServer = {
   handler: async () => new Response(null),
   api: {
     getSession: fakeGetSession,
