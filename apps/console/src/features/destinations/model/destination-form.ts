@@ -1,4 +1,5 @@
 import {
+  AlertSeveritySchema,
   formHeaderLines,
   formSeparatedList,
   formString,
@@ -75,11 +76,19 @@ export function destinationConfigFromForm(kind: DestinationFormKind, data: FormD
   }
 
   if (kind === "feishu") {
+    const sendMode = formFeishuSendMode(data);
+    const webhookUrl = formTrimmedString(data, "webhookUrl");
     const signSecret = formTrimmedString(data, "signSecret");
+    const appRef = formTrimmedString(data, "appRef");
+    const chatId = formTrimmedString(data, "chatId");
+    const urgent = urgentFromForm(data);
 
     return {
-      webhookUrl: formTrimmedString(data, "webhookUrl"),
+      sendMode,
+      ...(webhookUrl ? { webhookUrl } : {}),
       ...(signSecret ? { signSecret } : {}),
+      ...(sendMode === "app" && appRef && chatId ? { app: { appRef, chatId } } : {}),
+      ...(sendMode === "app" && urgent ? { urgent } : {}),
       ...nonEmptyObject({ template }),
     };
   }
@@ -140,8 +149,14 @@ export function destinationConfigPatchFromForm(
       config.headers = headers;
     }
   } else if (kind === "feishu") {
+    const sendMode = formFeishuSendMode(data);
     const webhookUrl = formTrimmedString(data, "webhookUrl");
     const signSecret = formTrimmedString(data, "signSecret");
+    const appRef = formTrimmedString(data, "appRef");
+    const chatId = formTrimmedString(data, "chatId");
+    const urgent = urgentFromForm(data);
+
+    config.sendMode = sendMode;
 
     if (webhookUrl) {
       config.webhookUrl = webhookUrl;
@@ -149,6 +164,14 @@ export function destinationConfigPatchFromForm(
 
     if (signSecret) {
       config.signSecret = signSecret;
+    }
+
+    if (sendMode === "app" && appRef && chatId) {
+      config.app = { appRef, chatId };
+    }
+
+    if (sendMode === "app" && urgent) {
+      config.urgent = urgent;
     }
   } else if (kind === "slack") {
     const webhookUrl = formTrimmedString(data, "webhookUrl");
@@ -179,6 +202,58 @@ export function destinationConfigPatchFromForm(
   }
 
   return config;
+}
+
+function formFeishuSendMode(data: FormData): "webhook" | "app" {
+  return formString(data, "sendMode") === "app" ? "app" : "webhook";
+}
+
+/**
+ * Urgent paging block from the form.
+ *
+ * Receivers are the switch: an empty list means paging is not configured and
+ * the block is omitted entirely. Severities default to `critical` when none are
+ * selected, so an accidental empty selection cannot silently widen paging to
+ * every alert.
+ */
+function urgentFromForm(data: FormData): JsonObject | null {
+  const receivers = Array.from(new Set(formSeparatedList(data, "urgentReceivers")));
+
+  if (receivers.length === 0) {
+    return null;
+  }
+
+  const severities = formJsonStringArray(data, "urgentSeverities").flatMap((severity) => {
+    const parsed = AlertSeveritySchema.safeParse(severity);
+
+    return parsed.success ? [parsed.data] : [];
+  });
+  const userIdType = formString(data, "urgentUserIdType");
+
+  return {
+    autoEnabled: formString(data, "urgentAutoEnabled") === "true",
+    severities: severities.length > 0 ? severities : ["critical"],
+    userIdType: userIdType === "user_id" || userIdType === "union_id" ? userIdType : "open_id",
+    receivers,
+  };
+}
+
+function formJsonStringArray(data: FormData, key: string): string[] {
+  const raw = formTrimmedString(data, key);
+
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+
+    return Array.isArray(parsed)
+      ? parsed.filter((entry): entry is string => typeof entry === "string")
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 function templateFromForm(kind: DestinationFormKind, data: FormData): JsonObject | null {

@@ -44,6 +44,7 @@ import {
   mergeJsonObjects,
   parseDestinationConfig,
   redactNullableText,
+  requireExistingFeishuAppRefs,
 } from "#/server/configuration/configuration-support";
 import type {
   DestinationServiceOptions,
@@ -54,11 +55,13 @@ export class DestinationService {
   private readonly store: DestinationServiceOptions["store"];
   private readonly destinations: DestinationServiceOptions["destinations"];
   private readonly destinationSendContext: DestinationServiceOptions["destinationSendContext"];
+  private readonly resolveDestinationConfig: DestinationServiceOptions["resolveDestinationConfig"];
 
   constructor(options: DestinationServiceOptions) {
     this.store = options.store;
     this.destinations = options.destinations;
     this.destinationSendContext = options.destinationSendContext;
+    this.resolveDestinationConfig = options.resolveDestinationConfig;
   }
 
   listDestinationCatalog(): DestinationCatalogItem[] {
@@ -73,11 +76,15 @@ export class DestinationService {
 
   async createDestination(command: CreateDestinationCommand): Promise<DestinationListItem> {
     const input = CreateDestinationCommandSchema.parse(command);
+    const config = parseDestinationConfig(this.destinations, input.kind, input.config);
+
+    await requireExistingFeishuAppRefs(config, this.store.feishuApps);
+
     const created = await this.store.destinations.create({
       name: input.name,
       kind: input.kind,
       enabled: input.enabled,
-      config: parseDestinationConfig(this.destinations, input.kind, input.config),
+      config,
       secretRefs: input.secretRefs,
     });
 
@@ -92,12 +99,18 @@ export class DestinationService {
       current && (input.config !== undefined || input.kind !== undefined)
         ? mergeJsonObjects(current.config, input.config ?? {})
         : input.config;
+    const parsedConfig =
+      config && kind ? parseDestinationConfig(this.destinations, kind, config) : config;
+
+    if (parsedConfig) {
+      await requireExistingFeishuAppRefs(parsedConfig, this.store.feishuApps);
+    }
 
     const updated = await this.store.destinations.update(input.id, {
       name: input.name,
       kind: input.kind,
       enabled: input.enabled,
-      config: config && kind ? parseDestinationConfig(this.destinations, kind, config) : config,
+      config: parsedConfig,
       secretRefs: input.secretRefs,
     });
 
@@ -153,6 +166,12 @@ export class DestinationService {
     };
     const summary = destinationSummaryFromRuntime(destination);
     const normalizedEvent = createTestNormalizedEvent();
+    const config = this.resolveDestinationConfig
+      ? await this.resolveDestinationConfig({
+          kind: destination.kind,
+          config: destination.config,
+        })
+      : destination.config;
     const result = await this.destinations.send(
       destination.kind,
       {
@@ -160,7 +179,7 @@ export class DestinationService {
         source,
         destination: summary,
         normalizedEvent,
-        config: destination.config,
+        config,
       },
       this.destinationSendContext,
     );

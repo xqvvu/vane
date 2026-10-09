@@ -1,5 +1,7 @@
 import { RiArrowRightLine } from "@remixicon/react";
 
+import type { FeishuAppListItem } from "@vane/core";
+
 import { FormPanel } from "#/components/common/content-panel";
 import {
   createDestinationDefaults,
@@ -15,6 +17,7 @@ import { useTranslations } from "#/i18n/use-i18n";
 
 export function CreateDestinationForm({
   destinationCatalog,
+  feishuApps,
   showHeader = true,
   layout = "panel",
   pending,
@@ -22,6 +25,7 @@ export function CreateDestinationForm({
   onSubmit,
 }: {
   destinationCatalog: DestinationCatalog;
+  feishuApps: FeishuAppListItem[];
   showHeader?: boolean;
   layout?: "panel" | "dialog";
   pending: boolean;
@@ -36,6 +40,7 @@ export function CreateDestinationForm({
       layout={layout}
       pending={pending}
       destinationCatalog={destinationCatalog}
+      feishuApps={feishuApps}
       defaultValues={createDestinationDefaults()}
       onPreview={onPreview}
       onSubmit={onSubmit}

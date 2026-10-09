@@ -2,6 +2,8 @@ import { RiAddLine } from "@remixicon/react";
 import * as React from "react";
 import { toast } from "sonner";
 
+import type { FeishuAppListItem } from "@vane/core";
+
 import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content";
 import { Button } from "#/components/ui/button";
 import {
@@ -22,10 +24,12 @@ import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationAddDialog({
   destinationCatalog,
+  feishuApps,
   disabled = false,
   onPreview,
 }: {
   destinationCatalog: DestinationCatalog;
+  feishuApps: FeishuAppListItem[];
   disabled?: boolean;
   onPreview: DestinationSubmitHandler<PreviewDestinationFormInput>;
 }) {
@@ -67,6 +71,7 @@ export function DestinationAddDialog({
 
         <CreateDestinationForm
           destinationCatalog={destinationCatalog}
+          feishuApps={feishuApps}
           showHeader={false}
           layout="dialog"
           pending={disabled || pending}

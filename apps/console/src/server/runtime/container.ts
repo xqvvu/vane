@@ -25,6 +25,7 @@ import { DestinationService } from "#/server/destinations/destination.service";
 import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types";
 import { WebhookIntakeService } from "#/server/intake/intake.service";
 import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types";
+import { createDestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
 import { FeishuAppService } from "#/server/integrations/feishu-app.service";
 import type { FeishuAppServiceOptions } from "#/server/integrations/feishu-app.service.types";
 import { EventReplayService } from "#/server/operations/event-replay.service";
@@ -175,9 +176,12 @@ export function createApplicationContainer(
     },
 
     async createDestinationService(serviceOptions = {}) {
+      const store = await container.getSqliteStore();
+
       return new DestinationService({
-        store: await container.getSqliteStore(),
+        store,
         destinations: container.getDestinationRegistry(),
+        resolveDestinationConfig: createDestinationConfigResolver({ store }),
         ...serviceOptions,
       });
     },
@@ -214,10 +218,13 @@ export function createApplicationContainer(
     },
 
     async createDeliveryWorker(workerOptions = {}) {
+      const store = await getOrOpenSqliteStore();
+
       return new DeliveryWorker({
-        store: await getOrOpenSqliteStore(),
+        store,
         destinations: container.getDestinationRegistry(),
         staleRunningTimeoutMs: workerStaleRunningMs,
+        resolveDestinationConfig: createDestinationConfigResolver({ store }),
         ...workerOptions,
       });
     },

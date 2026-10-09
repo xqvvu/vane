@@ -8,11 +8,14 @@ import type {
 import type { DestinationRegistry, DestinationSendContext } from "@vane/destinations";
 
 import type { SqliteStore } from "#/infra/sqlite/store";
+import type { DestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
 
 export interface DestinationServiceOptions {
   store: SqliteStore;
   destinations: DestinationRegistry;
   destinationSendContext?: DestinationSendContext;
+  /** Resolves server-side references (for example a Feishu app credential) before a test send. */
+  resolveDestinationConfig?: DestinationConfigResolver;
 }
 
 /** Re-exported dashboard DTOs — source of truth is `@vane/core`. */

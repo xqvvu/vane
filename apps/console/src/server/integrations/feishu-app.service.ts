@@ -21,6 +21,7 @@ import {
   requireFeishuApp,
 } from "#/infra/sqlite/repositories/feishu-app/feishu-app.helpers";
 import type { SqliteStore } from "#/infra/sqlite/store";
+import { feishuSendModeFromConfig } from "#/server/configuration/configuration-support";
 import type { FeishuAppServiceOptions } from "#/server/integrations/feishu-app.service.types";
 import { DomainValidationError } from "#/server/runtime/domain-errors";
 
@@ -114,8 +115,10 @@ export class FeishuAppService {
 /**
  * Scans destination runtime configs for an `app.appRef` pointing at the app.
  *
- * The reference shape is owned by the Feishu destination schema; the scan stays
- * defensive so a config in any state cannot break app administration.
+ * Only destinations that actually send through the app count: a leftover app
+ * block on a webhook-mode config is inert, so it neither blocks deletion nor
+ * needs to be cleaned up first. The scan stays defensive so a config in any
+ * state cannot break app administration.
  */
 function findReferencingDestinations(
   appId: string,
@@ -125,6 +128,10 @@ function findReferencingDestinations(
 
   for (const destination of destinations) {
     if (destination.kind !== "feishu") {
+      continue;
+    }
+
+    if (feishuSendModeFromConfig(destination.config) !== "app") {
       continue;
     }
 

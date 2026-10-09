@@ -19,6 +19,8 @@ export type {
 
 export type DestinationFormMode = "create" | "edit";
 
+export type DestinationFeishuSendMode = "webhook" | "app";
+
 export type DestinationFormValues = DestinationTemplateFormState & {
   name: string;
   kind: DestinationFormKind;
@@ -32,6 +34,15 @@ export type DestinationFormValues = DestinationTemplateFormState & {
   webhookUrl: string;
   method: string;
   signSecret: string;
+  /** Feishu send mode and app-mode target fields. */
+  sendMode: DestinationFeishuSendMode;
+  appRef: string;
+  chatId: string;
+  /** Feishu urgent paging fields; receivers comma or newline separated. */
+  urgentAutoEnabled: boolean;
+  urgentSeverities: string[];
+  urgentUserIdType: string;
+  urgentReceivers: string;
 };
 
 export type DestinationFormSubmitInput = {

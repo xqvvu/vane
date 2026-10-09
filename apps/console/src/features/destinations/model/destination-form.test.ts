@@ -105,6 +105,7 @@ describe("destination form helpers", () => {
     );
 
     expect(destinationConfigFromForm("feishu", data)).toEqual({
+      sendMode: "webhook",
       webhookUrl: "https://open.feishu.cn/webhook",
       signSecret: "feishu-sign-secret",
       template: {
@@ -146,6 +147,7 @@ describe("destination form helpers", () => {
     data.set("templateBindings", "{}");
 
     expect(destinationConfigFromForm("feishu", data)).toEqual({
+      sendMode: "webhook",
       webhookUrl: "https://open.feishu.cn/webhook",
       template: {
         source: "builtin",
@@ -188,7 +190,57 @@ describe("destination form helpers", () => {
     feishuCardWithoutDraft.set("templateMode", "feishu_card");
     feishuCardWithoutDraft.set("templateCard", "");
 
-    expect(destinationConfigPatchFromForm("feishu", feishuCardWithoutDraft)).toEqual({});
+    expect(destinationConfigPatchFromForm("feishu", feishuCardWithoutDraft)).toEqual({
+      sendMode: "webhook",
+    });
+  });
+
+  it("maps Feishu app send mode with urgent paging into destination config", () => {
+    const data = new FormData();
+
+    data.set("kind", "feishu");
+    data.set("sendMode", "app");
+    data.set("appRef", "feishu-app-1");
+    data.set("chatId", "oc_group");
+    data.set("urgentAutoEnabled", "true");
+    data.set("urgentSeverities", JSON.stringify(["critical", "warning", "bogus"]));
+    data.set("urgentUserIdType", "user_id");
+    data.set("urgentReceivers", "ou_1\nou_2, ou_2");
+    data.set("templateText", "{{event.title}}");
+
+    expect(destinationConfigFromForm("feishu", data)).toEqual({
+      sendMode: "app",
+      app: { appRef: "feishu-app-1", chatId: "oc_group" },
+      urgent: {
+        autoEnabled: true,
+        severities: ["critical", "warning"],
+        userIdType: "user_id",
+        receivers: ["ou_1", "ou_2"],
+      },
+      template: {
+        source: "custom",
+        mode: "text",
+        text: "{{event.title}}",
+      },
+    });
+  });
+
+  it("omits the urgent block when no receivers are configured", () => {
+    const data = new FormData();
+
+    data.set("kind", "feishu");
+    data.set("sendMode", "app");
+    data.set("appRef", "feishu-app-1");
+    data.set("chatId", "oc_group");
+    data.set("urgentAutoEnabled", "true");
+    data.set("urgentSeverities", JSON.stringify([]));
+    data.set("urgentUserIdType", "open_id");
+    data.set("urgentReceivers", "");
+
+    const config = destinationConfigFromForm("feishu", data);
+
+    expect(config).not.toHaveProperty("urgent");
+    expect(config.app).toEqual({ appRef: "feishu-app-1", chatId: "oc_group" });
   });
 
   it("falls back unknown destination form kinds to generic webhook", () => {

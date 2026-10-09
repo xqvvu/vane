@@ -77,6 +77,9 @@ export function destinationOperationalConfigFromRuntime(
       : null;
   const signingConfigured =
     destination.kind === "feishu" ? hasConfiguredString(config, "signSecret") : false;
+  const feishuApp = destination.kind === "feishu" ? configPlainObject(config, "app") : null;
+  const feishuUrgent = destination.kind === "feishu" ? configPlainObject(config, "urgent") : null;
+  const urgentReceivers = feishuUrgent ? configStringArray(feishuUrgent, "receivers") : null;
 
   return DestinationOperationalConfigSchema.parse({
     endpoint,
@@ -92,6 +95,14 @@ export function destinationOperationalConfigFromRuntime(
     templateSource: template.source,
     signingConfigured,
     secretFieldPaths: configuredSecretFieldPaths(destination.kind, config),
+    sendMode: destination.kind === "feishu" ? (feishuSendMode(config) ?? "webhook") : null,
+    appRef: feishuApp ? configString(feishuApp, "appRef") : null,
+    chatId: feishuApp ? configString(feishuApp, "chatId") : null,
+    urgentAutoEnabled:
+      feishuUrgent && typeof feishuUrgent.autoEnabled === "boolean"
+        ? feishuUrgent.autoEnabled
+        : null,
+    urgentReceivers: urgentReceivers && urgentReceivers.length > 0 ? urgentReceivers : null,
   });
 }
 
@@ -99,6 +110,8 @@ export function destinationEditorFormDraftFromRuntime(
   destination: DestinationRuntimeConfig,
 ): DestinationEditorFormDraft {
   const config = destination.config;
+  const feishuApp = destination.kind === "feishu" ? configPlainObject(config, "app") : null;
+  const feishuUrgent = destination.kind === "feishu" ? configPlainObject(config, "urgent") : null;
 
   return {
     endpointUrl: configString(config, "endpointUrl") ?? "",
@@ -110,6 +123,18 @@ export function destinationEditorFormDraftFromRuntime(
     url: configString(config, "url") ?? "",
     webhookUrl: configString(config, "webhookUrl") ?? "",
     method: configString(config, "method") ?? "",
+    sendMode: feishuSendMode(config) ?? "webhook",
+    appRef: feishuApp ? (configString(feishuApp, "appRef") ?? "") : "",
+    chatId: feishuApp ? (configString(feishuApp, "chatId") ?? "") : "",
+    urgentAutoEnabled:
+      feishuUrgent && typeof feishuUrgent.autoEnabled === "boolean"
+        ? feishuUrgent.autoEnabled
+        : true,
+    urgentSeverities: feishuUrgent ? configStringArray(feishuUrgent, "severities") : ["critical"],
+    urgentUserIdType: feishuUrgent
+      ? (configString(feishuUrgent, "userIdType") ?? "open_id")
+      : "open_id",
+    urgentReceivers: feishuUrgent ? configStringArray(feishuUrgent, "receivers").join(", ") : "",
   };
 }
 
@@ -149,6 +174,19 @@ export function destinationMetadataFromRuntime(destination: DestinationRuntimeCo
 
   if (destination.kind === "feishu") {
     metadata.signingEnabled = operational.signingConfigured;
+
+    if (operational.sendMode === "app") {
+      metadata.sendMode = "app";
+
+      if (operational.chatId) {
+        metadata.chatId = operational.chatId;
+      }
+
+      if (operational.urgentReceivers) {
+        metadata.urgentReceiverCount = operational.urgentReceivers.length;
+      }
+    }
+
     return metadata;
   }
 
@@ -320,6 +358,22 @@ function configStringArray(config: JsonObject, key: string): string[] {
   }
 
   return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
+}
+
+function configPlainObject(config: JsonObject, key: string): JsonObject | null {
+  const value = config[key];
+
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonObject) : null;
+}
+
+function feishuSendMode(config: JsonObject): "webhook" | "app" | null {
+  const value = config.sendMode;
+
+  if (value === "webhook" || value === "app") {
+    return value;
+  }
+
+  return value === undefined ? "webhook" : null;
 }
 
 function configHeaderNames(config: JsonObject): string[] {
