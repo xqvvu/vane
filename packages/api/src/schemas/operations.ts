@@ -8,6 +8,7 @@ import {
   IsoDateTimeSchema,
   JsonObjectSchema,
   JsonValueSchema,
+  OncallPingSchema,
   PreviewRouteReplayCommandSchema,
   ProviderReferenceSchema,
   ReplayEventCommandSchema,
@@ -93,6 +94,9 @@ export const DeliveryDetailSchema = z.object({
   // message_id. An operational identifier, never a secret.
   providerReference: ProviderReferenceSchema.nullable(),
   attempts: z.array(DeliveryAttemptSchema),
+  // Urgent phone pages created for this delivery; a failed page never changes
+  // the delivery's own state.
+  pings: z.array(OncallPingSchema),
 });
 
 export const EventReplayTargetSchema = z.object({

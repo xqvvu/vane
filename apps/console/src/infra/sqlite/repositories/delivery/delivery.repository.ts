@@ -40,6 +40,8 @@ import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destina
 import { requireEvent } from "#/infra/sqlite/repositories/intake/intake.helpers";
 import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository";
 import { SqliteIntakeRepository as SqliteIntakeRepositoryImpl } from "#/infra/sqlite/repositories/intake/intake.repository";
+import type { OncallRepository } from "#/infra/sqlite/repositories/oncall/oncall.interface";
+import { SqliteOncallRepository } from "#/infra/sqlite/repositories/oncall/oncall.repository";
 import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface";
 import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository";
 import {
@@ -56,6 +58,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     private readonly destinations: DestinationRepository,
     private readonly routes: RouteRepository,
     private readonly intake: SqliteIntakeRepository,
+    private readonly oncall: OncallRepository,
   ) {}
 
   enqueueForEvent(input: EnqueueDeliveriesInput): Promise<EnqueueDeliveriesResult> {
@@ -398,6 +401,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
       renderedPayload: row ? decodeRenderedPayload(row.rendered_payload_json) : null,
       providerReference: row ? providerReferenceFromRow(row) : null,
       attempts,
+      pings: await this.oncall.listForDelivery(job.id),
     };
   }
 
@@ -426,8 +430,9 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     const destinations = new SqliteDestinationRepository(context);
     const routes = new SqliteRouteRepository(context);
     const intake = new SqliteIntakeRepositoryImpl(context);
+    const oncall = new SqliteOncallRepository(context, destinations, intake);
 
-    return new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
+    return new SqliteDeliveryRepository(context, sources, destinations, routes, intake, oncall);
   }
 }
 

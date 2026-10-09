@@ -14,6 +14,7 @@ import type {
   DeliveryRepository,
 } from "#/infra/sqlite/repositories/delivery/delivery.interface";
 import type { DestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
+import type { OncallPingTrigger } from "#/server/oncall/oncall.service.types";
 import { DomainValidationError } from "#/server/runtime/domain-errors";
 import { safeErrorProperties } from "#/server/runtime/log-safety";
 
@@ -30,6 +31,11 @@ export interface DeliveryExecutionOptions {
   backoff?: DeliveryBackoffOptions;
   /** Resolves server-side references (for example a Feishu app credential) before the send. */
   resolveDestinationConfig?: DestinationConfigResolver;
+  /**
+   * Auto-paging hook: called after a successful send that carries a provider
+   * reference. A trigger failure never fails the delivery.
+   */
+  triggerPings?: OncallPingTrigger;
 }
 
 export interface DeliveryBackoffOptions {
@@ -44,6 +50,7 @@ export class DeliveryExecution {
   private readonly destinations: Pick<DestinationRegistry, "send">;
   private readonly sendContext?: DestinationSendContext;
   private readonly resolveDestinationConfig?: DestinationConfigResolver;
+  private readonly triggerPings?: OncallPingTrigger;
   private readonly initialDelayMs: number;
   private readonly maxDelayMs: number;
 
@@ -52,6 +59,7 @@ export class DeliveryExecution {
     this.destinations = options.destinations;
     this.sendContext = options.sendContext;
     this.resolveDestinationConfig = options.resolveDestinationConfig;
+    this.triggerPings = options.triggerPings;
     this.initialDelayMs = options.backoff?.initialDelayMs ?? 30_000;
     this.maxDelayMs = options.backoff?.maxDelayMs ?? 15 * 60_000;
   }
@@ -92,6 +100,22 @@ export class DeliveryExecution {
           responseBody: redactOptionalText(sendResult.responseBody),
           finishedAt: now,
         });
+
+        if (this.triggerPings && sendResult.providerReference) {
+          try {
+            await this.triggerPings({
+              delivery,
+              providerReference: sendResult.providerReference,
+              now,
+            });
+          } catch (error) {
+            deliveryLogger.warn("Urgent paging trigger failed for {deliveryId}", {
+              deliveryId: delivery.job.id,
+              destinationId: delivery.destination.id,
+              ...safeErrorProperties(error),
+            });
+          }
+        }
 
         deliveryLogger.info("Delivery {deliveryId} succeeded via {destinationKind}", {
           deliveryId: delivery.job.id,

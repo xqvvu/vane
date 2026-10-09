@@ -16,6 +16,8 @@ import type { HistoryRepository } from "#/infra/sqlite/repositories/history/hist
 import { SqliteHistoryRepository } from "#/infra/sqlite/repositories/history/history.repository";
 import type { IntakeRepository } from "#/infra/sqlite/repositories/intake/intake.interface";
 import { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository";
+import type { OncallRepository } from "#/infra/sqlite/repositories/oncall/oncall.interface";
+import { SqliteOncallRepository } from "#/infra/sqlite/repositories/oncall/oncall.repository";
 import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface";
 import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository";
 import type { SettingsRepository } from "#/infra/sqlite/repositories/settings/settings.interface";
@@ -37,6 +39,7 @@ export interface OpenSqliteStoreOptions {
     delivery: () => string;
     attempt: () => string;
     feishuApp: () => string;
+    oncallPing: () => string;
   }>;
 }
 
@@ -47,6 +50,7 @@ export interface SqliteStoreUnitOfWork {
   readonly intake: IntakeRepository;
   readonly deliveries: DeliveryRepository;
   readonly feishuApps: FeishuAppRepository;
+  readonly oncall: OncallRepository;
   readonly history: HistoryRepository;
   readonly settings: SettingsRepository;
 }
@@ -66,7 +70,15 @@ export function createSqliteRepositories(context: SqliteRepositoryContext): Sqli
   const destinations = new SqliteDestinationRepository(context);
   const routes = new SqliteRouteRepository(context);
   const intake = new SqliteIntakeRepository(context);
-  const deliveries = new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
+  const oncall = new SqliteOncallRepository(context, destinations, intake);
+  const deliveries = new SqliteDeliveryRepository(
+    context,
+    sources,
+    destinations,
+    routes,
+    intake,
+    oncall,
+  );
   const feishuApps = new SqliteFeishuAppRepository(context);
   const history = new SqliteHistoryRepository(context, sources, intake, routes, deliveries);
   const settings = new SqliteSettingsRepository(context);
@@ -78,6 +90,7 @@ export function createSqliteRepositories(context: SqliteRepositoryContext): Sqli
     intake,
     deliveries,
     feishuApps,
+    oncall,
     history,
     settings,
   };
@@ -134,6 +147,10 @@ export class OpenedSqliteStore implements SqliteStore {
 
   get feishuApps() {
     return this.repositories.feishuApps;
+  }
+
+  get oncall() {
+    return this.repositories.oncall;
   }
 
   get history() {
