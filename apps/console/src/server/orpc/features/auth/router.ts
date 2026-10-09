@@ -1,6 +1,6 @@
+import { findDashboardContext } from "#/server/orpc/middlewares/dashboard-context";
 import { os } from "#/server/orpc/os";
 import { getApplicationContainer } from "#/server/runtime/container";
-import { requireDashboardRequestContext } from "#/server/runtime/request-context";
 
 /**
  * Public auth procedures.
@@ -11,23 +11,21 @@ import { requireDashboardRequestContext } from "#/server/runtime/request-context
  */
 export const authRouter = os.auth.router({
   getDashboardSession: os.auth.getDashboardSession.handler(async ({ context }) => {
-    try {
-      const dashboardRequest = await requireDashboardRequestContext({
-        headers: context.reqHeaders,
-      });
+    const dashboardRequest = await findDashboardContext({ reqHeaders: context.reqHeaders });
 
-      return {
-        user: {
-          id: dashboardRequest.currentUser.id,
-          name: dashboardRequest.currentUser.name ?? null,
-          email: dashboardRequest.currentUser.email,
-          image: dashboardRequest.currentUser.image ?? null,
-          role: dashboardRequest.currentUser.role ?? null,
-        },
-      };
-    } catch {
+    if (!dashboardRequest) {
       return null;
     }
+
+    return {
+      user: {
+        id: dashboardRequest.currentUser.id,
+        name: dashboardRequest.currentUser.name ?? null,
+        email: dashboardRequest.currentUser.email,
+        image: dashboardRequest.currentUser.image ?? null,
+        role: dashboardRequest.currentUser.role ?? null,
+      },
+    };
   }),
 
   getAuthBootstrap: os.auth.getAuthBootstrap.handler(async () => {

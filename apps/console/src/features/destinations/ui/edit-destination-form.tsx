@@ -1,6 +1,6 @@
 import { RiEditLine } from "@remixicon/react";
 
-import type { DestinationEditorDraftResult } from "@vane/core";
+import type { DestinationEditorDraftResult, FeishuAppListItem } from "@vane/core";
 
 import { Skeleton } from "#/components/ui/skeleton";
 import { destinationTemplateFormStateFromDraft } from "#/features/destinations/model/destination-form";
@@ -19,6 +19,7 @@ import { useTranslations } from "#/i18n/use-i18n";
 
 export function EditDestinationForm({
   destinationCatalog,
+  feishuApps,
   showHeader = true,
   framed = true,
   layout = "panel",
@@ -30,6 +31,7 @@ export function EditDestinationForm({
   onSubmit,
 }: {
   destinationCatalog: DestinationCatalog;
+  feishuApps: FeishuAppListItem[];
   showHeader?: boolean;
   framed?: boolean;
   layout?: "panel" | "dialog";
@@ -62,6 +64,7 @@ export function EditDestinationForm({
         layout={layout}
         pending={pending}
         destinationCatalog={destinationCatalog}
+        feishuApps={feishuApps}
         defaultValues={{
           ...createDestinationDefaults(),
           ...destinationTemplateFormStateFromDraft(editorDraft.template),
@@ -77,6 +80,13 @@ export function EditDestinationForm({
           webhookUrl: editorDraft.form.webhookUrl,
           method: editorDraft.form.method,
           signSecret: "",
+          sendMode: editorDraft.form.sendMode,
+          appRef: editorDraft.form.appRef,
+          chatId: editorDraft.form.chatId,
+          urgentAutoEnabled: editorDraft.form.urgentAutoEnabled,
+          urgentSeverities: editorDraft.form.urgentSeverities,
+          urgentUserIdType: editorDraft.form.urgentUserIdType,
+          urgentReceivers: editorDraft.form.urgentReceivers,
         }}
         onCancel={onCancel}
         onPreview={(input) =>

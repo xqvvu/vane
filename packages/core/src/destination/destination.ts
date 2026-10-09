@@ -42,6 +42,16 @@ export const DestinationOperationalConfigSchema = z.object({
   signingConfigured: z.boolean(),
   /** Secret field paths that have values, for operator awareness without leaking them. */
   secretFieldPaths: z.array(z.string()),
+  /** Feishu send mode; null for other destination kinds. */
+  sendMode: z.enum(["webhook", "app"]).nullable(),
+  /** Feishu app send mode: the registered app resource id. */
+  appRef: z.string().nullable(),
+  /** Feishu app send mode: the target group chat. */
+  chatId: z.string().nullable(),
+  /** Feishu urgent paging: whether automatic paging is enabled. */
+  urgentAutoEnabled: z.boolean().nullable(),
+  /** Feishu urgent paging: configured receiver ids (operational handles, not secrets). */
+  urgentReceivers: z.array(z.string()).nullable(),
 });
 
 export type DestinationOperationalConfig = z.infer<typeof DestinationOperationalConfigSchema>;
@@ -169,6 +179,15 @@ export const DestinationEditorFormDraftSchema = z.object({
   url: z.string(),
   webhookUrl: z.string(),
   method: z.string(),
+  /** Feishu send mode and app-mode target fields. */
+  sendMode: z.enum(["webhook", "app"]),
+  appRef: z.string(),
+  chatId: z.string(),
+  /** Feishu urgent paging fields; receivers comma or newline separated. */
+  urgentAutoEnabled: z.boolean(),
+  urgentSeverities: z.array(z.string()),
+  urgentUserIdType: z.string(),
+  urgentReceivers: z.string(),
 });
 
 export type DestinationEditorFormDraft = z.infer<typeof DestinationEditorFormDraftSchema>;

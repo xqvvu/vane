@@ -404,11 +404,13 @@ describe("sqlite store", () => {
       responseStatus: 202,
       responseBody: "accepted token=delivery-secret password: hidden",
       renderedPayload: { ok: true },
+      providerReference: { type: "feishu_message_id", value: "om_abc123" },
     });
     const detail = await store.deliveries.get(updated.id);
 
     expect(updated.state).toBe("succeeded");
     expect(detail?.renderedPayload).toEqual({ ok: true });
+    expect(detail?.providerReference).toEqual({ type: "feishu_message_id", value: "om_abc123" });
     expect(detail?.attempts).toMatchObject([
       {
         attemptNumber: 1,
@@ -918,6 +920,7 @@ describe("sqlite store", () => {
     expect(JSON.stringify(deliveryDetail?.destinationMetadata)).not.toContain("Bearer");
     expect(JSON.stringify(deliveryDetail)).not.toContain("Bearer destination-secret");
     expect(deliveryDetail?.renderedPayload).toBeNull();
+    expect(deliveryDetail?.providerReference).toBeNull();
     expect(deliveryDetail?.attempts).toMatchObject([
       {
         attemptNumber: 1,

@@ -292,6 +292,7 @@ describe("destination templates", () => {
         kind: "feishu",
       },
       config: {
+        sendMode: "webhook",
         webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
         signSecret: "secret",
         template: {

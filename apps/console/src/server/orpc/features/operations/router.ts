@@ -1,98 +1,70 @@
-import { requireDashboard } from "#/server/orpc/middlewares/require-dashboard";
+import {
+  requireDashboard,
+  withDashboardService,
+} from "#/server/orpc/middlewares/require-dashboard";
 import { os } from "#/server/orpc/os";
 
 /**
  * Event, delivery, and replay operations.
  *
- * Reads go straight to the SQLite store because they are projection queries with
- * no business rules. Writes (retry, replay, manual worker run) go through the
- * capability services.
+ * The procedure handlers only adapt the authenticated request to capability
+ * services. Projection queries still belong to the operations capability even
+ * though their persistence implementation is read-only.
+ *
+ * `runDeliveryWorker` needs the container itself (it assembles a one-off worker
+ * and reads the runner health), so it uses the bare `requireDashboard()` guard.
  */
-export const operationsRouter = os.operations.router({
-  list: os.operations.list.use(requireDashboard()).handler(async ({ context, input }) => {
-    const store = await context.dashboardRequest!.container.getSqliteStore();
-    const limit = input?.limit ?? 20;
-    const [events, deliveries] = await Promise.all([
-      store.history.listEvents({
-        limit,
-        sourceId: input?.sourceId,
-        severity: input?.severity,
-        status: input?.status,
-        q: input?.q,
-        page: input?.eventPage ?? 1,
-      }),
-      store.history.listDeliveries({
-        limit,
-        sourceId: input?.sourceId,
-        severity: input?.severity,
-        status: input?.status,
-        destinationId: input?.destinationId,
-        state: input?.deliveryState,
-        q: input?.q,
-        cursor: input?.deliveryCursor,
-      }),
-    ]);
+const withOperationsService = withDashboardService((container) =>
+  container.createOperationsService(),
+);
+const withEventReplayService = withDashboardService((container) =>
+  container.createEventReplayService(),
+);
 
-    return {
-      events,
-      deliveries,
-    };
-  }),
+export const operationsRouter = os.operations.router({
+  list: os.operations.list
+    .use(withOperationsService)
+    .handler(({ context, input }) => context.service.listOperations(input)),
 
   getEventDetail: os.operations.getEventDetail
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.getSqliteStore()).history.getEventDetail(input.id),
-    ),
+    .use(withOperationsService)
+    .handler(({ context, input }) => context.service.getEventDetail(input.id)),
 
   getDeliveryDetail: os.operations.getDeliveryDetail
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.getSqliteStore()).deliveries.get(input.id),
-    ),
+    .use(withOperationsService)
+    .handler(({ context, input }) => context.service.getDeliveryDetail(input.id)),
 
   retryDelivery: os.operations.retryDelivery
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.getSqliteStore()).deliveries.retryNow({
-        deliveryId: input.id,
-      }),
+    .use(withOperationsService)
+    .handler(({ context, input }) => context.service.retryDelivery(input.id)),
+
+  // The operator is taken from the authenticated session, never from the input.
+  buzzDelivery: os.operations.buzzDelivery
+    .use(withOperationsService)
+    .handler(({ context, input }) =>
+      context.service.buzzDelivery(input.id, context.dashboardRequest.currentUser.id),
     ),
 
   previewEventReplay: os.operations.previewEventReplay
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createEventReplayService()).previewEventReplay(
-        input,
-      ),
-    ),
+    .use(withEventReplayService)
+    .handler(({ context, input }) => context.service.previewEventReplay(input)),
 
   replayEvent: os.operations.replayEvent
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createEventReplayService()).replayEvent(input),
-    ),
+    .use(withEventReplayService)
+    .handler(({ context, input }) => context.service.replayEvent(input)),
 
   previewRouteReplay: os.operations.previewRouteReplay
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createEventReplayService()).previewRouteReplay(
-        input,
-      ),
-    ),
+    .use(withEventReplayService)
+    .handler(({ context, input }) => context.service.previewRouteReplay(input)),
 
   replayRouteEvents: os.operations.replayRouteEvents
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createEventReplayService()).replayRouteEvents(
-        input,
-      ),
-    ),
+    .use(withEventReplayService)
+    .handler(({ context, input }) => context.service.replayRouteEvents(input)),
 
   runDeliveryWorker: os.operations.runDeliveryWorker
     .use(requireDashboard())
     .handler(async ({ context, input }) => {
-      const container = context.dashboardRequest!.container;
+      const container = context.dashboardRequest.container;
       const worker = await container.createDeliveryWorker();
       const result = await worker.runOnce({
         limit: input?.limit ?? 10,

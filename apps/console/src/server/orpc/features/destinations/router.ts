@@ -1,87 +1,56 @@
-import { requireDashboard } from "#/server/orpc/middlewares/require-dashboard";
+import { withDashboardService } from "#/server/orpc/middlewares/require-dashboard";
 import { os } from "#/server/orpc/os";
 
 /**
  * Outbound destination administration.
  *
- * These handlers stay thin on purpose: they resolve the capability service from
- * the request-scoped container and return its DTO. Config validation, template
- * rendering, and secret handling belong to the service.
+ * These handlers stay thin on purpose: the middleware resolves the capability
+ * service from the request-scoped container and the handler delegates to it.
+ * Config validation, template rendering, and secret handling belong to the
+ * service.
  */
+const withDestinationService = withDashboardService((container) =>
+  container.createDestinationService(),
+);
+
 export const destinationsRouter = os.destinations.router({
   list: os.destinations.list
-    .use(requireDashboard())
-    .handler(async ({ context }) =>
-      (await context.dashboardRequest!.container.createDestinationService()).listDestinations(),
-    ),
+    .use(withDestinationService)
+    .handler(({ context }) => context.service.listDestinations()),
 
   listCatalog: os.destinations.listCatalog
-    .use(requireDashboard())
-    .handler(async ({ context }) =>
-      (
-        await context.dashboardRequest!.container.createDestinationService()
-      ).listDestinationCatalog(),
-    ),
+    .use(withDestinationService)
+    .handler(({ context }) => context.service.listDestinationCatalog()),
 
   getTemplateDraft: os.destinations.getTemplateDraft
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (
-        await context.dashboardRequest!.container.createDestinationService()
-      ).getDestinationTemplateDraft(input),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.getDestinationTemplateDraft(input)),
 
   create: os.destinations.create
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createDestinationService()).createDestination(
-        input,
-      ),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.createDestination(input)),
 
   update: os.destinations.update
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createDestinationService()).updateDestination(
-        input,
-      ),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.updateDestination(input)),
 
   delete: os.destinations.delete
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createDestinationService()).deleteDestination(
-        input,
-      ),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.deleteDestination(input)),
 
   test: os.destinations.test
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createDestinationService()).testDestination(input),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.testDestination(input)),
 
   preview: os.destinations.preview
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createDestinationService()).previewDestination(
-        input,
-      ),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.previewDestination(input)),
 
   previewDraft: os.destinations.previewDraft
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (
-        await context.dashboardRequest!.container.createDestinationService()
-      ).previewDestinationDraft(input),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.previewDestinationDraft(input)),
 
   previewUpdate: os.destinations.previewUpdate
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (
-        await context.dashboardRequest!.container.createDestinationService()
-      ).previewDestinationUpdate(input),
-    ),
+    .use(withDestinationService)
+    .handler(({ context, input }) => context.service.previewDestinationUpdate(input)),
 });

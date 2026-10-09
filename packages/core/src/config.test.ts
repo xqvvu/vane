@@ -16,6 +16,18 @@ const portableConfig: PortableConfiguration = {
     timeZone: "Asia/Shanghai",
     rawPayloadRetentionDays: 14,
   },
+  feishuApps: [
+    {
+      id: "feishu-app-sre",
+      name: "SRE pager app",
+      appId: "cli_sre_app",
+      secretRefs: {
+        appSecret: {
+          env: "FEISHU_APP_SECRET",
+        },
+      },
+    },
+  ],
   sources: [
     {
       id: "source-grafana",
@@ -72,6 +84,17 @@ describe("Vane portable configuration", () => {
         time_zone: "Asia/Shanghai",
         raw_payload_retention_days: 14,
       },
+      feishu_apps: [
+        {
+          id: "feishu-app-sre",
+          app_id: "cli_sre_app",
+          secret_refs: {
+            appSecret: {
+              env: "FEISHU_APP_SECRET",
+            },
+          },
+        },
+      ],
       routes: [
         {
           destination_ids: ["destination-slack"],

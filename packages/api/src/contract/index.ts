@@ -2,6 +2,7 @@ import { auth } from "./auth";
 import { destinations } from "./destinations";
 import { health } from "./health";
 import { i18n } from "./i18n";
+import { integrations } from "./integrations";
 import { operations } from "./operations";
 import { portability } from "./portability";
 import { routes } from "./routes";
@@ -12,6 +13,7 @@ export { auth } from "./auth";
 export { destinations } from "./destinations";
 export { health } from "./health";
 export { i18n } from "./i18n";
+export { integrations } from "./integrations";
 export { operations } from "./operations";
 export { portability } from "./portability";
 export { routes } from "./routes";
@@ -29,6 +31,7 @@ export const contract = {
   destinations,
   health,
   i18n,
+  integrations,
   operations,
   portability,
   routes,

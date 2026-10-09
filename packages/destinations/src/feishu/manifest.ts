@@ -13,10 +13,25 @@ export const feishuManifest = {
   iconName: "feishu",
   configFields: [
     {
+      type: "select",
+      path: "sendMode",
+      labelKey: "destinations.form.feishuSendMode",
+      descriptionKey: "destinations.form.feishuSendModeDescription",
+      options: [
+        {
+          value: "webhook",
+          labelKey: "destinations.form.feishuSendModeWebhook",
+        },
+        {
+          value: "app",
+          labelKey: "destinations.form.feishuSendModeApp",
+        },
+      ],
+    },
+    {
       type: "url",
       path: "webhookUrl",
       labelKey: "destinations.form.feishuWebhookUrl",
-      required: true,
       sensitive: true,
     },
     {
@@ -25,6 +40,57 @@ export const feishuManifest = {
       labelKey: "destinations.form.signSecret",
       placeholderKey: "destinations.form.optionalPlaceholder",
       sensitive: true,
+    },
+    {
+      type: "text",
+      path: "app.appRef",
+      labelKey: "destinations.form.feishuAppRef",
+      descriptionKey: "destinations.form.feishuAppRefDescription",
+    },
+    {
+      type: "text",
+      path: "app.chatId",
+      labelKey: "destinations.form.feishuChatId",
+      placeholderKey: "destinations.form.feishuChatIdPlaceholder",
+      descriptionKey: "destinations.form.feishuChatIdDescription",
+    },
+    {
+      type: "boolean",
+      path: "urgent.autoEnabled",
+      labelKey: "destinations.form.feishuUrgentAutoEnabled",
+      descriptionKey: "destinations.form.feishuUrgentAutoEnabledDescription",
+    },
+    {
+      type: "string-list",
+      path: "urgent.severities",
+      labelKey: "destinations.form.feishuUrgentSeverities",
+      descriptionKey: "destinations.form.feishuUrgentSeveritiesDescription",
+    },
+    {
+      type: "select",
+      path: "urgent.userIdType",
+      labelKey: "destinations.form.feishuUrgentUserIdType",
+      descriptionKey: "destinations.form.feishuUrgentUserIdTypeDescription",
+      options: [
+        {
+          value: "open_id",
+          labelKey: "destinations.form.feishuUserIdTypeOpenId",
+        },
+        {
+          value: "user_id",
+          labelKey: "destinations.form.feishuUserIdTypeUserId",
+        },
+        {
+          value: "union_id",
+          labelKey: "destinations.form.feishuUserIdTypeUnionId",
+        },
+      ],
+    },
+    {
+      type: "string-list",
+      path: "urgent.receivers",
+      labelKey: "destinations.form.feishuUrgentReceivers",
+      descriptionKey: "destinations.form.feishuUrgentReceiversDescription",
     },
     defineAdapterTemplateConfigField({
       type: "template",

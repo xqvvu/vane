@@ -11,6 +11,7 @@ import type {
   DestinationSummary,
   JsonValue,
   NormalizedEvent,
+  ProviderReference,
   SourceSummary,
 } from "@vane/core";
 import type { AppLocale } from "@vane/core/presentation";
@@ -61,6 +62,8 @@ export interface DestinationSendResultBase {
   statusCode: number | null;
   responseBody: string | null;
   renderedPayload: JsonValue;
+  /** 目标系统返回的资产句柄；adapter 拿不到时可省略。 */
+  providerReference?: ProviderReference;
 }
 
 export type DestinationSendResult =

@@ -8,7 +8,9 @@ import {
   IsoDateTimeSchema,
   JsonObjectSchema,
   JsonValueSchema,
+  OncallPingSchema,
   PreviewRouteReplayCommandSchema,
+  ProviderReferenceSchema,
   ReplayEventCommandSchema,
   ReplayRouteEventsCommandSchema,
   RouteDefinitionSchema,
@@ -88,7 +90,18 @@ export const DeliveryDetailSchema = z.object({
   destinationMetadata: JsonObjectSchema,
   route: RouteDefinitionSchema.nullable(),
   renderedPayload: JsonValueSchema.nullable(),
+  // Target-system handle for the delivered message, for example a Feishu
+  // message_id. An operational identifier, never a secret.
+  providerReference: ProviderReferenceSchema.nullable(),
   attempts: z.array(DeliveryAttemptSchema),
+  // Urgent phone pages created for this delivery; a failed page never changes
+  // the delivery's own state.
+  pings: z.array(OncallPingSchema),
+});
+
+export const BuzzDeliveryOutputSchema = z.object({
+  deliveryId: z.string().min(1),
+  pings: z.array(OncallPingSchema),
 });
 
 export const EventReplayTargetSchema = z.object({

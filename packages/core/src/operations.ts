@@ -1,10 +1,11 @@
 import { z } from "zod";
 
-import type { DeliveryJob, DeliveryState } from "#core/delivery/delivery";
+import type { DeliveryJob, DeliveryState, ProviderReference } from "#core/delivery/delivery";
 import type { DestinationSummary } from "#core/destination/destination";
 import type { EventRecord } from "#core/event/event";
 import type { NormalizedEvent } from "#core/event/normalized-event";
 import type { JsonObject, JsonValue } from "#core/json";
+import type { OncallPing } from "#core/oncall/oncall";
 import type { RouteDefinition, RouteMatchResult } from "#core/route/route";
 import type { SourceSummary } from "#core/source/source";
 
@@ -85,7 +86,10 @@ export interface DeliveryDetail {
   destinationMetadata: JsonObject;
   route: RouteDefinition | null;
   renderedPayload: JsonValue | null;
+  providerReference: ProviderReference | null;
   attempts: DeliveryAttempt[];
+  /** Urgent phone pages created for this delivery, oldest first. */
+  pings: OncallPing[];
 }
 
 export interface WorkerRunNotice {
@@ -124,6 +128,12 @@ export const ReplayRouteEventsCommandSchema = z.object({
   eventIds: z.array(z.string().min(1)).min(1).max(100),
 });
 export type ReplayRouteEventsCommand = z.infer<typeof ReplayRouteEventsCommandSchema>;
+
+/** Result of manually paging one delivery: the records created by the attempt. */
+export interface DeliveryPingsResult {
+  deliveryId: string;
+  pings: OncallPing[];
+}
 
 export interface EventReplayTarget {
   routeId: string;

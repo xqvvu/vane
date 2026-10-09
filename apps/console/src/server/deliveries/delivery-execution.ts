@@ -13,6 +13,9 @@ import type {
   ClaimedDelivery,
   DeliveryRepository,
 } from "#/infra/sqlite/repositories/delivery/delivery.interface";
+import type { DestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
+import type { OncallPingTrigger } from "#/server/oncall/oncall.service.types";
+import { DomainValidationError } from "#/server/runtime/domain-errors";
 import { safeErrorProperties } from "#/server/runtime/log-safety";
 
 const deliveryLogger = getLogger(["vane", "delivery"]);
@@ -26,6 +29,13 @@ export interface DeliveryExecutionOptions {
   destinations: Pick<DestinationRegistry, "send">;
   sendContext?: DestinationSendContext;
   backoff?: DeliveryBackoffOptions;
+  /** Resolves server-side references (for example a Feishu app credential) before the send. */
+  resolveDestinationConfig?: DestinationConfigResolver;
+  /**
+   * Auto-paging hook: called after a successful send that carries a provider
+   * reference. A trigger failure never fails the delivery.
+   */
+  triggerPings?: OncallPingTrigger;
 }
 
 export interface DeliveryBackoffOptions {
@@ -39,6 +49,8 @@ export class DeliveryExecution {
   private readonly store: DeliveryExecutionStore;
   private readonly destinations: Pick<DestinationRegistry, "send">;
   private readonly sendContext?: DestinationSendContext;
+  private readonly resolveDestinationConfig?: DestinationConfigResolver;
+  private readonly triggerPings?: OncallPingTrigger;
   private readonly initialDelayMs: number;
   private readonly maxDelayMs: number;
 
@@ -46,6 +58,8 @@ export class DeliveryExecution {
     this.store = options.store;
     this.destinations = options.destinations;
     this.sendContext = options.sendContext;
+    this.resolveDestinationConfig = options.resolveDestinationConfig;
+    this.triggerPings = options.triggerPings;
     this.initialDelayMs = options.backoff?.initialDelayMs ?? 30_000;
     this.maxDelayMs = options.backoff?.maxDelayMs ?? 15 * 60_000;
   }
@@ -56,6 +70,12 @@ export class DeliveryExecution {
     presentation?: DestinationPresentation,
   ): Promise<DeliveryExecutionOutcome> {
     try {
+      const config = this.resolveDestinationConfig
+        ? await this.resolveDestinationConfig({
+            kind: delivery.destination.kind,
+            config: delivery.destination.config,
+          })
+        : delivery.destination.config;
       const sendResult = await this.destinations.send(
         delivery.destination.kind,
         {
@@ -64,7 +84,7 @@ export class DeliveryExecution {
           destination: delivery.destination,
           normalizedEvent: delivery.event.normalized,
           payload: redactJsonValue(delivery.event.rawPayload),
-          config: delivery.destination.config,
+          config,
           presentation,
         },
         this.sendContext,
@@ -75,10 +95,27 @@ export class DeliveryExecution {
           deliveryId: delivery.job.id,
           attemptId: delivery.attempt.id,
           renderedPayload: sendResult.renderedPayload,
+          providerReference: sendResult.providerReference,
           responseStatus: sendResult.statusCode ?? undefined,
           responseBody: redactOptionalText(sendResult.responseBody),
           finishedAt: now,
         });
+
+        if (this.triggerPings && sendResult.providerReference) {
+          try {
+            await this.triggerPings({
+              delivery,
+              providerReference: sendResult.providerReference,
+              now,
+            });
+          } catch (error) {
+            deliveryLogger.warn("Urgent paging trigger failed for {deliveryId}", {
+              deliveryId: delivery.job.id,
+              destinationId: delivery.destination.id,
+              ...safeErrorProperties(error),
+            });
+          }
+        }
 
         deliveryLogger.info("Delivery {deliveryId} succeeded via {destinationKind}", {
           deliveryId: delivery.job.id,
@@ -103,6 +140,15 @@ export class DeliveryExecution {
         finishedAt: now,
       });
     } catch (error) {
+      if (error instanceof DomainValidationError) {
+        return await this.markFailed(delivery, {
+          error: error.message,
+          errorKind: "configuration_error",
+          retryHint: "not_retryable",
+          finishedAt: now,
+        });
+      }
+
       const safeError = safeErrorProperties(error);
 
       return await this.markFailed(delivery, {

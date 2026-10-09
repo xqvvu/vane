@@ -11,5 +11,7 @@ export * from "#core/configuration/index";
 export * from "#core/delivery/index";
 export * from "#core/destination/index";
 export * from "#core/event/index";
+export * from "#core/integration/index";
+export * from "#core/oncall/index";
 export * from "#core/route/index";
 export * from "#core/source/index";

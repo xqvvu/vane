@@ -8,6 +8,7 @@ import {
   attemptFromRow,
   decodeRenderedPayload,
   deliveryFromRow,
+  providerReferenceFromRow,
   pruneDedupeKeys,
   redactNullableText,
   requireAttempt,
@@ -39,6 +40,8 @@ import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destina
 import { requireEvent } from "#/infra/sqlite/repositories/intake/intake.helpers";
 import type { SqliteIntakeRepository } from "#/infra/sqlite/repositories/intake/intake.repository";
 import { SqliteIntakeRepository as SqliteIntakeRepositoryImpl } from "#/infra/sqlite/repositories/intake/intake.repository";
+import type { OncallRepository } from "#/infra/sqlite/repositories/oncall/oncall.interface";
+import { SqliteOncallRepository } from "#/infra/sqlite/repositories/oncall/oncall.repository";
 import type { RouteRepository } from "#/infra/sqlite/repositories/route/route.interface";
 import { SqliteRouteRepository } from "#/infra/sqlite/repositories/route/route.repository";
 import {
@@ -55,6 +58,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     private readonly destinations: DestinationRepository,
     private readonly routes: RouteRepository,
     private readonly intake: SqliteIntakeRepository,
+    private readonly oncall: OncallRepository,
   ) {}
 
   enqueueForEvent(input: EnqueueDeliveriesInput): Promise<EnqueueDeliveriesResult> {
@@ -118,6 +122,8 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
               next_attempt_at: null,
               last_error: null,
               rendered_payload_json: null,
+              provider_ref_type: null,
+              provider_ref_value: null,
               created_at: now,
               updated_at: now,
               finished_at: null,
@@ -275,6 +281,8 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
             input.renderedPayload === undefined
               ? eb.ref("rendered_payload_json")
               : encodeJson(input.renderedPayload),
+          provider_ref_type: input.providerReference?.type ?? null,
+          provider_ref_value: input.providerReference?.value ?? null,
           updated_at: finishedAt,
           finished_at: finishedAt,
         }))
@@ -379,7 +387,7 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     ).map((row) => attemptFromRow(row));
     const row = await this.context.db
       .selectFrom("deliveries")
-      .select("rendered_payload_json")
+      .select(["rendered_payload_json", "provider_ref_type", "provider_ref_value"])
       .where("id", "=", id)
       .executeTakeFirst();
 
@@ -391,7 +399,9 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
       destinationMetadata,
       route,
       renderedPayload: row ? decodeRenderedPayload(row.rendered_payload_json) : null,
+      providerReference: row ? providerReferenceFromRow(row) : null,
       attempts,
+      pings: await this.oncall.listForDelivery(job.id),
     };
   }
 
@@ -420,8 +430,9 @@ export class SqliteDeliveryRepository implements DeliveryRepository {
     const destinations = new SqliteDestinationRepository(context);
     const routes = new SqliteRouteRepository(context);
     const intake = new SqliteIntakeRepositoryImpl(context);
+    const oncall = new SqliteOncallRepository(context, destinations, intake);
 
-    return new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
+    return new SqliteDeliveryRepository(context, sources, destinations, routes, intake, oncall);
   }
 }
 

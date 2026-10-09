@@ -118,14 +118,18 @@ LogTape request context 与 dashboard/webhook auth context 不是同一个对象
 Dashboard procedure 的固定形状（实现位于 `server/orpc/features/<capability>/router.ts`）：
 
 ```ts
+const withSourceService = withDashboardService((container) => container.createSourceService());
+
 export const sourcesRouter = os.sources.router({
-  create: os.sources.create.use(requireDashboard()).handler(async ({ context, input }) =>
-    (await context.dashboardRequest!.container.createSourceService()).createSource(input),
-  ),
+  create: os.sources.create
+    .use(withSourceService)
+    .handler(({ context, input }) => context.service.createSource(input)),
 });
 ```
 
-这个入口只负责 input validation（contract 已声明 schema）、通过 middleware 建立 dashboard context、取 service、调用业务方法。Sources、Routes、Destinations、Settings、配置 portability 分别调用 container 暴露的对应 service factory，不再经过单一 `ConfigurationService` 门面。
+这个入口只负责 input validation（contract 已声明 schema）、通过 middleware 建立 dashboard context 并解析 service、调用业务方法。Sources、Routes、Destinations、Settings、配置 portability 分别调用 container 暴露的对应 service factory，不再经过单一 `ConfigurationService` 门面。
+
+`withDashboardService()` 让 router 文件在顶部声明一次依赖，handler 只认 `context.service`；需要 container 本身的 procedure（如手动跑 delivery worker）使用裸 `requireDashboard()` 并读 `context.dashboardRequest.container`。guard 的 output context 是显式类型的，所以忘记挂 guard 会在类型检查阶段失败，而不是靠 `!` 断言掩盖。
 
 `server/orpc/*` 是 server-only implementer，浏览器不导入它。浏览器侧只导入 `#/lib/orpc`（isomorphic client），它经 `#/server/orpc/router` 建立 SSR 进程内调用或 `/api/rpc` 网络调用。procedure handler 内可以使用窄 runtime accessor 或 `context.dashboardRequest.container`；不要在 module 初始化阶段调用 runtime/container。
 
@@ -217,7 +221,8 @@ Vane 的后端是 TanStack Start 单体应用，MVP 需要的是清晰的 server
 
 - container factory 可以用 fake store / fake registry 构造 service，证明业务 service 没有写死全局 singleton。
 - 默认 container 通过 ESM module cache 复用；调用 `disposeApplicationContainer()` 后必须停 worker、关闭已打开的数据库连接，并允许后续请求重建新 container。
-- dashboard procedures 必须通过 `requireDashboard()` middleware 或等价的 dashboard request context 认证。
+- dashboard procedures 必须通过 `requireDashboard()` / `withDashboardService()` middleware 或等价的 dashboard request context 认证；`server-orpc-auth.test.ts` 以运行时调用逐个断言。
+- service 抛出的领域错误（`RecordNotFoundError`、`DomainValidationError`、`InvalidDeliveryStateError`、`z.ZodError`）必须在 oRPC 边界被翻译成 4xx，而不是退化成 500；`errors.test.ts` 覆盖该映射。
 - webhook route 不导入也不调用 dashboard request context，Source token / 额外共享密钥认证路径保持独立。
 - client components、route loaders、serialized data 不导入 server-only container，也不返回 token hash、Destination secret、raw sensitive config。
 - 全局 request middleware 必须同时保留 CSRF middleware，并证明并发 request context 不串线。

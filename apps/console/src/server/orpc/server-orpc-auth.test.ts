@@ -1,7 +1,62 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-import { describe, expect, it } from "vite-plus/test";
+import { createRouterClient } from "@orpc/server";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+
+import type { ApplicationContainer } from "#/server/runtime/container";
+
+/**
+ * Auth-free container: every capability service factory throws, so a private
+ * procedure that reaches its handler fails loudly instead of silently passing
+ * this test. Only the auth session lookup and the bootstrap flag are real.
+ */
+const fakeContainer = {
+  hasRegisteredUsers: async () => false,
+  getAuth: async () => ({
+    handler: async () => new Response(null),
+    api: {
+      getSession: async () => null,
+    },
+  }),
+  createSourceService: async () => {
+    throw new Error("sources procedures must not run without a dashboard session");
+  },
+  createDestinationService: async () => {
+    throw new Error("destination procedures must not run without a dashboard session");
+  },
+  createRouteService: async () => {
+    throw new Error("routes procedures must not run without a dashboard session");
+  },
+  createFeishuAppService: async () => {
+    throw new Error("integrations procedures must not run without a dashboard session");
+  },
+  createAppSettingsService: async () => ({
+    getAppSettings: async () => ({
+      locale: "zh-CN",
+      timeZone: "Asia/Shanghai",
+      rawPayloadRetentionDays: 7,
+    }),
+  }),
+  createConfigPortabilityService: async () => {
+    throw new Error("portability procedures must not run without a dashboard session");
+  },
+  createEventReplayService: async () => {
+    throw new Error("replay procedures must not run without a dashboard session");
+  },
+  createOperationsService: async () => {
+    throw new Error("operations procedures must not run without a dashboard session");
+  },
+  createDeliveryWorker: async () => {
+    throw new Error("worker procedures must not run without a dashboard session");
+  },
+} as unknown as ApplicationContainer;
+
+vi.mock("#/server/runtime/container", () => ({
+  getApplicationContainer: () => fakeContainer,
+}));
+
+const { router } = await import("#/server/orpc/router");
 
 const orpcDir = path.resolve(import.meta.dirname);
 const featuresDir = path.join(orpcDir, "features");
@@ -41,6 +96,16 @@ const expectedProcedures: Record<
   },
   health: { public: ["check"], private: [] },
   i18n: { public: ["getRequestLocale"], private: [] },
+  integrations: {
+    public: [],
+    private: [
+      "listFeishuApps",
+      "createFeishuApp",
+      "updateFeishuApp",
+      "deleteFeishuApp",
+      "testFeishuApp",
+    ],
+  },
   operations: {
     public: [],
     private: [
@@ -48,6 +113,7 @@ const expectedProcedures: Record<
       "getEventDetail",
       "getDeliveryDetail",
       "retryDelivery",
+      "buzzDelivery",
       "previewEventReplay",
       "replayEvent",
       "previewRouteReplay",
@@ -64,23 +130,126 @@ const expectedProcedures: Record<
   },
 };
 
+/**
+ * Schema-valid arguments per procedure. The guard middleware runs after input
+ * validation, so an unauthenticated call only reaches `requireDashboard()` when
+ * the input itself validates; otherwise the test would observe BAD_REQUEST and
+ * pass for the wrong reason.
+ */
+const procedureArgs: Record<string, unknown> = {
+  check: undefined,
+  getRequestLocale: undefined,
+  getAuthBootstrap: undefined,
+  getDashboardSession: undefined,
+  list: { limit: 20, eventPage: 1 },
+  listCatalog: undefined,
+  get: undefined,
+  getTemplateDraft: { id: "destination-missing" },
+  create: {
+    name: "probe",
+    provider: "generic",
+    kind: "feishu",
+    enabled: true,
+    config: {},
+    destinationIds: ["destination-missing"],
+  },
+  update: { id: "destination-missing", rawPayloadRetentionDays: 1 },
+  delete: { id: "destination-missing" },
+  rotateToken: { id: "source-missing" },
+  listFeishuApps: undefined,
+  createFeishuApp: { name: "probe", appId: "cli_probe", appSecret: "probe-secret" },
+  updateFeishuApp: { id: "feishu-app-missing" },
+  deleteFeishuApp: { id: "feishu-app-missing" },
+  testFeishuApp: { id: "feishu-app-missing" },
+  test: { id: "destination-missing" },
+  preview: { id: "destination-missing" },
+  previewDraft: { name: "probe", kind: "feishu", config: {} },
+  previewUpdate: { id: "destination-missing" },
+  exportToml: {},
+  exportJson: {},
+  importToml: { toml: "probe" },
+  importJson: { json: "probe" },
+  getEventDetail: { id: "event-missing" },
+  getDeliveryDetail: { id: "delivery-missing" },
+  retryDelivery: { id: "delivery-missing" },
+  buzzDelivery: { id: "delivery-missing" },
+  previewEventReplay: { eventId: "event-missing" },
+  replayEvent: { eventId: "event-missing" },
+  previewRouteReplay: { routeId: "route-missing" },
+  replayRouteEvents: { routeId: "route-missing", eventIds: ["event-missing"] },
+  runDeliveryWorker: {},
+};
+
 describe("dashboard oRPC auth gates", () => {
-  it.each(routerFiles)("gates every private procedure in the %s router", (feature) => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each(routerFiles)("mirrors the contract inventory in the %s router", (feature) => {
     const source = readFileSync(path.join(featuresDir, feature, "router.ts"), "utf8");
-    const procedures = procedureChunks(source);
+    const procedures = procedureSources(source);
     const expected = expectedProcedures[feature];
 
     expect(expected, `no expected inventory for the ${feature} router`).toBeDefined();
     expect(procedures.map((procedure) => procedure.name).sort()).toEqual(
       [...expected!.public, ...expected!.private].sort(),
     );
+  });
 
-    for (const procedure of procedures) {
-      expect(
-        procedure.source.includes(".use(requireDashboard())"),
-        `${feature}:${procedure.name}`,
-      ).toBe(expected!.private.includes(procedure.name));
-    }
+  it("rejects every private procedure without a dashboard session", async () => {
+    const client = createRouterClient(router, {
+      context: { reqHeaders: new Headers() },
+    }) as unknown as Record<string, Record<string, (input?: unknown) => Promise<unknown>>>;
+
+    const privateProcedures = routerFiles.flatMap((feature) =>
+      expectedProcedures[feature]!.private.map(
+        (procedure) => [feature, procedure] as [string, string],
+      ),
+    );
+    expect(privateProcedures.length).toBeGreaterThan(0);
+
+    const observed = await Promise.all(
+      privateProcedures.map(async ([feature, procedure]) => {
+        const code = await client[feature]![procedure]!(procedureArgs[procedure]).then(
+          () => "RESOLVED",
+          (error: { code?: string }) => error.code ?? "NO_CODE",
+        );
+
+        return [`${feature}.${procedure}`, code] as const;
+      }),
+    );
+
+    expect(Object.fromEntries(observed)).toEqual(
+      Object.fromEntries(privateProcedures.map(([f, p]) => [`${f}.${p}`, "UNAUTHORIZED"])),
+    );
+  });
+
+  it("serves every public procedure without a dashboard session", async () => {
+    const client = createRouterClient(router, {
+      context: { reqHeaders: new Headers() },
+    }) as unknown as Record<string, Record<string, (input?: unknown) => Promise<unknown>>>;
+
+    const publicProcedures = routerFiles.flatMap((feature) =>
+      expectedProcedures[feature]!.public.map(
+        (procedure) => [feature, procedure] as [string, string],
+      ),
+    );
+    expect(publicProcedures.length).toBeGreaterThan(0);
+
+    const observed = await Promise.all(
+      publicProcedures.map(async ([feature, procedure]) => {
+        const code = await client[feature]![procedure]!(procedureArgs[procedure]).then(
+          () => "RESOLVED",
+          (error: { code?: string }) => error.code ?? "NO_CODE",
+        );
+
+        return [`${feature}.${procedure}`, code] as const;
+      }),
+    );
+
+    expect(Object.fromEntries(observed)).toEqual(
+      Object.fromEntries(publicProcedures.map(([f, p]) => [`${f}.${p}`, "RESOLVED"])),
+    );
   });
 
   it("keeps the webhook intake off the dashboard auth path", () => {
@@ -118,7 +287,8 @@ describe("dashboard oRPC auth gates", () => {
   });
 });
 
-function procedureChunks(source: string): Array<{ name: string; source: string }> {
+/** Splits one feature router file into `name: os.<feature>.<procedure>` chunks. */
+function procedureSources(source: string): Array<{ name: string; source: string }> {
   const matches = [...source.matchAll(/^ {2}(\w+): os\./gm)];
 
   return matches.map((match, index) => {

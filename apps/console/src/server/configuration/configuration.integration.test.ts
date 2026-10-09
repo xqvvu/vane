@@ -309,6 +309,11 @@ describe("configuration capabilities", () => {
           subjectPrefix: null,
           headerNames: null,
           secretFieldPaths: ["webhookUrl"],
+          sendMode: null,
+          appRef: null,
+          chatId: null,
+          urgentAutoEnabled: null,
+          urgentReceivers: null,
         },
       },
     ]);

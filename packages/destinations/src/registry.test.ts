@@ -25,37 +25,55 @@ describe("destination registry", () => {
         delivery: true,
       },
     });
-    expect(catalog.find((item) => item.kind === "feishu")).toMatchObject({
-      configFields: [
-        expect.any(Object),
-        expect.any(Object),
+    const feishuItem = catalog.find((item) => item.kind === "feishu");
+
+    expect(feishuItem?.configFields.map((field) => field.type)).toEqual([
+      "select",
+      "url",
+      "secret",
+      "text",
+      "text",
+      "boolean",
+      "string-list",
+      "select",
+      "string-list",
+      "template",
+    ]);
+    expect(feishuItem?.configFields.find((field) => field.type === "template")).toMatchObject({
+      modes: [
         {
-          type: "template",
-          modes: [
-            {
-              mode: "text",
-              labelKey: "destinations.form.templateModeText",
-            },
-            {
-              mode: "feishu_card",
-              labelKey: "destinations.form.templateModeFeishuCard",
-              help: {
-                labelKey: "destinations.form.feishuCardTemplateHelpLabel",
-                descriptionKey: "destinations.form.feishuCardTemplateHelp",
-                links: [
-                  {
-                    labelKey: "destinations.form.feishuCardJsonDocs",
-                    href: "https://open.feishu.cn/document/feishu-cards/card-json-structure",
-                  },
-                ],
+          mode: "text",
+          labelKey: "destinations.form.templateModeText",
+        },
+        {
+          mode: "feishu_card",
+          labelKey: "destinations.form.templateModeFeishuCard",
+          help: {
+            labelKey: "destinations.form.feishuCardTemplateHelpLabel",
+            descriptionKey: "destinations.form.feishuCardTemplateHelp",
+            links: [
+              {
+                labelKey: "destinations.form.feishuCardJsonDocs",
+                href: "https://open.feishu.cn/document/feishu-cards/card-json-structure",
               },
-            },
-          ],
+            ],
+          },
         },
       ],
     });
     expect(JSON.stringify(catalog)).not.toContain("secretFields");
     expect(JSON.stringify(catalog)).not.toContain("configSchema");
-    expect(JSON.stringify(catalog)).not.toContain("send");
+    expect(Object.keys(feishuItem ?? {}).sort()).toEqual(
+      [
+        "kind",
+        "configVersion",
+        "lifecycle",
+        "displayNameKey",
+        "descriptionKey",
+        "iconName",
+        "configFields",
+        "capabilities",
+      ].sort(),
+    );
   });
 });

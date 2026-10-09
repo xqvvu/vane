@@ -3,6 +3,7 @@ import { DeliveryAttemptsTable } from "#/features/deliveries/ui/delivery-attempt
 import { DeliveryDetailSummary } from "#/features/deliveries/ui/delivery-detail-summary";
 import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types";
 import { DeliveryJsonBlock } from "#/features/deliveries/ui/delivery-json-block";
+import { DeliveryPingsTable } from "#/features/deliveries/ui/delivery-pings-table";
 import { DeliverySummaryTab } from "#/features/deliveries/ui/delivery-summary-tab";
 import { useTranslations } from "#/i18n/use-i18n";
 
@@ -25,6 +26,7 @@ export function DeliveryDetailView({ detail }: { detail: DeliveryDetailData }) {
             <TabsTrigger value="summary">{t("deliveries.detail.tabs.summary")}</TabsTrigger>
             <TabsTrigger value="payload">{t("deliveries.detail.tabs.payload")}</TabsTrigger>
             <TabsTrigger value="attempts">{t("deliveries.detail.tabs.attempts")}</TabsTrigger>
+            <TabsTrigger value="paging">{t("deliveries.detail.tabs.paging")}</TabsTrigger>
             <TabsTrigger value="metadata">{t("deliveries.detail.tabs.metadata")}</TabsTrigger>
           </TabsList>
         </div>
@@ -42,6 +44,10 @@ export function DeliveryDetailView({ detail }: { detail: DeliveryDetailData }) {
 
         <TabsContent value="attempts" className="min-h-0 overflow-hidden p-3">
           <DeliveryAttemptsTable attempts={detail.attempts} />
+        </TabsContent>
+
+        <TabsContent value="paging" className="min-h-0 overflow-hidden p-3">
+          <DeliveryPingsTable pings={detail.pings} />
         </TabsContent>
 
         <TabsContent value="metadata" className="min-h-0 overflow-hidden p-3">

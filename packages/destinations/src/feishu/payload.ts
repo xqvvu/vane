@@ -57,3 +57,24 @@ export async function renderFeishuWirePayload(
 
   return payload;
 }
+
+/**
+ * Builds the message body for the app send API (`POST /im/v1/messages`).
+ *
+ * Unlike the webhook wire payload this carries no timestamp or signature — the
+ * app authenticates with a tenant access token — and the message content is a
+ * JSON *string*: the card object for interactive messages, `{"text": ...}` for
+ * text messages.
+ */
+export function renderFeishuSendMessage(
+  input: DestinationSendInput<FeishuConfig>,
+  config: FeishuConfig,
+): { msgType: "text" | "interactive"; content: string } {
+  const payload = renderFeishuPreviewPayload(input, config) as JsonObject;
+
+  if (payload.msg_type === "text") {
+    return { msgType: "text", content: JSON.stringify(payload.content ?? { text: "" }) };
+  }
+
+  return { msgType: "interactive", content: JSON.stringify(payload.card ?? {}) };
+}

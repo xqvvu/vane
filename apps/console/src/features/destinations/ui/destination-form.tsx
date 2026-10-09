@@ -8,7 +8,7 @@ import {
 import { useForm } from "@tanstack/react-form";
 import * as React from "react";
 
-import type { AdapterConfigHelp, AdapterTemplateConfigField } from "@vane/core";
+import type { AdapterConfigHelp, AdapterTemplateConfigField, FeishuAppListItem } from "@vane/core";
 import { defaultFeishuCardTemplate as defaultFeishuCardTemplateObject } from "@vane/destinations/feishu/default-card";
 
 import { Button } from "#/components/ui/button";
@@ -61,6 +61,7 @@ export function DestinationForm({
   layout = "panel",
   pending,
   destinationCatalog,
+  feishuApps,
   defaultValues,
   onPreview,
   onSubmit,
@@ -70,6 +71,8 @@ export function DestinationForm({
   layout?: "panel" | "dialog";
   pending: boolean;
   destinationCatalog: DestinationCatalog;
+  /** Registered Feishu apps for the app send mode picker. */
+  feishuApps: FeishuAppListItem[];
   defaultValues: DestinationFormValues;
   onPreview: DestinationSubmitHandler<DestinationFormPreviewInput>;
   onSubmit: DestinationSubmitHandler<DestinationFormSubmitInput>;
@@ -118,6 +121,22 @@ export function DestinationForm({
   });
 
   const requiresSecrets = mode === "create";
+  const feishuAppItems = feishuApps.map((app) => ({ value: app.id, label: app.name }));
+  const feishuSendModeItems = [
+    { value: "webhook", label: t("destinations.form.feishuSendModeWebhook") },
+    { value: "app", label: t("destinations.form.feishuSendModeApp") },
+  ];
+  const feishuUserIdTypeItems = [
+    { value: "open_id", label: t("destinations.form.feishuUserIdTypeOpenId") },
+    { value: "user_id", label: t("destinations.form.feishuUserIdTypeUserId") },
+    { value: "union_id", label: t("destinations.form.feishuUserIdTypeUnionId") },
+  ];
+  const urgentSeverityItems = [
+    { value: "critical", label: t("common.severity.critical") },
+    { value: "warning", label: t("common.severity.warning") },
+    { value: "info", label: t("common.severity.info") },
+    { value: "unknown", label: t("common.severity.unknown") },
+  ];
 
   const renderTextField = ({
     label,
@@ -534,16 +553,249 @@ export function DestinationForm({
           })}
           {renderHeaderLinesField()}
         </>
+      ) : kind === "feishu" ? (
+        <>
+          <form.Field name="sendMode">
+            {(field) => (
+              <UiField>
+                <FieldLabel htmlFor={field.name}>
+                  {t("destinations.form.feishuSendMode")}
+                </FieldLabel>
+                <Select
+                  id={field.name}
+                  name={field.name}
+                  items={feishuSendModeItems}
+                  value={field.state.value}
+                  onValueChange={(value) => field.handleChange(value === "app" ? "app" : "webhook")}
+                >
+                  <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="webhook">
+                        {t("destinations.form.feishuSendModeWebhook")}
+                      </SelectItem>
+                      <SelectItem value="app">
+                        {t("destinations.form.feishuSendModeApp")}
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldDescription>
+                  {t("destinations.form.feishuSendModeDescription")}
+                </FieldDescription>
+              </UiField>
+            )}
+          </form.Field>
+          <form.Subscribe selector={(state) => state.values.sendMode}>
+            {(sendMode) =>
+              sendMode === "app" ? (
+                <>
+                  <form.Field name="appRef">
+                    {(field) => (
+                      <UiField>
+                        <FieldLabel htmlFor={field.name}>
+                          {t("destinations.form.feishuAppRef")}
+                        </FieldLabel>
+                        <Select
+                          id={field.name}
+                          name={field.name}
+                          items={feishuAppItems}
+                          value={field.state.value || null}
+                          onValueChange={(value) => field.handleChange(value ?? "")}
+                        >
+                          <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                            <SelectValue
+                              placeholder={t("destinations.form.feishuAppRefPlaceholder")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {feishuApps.map((app) => (
+                                <SelectItem key={app.id} value={app.id}>
+                                  {app.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <FieldDescription>
+                          {feishuApps.length === 0
+                            ? t("destinations.form.feishuAppRefEmpty")
+                            : t("destinations.form.feishuAppRefDescription")}
+                        </FieldDescription>
+                      </UiField>
+                    )}
+                  </form.Field>
+                  {renderTextField({
+                    label: t("destinations.form.feishuChatId"),
+                    name: "chatId",
+                    placeholder: t("destinations.form.feishuChatIdPlaceholder"),
+                    description: t("destinations.form.feishuChatIdDescription"),
+                  })}
+                  <FieldSet className="border-border gap-3 border p-3">
+                    <FieldLegend variant="label">
+                      {t("destinations.form.feishuUrgentLegend")}
+                    </FieldLegend>
+                    <FieldGroup className="gap-3">
+                      <form.Field name="urgentAutoEnabled">
+                        {(field) => (
+                          <UiField>
+                            <FieldLabel>
+                              {t("destinations.form.feishuUrgentAutoEnabled")}
+                            </FieldLabel>
+                            <ToggleGroup
+                              value={[String(field.state.value)]}
+                              variant="outline"
+                              size="sm"
+                              onValueChange={(value) => {
+                                const next = value[0];
+
+                                if (next) {
+                                  field.handleChange(next === "true");
+                                }
+                              }}
+                            >
+                              <ToggleGroupItem
+                                value="true"
+                                aria-label={t("destinations.form.feishuUrgentAutoOn")}
+                              >
+                                {t("destinations.form.feishuUrgentAutoOn")}
+                              </ToggleGroupItem>
+                              <ToggleGroupItem
+                                value="false"
+                                aria-label={t("destinations.form.feishuUrgentAutoOff")}
+                              >
+                                {t("destinations.form.feishuUrgentAutoOff")}
+                              </ToggleGroupItem>
+                            </ToggleGroup>
+                            <FieldDescription>
+                              {t("destinations.form.feishuUrgentAutoEnabledDescription")}
+                            </FieldDescription>
+                          </UiField>
+                        )}
+                      </form.Field>
+                      <form.Field name="urgentSeverities">
+                        {(field) => (
+                          <UiField>
+                            <FieldLabel>{t("destinations.form.feishuUrgentSeverities")}</FieldLabel>
+                            <ToggleGroup
+                              multiple
+                              value={field.state.value}
+                              variant="outline"
+                              size="sm"
+                              onValueChange={(value) => field.handleChange(value)}
+                            >
+                              {urgentSeverityItems.map((item) => (
+                                <ToggleGroupItem
+                                  key={item.value}
+                                  value={item.value}
+                                  aria-label={item.label}
+                                >
+                                  {item.label}
+                                </ToggleGroupItem>
+                              ))}
+                            </ToggleGroup>
+                            <FieldDescription>
+                              {t("destinations.form.feishuUrgentSeveritiesDescription")}
+                            </FieldDescription>
+                          </UiField>
+                        )}
+                      </form.Field>
+                      <form.Field name="urgentUserIdType">
+                        {(field) => (
+                          <UiField>
+                            <FieldLabel htmlFor={field.name}>
+                              {t("destinations.form.feishuUrgentUserIdType")}
+                            </FieldLabel>
+                            <Select
+                              id={field.name}
+                              name={field.name}
+                              items={feishuUserIdTypeItems}
+                              value={field.state.value}
+                              onValueChange={(value) =>
+                                field.handleChange(
+                                  value === "user_id" || value === "union_id" ? value : "open_id",
+                                )
+                              }
+                            >
+                              <SelectTrigger className="w-full" onBlur={field.handleBlur}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectItem value="open_id">
+                                    {t("destinations.form.feishuUserIdTypeOpenId")}
+                                  </SelectItem>
+                                  <SelectItem value="user_id">
+                                    {t("destinations.form.feishuUserIdTypeUserId")}
+                                  </SelectItem>
+                                  <SelectItem value="union_id">
+                                    {t("destinations.form.feishuUserIdTypeUnionId")}
+                                  </SelectItem>
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <FieldDescription>
+                              {t("destinations.form.feishuUrgentUserIdTypeDescription")}
+                            </FieldDescription>
+                          </UiField>
+                        )}
+                      </form.Field>
+                      <form.Field name="urgentReceivers">
+                        {(field) => (
+                          <UiField>
+                            <FieldLabel htmlFor={field.name}>
+                              {t("destinations.form.feishuUrgentReceivers")}
+                            </FieldLabel>
+                            <Textarea
+                              id={field.name}
+                              name={field.name}
+                              value={field.state.value}
+                              placeholder={t("destinations.form.feishuUrgentReceiversPlaceholder")}
+                              className="min-h-16 resize-y font-mono text-[11px]"
+                              onBlur={field.handleBlur}
+                              onChange={(event) => field.handleChange(event.currentTarget.value)}
+                            />
+                            <FieldDescription>
+                              {t("destinations.form.feishuUrgentReceiversDescription")}
+                            </FieldDescription>
+                          </UiField>
+                        )}
+                      </form.Field>
+                    </FieldGroup>
+                  </FieldSet>
+                </>
+              ) : (
+                <>
+                  {renderTextField({
+                    label: t("destinations.form.feishuWebhookUrl"),
+                    name: "webhookUrl",
+                    type: "url",
+                    placeholder: "https://...",
+                    required: requiresSecrets,
+                    description: secretFieldDescription,
+                  })}
+                  {renderTextField({
+                    label: t("destinations.form.signSecret"),
+                    name: "signSecret",
+                    placeholder: t("destinations.form.optionalPlaceholder"),
+                    description: secretFieldDescription,
+                  })}
+                </>
+              )
+            }
+          </form.Subscribe>
+        </>
       ) : (
         <>
           {renderTextField({
             label:
               kind === "slack"
                 ? t("destinations.form.slackWebhookUrl")
-                : kind === "feishu"
-                  ? t("destinations.form.feishuWebhookUrl")
-                  : t("destinations.form.webhookUrl"),
-            name: kind === "generic_webhook" ? "url" : "webhookUrl",
+                : t("destinations.form.webhookUrl"),
+            name: "webhookUrl",
             type: "url",
             placeholder: "https://...",
             required: requiresSecrets,
@@ -585,14 +837,6 @@ export function DestinationForm({
               {renderHeaderLinesField()}
             </>
           ) : null}
-          {kind === "feishu"
-            ? renderTextField({
-                label: t("destinations.form.signSecret"),
-                name: "signSecret",
-                placeholder: t("destinations.form.optionalPlaceholder"),
-                description: secretFieldDescription,
-              })
-            : null}
         </>
       )}
     </>
@@ -808,6 +1052,13 @@ export function createDestinationDefaults(): DestinationFormValues {
     webhookUrl: "",
     method: "POST",
     signSecret: "",
+    sendMode: "webhook",
+    appRef: "",
+    chatId: "",
+    urgentAutoEnabled: true,
+    urgentSeverities: ["critical"],
+    urgentUserIdType: "open_id",
+    urgentReceivers: "",
     templateCard: defaultFeishuCardTemplate,
   };
 }

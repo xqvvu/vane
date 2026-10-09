@@ -2,6 +2,8 @@ import type { DestinationRegistry, DestinationSendContext } from "@vane/destinat
 
 import type { SqliteStore } from "#/infra/sqlite/store";
 import type { DeliveryBackoffOptions } from "#/server/deliveries/delivery-execution";
+import type { DestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
+import type { OncallPingTrigger } from "#/server/oncall/oncall.service.types";
 
 export interface DeliveryWorkerOptions {
   store: SqliteStore;
@@ -11,6 +13,10 @@ export interface DeliveryWorkerOptions {
   batchSize?: number;
   staleRunningTimeoutMs?: number;
   backoff?: DeliveryBackoffOptions;
+  /** Resolves server-side references (for example a Feishu app credential) before each send. */
+  resolveDestinationConfig?: DestinationConfigResolver;
+  /** Auto-paging hook invoked after a successful send that carries a provider reference. */
+  triggerPings?: OncallPingTrigger;
 }
 
 export interface DeliveryWorkerRunOptions {

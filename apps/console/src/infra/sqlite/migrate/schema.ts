@@ -50,6 +50,16 @@ export async function createAppTables(db: Kysely<SqliteDatabaseSchema>): Promise
     .execute();
 
   await db.schema
+    .createTable("feishu_apps")
+    .addColumn("id", "text", (column) => column.primaryKey())
+    .addColumn("name", "text", (column) => column.notNull().unique())
+    .addColumn("app_id", "text", (column) => column.notNull())
+    .addColumn("app_secret", "text", (column) => column.notNull())
+    .addColumn("created_at", "text", (column) => column.notNull())
+    .addColumn("updated_at", "text", (column) => column.notNull())
+    .execute();
+
+  await db.schema
     .createTable("events")
     .addColumn("id", "text", (column) => column.primaryKey())
     .addColumn("source_id", "text", (column) =>
@@ -113,6 +123,8 @@ export async function createAppTables(db: Kysely<SqliteDatabaseSchema>): Promise
     .addColumn("next_attempt_at", "text")
     .addColumn("last_error", "text")
     .addColumn("rendered_payload_json", "text")
+    .addColumn("provider_ref_type", "text")
+    .addColumn("provider_ref_value", "text")
     .addColumn("created_at", "text", (column) => column.notNull())
     .addColumn("updated_at", "text", (column) => column.notNull())
     .addColumn("finished_at", "text")
@@ -171,6 +183,61 @@ export async function createAppTables(db: Kysely<SqliteDatabaseSchema>): Promise
       "destination_id",
     ])
     .execute();
+
+  await db.schema
+    .createTable("oncall_pings")
+    .addColumn("id", "text", (column) => column.primaryKey())
+    .addColumn("delivery_id", "text", (column) =>
+      column.notNull().references("deliveries.id").onDelete("cascade"),
+    )
+    .addColumn("destination_id", "text", (column) =>
+      column.notNull().references("destinations.id").onDelete("cascade"),
+    )
+    .addColumn("event_id", "text", (column) =>
+      column.notNull().references("events.id").onDelete("cascade"),
+    )
+    .addColumn("fingerprint", "text", (column) => column.notNull())
+    .addColumn("receiver", "text", (column) => column.notNull())
+    .addColumn("channel", "text", (column) => column.notNull())
+    .addColumn("state", "text", (column) => column.notNull())
+    .addColumn("provider_ref_type", "text")
+    .addColumn("provider_ref_value", "text")
+    .addColumn("attempt_count", "integer", (column) => column.notNull().defaultTo(0))
+    .addColumn("max_attempts", "integer", (column) => column.notNull().defaultTo(3))
+    .addColumn("next_attempt_at", "text")
+    .addColumn("last_error", "text")
+    .addColumn("trigger", "text", (column) => column.notNull())
+    .addColumn("initiated_by", "text")
+    .addColumn("suppress_reason", "text")
+    .addColumn("created_at", "text", (column) => column.notNull())
+    .addColumn("updated_at", "text", (column) => column.notNull())
+    .addColumn("fired_at", "text")
+    .addCheckConstraint(
+      "oncall_pings_state_check",
+      sql`state IN ('scheduled', 'running', 'fired', 'suppressed', 'failed')`,
+    )
+    .addCheckConstraint("oncall_pings_trigger_check", sql`trigger IN ('auto', 'manual')`)
+    .addCheckConstraint("oncall_pings_attempt_count_check", sql`attempt_count >= 0`)
+    .addCheckConstraint("oncall_pings_max_attempts_check", sql`max_attempts > 0`)
+    .execute();
+
+  await db.schema
+    .createTable("oncall_ping_dedupe_keys")
+    .addColumn("fingerprint", "text", (column) => column.notNull())
+    .addColumn("destination_id", "text", (column) =>
+      column.notNull().references("destinations.id").onDelete("cascade"),
+    )
+    .addColumn("receiver", "text", (column) => column.notNull())
+    .addColumn("first_ping_id", "text", (column) =>
+      column.notNull().references("oncall_pings.id").onDelete("cascade"),
+    )
+    .addColumn("created_at", "text", (column) => column.notNull())
+    .addPrimaryKeyConstraint("oncall_ping_dedupe_keys_primary_key", [
+      "fingerprint",
+      "destination_id",
+      "receiver",
+    ])
+    .execute();
 }
 
 export async function createAppIndexes(db: Kysely<SqliteDatabaseSchema>): Promise<void> {
@@ -207,6 +274,21 @@ export async function createAppIndexes(db: Kysely<SqliteDatabaseSchema>): Promis
   await db.schema
     .createIndex("idx_delivery_dedupe_created_at")
     .on("delivery_dedupe_keys")
+    .column("created_at")
+    .execute();
+  await db.schema
+    .createIndex("idx_oncall_pings_state_next_attempt_at")
+    .on("oncall_pings")
+    .columns(["state", "next_attempt_at"])
+    .execute();
+  await db.schema
+    .createIndex("idx_oncall_pings_delivery_id")
+    .on("oncall_pings")
+    .column("delivery_id")
+    .execute();
+  await db.schema
+    .createIndex("idx_oncall_ping_dedupe_created_at")
+    .on("oncall_ping_dedupe_keys")
     .column("created_at")
     .execute();
 }

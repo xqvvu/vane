@@ -1,5 +1,5 @@
 import { decodeJson, DeliveryJobSchema, redactText } from "@vane/core";
-import type { DeliveryAttempt, DeliveryJob, JsonValue } from "@vane/core";
+import type { DeliveryAttempt, DeliveryJob, JsonValue, ProviderReference } from "@vane/core";
 
 import { RecordNotFoundError } from "#/infra/sqlite/errors";
 import type {
@@ -42,6 +42,16 @@ export function attemptFromRow(row: DeliveryAttemptRow): DeliveryAttempt {
 
 export function decodeRenderedPayload(value: string | null): JsonValue | null {
   return value === null ? null : decodeJson(value);
+}
+
+export function providerReferenceFromRow(
+  row: Pick<DeliveryRow, "provider_ref_type" | "provider_ref_value">,
+): ProviderReference | null {
+  if (row.provider_ref_type === null || row.provider_ref_value === null) {
+    return null;
+  }
+
+  return { type: row.provider_ref_type, value: row.provider_ref_value };
 }
 
 export function requireDelivery(delivery: DeliveryJob | null): DeliveryJob {

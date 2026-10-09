@@ -199,6 +199,11 @@ function destinationFixture(
       subjectPrefix: null,
       headerNames: null,
       secretFieldPaths: kind === "email" ? [] : ["webhookUrl"],
+      sendMode: kind === "feishu" ? "webhook" : null,
+      appRef: null,
+      chatId: null,
+      urgentAutoEnabled: null,
+      urgentReceivers: null,
     },
   };
 }

@@ -7,6 +7,7 @@ import {
 } from "@vane/core";
 
 import { dashboardAuth } from "../errors/dashboard-auth";
+import { resourceErrors } from "../errors/resources";
 import {
   ConfigurationJsonOutputSchema,
   ConfigurationTomlOutputSchema,
@@ -14,6 +15,7 @@ import {
 } from "../schemas/portability";
 
 const dashboardErrors = dashboardAuth.error;
+const resource = resourceErrors.error;
 
 /**
  * Portable configuration export/import.
@@ -39,11 +41,13 @@ export const portability = {
     .meta(openapi({ method: "POST" }))
     .input(ImportConfigurationCommandSchema)
     .errors(dashboardErrors)
+    .errors(resource)
     .output(ImportConfigurationOutputSchema),
 
   importJson: oc
     .meta(openapi({ method: "POST" }))
     .input(ImportConfigurationJsonCommandSchema)
     .errors(dashboardErrors)
+    .errors(resource)
     .output(ImportConfigurationOutputSchema),
 };

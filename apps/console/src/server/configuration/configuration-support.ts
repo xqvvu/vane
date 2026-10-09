@@ -6,6 +6,7 @@ import type { DestinationKind, JsonObject, JsonValue, NormalizedEvent } from "@v
 import type { DestinationRegistry } from "@vane/destinations";
 
 import type { SqliteStore } from "#/infra/sqlite/store";
+import { DomainValidationError } from "#/server/runtime/domain-errors";
 
 export function generateSourceToken(): string {
   return `vane_src_${randomBytes(24).toString("base64url")}`;
@@ -51,7 +52,7 @@ export async function requireExistingSourceIds(
   }
 
   if (missing.length > 0) {
-    throw new Error(`Unknown source IDs: ${missing.join(", ")}`);
+    throw new DomainValidationError(`Unknown source IDs: ${missing.join(", ")}`);
   }
 }
 
@@ -68,7 +69,56 @@ export async function requireExistingDestinationIds(
   }
 
   if (missing.length > 0) {
-    throw new Error(`Unknown destination IDs: ${missing.join(", ")}`);
+    throw new DomainValidationError(`Unknown destination IDs: ${missing.join(", ")}`);
+  }
+}
+
+/** The `app` object of a Feishu destination config, when present and well-formed. */
+export function feishuAppTargetFromConfig(config: JsonObject): JsonObject | null {
+  const app = config.app;
+
+  return app && typeof app === "object" && !Array.isArray(app) ? (app as JsonObject) : null;
+}
+
+export function feishuAppRefFromConfig(config: JsonObject): string | null {
+  const appRef = feishuAppTargetFromConfig(config)?.appRef;
+
+  return typeof appRef === "string" && appRef.trim() ? appRef.trim() : null;
+}
+
+/**
+ * Effective Feishu send mode of a (possibly pre-sendMode) config.
+ *
+ * Mirrors the schema default: a config without `sendMode` is a webhook
+ * destination, so a leftover `app` block on such a config is inert and must not
+ * block app deletion or fail delivery resolution.
+ */
+export function feishuSendModeFromConfig(config: JsonObject): "webhook" | "app" {
+  return config.sendMode === "app" ? "app" : "webhook";
+}
+
+/**
+ * Rejects a Feishu destination config whose app reference does not resolve.
+ *
+ * App send mode and urgent paging both depend on the registered app, so a
+ * dangling reference is a save-time error instead of a runtime surprise.
+ */
+export async function requireExistingFeishuAppRefs(
+  config: JsonObject,
+  feishuApps: Pick<SqliteStore["feishuApps"], "get">,
+): Promise<void> {
+  if (feishuSendModeFromConfig(config) !== "app") {
+    return;
+  }
+
+  const appRef = feishuAppRefFromConfig(config);
+
+  if (!appRef) {
+    return;
+  }
+
+  if ((await feishuApps.get(appRef)) === null) {
+    throw new DomainValidationError(`Unknown Feishu app reference: ${appRef}`);
   }
 }
 

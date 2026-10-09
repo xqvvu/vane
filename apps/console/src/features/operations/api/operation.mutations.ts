@@ -8,6 +8,7 @@ export function useOperationMutations() {
 
   return {
     retryDelivery: orpc.operations.retryDelivery.call,
+    buzzDelivery: orpc.operations.buzzDelivery.call,
     replayEvent: orpc.operations.replayEvent.call,
     replayRouteEvents: orpc.operations.replayRouteEvents.call,
     runDeliveryWorker: orpc.operations.runDeliveryWorker.call,
