@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { DestinationPreviewResult, DestinationTestResult } from "@vane/core";
 
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 import { DestinationPreviewDialog, showDestinationTestToast } from "./destination-notices";
 
@@ -114,9 +114,9 @@ describe("destination notices", () => {
     };
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DestinationPreviewDialog open onOpenChange={() => {}} notice={notice} />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText(/"text": "disk full"/)).toBeTruthy();

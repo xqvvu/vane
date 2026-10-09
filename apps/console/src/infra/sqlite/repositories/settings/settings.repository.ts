@@ -1,9 +1,9 @@
-import { IanaTimeZoneSchema, VaneLocaleSchema } from "@vane/core/presentation";
+import { AppLocaleSchema, IanaTimeZoneSchema } from "@vane/core/presentation";
 
 import type { SqliteRepositoryContext } from "#/infra/sqlite/context";
 import {
-  DEFAULT_VANE_LOCALE,
-  DEFAULT_VANE_TIME_ZONE,
+  DEFAULT_APP_LOCALE,
+  DEFAULT_APP_TIME_ZONE,
   DEFAULT_RAW_PAYLOAD_RETENTION_DAYS,
   LOCALE_KEY,
   RAW_PAYLOAD_RETENTION_DAYS_KEY,
@@ -19,11 +19,11 @@ export class SqliteSettingsRepository implements SettingsRepository {
 
   async get(): Promise<AppSettings> {
     return {
-      locale: await this.getParsedSetting(LOCALE_KEY, VaneLocaleSchema, DEFAULT_VANE_LOCALE),
+      locale: await this.getParsedSetting(LOCALE_KEY, AppLocaleSchema, DEFAULT_APP_LOCALE),
       timeZone: await this.getParsedSetting(
         TIME_ZONE_KEY,
         IanaTimeZoneSchema,
-        DEFAULT_VANE_TIME_ZONE,
+        DEFAULT_APP_TIME_ZONE,
       ),
       rawPayloadRetentionDays: await this.getNumberSetting(
         RAW_PAYLOAD_RETENTION_DAYS_KEY,
@@ -34,7 +34,7 @@ export class SqliteSettingsRepository implements SettingsRepository {
 
   async update(input: Partial<AppSettings>): Promise<AppSettings> {
     if (input.locale !== undefined) {
-      await this.setSetting(LOCALE_KEY, VaneLocaleSchema.parse(input.locale));
+      await this.setSetting(LOCALE_KEY, AppLocaleSchema.parse(input.locale));
     }
 
     if (input.timeZone !== undefined) {

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { SettingsTimeZoneCombobox } from "#/features/configuration/ui/settings-time-zone-combobox";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 describe("settings time zone combobox", () => {
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe("settings time zone combobox", () => {
     const onChange = vi.fn<(value: string) => void>();
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <label htmlFor="time-zone">Time zone</label>
         <SettingsTimeZoneCombobox
           id="time-zone"
@@ -56,7 +56,7 @@ describe("settings time zone combobox", () => {
           onBlur={vi.fn<() => void>()}
           onChange={onChange}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     const input = screen.getByRole("combobox", { name: "Time zone" });

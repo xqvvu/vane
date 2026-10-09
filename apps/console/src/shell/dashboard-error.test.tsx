@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 import { DashboardErrorPage } from "#/shell/dashboard-error";
 import { DashboardNotFoundPage } from "#/shell/dashboard-not-found";
 
@@ -41,9 +41,9 @@ describe("dashboard error page", () => {
     const error = new Error("sqlite failed token=super-secret");
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DashboardErrorPage error={error} reset={reset} />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByRole("heading", { name: "Application error" })).toBeTruthy();
@@ -69,9 +69,9 @@ describe("dashboard not found page", () => {
 
   it("renders a centered 404 page without the checklist column", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <DashboardNotFoundPage />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByRole("heading", { name: "Route not found" })).toBeTruthy();

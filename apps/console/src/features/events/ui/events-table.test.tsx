@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { EventsTable } from "#/features/events/ui/events-table";
 import type { Operations } from "#/features/operations/model/operation-types";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 describe("events table", () => {
   afterEach(() => {
@@ -16,7 +16,7 @@ describe("events table", () => {
     const onPageChange = vi.fn<(page: number) => void>();
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <EventsTable
           events={[eventFixture("event-1")]}
           page={2}
@@ -26,7 +26,7 @@ describe("events table", () => {
           onInspect={vi.fn<(eventId: string) => void>()}
           onPageChange={onPageChange}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText("45 events")).toBeTruthy();
@@ -42,7 +42,7 @@ describe("events table", () => {
 
   it("shows unmatched routing state for events without matched routes or deliveries", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <EventsTable
           events={[
             {
@@ -63,7 +63,7 @@ describe("events table", () => {
           onInspect={vi.fn<(eventId: string) => void>()}
           onPageChange={vi.fn<(page: number) => void>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText("No route matched")).toBeTruthy();

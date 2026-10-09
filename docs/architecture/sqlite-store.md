@@ -41,7 +41,7 @@ SQLite 层是 Vane 的持久化适配器。对外暴露一个 `SqliteStore`，�
 
 ## 2. 设计原则
 
-1. **Kysely 是公共数据库边界。** 调用方拿到的是 `VaneSqliteKysely` / `VaneSqliteExecutor`，
+1. **Kysely 是公共数据库边界。** 调用方拿到的是 `SqliteDatabase` / `SqliteExecutor`，
    raw driver 不外泄。连接创建、调用、事务和销毁都围绕 Kysely handle 组织。
 2. **按聚合纵切。** 每个聚合在
    `apps/console/src/infra/sqlite/repositories/<module>/` 下拆成
@@ -103,7 +103,7 @@ export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;
 }
 
-export function createSqliteDatabase(options?: CreateSqliteDatabaseOptions): VaneSqliteKysely;
+export function createSqliteDatabase(options?: CreateSqliteDatabaseOptions): SqliteDatabase;
 ```
 
 行为：
@@ -126,7 +126,7 @@ export function createSqliteDatabase(options?: CreateSqliteDatabaseOptions): Van
 `schema.ts` 定义 Kysely 的数据库形状：
 
 ```ts
-export interface VaneSqliteDatabaseSchema {
+export interface SqliteDatabaseSchema {
   sources: SourcesTable;
   destinations: DestinationsTable;
   routes: RoutesTable;
@@ -142,9 +142,9 @@ export interface VaneSqliteDatabaseSchema {
   verification: BetterAuthVerificationTable;
 }
 
-export type VaneSqliteKysely = Kysely<VaneSqliteDatabaseSchema>;
-export type VaneSqliteTransaction = Transaction<VaneSqliteDatabaseSchema>;
-export type VaneSqliteExecutor = VaneSqliteKysely | VaneSqliteTransaction;
+export type SqliteDatabase = Kysely<SqliteDatabaseSchema>;
+export type SqliteTransaction = Transaction<SqliteDatabaseSchema>;
+export type SqliteExecutor = SqliteDatabase | SqliteTransaction;
 ```
 
 字段类型尽量贴近领域类型，例如：
@@ -224,7 +224,7 @@ sources/destinations/routes/intake；`history` 需要 sources/intake/routes/deli
 
 `SqliteRepositoryContext` 持有 repository 共享依赖：
 
-- `db: VaneSqliteExecutor`
+- `db: SqliteExecutor`
 - `now()`
 - `ids`
 
@@ -242,8 +242,8 @@ async runInTransaction<T>(fn: (context: SqliteRepositoryContext) => Promise<T>):
 
 ```ts
 export function transaction<T>(
-  db: VaneSqliteKysely,
-  fn: (tx: VaneSqliteTransaction) => Promise<T>,
+  db: SqliteDatabase,
+  fn: (tx: SqliteTransaction) => Promise<T>,
 ): Promise<T> {
   return db.transaction().execute(fn);
 }
@@ -340,7 +340,7 @@ database: {
 }
 ```
 
-把同一个 `VaneSqliteKysely` 传给 Better Auth。
+把同一个 `SqliteDatabase` 传给 Better Auth。
 
 ---
 

@@ -1,8 +1,8 @@
-import type { VaneSqliteKysely, VaneSqliteTransaction } from "#/infra/sqlite/schema";
+import type { SqliteDatabase, SqliteTransaction } from "#/infra/sqlite/schema";
 
 export function transaction<T>(
-  db: VaneSqliteKysely,
-  fn: (tx: VaneSqliteTransaction) => Promise<T>,
+  db: SqliteDatabase,
+  fn: (tx: SqliteTransaction) => Promise<T>,
 ): Promise<T> {
   return db.transaction().execute(fn);
 }

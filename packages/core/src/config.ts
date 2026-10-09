@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { DestinationKindSchema } from "#core/destination/destination";
 import { JsonObjectSchema } from "#core/json";
-import { IanaTimeZoneSchema, VaneLocaleSchema } from "#core/presentation";
+import { AppLocaleSchema, IanaTimeZoneSchema } from "#core/presentation";
 import {
   LabelMatchOperatorSchema,
   LabelMatcherSchema,
@@ -11,7 +11,7 @@ import {
 } from "#core/route/route";
 import { SourceProviderSchema } from "#core/source/source";
 
-export const VANE_CONFIG_SCHEMA_VERSION = "vane.config.v1";
+export const PORTABLE_CONFIG_SCHEMA_VERSION = "vane.config.v1";
 
 const NonEmptyConfigStringSchema = z.string().trim().min(1);
 const EnvironmentVariableNameSchema = z
@@ -27,48 +27,46 @@ const SecretPathSchema = z
     /^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/,
     "Secret reference paths must use dot-separated config keys",
   )
-  .refine(isSafeVaneSecretPath, {
+  .refine(isSafeSecretPath, {
     message: "Secret reference paths must not use prototype-polluting keys",
   });
 
 const UnsafeSecretPathSegments = new Set(["__proto__", "prototype", "constructor"]);
 
-export const VaneSecretReferenceSchema = z.strictObject({
+export const SecretReferenceSchema = z.strictObject({
   env: EnvironmentVariableNameSchema,
 });
 
-export const VaneSecretReferencesSchema = z
-  .record(SecretPathSchema, VaneSecretReferenceSchema)
-  .default({});
+export const SecretReferencesSchema = z.record(SecretPathSchema, SecretReferenceSchema).default({});
 
-export const VaneConfigSettingsSchema = z.strictObject({
-  schemaVersion: z.literal(VANE_CONFIG_SCHEMA_VERSION),
+export const PortableSettingsSchema = z.strictObject({
+  schemaVersion: z.literal(PORTABLE_CONFIG_SCHEMA_VERSION),
   exportedAt: z.string().optional(),
   includeSecrets: z.literal(false),
-  locale: VaneLocaleSchema.default("en-US"),
+  locale: AppLocaleSchema.default("en-US"),
   timeZone: IanaTimeZoneSchema.default("UTC"),
   rawPayloadRetentionDays: z.number().int().min(0).max(3650),
 });
 
-export const VaneConfigSourceSchema = z.strictObject({
+export const PortableSourceSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   provider: SourceProviderSchema,
   enabled: z.boolean(),
   config: JsonObjectSchema.default({}),
-  secretRefs: VaneSecretReferencesSchema,
+  secretRefs: SecretReferencesSchema,
 });
 
-export const VaneConfigDestinationSchema = z.strictObject({
+export const PortableDestinationSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   kind: DestinationKindSchema,
   enabled: z.boolean(),
   config: JsonObjectSchema.default({}),
-  secretRefs: VaneSecretReferencesSchema,
+  secretRefs: SecretReferencesSchema,
 });
 
-export const VaneConfigRouteSchema = z.strictObject({
+export const PortableRouteSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   enabled: z.boolean(),
@@ -76,33 +74,33 @@ export const VaneConfigRouteSchema = z.strictObject({
   destinationIds: RouteDefinitionSchema.shape.destinationIds,
 });
 
-export const VaneConfigFeishuAppSchema = z.strictObject({
+export const PortableFeishuAppSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   appId: NonEmptyConfigStringSchema,
   appSecret: z.string().min(1).optional(),
-  secretRefs: VaneSecretReferencesSchema,
+  secretRefs: SecretReferencesSchema,
 });
 
-export const VaneConfigurationSchema = z.strictObject({
-  settings: VaneConfigSettingsSchema,
-  feishuApps: z.array(VaneConfigFeishuAppSchema).default([]),
-  sources: z.array(VaneConfigSourceSchema).default([]),
-  destinations: z.array(VaneConfigDestinationSchema).default([]),
-  routes: z.array(VaneConfigRouteSchema).default([]),
+export const PortableConfigurationSchema = z.strictObject({
+  settings: PortableSettingsSchema,
+  feishuApps: z.array(PortableFeishuAppSchema).default([]),
+  sources: z.array(PortableSourceSchema).default([]),
+  destinations: z.array(PortableDestinationSchema).default([]),
+  routes: z.array(PortableRouteSchema).default([]),
 });
 
-const VaneTomlLabelMatcherSchema = z.strictObject({
+const PortableTomlLabelMatcherSchema = z.strictObject({
   key: NonEmptyConfigStringSchema,
   operator: LabelMatchOperatorSchema.default("equals"),
   value: NonEmptyConfigStringSchema,
 });
 
-const VaneTomlRouteRuleSchema = z.strictObject({
+const PortableTomlRouteRuleSchema = z.strictObject({
   source_ids: z.array(NonEmptyConfigStringSchema).default([]),
   severities: RouteRuleSchema.shape.severities.default([]),
   statuses: RouteRuleSchema.shape.statuses.default([]),
-  labels: z.array(VaneTomlLabelMatcherSchema).default([]),
+  labels: z.array(PortableTomlLabelMatcherSchema).default([]),
   title_contains: z.array(NonEmptyConfigStringSchema).default([]),
   message_contains: z.array(NonEmptyConfigStringSchema).default([]),
 });
@@ -114,79 +112,81 @@ const EmptyTomlRouteRule = {
   labels: [],
   title_contains: [],
   message_contains: [],
-} satisfies z.output<typeof VaneTomlRouteRuleSchema>;
+} satisfies z.output<typeof PortableTomlRouteRuleSchema>;
 
-export const VaneTomlSettingsDocumentSchema = z.strictObject({
-  schema_version: z.literal(VANE_CONFIG_SCHEMA_VERSION),
+export const PortableTomlSettingsDocumentSchema = z.strictObject({
+  schema_version: z.literal(PORTABLE_CONFIG_SCHEMA_VERSION),
   exported_at: z.string().optional(),
   include_secrets: z.literal(false),
-  locale: VaneLocaleSchema.default("en-US"),
+  locale: AppLocaleSchema.default("en-US"),
   time_zone: IanaTimeZoneSchema.default("UTC"),
   raw_payload_retention_days: z.number().int().min(0).max(3650),
 });
 
-export const VaneTomlSourceDocumentSchema = z.strictObject({
+export const PortableTomlSourceDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   provider: SourceProviderSchema,
   enabled: z.boolean(),
   config: JsonObjectSchema.default({}),
-  secret_refs: VaneSecretReferencesSchema,
+  secret_refs: SecretReferencesSchema,
 });
 
-export const VaneTomlDestinationDocumentSchema = z.strictObject({
+export const PortableTomlDestinationDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   kind: DestinationKindSchema,
   enabled: z.boolean(),
   config: JsonObjectSchema.default({}),
-  secret_refs: VaneSecretReferencesSchema,
+  secret_refs: SecretReferencesSchema,
 });
 
-export const VaneTomlRouteDocumentSchema = z.strictObject({
+export const PortableTomlRouteDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   enabled: z.boolean(),
-  rule: VaneTomlRouteRuleSchema.default(EmptyTomlRouteRule),
+  rule: PortableTomlRouteRuleSchema.default(EmptyTomlRouteRule),
   destination_ids: RouteDefinitionSchema.shape.destinationIds,
 });
 
-export const VaneTomlFeishuAppDocumentSchema = z.strictObject({
+export const PortableTomlFeishuAppDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   app_id: NonEmptyConfigStringSchema,
   app_secret: z.string().min(1).optional(),
-  secret_refs: VaneSecretReferencesSchema,
+  secret_refs: SecretReferencesSchema,
 });
 
-export const VaneTomlDocumentSchema = z.strictObject({
-  settings: VaneTomlSettingsDocumentSchema,
-  feishu_apps: z.array(VaneTomlFeishuAppDocumentSchema).default([]),
-  sources: z.array(VaneTomlSourceDocumentSchema).default([]),
-  destinations: z.array(VaneTomlDestinationDocumentSchema).default([]),
-  routes: z.array(VaneTomlRouteDocumentSchema).default([]),
+export const PortableTomlDocumentSchema = z.strictObject({
+  settings: PortableTomlSettingsDocumentSchema,
+  feishu_apps: z.array(PortableTomlFeishuAppDocumentSchema).default([]),
+  sources: z.array(PortableTomlSourceDocumentSchema).default([]),
+  destinations: z.array(PortableTomlDestinationDocumentSchema).default([]),
+  routes: z.array(PortableTomlRouteDocumentSchema).default([]),
 });
 
-export type VaneSecretReference = z.infer<typeof VaneSecretReferenceSchema>;
-export type VaneSecretReferences = z.infer<typeof VaneSecretReferencesSchema>;
-export type VaneConfigSettings = z.infer<typeof VaneConfigSettingsSchema>;
-export type VaneConfigFeishuApp = z.infer<typeof VaneConfigFeishuAppSchema>;
-export type VaneConfigSource = z.infer<typeof VaneConfigSourceSchema>;
-export type VaneConfigDestination = z.infer<typeof VaneConfigDestinationSchema>;
-export type VaneConfigRoute = z.infer<typeof VaneConfigRouteSchema>;
-export type VaneConfiguration = z.infer<typeof VaneConfigurationSchema>;
-export type VaneTomlDocument = z.infer<typeof VaneTomlDocumentSchema>;
+export type SecretReference = z.infer<typeof SecretReferenceSchema>;
+export type SecretReferences = z.infer<typeof SecretReferencesSchema>;
+export type PortableFeishuApp = z.infer<typeof PortableFeishuAppSchema>;
+export type PortableSettings = z.infer<typeof PortableSettingsSchema>;
+export type PortableSource = z.infer<typeof PortableSourceSchema>;
+export type PortableDestination = z.infer<typeof PortableDestinationSchema>;
+export type PortableRoute = z.infer<typeof PortableRouteSchema>;
+export type PortableConfiguration = z.infer<typeof PortableConfigurationSchema>;
+export type PortableTomlDocument = z.infer<typeof PortableTomlDocumentSchema>;
 
-export function isSafeVaneSecretPath(path: string): boolean {
+export function isSafeSecretPath(path: string): boolean {
   return path
     .split(".")
     .every((segment) => segment.length > 0 && !UnsafeSecretPathSegments.has(segment));
 }
 
-export function vaneConfigurationToTomlDocument(configInput: VaneConfiguration): VaneTomlDocument {
-  const config = VaneConfigurationSchema.parse(configInput);
+export function configurationToTomlDocument(
+  configInput: PortableConfiguration,
+): PortableTomlDocument {
+  const config = PortableConfigurationSchema.parse(configInput);
 
-  return VaneTomlDocumentSchema.parse({
+  return PortableTomlDocumentSchema.parse({
     settings: {
       schema_version: config.settings.schemaVersion,
       exported_at: config.settings.exportedAt,
@@ -235,10 +235,10 @@ export function vaneConfigurationToTomlDocument(configInput: VaneConfiguration):
   });
 }
 
-export function vaneTomlDocumentToConfiguration(documentInput: unknown): VaneConfiguration {
-  const document = VaneTomlDocumentSchema.parse(documentInput);
+export function tomlDocumentToConfiguration(documentInput: unknown): PortableConfiguration {
+  const document = PortableTomlDocumentSchema.parse(documentInput);
 
-  return VaneConfigurationSchema.parse({
+  return PortableConfigurationSchema.parse({
     settings: {
       schemaVersion: document.settings.schema_version,
       exportedAt: document.settings.exported_at,

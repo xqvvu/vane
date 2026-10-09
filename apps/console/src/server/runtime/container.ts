@@ -13,7 +13,7 @@ import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/prov
 import { env } from "#/env";
 import { createSqliteDatabase } from "#/infra/sqlite/connection";
 import { migrateSqliteDatabase } from "#/infra/sqlite/migrate";
-import type { VaneSqliteKysely } from "#/infra/sqlite/schema";
+import type { SqliteDatabase } from "#/infra/sqlite/schema";
 import { openSqliteStore, type SqliteStore } from "#/infra/sqlite/store";
 import { requireBetterAuthBaseUrl, requireBetterAuthSecret } from "#/lib/auth-config";
 import { createBaseBetterAuthOptions } from "#/lib/auth-options";
@@ -55,7 +55,7 @@ import type { SourceServiceOptions } from "#/server/sources/source.service.types
 const deliveryWorkerLogger = getLogger(["vane", "worker", "delivery"]);
 const oncallWorkerLogger = getLogger(["vane", "worker", "oncall"]);
 
-export interface VaneAuth {
+export interface AuthRuntime {
   handler(request: Request): Promise<Response>;
   api: {
     getSession(input: { headers: HeadersInit }): Promise<DashboardSession | null>;
@@ -99,9 +99,9 @@ export interface ApplicationContainer {
   createOperationsService(): Promise<OperationsService>;
   ensureDeliveryWorkerRunner(): Promise<DeliveryWorkerRunner>;
   ensureOncallWorkerRunner(): Promise<DeliveryWorkerRunner>;
-  getBetterAuthDatabase(): Promise<VaneSqliteKysely>;
+  getBetterAuthDatabase(): Promise<SqliteDatabase>;
   hasRegisteredUsers(): Promise<boolean>;
-  getAuth(): Promise<VaneAuth>;
+  getAuth(): Promise<AuthRuntime>;
   dispose(): Promise<void>;
 }
 
@@ -110,8 +110,8 @@ export interface ApplicationContainerOptions {
   createProviderRegistry?: () => ProviderRegistry;
   createDestinationRegistry?: () => DestinationRegistry;
   createUrgencyRegistry?: () => UrgencyRegistry;
-  createAuthDatabase?: () => Promise<VaneSqliteKysely>;
-  createAuth?: (input: { db: VaneSqliteKysely }) => VaneAuth;
+  createAuthDatabase?: () => Promise<SqliteDatabase>;
+  createAuth?: (input: { db: SqliteDatabase }) => AuthRuntime;
   createWorkerRunner?: (options: DeliveryWorkerRunnerOptions) => DeliveryWorkerRunner;
   workerIntervalMs?: number;
   workerBatchSize?: number;
@@ -145,10 +145,10 @@ export function createApplicationContainer(
   let providers: ProviderRegistry | undefined;
   let destinations: DestinationRegistry | undefined;
   let urgency: UrgencyRegistry | undefined;
-  let authDatabase: VaneSqliteKysely | undefined;
-  let authDatabasePromise: Promise<VaneSqliteKysely> | undefined;
-  let auth: VaneAuth | undefined;
-  let authPromise: Promise<VaneAuth> | undefined;
+  let authDatabase: SqliteDatabase | undefined;
+  let authDatabasePromise: Promise<SqliteDatabase> | undefined;
+  let auth: AuthRuntime | undefined;
+  let authPromise: Promise<AuthRuntime> | undefined;
   let runner: DeliveryWorkerRunner | undefined;
   let runnerPromise: Promise<DeliveryWorkerRunner> | undefined;
   let oncallRunner: DeliveryWorkerRunner | undefined;
@@ -407,7 +407,7 @@ export function createApplicationContainer(
     return sqliteStorePromise;
   }
 
-  async function getOrCreateAuthDatabase(): Promise<VaneSqliteKysely> {
+  async function getOrCreateAuthDatabase(): Promise<SqliteDatabase> {
     authDatabasePromise ??= createAuthDatabase().then((db) => {
       authDatabase = db;
       return db;
@@ -512,7 +512,7 @@ function logOncallWorkerError(error: unknown): void {
   oncallWorkerLogger.error("On-call worker run failed", safeErrorProperties(error));
 }
 
-async function createDefaultBetterAuthDatabase(): Promise<VaneSqliteKysely> {
+async function createDefaultBetterAuthDatabase(): Promise<SqliteDatabase> {
   const db = createSqliteDatabase({
     databasePath: env.VANE_DATABASE_PATH,
   });
@@ -522,7 +522,7 @@ async function createDefaultBetterAuthDatabase(): Promise<VaneSqliteKysely> {
   return db;
 }
 
-function createDefaultAuth(input: { db: VaneSqliteKysely }): VaneAuth {
+function createDefaultAuth(input: { db: SqliteDatabase }): AuthRuntime {
   return betterAuth({
     ...createBaseBetterAuthOptions(),
     baseURL: requireBetterAuthBaseUrl(env.BETTER_AUTH_URL ?? env.SERVER_URL, process.env, {
@@ -545,5 +545,5 @@ function createDefaultAuth(input: { db: VaneSqliteKysely }): VaneAuth {
       },
     },
     secret: requireBetterAuthSecret(env.BETTER_AUTH_SECRET),
-  }) as VaneAuth;
+  }) as AuthRuntime;
 }

@@ -5,7 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { authQueryKeys, dashboardSessionQueryOptions } from "#/features/auth/api/auth.queries";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 import { LoginForm } from "#/routes/-login-form";
 import { LoginFormClient } from "#/routes/-login-form-impl";
 
@@ -53,9 +53,9 @@ describe("login form", () => {
     const queryClient = new QueryClient();
     render(
       <QueryClientProvider client={queryClient}>
-        <VaneIntlProvider locale="en-US">
+        <AppIntlProvider locale="en-US">
           <LoginFormClient redirectTo="/" />
-        </VaneIntlProvider>
+        </AppIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -70,9 +70,9 @@ describe("login form", () => {
     const queryClient = new QueryClient();
     render(
       <QueryClientProvider client={queryClient}>
-        <VaneIntlProvider locale="zh-Hans">
+        <AppIntlProvider locale="zh-Hans">
           <LoginFormClient redirectTo="/" />
-        </VaneIntlProvider>
+        </AppIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -94,9 +94,9 @@ describe("login form", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <VaneIntlProvider locale="en-US">
+        <AppIntlProvider locale="en-US">
           <LoginFormClient redirectTo="/" />
-        </VaneIntlProvider>
+        </AppIntlProvider>
       </QueryClientProvider>,
     );
 
@@ -137,9 +137,9 @@ describe("login form", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <VaneIntlProvider locale="en-US">
+        <AppIntlProvider locale="en-US">
           <LoginFormClient redirectTo="/" />
-        </VaneIntlProvider>
+        </AppIntlProvider>
       </QueryClientProvider>,
     );
 

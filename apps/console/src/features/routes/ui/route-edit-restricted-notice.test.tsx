@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { RouteDefinition } from "@vane/core";
 
 import { RouteEditRestrictedNotice } from "#/features/routes/ui/route-edit-restricted-notice";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 function multiConditionRule(): RouteDefinition["rule"] {
   return {
@@ -40,9 +40,9 @@ describe("RouteEditRestrictedNotice", () => {
 
   it("shows preserved multi-condition counts using the real restriction helper", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <RouteEditRestrictedNotice rule={multiConditionRule()} />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByTestId("route-edit-restricted-notice")).toBeTruthy();
@@ -63,9 +63,9 @@ describe("RouteEditRestrictedNotice", () => {
 
   it("renders nothing for single-condition rules", () => {
     const { container } = render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <RouteEditRestrictedNotice rule={simpleRule()} />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(container.textContent).toBe("");

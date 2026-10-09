@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { SourceSummary } from "#/features/sources/ui/source-ui-types";
 import { SourcesSection } from "#/features/sources/ui/sources-section";
-import { VaneIntlProvider } from "#/i18n/provider";
+import { AppIntlProvider } from "#/i18n/provider";
 
 type RouteSummary = ComponentProps<typeof SourcesSection>["routes"][number];
 type SourceActionHandler = (source: SourceSummary) => void;
@@ -26,7 +26,7 @@ describe("sources section table", () => {
     const sources = Array.from({ length: 12 }, (_, index) => sourceFixture(index + 1));
 
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <SourcesSection
           sources={sources}
           routes={[]}
@@ -36,7 +36,7 @@ describe("sources section table", () => {
           onRotateToken={vi.fn<SourceActionHandler>()}
           onDelete={vi.fn<SourceActionHandler>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText("12 sources")).toBeTruthy();
@@ -56,7 +56,7 @@ describe("sources section table", () => {
 
   it("summarizes enabled route coverage instead of static auth placeholders", () => {
     render(
-      <VaneIntlProvider locale="en-US">
+      <AppIntlProvider locale="en-US">
         <SourcesSection
           sources={[sourceFixture(1), sourceFixture(2)]}
           routes={[
@@ -70,7 +70,7 @@ describe("sources section table", () => {
           onRotateToken={vi.fn<SourceActionHandler>()}
           onDelete={vi.fn<SourceActionHandler>()}
         />
-      </VaneIntlProvider>,
+      </AppIntlProvider>,
     );
 
     expect(screen.getByText("Intake")).toBeTruthy();

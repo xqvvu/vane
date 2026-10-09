@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const VaneLocaleSchema = z.enum(["en-US", "zh-Hans"]);
-export type VaneLocale = z.infer<typeof VaneLocaleSchema>;
+export const AppLocaleSchema = z.enum(["en-US", "zh-Hans"]);
+export type AppLocale = z.infer<typeof AppLocaleSchema>;
 
-export const DEFAULT_VANE_LOCALE: VaneLocale = "en-US";
-export const DEFAULT_VANE_TIME_ZONE = "UTC";
+export const DEFAULT_APP_LOCALE: AppLocale = "en-US";
+export const DEFAULT_APP_TIME_ZONE = "UTC";
 
 export const IanaTimeZoneSchema = z.string().trim().min(1).refine(isValidIanaTimeZone, {
   message: "Time zone must be a valid IANA time zone",

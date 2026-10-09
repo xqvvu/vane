@@ -1,8 +1,8 @@
 import { sql, type Kysely } from "kysely";
 
-import type { VaneSqliteDatabaseSchema } from "#/infra/sqlite/schema";
+import type { SqliteDatabaseSchema } from "#/infra/sqlite/schema";
 
-export async function createBetterAuthTables(db: Kysely<VaneSqliteDatabaseSchema>): Promise<void> {
+export async function createBetterAuthTables(db: Kysely<SqliteDatabaseSchema>): Promise<void> {
   await db.schema
     .createTable("user")
     .addColumn("id", "text", (column) => column.notNull().primaryKey())
@@ -61,7 +61,7 @@ export async function createBetterAuthTables(db: Kysely<VaneSqliteDatabaseSchema
     .execute();
 }
 
-export async function createBetterAuthIndexes(db: Kysely<VaneSqliteDatabaseSchema>): Promise<void> {
+export async function createBetterAuthIndexes(db: Kysely<SqliteDatabaseSchema>): Promise<void> {
   await db.schema.createIndex("session_user_id_idx").on("session").column("user_id").execute();
   await db.schema.createIndex("account_user_id_idx").on("account").column("user_id").execute();
   await db.schema
