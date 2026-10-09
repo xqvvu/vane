@@ -27,6 +27,7 @@ import {
   generateSourceToken as defaultGenerateSourceToken,
   parseDestinationConfig,
   requireExistingDestinationIds,
+  requireExistingFeishuAppRefs,
   requireExistingSourceIds,
 } from "#/server/configuration/configuration-support";
 import { hashSourceToken } from "#/server/intake/intake.service";
@@ -198,6 +199,8 @@ export class ConfigPortabilityService {
           destination.kind,
           destination.config,
         );
+
+        await requireExistingFeishuAppRefs(config, tx.feishuApps);
 
         if (existing) {
           await tx.destinations.update(destination.id, {

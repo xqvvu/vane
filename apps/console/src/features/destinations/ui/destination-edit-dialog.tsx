@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
+import type { FeishuAppListItem } from "@vane/core";
+
 import { ConfigurationDialogContent } from "#/components/common/configuration-dialog-content";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -20,6 +22,7 @@ import { useTranslations } from "#/i18n/use-i18n";
 
 export function DestinationEditDialog({
   destinationCatalog,
+  feishuApps,
   destination,
   open,
   disabled = false,
@@ -27,6 +30,7 @@ export function DestinationEditDialog({
   onPreview,
 }: {
   destinationCatalog: DestinationCatalog;
+  feishuApps: FeishuAppListItem[];
   destination: DestinationListItem | null;
   open: boolean;
   disabled?: boolean;
@@ -59,6 +63,7 @@ export function DestinationEditDialog({
         {destination && templateDraftQuery.data ? (
           <EditDestinationForm
             destinationCatalog={destinationCatalog}
+            feishuApps={feishuApps}
             key={destination.id}
             showHeader={false}
             framed={false}

@@ -119,7 +119,7 @@ describe("FeishuAppService", () => {
     await store.destinations.create({
       name: "SRE group",
       kind: "feishu",
-      config: { app: { appRef: created.id, chatId: "oc_group" } },
+      config: { sendMode: "app", app: { appRef: created.id, chatId: "oc_group" } },
     });
 
     await expect(service.deleteFeishuApp({ id: created.id })).rejects.toThrow(
@@ -144,7 +144,7 @@ describe("FeishuAppService", () => {
     await store.destinations.create({
       name: "SRE group",
       kind: "feishu",
-      config: { app: { appRef: created.id, chatId: "oc_group" } },
+      config: { sendMode: "app", app: { appRef: created.id, chatId: "oc_group" } },
     });
     await store.destinations.delete("destination-1");
 

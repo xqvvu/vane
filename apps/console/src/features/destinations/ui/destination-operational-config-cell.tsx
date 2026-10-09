@@ -29,6 +29,10 @@ function operationalConfigPrimaryLine(
 ): string {
   const { operationalConfig } = destination;
 
+  if (operationalConfig.chatId) {
+    return operationalConfig.chatId;
+  }
+
   if (operationalConfig.endpoint) {
     return operationalConfig.endpoint;
   }
@@ -52,6 +56,22 @@ function operationalConfigSecondaryLine(
 
   if (operationalConfig.method) {
     parts.push(operationalConfig.method);
+  }
+
+  if (operationalConfig.sendMode === "app") {
+    parts.push(t("destinations.table.operationalConfig.sendModeApp"));
+  }
+
+  if (operationalConfig.urgentReceivers && operationalConfig.urgentReceivers.length > 0) {
+    parts.push(
+      operationalConfig.urgentAutoEnabled
+        ? t("destinations.table.operationalConfig.urgentAuto", {
+            count: operationalConfig.urgentReceivers.length,
+          })
+        : t("destinations.table.operationalConfig.urgentManual", {
+            count: operationalConfig.urgentReceivers.length,
+          }),
+    );
   }
 
   if (operationalConfig.to && operationalConfig.to.length > 0 && operationalConfig.endpoint) {

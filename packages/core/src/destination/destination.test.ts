@@ -29,6 +29,11 @@ describe("destination dashboard DTOs", () => {
         subjectPrefix: null,
         headerNames: null,
         secretFieldPaths: ["webhookUrl", "signSecret"],
+        sendMode: "webhook",
+        appRef: null,
+        chatId: null,
+        urgentAutoEnabled: null,
+        urgentReceivers: null,
       },
     });
 
@@ -134,6 +139,11 @@ describe("destination dashboard DTOs", () => {
         templateSource: "builtin",
         signingConfigured: true,
         secretFieldPaths: ["webhookUrl", "signSecret"],
+        sendMode: "webhook",
+        appRef: null,
+        chatId: null,
+        urgentAutoEnabled: null,
+        urgentReceivers: null,
       },
       form: {
         endpointUrl: "",
@@ -145,6 +155,13 @@ describe("destination dashboard DTOs", () => {
         url: "",
         webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/abc",
         method: "",
+        sendMode: "webhook",
+        appRef: "",
+        chatId: "",
+        urgentAutoEnabled: true,
+        urgentSeverities: ["critical"],
+        urgentUserIdType: "open_id",
+        urgentReceivers: "",
       },
     });
 
@@ -170,6 +187,11 @@ describe("destination dashboard DTOs", () => {
       subjectPrefix: null,
       headerNames: null,
       secretFieldPaths: [],
+      sendMode: null,
+      appRef: null,
+      chatId: null,
+      urgentAutoEnabled: null,
+      urgentReceivers: null,
       signSecret: "should-not-appear",
     });
 

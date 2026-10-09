@@ -22,16 +22,26 @@ import type {
 } from "#/features/destinations/ui/destination-ui-types";
 import { DestinationsPageToolbar } from "#/features/destinations/ui/destinations-page-toolbar";
 import { DestinationsSection } from "#/features/destinations/ui/destinations-section";
+import { feishuAppsQueryOptions } from "#/features/integrations/api/feishu-app.queries";
 import { routesQueryOptions } from "#/features/routes/api/route.queries";
 import { useTranslations } from "#/i18n/use-i18n";
 import { DashboardContentLayout } from "#/shell/dashboard-layout";
 
 export function DestinationsPage() {
   const t = useTranslations();
-  const [{ data: destinations }, { data: routes }, { data: destinationCatalog }] =
-    useSuspenseQueries({
-      queries: [destinationsQueryOptions(), routesQueryOptions(), destinationCatalogQueryOptions()],
-    });
+  const [
+    { data: destinations },
+    { data: routes },
+    { data: destinationCatalog },
+    { data: feishuApps },
+  ] = useSuspenseQueries({
+    queries: [
+      destinationsQueryOptions(),
+      routesQueryOptions(),
+      destinationCatalogQueryOptions(),
+      feishuAppsQueryOptions(),
+    ],
+  });
   const {
     deleteDestination,
     invalidateDestinations,
@@ -125,6 +135,7 @@ export function DestinationsPage() {
               <>
                 <DestinationAddDialog
                   destinationCatalog={destinationCatalog}
+                  feishuApps={feishuApps}
                   disabled={pending}
                   onPreview={previewDraft}
                 />
@@ -197,6 +208,7 @@ export function DestinationsPage() {
 
           <DestinationEditDialog
             destinationCatalog={destinationCatalog}
+            feishuApps={feishuApps}
             destination={editingDestination}
             open={destinationEditorOpen && editingDestination !== null}
             disabled={pending}

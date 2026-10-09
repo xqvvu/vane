@@ -177,6 +177,7 @@ function renderDestinationForm(
       <DestinationForm
         mode="create"
         pending={false}
+        feishuApps={[]}
         destinationCatalog={options.destinationCatalog ?? defaultDestinationCatalog}
         defaultValues={{
           ...createDestinationDefaults(),

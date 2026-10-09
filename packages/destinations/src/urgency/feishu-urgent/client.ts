@@ -1,3 +1,4 @@
+import { FEISHU_MESSAGES_URL } from "#destinations/shared/feishu-endpoints";
 import { feishuFailureMessage, parseFeishuResult } from "#destinations/shared/feishu-result";
 import type {
   DestinationErrorKind,
@@ -5,8 +6,6 @@ import type {
   DestinationTransportContext,
 } from "#destinations/types";
 import { Adapter, Send } from "#destinations/utils";
-
-const FEISHU_MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages";
 
 export interface FeishuUrgentPhoneCall {
   tenantAccessToken: string;
@@ -40,7 +39,7 @@ export async function callFeishuUrgentPhone(
   context?: DestinationTransportContext,
 ): Promise<FeishuUrgentPhoneCallResult> {
   const { fetch } = Adapter.getTransportContext(context);
-  const url = `${FEISHU_MESSAGE_URL}/${encodeURIComponent(input.messageId)}/urgent_phone?user_id_type=${input.userIdType}`;
+  const url = `${FEISHU_MESSAGES_URL}/${encodeURIComponent(input.messageId)}/urgent_phone?user_id_type=${input.userIdType}`;
 
   try {
     const response = await fetch(url, {

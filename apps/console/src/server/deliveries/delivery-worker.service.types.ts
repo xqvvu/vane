@@ -2,6 +2,7 @@ import type { DestinationRegistry, DestinationSendContext } from "@vane/destinat
 
 import type { SqliteStore } from "#/infra/sqlite/store";
 import type { DeliveryBackoffOptions } from "#/server/deliveries/delivery-execution";
+import type { DestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
 
 export interface DeliveryWorkerOptions {
   store: SqliteStore;
@@ -11,6 +12,8 @@ export interface DeliveryWorkerOptions {
   batchSize?: number;
   staleRunningTimeoutMs?: number;
   backoff?: DeliveryBackoffOptions;
+  /** Resolves server-side references (for example a Feishu app credential) before each send. */
+  resolveDestinationConfig?: DestinationConfigResolver;
 }
 
 export interface DeliveryWorkerRunOptions {

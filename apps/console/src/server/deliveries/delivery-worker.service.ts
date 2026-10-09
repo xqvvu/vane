@@ -32,6 +32,7 @@ export class DeliveryWorker {
       destinations: options.destinations,
       sendContext: options.sendContext,
       backoff: options.backoff,
+      resolveDestinationConfig: options.resolveDestinationConfig,
     });
     this.now = options.now ?? (() => new Date().toISOString());
     this.batchSize = options.batchSize ?? 10;
