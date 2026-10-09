@@ -1,6 +1,8 @@
-# 0009 --- On-call 加急：飞书电话呼叫的接入架构
+# 0009 --- On-call 加急：飞书应用与 delivery 级电话呼叫
 
-状态：提议（2026-10-08）。本 ADR 是对 MVP PRD 的 scope amendment：PRD 把 on-call scheduling、escalation policies 列为 out-of-scope（`docs/prd/self-hosted-alert-hub-mvp.md:210`），实现前需要先按 `docs/prd/post-mvp-planning.md` 的流程认领方向并立增量 PRD。本 ADR 同时 **amend** `0002-curated-adapter-extension-model.md` 的两条决策（send result 形状、adapter 能力 registry），并依赖 `0007-console-orpc-api-boundary.md` 的边界规则。
+状态：提议（2026-10-08）。本 ADR 是对 MVP PRD 的 scope amendment：PRD 把 on-call scheduling、escalation policies 列为 out-of-scope（`docs/prd/self-hosted-alert-hub-mvp.md:210`），实现前需要先按 `docs/prd/post-mvp-planning.md` 的流程认领方向并立增量 PRD（`docs/prd/oncall-feishu-urgent.md`）。本 ADR **amend** `0002-curated-adapter-extension-model.md` 的一条决策（adapter 家族新增 urgency channel 类型；send result 的 `providerReference` 已随步骤 1 落地），并依赖 `0007-console-orpc-api-boundary.md` 的边界规则。
+
+2026-10-08 设计修订：初版把飞书应用凭证放在独立的"加急策略"实体里、用单聊消息作为加急载体。评审后改为：**飞书应用做成可复用资源；加急配置挂在飞书 destination 上；加急动作挂在某一次 delivery 上（自动 + 手动）**。本 ADR 记录修订后的形状；被替换的设计记入「不采用的替代方案」。
 
 ## 背景
 
@@ -9,157 +11,143 @@
 飞书平台侧的硬约束（2026-10-08 由官方 Go SDK `larksuite/oapi-sdk-go` 的 `im/v1` samples 核实）：
 
 1. 加急是 `PATCH /open-apis/im/v1/messages/:message_id/urgent_phone`（同类还有 `urgent_app` 应用内强提醒、`urgent_sms` 短信），body 为 `{ urgent_receivers: { user_id_list } }`，query 带 `user_id_type`。它**作用于一条已存在的 message**，必须先有 `message_id`。
-2. 该调用需要自建应用凭证（`app_id` + `app_secret` → `tenant_access_token`）。Vane 当前 `feishu` destination 用的是自定义群机器人 webhook（`webhookUrl` + 签名密钥），两者是互不相通的接入方式；加急无法从 webhook 路径发起。
-3. 现有 webhook 发送的响应只有 `{code, msg}`，拿不到 `message_id`，因此**群卡片消息大概率无法被加急**（自定义机器人消息不是应用资产）。平台文档是客户端渲染的，暂时无法在线核实这条限制；设计上不依赖它，但实现前必须用真实飞书应用做 spike 验证。
+2. 该调用需要自建应用凭证（`app_id` + `app_secret` → `tenant_access_token`）。Vane 当前 `feishu` destination 用的是自定义群机器人 webhook（`webhookUrl` + 签名密钥），响应里只有 `{code, msg}`，拿不到 `message_id`：**webhook 消息无法被加急，能被加急的只有应用自己发出的消息**。
+3. 应用向群发消息需要机器人已在群内；`chat_id` 由此获得。加急有配额/计费（电话按量）。
 
 对现有代码的关键发现（决定下面的取舍）：
 
-- `DestinationAdapter` 只有 `preview` + `send` 两个动作；`DestinationSendResult` 没有任何 provider reference 字段（`packages/destinations/src/types.ts:60`），`deliveries` / `delivery_attempts` 也没有 `message_id` 列。
-- `delivery-execution.ts` 是所有出站发送的唯一收口，`markSucceeded` / `markFailed` 共享同一个 attempt 计数与退避。**加急若塞进 `send()` 内部，电话失败会连带重发整条告警卡片**，这在告警群里不可接受。
-- `RouteRuleSchema` 是严格匹配谓词，`evaluateRouteMatch` 产出审计用 `checks[]`。加急是动作（action），不是谓词（predicate），塞进规则会污染匹配审计。
+- `DestinationSendResult` 已能携带可选 `providerReference: { type, value }`，且 `deliveries.provider_ref_type / provider_ref_value` 已落库并投影进 Delivery detail（步骤 1，2026-10-08 完成）。"加急作用于某次 delivery 的消息"所需的地基已经就位。
+- `delivery-execution.ts` 是所有出站发送的唯一收口，`markSucceeded` / `markFailed` 共享同一个 attempt 计数与退避。**加急若折叠进 `send()`，电话失败会连带重发整条告警卡片**，在告警群里不可接受。
+- `RouteRuleSchema` / `RouteDefinition` 是 strict schema，且有 TOML snake_case 镜像与路由表单全链；把加急接收人配在 route 上的连带成本显著高于配在 destination config（后者本就是 adapter-owned JSON，有现成的 schema/manifest/表单/操作摘要管线，email 的 `to` 字段是既有先例）。
 
 ## 决定
 
-1. **加急是独立的 on-call 升级能力，不折叠进 destination `send()`。** 新建 capability 切片：`packages/core/src/oncall/`（共享契约）、`apps/console/src/server/oncall/`（service）、新表和新 worker 队列、新 oRPC namespace。加急拥有自己的状态机、attempt 计数和退避（镜像 `deliveries` 的形状），与群卡片投递生命周期完全解耦：电话失败只重试电话，永远不重发卡片；卡片重发也绝不重复打电话。
+1. **飞书应用是一等资源。** 新表 `feishu_apps(id, name UNIQUE, app_id, app_secret, created_at, updated_at)`；console 新增「飞书应用」管理页（列表 + 新建/编辑/删除 + 测试）。测试 = 用 `app_id`/`app_secret` 换 `tenant_access_token` 验证凭证有效。凭证沿用现有 secret 纪律：形如 `appSecret` 的路径按 `isSensitiveKey`/redaction helper 脱敏，不回显进 DTO，不进 TOML 明文（导出为 env ref，命名对齐 `VANE_DEST_*`，即 `VANE_FEISHU_APP_<id>_<path>`）；被 destination 引用时拒绝删除，并在错误信息里列出引用方。
 
-2. **每条 ping 自带消息载体（DM 模式）。** 加急动作 `ping` 是 channel adapter 内部的两步组合：先用应用凭证给值班人发单聊消息 `POST /im/v1/messages?receive_id_type=user_id` 拿到该消息的 `message_id`，再对这条消息执行 `PATCH .../urgent_phone`。加急因此完全不依赖群卡片投递的结果，规避约束 3。未来 spike 若证明群卡片可加急，只需给 ping 增加一种 provider reference 来源（见决定 6），队列和状态机不变。
+2. **飞书 destination 增加应用发送模式。** config 增加 `sendMode: "webhook" | "app"`（默认 `webhook`，现有配置零迁移）：app 模式引用 `{ appRef, chatId }`，卡片经 `POST /im/v1/messages` 由应用发出，响应 `message_id` 写入 `providerReference`。预览、测试、模板渲染、webhook 模式全部保持原样共用。运维前提写进表单提示与部署文档：应用机器人必须已加入目标群，`chat_id` 从群信息获得。
 
-3. **Channel adapter 与 Destination adapter 并列，复用同一套纪律。** `packages/destinations/src/urgency/` 新增 `UrgencyChannelAdapter`（`kind`、`configSchema`、`ping(input, ctx)`）和 `UrgencyRegistry`，与 `DestinationRegistry` 同构：结构化 `ok` union、error kind、retry hint、只接收已校验 typed config、不碰 DB/container/logger、使用注入的 `fetch` / `now` transport context。`UrgencyChannelKind` 从第一天就是封闭枚举，当前唯一成员 `feishu_urgent_phone`；SMS/语音以后是新增成员，不是重构。不把加急塞进 `DestinationAdapter` 变成可选方法：那会让"能力标志 + 动作方法"两处真相分裂，且被迫打开封闭的 capabilities schema，0002 的论证同样适用。
+3. **加急挂在某一次 delivery 上，不引入策略实体。** 加急对象就是这条 delivery 自己发出的消息，因此只有应用发送模式的投递可加急；webhook 投递在 UI 上明确标注"无法加急（消息非应用发送）"。初版的 `oncall_policies` 表、策略 CRUD 与 `oncall` namespace 全部取消。
 
-4. **触发复用 Route 匹配；配置是独立实体，不进 `RouteRuleSchema`。** intake 事务（`server/intake/intake.service.ts` 里 `tx.intake.recordEvent` + `tx.deliveries.enqueueForEvent` 之后，见该文件 105/115 行）新增一步 `schedulePingsForEvent`：为「匹配到的 route 关联的、enabled 的 on-call policy」各建一条 ping。`RouteRuleSchema` / `evaluateRouteMatch` / `checks[]` 一字不改。配置侧新增 `oncall_policies` 表（policy 按 id 关联 routeIds，含渠道、收件人、severity 门槛），配 oRPC `oncall.listPolicies / upsertPolicy / deletePolicy / listPings`。路由只负责"是否命中"，policy 负责"命中后打给谁、什么级别才打"。不把 receivers 写进 destination config（那是 transport 配置，不是 operator intent），也不写进 `RouteDefinition`（route 的 strict schema + TOML snake_case 镜像 + 路由表单会全链连带）。
+4. **触发 = 自动 + 手动。** destination 的 `urgent` 配置形状：`{ autoEnabled, severities（默认 ["critical"]）, userIdType, receivers（≥1 且唯一） }`；`urgent` 存在才允许加急，`autoEnabled = false` 即"只手动"。
+   - 自动：delivery 成功、带 `providerReference`、事件 `status = firing`、severity 在 `urgent.severities` 内 → 为每个接收人建一条 ping（`trigger: auto`）。
+   - 手动：`operations.buzzDelivery({ deliveryId })`，接收人取 destination 配置，记录操作者（`trigger: manual` + `initiated_by`）；立即派发，失败落回队列重试。v1 不支持手动指定任意接收人。
+   - 触发判断收口在 `delivery-execution.ts` 的成功分支，通过注入的窄接口（`enqueueUrgentPings`）调用；执行器不读 Feishu 配置细节，无该依赖时行为与今天完全一致（既有测试与单 destination 场景不感知）。
 
-5. **`oncall_pings` 运行时表 + 复用 worker 形状。**
+5. **ping 拥有独立状态机与重试，一个接收人一条。**
 
    ```text
    oncall_pings(
-     id, policy_id, event_id, route_id, fingerprint, channel,
+     id, delivery_id, destination_id, event_id, fingerprint, receiver, channel,
      state scheduled|running|fired|suppressed|failed,
-     provider_ref_type, provider_ref_value,          -- DM 的 message_id
+     provider_ref_type, provider_ref_value,   -- 被加急的那条消息（来自 delivery）
      attempt_count, max_attempts, next_attempt_at, last_error,
-     trigger auto|manual, initiated_by,              -- 审计
-     suppress_reason,                                -- MVP 恒为 null，见决定 9
+     trigger auto|manual, initiated_by,       -- 审计
+     suppress_reason,                         -- v1 恒为 null，见决定 13
      created_at, updated_at, fired_at
    )
    ```
 
-   `OncallWorker.runOnce()` 照抄 `DeliveryWorkerService`（`server/deliveries/delivery-worker.service.ts`）的 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`（`server/deliveries/delivery-execution.ts:31`）；runner 复用 `createDeliveryWorkerRunner`（`server/runtime/delivery-worker-runner.ts:47`，它对队列形状无感知），container 里 `ensureOncallWorkerRunner()` 与 delivery runner 并列（注入点见 `server/runtime/container.ts:138`），仍是单进程 setInterval。MVP 阶段按 AGENTS.md 直接在 `migrate/schema.ts` 的 `createVaneTables` / `createVaneIndexes` 里加表（`migrate/0001_initial_schema.ts` 只是编排器，不需要改）；ping 需要独立 attempt 历史时再加 `oncall_ping_attempts`（与 `delivery_attempts` 同构）。
+   电话失败只重试电话，绝不重发卡片；卡片重发也绝不重复打电话。`OncallWorker.runOnce()` 照抄 `DeliveryWorkerService`（`server/deliveries/delivery-worker.service.ts`）的 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`（`server/deliveries/delivery-execution.ts:31`）；runner 复用 `createDeliveryWorkerRunner`（`server/runtime/delivery-worker-runner.ts:47`，它对队列形状无感知），container 里 `ensureOncallWorkerRunner()` 与 delivery runner 并列（注入点见 `server/runtime/container.ts:138`），仍是单进程 setInterval。MVP 阶段按 AGENTS.md 直接在 `migrate/schema.ts` 的 `createVaneTables` / `createVaneIndexes` 加表。
 
-6. **Provider reference 进通用 send result，为群加急留门。** `DestinationSendResultBase` 增加可选 `providerReference?: { type: string; value: string }`（`type` 是开放字符串命名空间，如 `feishu_message_id`），`markSucceeded` 落 `deliveries.provider_ref_{type,value}` 两列。这是对 0002 的 amend：结果保持 `ok` union 纪律，只是多了"目标系统资产句柄"这一通用维度。有了它，手动加急（决定 8）和未来群卡片加急都不需要再动 schema。共享类型 `ProviderReferenceSchema` 归 `@vane/core`（infra 层不应依赖 `@vane/destinations`），读路径经 `DeliveryDetail.providerReference` 与 `packages/api` 的 `DeliveryDetailSchema` 投影到已认证 dashboard；`value` 是运维标识符而非 secret。
+6. **去重风暴保护。** ping 按 `(fingerprint, destination_id, receiver)` 在一个去重窗口（沿用 `intake.service.ts:54` 的 `dedupeWindowMs ?? 5 * 60 * 1000` 模式，作为 service 选项而非共享常量）内只建一条。告警风暴下"每 30 秒一条 firing 就刷一次电话"不可接受。新建 `oncall_ping_dedupe_keys` 表，不复用 `delivery_dedupe_keys` 的行。
 
-7. **`app_id` / `app_secret` 归属 on-call policy，走现有 secret 管线。** policy 的 channel config 里 `app_secret` 声明为 `secretFields`（kind `api_key`，env hint `VANE_ONCALL_FEISHU_APP_SECRET`），沿用 secretRefs 与 `preserve/replace/clear` 编辑语义；DTO、TOML 导出、日志一律不带明文。飞书 destination 配置不新增 app 凭证：webhook 群通知和加急是两条能力路径，凭证各自归属各自的实体，operator 在 UI 里分别配置。
+7. **urgency channel adapter 家族与 Destination adapter 并列。** `packages/destinations/src/urgency/` 新增 `UrgencyChannelAdapter`（`kind` / `configSchema` / `ping(input, ctx)`）与 `UrgencyRegistry`，复用 0002 的全部纪律：结构化 `ok` union、封闭 error kind、retry hint、只接收已校验 typed config、不碰 DB/container/logger、`fetch` 与 `now` 从 ctx 注入。`UrgencyChannelKind` 是封闭枚举，v1 唯一成员 `feishu_urgent_phone`；输入为 `{ app: { appId, appSecret }, messageId, receivers, userIdType }`。卡模式直接对 `messageId` 执行 `urgent_phone`；若 spike 证明群卡片不可加急，则在该 adapter 内部回退为"先给每个接收人发单聊、再对其加急"，对外接口不变。配额/权限类拒绝映射为 `target_rejected` + `not_retryable`。
 
-8. **手动加急按钮进 v1。** oRPC `oncall.buzzNow({ eventId })`：对事件关联的 policy（无 policy 时要求显式传 channel + receivers）建一条 `trigger: manual` 的 ping 并立即 dispatch（参照 `server/destinations/destination.service.ts:140` `testDestination` 的直接调用模式，不等 tick；失败落回队列重试）。这是 `manual` trigger 与 `initiated_by` 列存在的原因，也是 0007 边界（薄 entrypoint + `withDashboardService`）的标准套用。
+8. **凭证解析在服务端路径上完成。** 应用凭证在三条路径上按 `appRef` 解析并注入 adapter：delivery 发送、destination 测试、加急执行。adapter 永远不读 DB/env；console 侧用一个窄的 resolver 依赖（容器注入，测试可替换）。
 
-9. **延时与确认：状态机预留，行为不实现。** v1 的 ping 是 immediate（`scheduled_at = received_at`）。`scheduled` / `suppressed` 状态、`ackOncallPing` 和 resolved-as-ack（按 fingerprint 抑制未 fire 的 ping）不实现，只保留在状态枚举里。"没人确认就升级"是真正的 on-call 语义，但依赖 ack/silence 建模，PRD 明确把这类概念留给单独的设计轮；先打通电话通路，不预先设计一半的升级链。
+9. **oRPC 面。** 新增 `integrations` namespace（`listFeishuApps` / `createFeishuApp` / `updateFeishuApp` / `deleteFeishuApp` / `testFeishuApp`）+ `operations.buzzDelivery`；`DeliveryDetail` 增加 `pings[]`，与既有 `providerReference` 一起构成"这条投递能不能加急、加急成没成"的可见面。不新增 `oncall` namespace。私有过程一律 dashboard 鉴权，领域错误由边界统一翻译，DTO 不带 `app_secret`。
 
-10. **去重风暴保护。** ping 按 `(fingerprint, policy_id)` 在一个去重窗口（沿用 `intake.service.ts:54` 的 `dedupeWindowMs ?? 5 * 60 * 1000` 模式，作为 service 选项而非共享常量）内只建一条。告警风暴下"每 30 秒一条 firing 就刷一次电话"不可接受。新建 `oncall_ping_dedupe_keys` 表，不复用 `delivery_dedupe_keys` 的行，避免两种生命周期缠绕。
+10. **可移植性。** `feishu_apps` 进 `VaneConfiguration` 与 TOML（`[[feishu_apps]]`：id / name / app_id / app_secret，导出时 secret 走 env ref）；destination 的 `sendMode` / `app` / `urgent` 随现有 destination config 块自然进出；不含这些块的旧文档仍可导入。
+
+11. **删除语义。** 删除仍被 destination 引用的飞书应用被拒绝；pings 随 delivery 级联删除，dedupe 键随 ping 级联；source/route 的既有级联策略不变（pings 经 delivery/event 间接级联）。
+
+12. **destination 操作摘要新增投影。** sendMode、应用名、群 `chat_id`、加急开关与接收人数进入 `DestinationOperationalConfig`，使通知目标表能直接看出"哪些目标会在 critical 时打电话"。接收人 id 是运维标识符而非 secret，可以进入已认证 dashboard DTO。
+
+13. **v1 边界。** 只做电话加急（`urgent_phone`）、只做即时触发、只对 `firing` 自动；排班/轮转/多级升级、ack 与抑制、恢复呼叫、短信与应用内渠道、自定义加急消息模板、手动指定任意接收人、route 级加急配置、独立加急记录页、per-channel 限流都不在实现范围；`scheduled` / `suppressed` 只留在状态枚举里。
 
 ## 后果
 
-- 实现前必须完成 spike：真实飞书应用拿 `tenant_access_token`、发 DM 取 `message_id`、`urgent_phone` 打通；同时验证群 webhook 卡片是否可加急（决定 2 的前提）。spike 结论回写本 ADR。
-- 飞书加急有平台配额/计费（电话、短信按量），`UrgencyRegistry` 的结果必须能区分配额类拒绝（映射为 `target_rejected` + `not_retryable`）。per-channel 限流仍按 0002 留给 worker 架构议题，但配额错误码解析属于 adapter。
-- 第二张队列表意味着 worker 健康快照、日志（`vane.delivery` / `vane.worker.*` 模式扩展到 `vane.oncall`）与 operations UI 各多一个维度；这是独立重试换来的固定成本。
-- 0002 需要补两段：send result 的 `providerReference`；adapter 家族新增 urgency channel 类型及其 registry 纪律。AGENTS.md 的目录清单（`features` 与 `server/`）要加 `oncall`。具体批次见「实现顺序」的前置门槛。
-- UI 侧新增 `features/oncall/`（policy 配置页、ping 列表、事件详情上的加急按钮），i18n 按 AGENTS.md 运维词汇使用「加急」「值班」「呼叫」，中文键走 `oncall.*` namespace。
+- **spike 是硬门槛**：①应用凭证换 `tenant_access_token`；②应用向群发卡片并拿到 `message_id`；③对群内接收人执行 `urgent_phone` 真实响铃；④记录配额/计费错误码；⑤若 ③ 不可行，确认 DM 回退路径。结论回写本 ADR 与 PRD 的对应条目。
+- 电话加急按量计费、有平台配额；配额/权限错误码解析属于 adapter（映射为不可重试），per-channel 限流仍按 0002 留给 worker 架构议题。
+- 应用机器人必须在目标群内（`chat_id` 前提），部署文档与表单提示需要覆盖这一前置条件和常见错误（chat_id 无效、机器人不在群、权限未开通）。
+- 自动触发点是本方案**唯一**改动现有热路径的地方（delivery execution 成功分支 + 一次注入调用）；intake 与 route 匹配完全不改。
+- 改动面比初版更小：没有策略表、策略 CRUD、策略 oRPC 与策略页面；多出的是应用资源页与三条路径上的凭证解析。
+- `0002` 需要两段：urgency channel 家族（已写入，标注为提议且尚未实现）、send result 的 `providerReference`（已写入并已实现）。AGENTS.md 目录清单：`features` 加 `integrations`，`server/` 加 `oncall`。
 
 ## 实现顺序
 
-下面是把上述决定摊开的落地顺序，每步标注它实现哪条决定、动哪些文件、如何验收。路径均已核对存在。
+每步标注实现哪条决定、动哪些文件、如何验收。路径均已核对存在。
 
-**前置门槛（不满足则不开步骤 3）**
+**步骤 0（步骤 3、4 的门槛）：飞书 spike，人工执行，不入仓库**
 
-- 按 `docs/prd/post-mvp-planning.md` 认领方向并立增量 PRD；本 ADR 从提议转为接受以该 PRD 被接受为条件（PRD `:210` 目前把 on-call 列为 out-of-scope）。
-- `docs/adr/0002-curated-adapter-extension-model.md` 补两段：send result 的 `providerReference`（已随步骤 1 落地）、urgency channel adapter 家族及其 registry 纪律（已写入，标注为提议且尚未实现）。`AGENTS.md` 的 `features` 与 `server/` 目录清单加 `oncall` 一项**延后**：该文件当前带着未提交的 oRPC 边界重构改动，现在编辑会与之混在同一批 diff 里，等那批重构落地后再补。
+一次性脚本验证：`app_id` + `app_secret` 换 `tenant_access_token`；应用向群发卡片（`POST /im/v1/messages`）拿到 `message_id`；对该消息执行 `urgent_phone`，接收人手机真实响铃；记录配额/计费错误码形态。若加急群卡片不可行，验证"发单聊 + 加急"回退路径。结论回写背景第 2、3 条与决定 7。**不通过就不进入步骤 3、4**，本 ADR 退回重议。
 
-**步骤 0：飞书 spike（阻塞项，不入仓库）**
+**步骤 1：provider reference 地基（决定 5 的前件）—— 已完成（2026-10-08）**
 
-用一次性脚本验证三件事：`app_id` + `app_secret` 换 `tenant_access_token`；`POST /open-apis/im/v1/messages?receive_id_type=user_id` 发单聊能取到 `message_id`；`PATCH /open-apis/im/v1/messages/:message_id/urgent_phone` 真实响铃。同时验证群 webhook 卡片是否可加急（决定 2 的前提），并记录加急的配额/计费错误码形态。结论回写「背景」第 3 条与决定 2、决定 7。**spike 不通过就不进入步骤 1**，本 ADR 退回重议。
+已合并：`packages/core` 的 `ProviderReferenceSchema`、`@vane/destinations` send result 的可选 `providerReference`、`deliveries.provider_ref_type / provider_ref_value` 两列、`markSucceeded` 透传、`DeliveryDetail.providerReference` 与 wire schema。`vp check`、`vp run -r test`、`vp run -r build` 全绿。
 
-**步骤 1：provider reference 地基（决定 6，可独立合并）—— 已完成（2026-10-08）**
+**步骤 2：飞书应用资源（决定 1、10）**
 
-| 文件 | 改动 |
-| --- | --- |
-| `packages/core/src/delivery/delivery.ts` | 新增 `ProviderReferenceSchema` 与 `ProviderReference` 类型 |
-| `packages/destinations/src/types.ts` | `DestinationSendResultBase` 增可选 `providerReference?: ProviderReference` |
-| `apps/console/src/infra/sqlite/migrate/schema.ts` | `createVaneTables` 给 `deliveries` 增 `provider_ref_type` / `provider_ref_value` |
-| `apps/console/src/infra/sqlite/schema.ts` | `DeliveriesTable` 同步两列 |
-| `apps/console/src/infra/sqlite/repositories/delivery/delivery.interface.ts` | `DeliveryRow` 两列；`MarkDeliverySucceededInput.providerReference` |
-| 同目录 `delivery.helpers.ts` | 新增 `providerReferenceFromRow`（两列任一为 null 即视为无句柄） |
-| 同目录 `delivery.repository.ts` | insert 显式写 null；`markSucceeded` 写两列；`get()` 投影进 detail |
-| `packages/core/src/operations.ts` | `DeliveryDetail.providerReference` |
-| `packages/api/src/schemas/operations.ts` | `DeliveryDetailSchema` 增 `providerReference` nullable，使 wire DTO 与 core 投影一致 |
-| `apps/console/src/server/deliveries/delivery-execution.ts` | 成功分支把 `sendResult.providerReference` 透传给 `markSucceeded` |
+- `packages/core`：`FeishuAppSchema`（id / name / appId / appSecret / timestamps）与 `VaneConfiguration` / TOML 文档 schema + 两个 mapper 的 `feishu_apps` 段
+- `apps/console/src/infra/sqlite/migrate/schema.ts`：`feishu_apps` 表；`infra/sqlite/schema.ts` 的表类型；`migrate/migrate.test.ts` 的表名清单断言同步
+- `infra/sqlite/repositories/feishu-app/`（`*.interface.ts` / `*.helpers.ts` / `*.repository.ts`）并接入 `store.ts`
+- `server/integrations/feishu-app.service.ts` + `.types.ts`：CRUD、凭证测试（注入 fetch）、被引用时拒删（引用查询走 destination 配置扫描）
+- `packages/api` 的 `integrations` contract + `server/orpc/features/integrations/router.ts` + `server/orpc/router.ts` 注册
+- `server/configuration/`：portability 的导出/导入与 env ref（`VANE_FEISHU_APP_<id>_<path>`），旧文档导入测试
+- `features/integrations/`（api / model / ui）：列表、表单、测试按钮；i18n `integrations.*`
+- `AGENTS.md` 的 `features` 目录清单加 `integrations`
 
-实现时比原计划多做了读路径：只写不读的列是死数据，而 `DeliveryDetail` 增加字段不会外溢到 UI（oRPC 输出由 `packages/api` 的 schema 决定，前端 view 复用 core 类型，因此必须同批补 wire schema，否则 `delivery-detail-page.tsx` 类型不通过）。UI 是否展示 message_id 留给步骤 8。
+验收：应用可建可测可删；被 destination 引用时删除被拒；TOML 往返（含 env ref）与旧的、无 `feishu_apps` 的文档导入均通过；`vp check` + `vp run -r test`。
 
-验收：`vp check` 零错误，`vp run -r test` 四个包全绿（含新增断言：execution 透传 ref、store 落库并可读回、失败投递的 ref 为 null），`vp run -r build` 通过。此步不需要飞书应用凭证。
+**步骤 3：destination 应用发送模式（决定 2、4 的配置面、12）**
 
-**步骤 2：urgency channel adapter（决定 3）**
+- `packages/destinations/src/feishu/schema.ts`：`sendMode`（默认 webhook）、`app: { appRef, chatId }`、`urgent: { autoEnabled, severities, userIdType, receivers }` 与 mode/字段一致性、`urgent` 必须 app 模式的 superRefine
+- `packages/destinations/src/feishu/adapter.ts` + 新 `app.ts`：app 模式发送（token → `im/v1/messages`）、`message_id` → `providerReference`；webhook 路径不动
+- `packages/destinations/src/feishu/manifest.ts`：`configFields` 增 mode/app/urgent 字段（`appRef` 用 select 类型或在 feature 层 override）
+- `destination.service.ts`：保存校验 `appRef` 存在；`test`/`preview` 路径的应用凭证解析（resolver 注入）
+- `infra/sqlite/repositories/destination/destination.helpers.ts`：`DestinationOperationalConfig` 投影（sendMode / 应用名 / chatId / 加急开关与接收人数）
+- `features/destinations`：表单 mode 切换、应用选择、urgent 区块；i18n
+- 测试：app 模式 send 的请求形状与 providerReference 落库、mode/urgent 校验矩阵、webhook 模式回归
 
-新建 `packages/destinations/src/urgency/`，与 `feishu/` 并列：
+**步骤 4：urgency channel adapter（决定 7）**
 
-- `types.ts`：`UrgencyChannelKind = "feishu_urgent_phone"`（封闭枚举）、`UrgencyChannelAdapter`（`kind` / `configSchema` / `ping(input, ctx)`）、结构化 `ok` union、error kind、`retryable`
-- `feishu/`：`schema.ts`（已校验的 typed app config）、`client.ts`（token 获取与缓存 + 发 DM + `urgent_phone` 两步）、`adapter.ts`、`manifest.ts`、`result.ts`（从响应提取 `message_id`）
-- `registry.ts`：照抄 `packages/destinations/src/registry.ts` 的注册与查找形状
-- 包根 `index.ts` 只做聚合导出，`package.json` 增加 `@vane/destinations/urgency/...` 子路径
+- 新建 `packages/destinations/src/urgency/`：`types.ts`（封闭 `UrgencyChannelKind`、adapter 接口、结构化结果）、`feishu-urgent/`（schema / client：token → `urgent_phone`，DM 回退路径按 spike 结论）、`registry.ts`、包根与 `package.json` 子路径导出
+- 测试：假 fetch 断言 URL、`user_id_type`、`urgent_receivers` body、响应解析、配额类不可重试、token 复用
 
-纪律：`ping` 对内两步、对外一个动作；adapter 不碰 DB / container / logger；`fetch` 与 `now` 从 ctx 注入；配额类拒绝映射为 `target_rejected` + 不可重试。**不要**给 `DestinationAdapter` 加 `urgent?()` 方法（见替代方案第二条）。
+**步骤 5：加急队列、自动触发与可见性（决定 4 自动、5、6、8、11）**
 
-验收：假 `fetch` 单元测试断言两步调用的 URL、query `user_id_type`、body `urgent_receivers`，以及 token 过期重取。
+- `infra/sqlite/migrate/schema.ts`：`oncall_pings`、`oncall_ping_dedupe_keys`（含索引）；表类型与迁移测试同步
+- `infra/sqlite/repositories/oncall/`：enqueue（含去重）、claimDue、markFired/markFailed/retryNow、listForDelivery
+- `server/oncall/oncall.service.ts` + `.types.ts`：自动入队判断（firing + severity 门槛 + providerReference）、执行（解析 appRef → 调 `UrgencyRegistry.ping`）、退避复用 `DeliveryBackoffOptions`；不 throw `ORPCError`
+- `server/oncall/oncall-worker.service.ts` + `.types.ts`；`container.ts` 增 `createOncallService` / `ensureOncallWorkerRunner`；日志 `vane.oncall`
+- `server/deliveries/delivery-execution.ts`：成功分支注入 `enqueueUrgentPings`（可选依赖，缺省行为不变）
+- `packages/core` 的 `DeliveryDetail.pings` 投影 + `packages/api` wire schema；`features/deliveries` 详情页 pings 区块
+- `AGENTS.md` 的 `server/` 目录清单加 `oncall`
+- 测试（本方案的核心验收）：假 registry + 假时钟的服务级集成——成功 → 每接收人一条 ping；severity 门槛、firing-only、去重窗口、退避序列、**ping 失败不改 delivery 状态**、卡片重试不重复 ping
 
-**步骤 3：core 共享契约（决定 4、5、7、8）**
+**步骤 6：手动加急（决定 4 手动）**
 
-`packages/core/src/oncall/`：policy 与 ping 的 DTO、`UpsertOncallPolicyCommand` / `ListOncallPingsCommand` / `BuzzNowCommand` 等命令 schema、ping 状态枚举（含预留的 `scheduled` / `suppressed`）。必须保持环境中性：不 import `node:*`、`#/infra/*`、`#/server/*`，不带 server-only 标记。
+- `packages/api`：`operations.buzzDelivery` contract + `server/orpc/features/operations/router.ts` + service 方法
+- `features/deliveries`：详情页「加急」按钮（无 `providerReference` 时禁用并解释原因）、结果反馈、query invalidation
+- 测试：手动入队（trigger=manual + initiated_by）、webhook 投递被拒、立即派发失败落回队列
 
-**步骤 4：持久化与 service（决定 4、5、9、10）**
+**步骤 7：文档收尾**
 
-- `infra/sqlite/migrate/schema.ts`：`oncall_policies`、`oncall_pings`、`oncall_ping_dedupe_keys`
-- `infra/sqlite/schema.ts`：Kysely 表类型声明；`infra/sqlite/migrate/migrate.test.ts` 的精确表名清单断言要同步（该断言是全量相等，漏改必红）
-- `infra/sqlite/store.ts` + `repositories/oncall/`（`oncall.interface.ts` / `oncall.helpers.ts` / `oncall.repository.ts`）
-- `server/oncall/oncall.service.ts` + `oncall.service.types.ts`：policy CRUD、`schedulePingsForEvent`、`buzzNow`、claim/due/mark。领域失败用 `RecordNotFoundError` / `DomainValidationError`，**不得 throw `ORPCError`**（`server/orpc/errors.ts` 是唯一的边界翻译点）
-- 去重按 `(fingerprint, policy_id)`，照抄 `intake.service.ts:54` 的 `dedupeWindowMs` 选项模式
-
-**步骤 5：worker（决定 5）**
-
-`server/oncall/oncall-worker.service.ts`（+ `.types.ts`）照抄 `server/deliveries/delivery-worker.service.ts` 的 reclaim → claim(due) → execute，退避复用 `DeliveryBackoffOptions`；runner 直接复用 `server/runtime/delivery-worker-runner.ts:47`，在 `server/runtime/container.ts`（对照 138 行的 delivery runner 注入）加 `ensureOncallWorkerRunner()`。日志命名从 `vane.delivery` 扩展到 `vane.oncall`。
-
-验收：worker 单元测试用假时钟断言退避序列，且**必须**覆盖一条「ping 失败不触碰 delivery 状态」的断言，这是决定 1 的全部价值所在。
-
-**步骤 6：oRPC 边界（决定 8，套用 0007）**
-
-- `packages/api/src/contract/oncall.ts` + `contract/index.ts` 注册 namespace
-- `apps/console/src/server/orpc/features/oncall/router.ts`：`listPolicies` / `upsertPolicy` / `deletePolicy` / `listPings` / `buzzNow`，私有过程用 `withDashboardService((container) => container.createOncallService())`，handler 只调 `context.service.<method>(input)`
-- DTO 不得带出 `app_secret`、token 或明文 secret
-
-contract 与 implementer 由类型检查强制同步，步骤 3 与步骤 6 应落在同一批提交。
-
-**步骤 7：intake 挂接（决定 4）**
-
-`server/intake/intake.service.ts` 在 `tx.intake.recordEvent`（105 行）+ `tx.deliveries.enqueueForEvent`（115 行）之后加一步 `schedulePingsForEvent`。这是本方案唯一改动现有热路径的地方，收口在事务内的依赖注入 + 一次调用，不要在此文件写加急业务判断。
-
-验收：intake 测试补「命中 enabled policy 时建 ping」「policy disabled 时不建」「同 fingerprint 窗口内只建一条」。
-
-**步骤 8：portability 与 UI（决定 4、7）**
-
-- `server/configuration/config-portability.service.ts`（+ `config-portability.ts` / `.service.types.ts`）：policy 进 TOML 导出导入；`app_secret` 走 secretRefs，env hint `VANE_ONCALL_FEISHU_APP_SECRET`；**旧 TOML 无该块必须仍能导入**
-- `src/features/oncall/`：`api/`（queryOptions 与 mutation 包装）、`model/`、`ui/`（policy 列表页、policy 表单、ping 列表、事件详情加急按钮），路由文件只挂 URL 与 loader
-- `src/components/common` 复用表格壳与分页；`enabled/disabled` 用现有 badge
-- i18n 走 `oncall.*` namespace，`const t = useTranslations();` 单入口，中文用「加急」「值班」「呼叫对象」「应用凭证」，`feishu_urgent_phone` 等机器值不翻译
-- 表单用 TanStack Form，列表用 TanStack Table，持久筛选进 Router search params
-
-验收：`vp check` + `vp run -r test`，再起 dev server 用 `admin@example.test` 走完「建 policy → 打告警 → 收到电话 → 事件详情手动加急」，浏览器验证走 `http://localhost:<port>`。
+`docs/prd/post-mvp-planning.md` 的已认领方向与删除语义更新；`docs/architecture/*` 相关页（application-container、sqlite-store、observability）增补新表/新 runner/新 logger；部署文档补应用机器人入群、chat_id、配额计费三项前提。
 
 ## 不采用的替代方案
 
-- **折叠进 `send()`（最省）**：加急作为 feishu send 的副作用，零新表。否决：电话失败连带重发群卡片；加急无法被操作者单独观测和重试；手动加急没有 message 句柄。
-- **`DestinationAdapter.urgent?()` 可选方法 + capability 标志**：比独立 registry 少一个接口，但把"出站通知"和"呼叫人"两种语义挤进同一 adapter 对象，且要打开封闭 capabilities schema，四份 manifest 连带修改。否决：seam 更差，收益只是少一个类。
-- **urgency 写进 `RouteRuleSchema` / `RouteDefinition`**：operator intent 更贴身，但污染匹配谓词审计，且 route strict schema + TOML snake_case 镜像 + 路由表单全链连带。否决：独立 policy 实体表达同样关联，改动面小得多。
-- **完整 on-call 平台（排班/轮转/多级升级）一次到位**：正是 PRD 排除的部分，不预先建模。本 ADR 的 policy / ping / channel 三层形状已足以无破坏地长出这些概念。
+- **独立"加急策略"实体 + app 凭证内联（初版设计）**：凭证与接收人按策略重复配置，且"哪条消息用哪个 app"要在策略、destination、app 三处维护；修订后替换为"应用资源 + destination 配置 + delivery 级动作"。
+- **单聊（DM）作为默认载体**：被叫的人拿到的上下文与群里的卡片割裂，且多一条消息；保留为 spike 失败时的 adapter 内部回退，不作为默认。
+- **折叠进 `send()`**：电话失败连带重发卡片，告警群会被刷屏；且加急无法被单独观测与重试。
+- **把加急接收人配在 route 上**：语义更贴身，但 route strict schema + TOML snake_case 镜像 + 路由表单全链连带；destination 级配置已能表达"这个目标命中 critical 时呼叫这些人"，且与 email recipients 先例一致。未来若需要按路由细分，另立 ADR 付那笔成本。
+- **完整 on-call 平台（排班/轮转/多级升级）一次到位**：正是 PRD 排除的部分，本 ADR 的形状（delivery 级 ping + 状态枚举预留）足以无破坏地长出这些概念。
 
 ## 参考
 
-- `docs/adr/0002-curated-adapter-extension-model.md`（本 ADR amend 其 send result 与 registry 决策）
-- `docs/adr/0007-console-orpc-api-boundary.md`（oncall namespace 的边界套用）
+- `docs/prd/oncall-feishu-urgent.md`（本 ADR 对应的增量 PRD；PRD 被接受后本 ADR 从提议转为接受）
+- `docs/adr/0002-curated-adapter-extension-model.md`（本 ADR amend 其 adapter 家族与 send result 决策）
+- `docs/adr/0007-console-orpc-api-boundary.md`（integrations / operations 过程的边界套用）
 - `docs/prd/self-hosted-alert-hub-mvp.md`（out-of-scope 条款，本 ADR 是其 amendment 提案）
 - `docs/prd/post-mvp-planning.md`（新特性先认领方向 + 增量 PRD 的流程）
 - 飞书加急 API：`larksuite/oapi-sdk-go` `sample/apiall/imv1/urgentPhone_message.go`，`PATCH /open-apis/im/v1/messages/:message_id/urgent_phone`

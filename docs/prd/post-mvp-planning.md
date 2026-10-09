@@ -43,10 +43,12 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 在公开发布前，Vane 的本地 SQLite 数据仍视为可重建的内测数据。告警源、路由和通知目标的 UI
 删除操作采用硬删除语义：
 
-- 删除告警源会删除该告警源、它接收到的 Events、相关 Deliveries / attempts / dedupe keys，并清理引用它的路由规则。
+- 删除告警源会删除该告警源、它接收到的 Events、相关 Deliveries / attempts / dedupe keys
+  和相关加急记录，并清理引用它的路由规则。
 - 删除通知目标会删除该通知目标、相关 Deliveries / attempts / dedupe keys，并清理引用它的路由目标。
 - 删除路由会删除该路由和相关 Deliveries / attempts / dedupe keys，但保留来源 Events。
-- 如果删除引用会让路由语义变宽，例如把只匹配某告警源的规则变成 catch-all，则直接删除该路由，而不是静默放宽匹配范围。
+- 删除仍被通知目标引用的飞书应用会被拒绝，提示先解除引用。
+- 加急记录（pings）随投递级联删除，加急去重键随加急记录级联。- 如果删除引用会让路由语义变宽，例如把只匹配某告警源的规则变成 catch-all，则直接删除该路由，而不是静默放宽匹配范围。
 
 第一次公开 release 前需要重新评估该策略：如果历史数据开始具备审计价值，应切换到“有历史则归档”或软删除模型，并补充对应迁移和文档。
 
@@ -167,6 +169,23 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 - 运行时第三方插件安装。
 - Marketplace。
 - 动态加载远程 adapter。
+
+## 已认领方向
+
+### On-call 加急（飞书电话呼叫）
+
+问题：Vane 的投递能"通知"但不能"叫醒"。夜班 critical 告警会在静音的群消息里被错过。
+
+范围：飞书自建应用成为可复用资源（登记、测试、被通知目标引用）；飞书通知目标新增"应用发送
+模式"（引用应用 + 群 `chat_id`，卡片由应用发出并携带 `message_id`）；通知目标上配置加急接收人
+与 severity 门槛后，命中的 firing 投递自动为每个接收人创建一条加急记录并执行 `urgent_phone`，
+也可在投递详情手动加急。加急有独立状态、重试与去重。
+
+不在本方向内（仍属 out-of-scope）：on-call 排班、轮转与多级 escalation policy，ack 确认与抑制，
+短信/应用内加急渠道，恢复（resolved）呼叫，路由级加急配置。
+
+- PRD：`docs/prd/oncall-feishu-urgent.md`
+- ADR：`docs/adr/0009-oncall-feishu-urgent.md`
 
 ## 建议优先级
 
