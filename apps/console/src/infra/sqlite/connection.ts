@@ -7,13 +7,13 @@ import process from "node:process";
 import Sqlite from "better-sqlite3";
 import { Kysely, SqliteDialect } from "kysely";
 
-import type { SqliteDatabaseSchema, SqliteDatabase } from "#/infra/sqlite/schema";
+import type { SqliteDatabaseSchema, SqliteKysely } from "#/infra/sqlite/schema";
 
 export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;
 }
 
-export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): SqliteDatabase {
+export function createSqliteDatabase(options: CreateSqliteDatabaseOptions = {}): SqliteKysely {
   const databasePath = String(options.databasePath ?? path.join(process.cwd(), "data.sqlite"));
 
   if (databasePath !== ":memory:") {

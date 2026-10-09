@@ -33,9 +33,9 @@ export interface SqliteDatabaseSchema {
   verification: BetterAuthVerificationTable;
 }
 
-export type SqliteDatabase = Kysely<SqliteDatabaseSchema>;
+export type SqliteKysely = Kysely<SqliteDatabaseSchema>;
 export type SqliteTransaction = Transaction<SqliteDatabaseSchema>;
-export type SqliteExecutor = SqliteDatabase | SqliteTransaction;
+export type SqliteExecutor = SqliteKysely | SqliteTransaction;
 
 export interface SettingsTable {
   key: string;

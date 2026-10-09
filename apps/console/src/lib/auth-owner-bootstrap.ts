@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
 import { APIError } from "better-auth/api";
 
-import type { SqliteDatabase } from "#/infra/sqlite/schema";
+import type { SqliteKysely } from "#/infra/sqlite/schema";
 
 export interface BetterAuthUserCreateInput {
   id: string;
@@ -36,7 +36,7 @@ export async function assignOwnerRoleBeforeUserCreate(
   };
 }
 
-export async function hasRegisteredUsers(db: SqliteDatabase): Promise<boolean> {
+export async function hasRegisteredUsers(db: SqliteKysely): Promise<boolean> {
   const row = await db
     .selectFrom("user")
     .select((eb) => eb.fn.countAll<number>().as("count"))

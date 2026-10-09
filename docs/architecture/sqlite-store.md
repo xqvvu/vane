@@ -41,7 +41,7 @@ SQLite 层是 Vane 的持久化适配器。对外暴露一个 `SqliteStore`，�
 
 ## 2. 设计原则
 
-1. **Kysely 是公共数据库边界。** 调用方拿到的是 `SqliteDatabase` / `SqliteExecutor`，
+1. **Kysely 是公共数据库边界。** 调用方拿到的是 `SqliteKysely` / `SqliteExecutor`，
    raw driver 不外泄。连接创建、调用、事务和销毁都围绕 Kysely handle 组织。
 2. **按聚合纵切。** 每个聚合在
    `apps/console/src/infra/sqlite/repositories/<module>/` 下拆成
@@ -103,7 +103,7 @@ export interface CreateSqliteDatabaseOptions {
   databasePath?: PathLike;
 }
 
-export function createSqliteDatabase(options?: CreateSqliteDatabaseOptions): SqliteDatabase;
+export function createSqliteDatabase(options?: CreateSqliteDatabaseOptions): SqliteKysely;
 ```
 
 行为：
@@ -142,9 +142,9 @@ export interface SqliteDatabaseSchema {
   verification: BetterAuthVerificationTable;
 }
 
-export type SqliteDatabase = Kysely<SqliteDatabaseSchema>;
+export type SqliteKysely = Kysely<SqliteDatabaseSchema>;
 export type SqliteTransaction = Transaction<SqliteDatabaseSchema>;
-export type SqliteExecutor = SqliteDatabase | SqliteTransaction;
+export type SqliteExecutor = SqliteKysely | SqliteTransaction;
 ```
 
 字段类型尽量贴近领域类型，例如：
@@ -242,7 +242,7 @@ async runInTransaction<T>(fn: (context: SqliteRepositoryContext) => Promise<T>):
 
 ```ts
 export function transaction<T>(
-  db: SqliteDatabase,
+  db: SqliteKysely,
   fn: (tx: SqliteTransaction) => Promise<T>,
 ): Promise<T> {
   return db.transaction().execute(fn);
@@ -340,7 +340,7 @@ database: {
 }
 ```
 
-把同一个 `SqliteDatabase` 传给 Better Auth。
+把同一个 `SqliteKysely` 传给 Better Auth。
 
 ---
 

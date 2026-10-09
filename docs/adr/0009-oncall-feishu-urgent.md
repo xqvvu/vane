@@ -47,7 +47,7 @@
    )
    ```
 
-   电话失败只重试电话，绝不重发卡片；卡片重发也绝不重复打电话。`OncallWorker.runOnce()` 照抄 `DeliveryWorkerService`（`server/deliveries/delivery-worker.service.ts`）的 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`（`server/deliveries/delivery-execution.ts:31`）；runner 复用 `createDeliveryWorkerRunner`（`server/runtime/delivery-worker-runner.ts:47`，它对队列形状无感知），container 里 `ensureOncallWorkerRunner()` 与 delivery runner 并列（注入点见 `server/runtime/container.ts:138`），仍是单进程 setInterval。MVP 阶段按 AGENTS.md 直接在 `migrate/schema.ts` 的 `createVaneTables` / `createVaneIndexes` 加表。
+   电话失败只重试电话，绝不重发卡片；卡片重发也绝不重复打电话。`OncallWorker.runOnce()` 照抄 `DeliveryWorkerService`（`server/deliveries/delivery-worker.service.ts`）的 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`（`server/deliveries/delivery-execution.ts:31`）；runner 复用 `createDeliveryWorkerRunner`（`server/runtime/delivery-worker-runner.ts:47`，它对队列形状无感知），container 里 `ensureOncallWorkerRunner()` 与 delivery runner 并列（注入点见 `server/runtime/container.ts:138`），仍是单进程 setInterval。MVP 阶段按 AGENTS.md 直接在 `migrate/schema.ts` 的 `createAppTables` / `createAppIndexes` 加表。
 
 6. **去重风暴保护。** ping 按 `(fingerprint, destination_id, receiver)` 在一个去重窗口（沿用 `intake.service.ts:54` 的 `dedupeWindowMs ?? 5 * 60 * 1000` 模式，作为 service 选项而非共享常量）内只建一条。告警风暴下"每 30 秒一条 firing 就刷一次电话"不可接受。新建 `oncall_ping_dedupe_keys` 表，不复用 `delivery_dedupe_keys` 的行。
 
@@ -57,7 +57,7 @@
 
 9. **oRPC 面。** 新增 `integrations` namespace（`listFeishuApps` / `createFeishuApp` / `updateFeishuApp` / `deleteFeishuApp` / `testFeishuApp`）+ `operations.buzzDelivery`；`DeliveryDetail` 增加 `pings[]`，与既有 `providerReference` 一起构成"这条投递能不能加急、加急成没成"的可见面。不新增 `oncall` namespace。私有过程一律 dashboard 鉴权，领域错误由边界统一翻译，DTO 不带 `app_secret`。
 
-10. **可移植性。** `feishu_apps` 进 `VaneConfiguration` 与 TOML（`[[feishu_apps]]`：id / name / app_id / app_secret，导出时 secret 走 env ref）；destination 的 `sendMode` / `app` / `urgent` 随现有 destination config 块自然进出；不含这些块的旧文档仍可导入。
+10. **可移植性。** `feishu_apps` 进 `Configuration` 与 TOML（`[[feishu_apps]]`：id / name / app_id / app_secret，导出时 secret 走 env ref）；destination 的 `sendMode` / `app` / `urgent` 随现有 destination config 块自然进出；不含这些块的旧文档仍可导入。
 
 11. **删除语义。** 删除仍被 destination 引用的飞书应用被拒绝；pings 随 delivery 级联删除，dedupe 键随 ping 级联；source/route 的既有级联策略不变（pings 经 delivery/event 间接级联）。
 
@@ -88,7 +88,7 @@
 
 **步骤 2：飞书应用资源（决定 1、10）**
 
-- `packages/core`：`FeishuAppSchema`（id / name / appId / appSecret / timestamps）与 `VaneConfiguration` / TOML 文档 schema + 两个 mapper 的 `feishu_apps` 段
+- `packages/core`：`FeishuAppSchema`（id / name / appId / appSecret / timestamps）与 `Configuration` / TOML 文档 schema + 两个 mapper 的 `feishu_apps` 段
 - `apps/console/src/infra/sqlite/migrate/schema.ts`：`feishu_apps` 表；`infra/sqlite/schema.ts` 的表类型；`migrate/migrate.test.ts` 的表名清单断言同步
 - `infra/sqlite/repositories/feishu-app/`（`*.interface.ts` / `*.helpers.ts` / `*.repository.ts`）并接入 `store.ts`
 - `server/integrations/feishu-app.service.ts` + `.types.ts`：CRUD、凭证测试（注入 fetch）、被引用时拒删（引用查询走 destination 配置扫描）

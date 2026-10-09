@@ -4,24 +4,29 @@ import { z } from "zod";
 import {
   isSensitiveKey,
   isSafeSecretPath,
+  CONFIG_SCHEMA_VERSION,
+  ConfigurationSchema,
   configurationToTomlDocument,
   tomlDocumentToConfiguration,
-  PORTABLE_CONFIG_SCHEMA_VERSION,
-  PortableConfigurationSchema,
   type FeishuApp,
   type JsonObject,
   type JsonValue,
-  type PortableConfiguration,
-  type PortableDestination,
-  type PortableFeishuApp,
-  type PortableSource,
   type RouteDefinition,
+  type ConfigDestination,
+  type ConfigFeishuApp,
+  type ConfigSource,
+  type Configuration,
   type SecretReferences,
 } from "@vane/core";
 
 import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface";
 import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
 import { DomainValidationError } from "#/server/runtime/domain-errors";
+
+export type PortableConfiguration = Configuration;
+export type PortableDestination = ConfigDestination;
+export type PortableSource = ConfigSource;
+export type PortableFeishuApp = ConfigFeishuApp;
 
 export interface ExportConfigurationOptions {
   includeSecrets?: boolean;
@@ -32,6 +37,8 @@ export interface ImportConfigurationOptions {
   env?: Record<string, string | undefined>;
 }
 
+export const PortableConfigurationSchema = ConfigurationSchema;
+
 export function createPortableConfiguration(
   input: {
     feishuApps: FeishuApp[];
@@ -39,7 +46,7 @@ export function createPortableConfiguration(
     destinations: DestinationRuntimeConfig[];
     routes: RouteDefinition[];
     settings: {
-      locale: PortableConfiguration["settings"]["locale"];
+      locale: Configuration["settings"]["locale"];
       timeZone: string;
       rawPayloadRetentionDays: number;
     };
@@ -50,9 +57,9 @@ export function createPortableConfiguration(
     throw new DomainValidationError("Plaintext secret export is not supported");
   }
 
-  return PortableConfigurationSchema.parse({
+  return ConfigurationSchema.parse({
     settings: {
-      schemaVersion: PORTABLE_CONFIG_SCHEMA_VERSION,
+      schemaVersion: CONFIG_SCHEMA_VERSION,
       exportedAt: options.now?.() ?? new Date().toISOString(),
       includeSecrets: false,
       locale: input.settings.locale,

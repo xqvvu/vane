@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { DestinationKindSchema } from "#core/destination/destination";
 import { JsonObjectSchema } from "#core/json";
-import { AppLocaleSchema, IanaTimeZoneSchema } from "#core/presentation";
+import { IanaTimeZoneSchema, LocaleSchema } from "#core/presentation";
 import {
   LabelMatchOperatorSchema,
   LabelMatcherSchema,
@@ -11,7 +11,7 @@ import {
 } from "#core/route/route";
 import { SourceProviderSchema } from "#core/source/source";
 
-export const PORTABLE_CONFIG_SCHEMA_VERSION = "vane.config.v1";
+export const CONFIG_SCHEMA_VERSION = "vane.config.v1";
 
 const NonEmptyConfigStringSchema = z.string().trim().min(1);
 const EnvironmentVariableNameSchema = z
@@ -39,16 +39,16 @@ export const SecretReferenceSchema = z.strictObject({
 
 export const SecretReferencesSchema = z.record(SecretPathSchema, SecretReferenceSchema).default({});
 
-export const PortableSettingsSchema = z.strictObject({
-  schemaVersion: z.literal(PORTABLE_CONFIG_SCHEMA_VERSION),
+export const ConfigSettingsSchema = z.strictObject({
+  schemaVersion: z.literal(CONFIG_SCHEMA_VERSION),
   exportedAt: z.string().optional(),
   includeSecrets: z.literal(false),
-  locale: AppLocaleSchema.default("en-US"),
+  locale: LocaleSchema.default("en-US"),
   timeZone: IanaTimeZoneSchema.default("UTC"),
   rawPayloadRetentionDays: z.number().int().min(0).max(3650),
 });
 
-export const PortableSourceSchema = z.strictObject({
+export const ConfigSourceSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   provider: SourceProviderSchema,
@@ -57,7 +57,7 @@ export const PortableSourceSchema = z.strictObject({
   secretRefs: SecretReferencesSchema,
 });
 
-export const PortableDestinationSchema = z.strictObject({
+export const ConfigDestinationSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   kind: DestinationKindSchema,
@@ -66,7 +66,7 @@ export const PortableDestinationSchema = z.strictObject({
   secretRefs: SecretReferencesSchema,
 });
 
-export const PortableRouteSchema = z.strictObject({
+export const ConfigRouteSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   enabled: z.boolean(),
@@ -74,7 +74,7 @@ export const PortableRouteSchema = z.strictObject({
   destinationIds: RouteDefinitionSchema.shape.destinationIds,
 });
 
-export const PortableFeishuAppSchema = z.strictObject({
+export const ConfigFeishuAppSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   appId: NonEmptyConfigStringSchema,
@@ -82,25 +82,25 @@ export const PortableFeishuAppSchema = z.strictObject({
   secretRefs: SecretReferencesSchema,
 });
 
-export const PortableConfigurationSchema = z.strictObject({
-  settings: PortableSettingsSchema,
-  feishuApps: z.array(PortableFeishuAppSchema).default([]),
-  sources: z.array(PortableSourceSchema).default([]),
-  destinations: z.array(PortableDestinationSchema).default([]),
-  routes: z.array(PortableRouteSchema).default([]),
+export const ConfigurationSchema = z.strictObject({
+  settings: ConfigSettingsSchema,
+  feishuApps: z.array(ConfigFeishuAppSchema).default([]),
+  sources: z.array(ConfigSourceSchema).default([]),
+  destinations: z.array(ConfigDestinationSchema).default([]),
+  routes: z.array(ConfigRouteSchema).default([]),
 });
 
-const PortableTomlLabelMatcherSchema = z.strictObject({
+const TomlLabelMatcherSchema = z.strictObject({
   key: NonEmptyConfigStringSchema,
   operator: LabelMatchOperatorSchema.default("equals"),
   value: NonEmptyConfigStringSchema,
 });
 
-const PortableTomlRouteRuleSchema = z.strictObject({
+const TomlRouteRuleSchema = z.strictObject({
   source_ids: z.array(NonEmptyConfigStringSchema).default([]),
   severities: RouteRuleSchema.shape.severities.default([]),
   statuses: RouteRuleSchema.shape.statuses.default([]),
-  labels: z.array(PortableTomlLabelMatcherSchema).default([]),
+  labels: z.array(TomlLabelMatcherSchema).default([]),
   title_contains: z.array(NonEmptyConfigStringSchema).default([]),
   message_contains: z.array(NonEmptyConfigStringSchema).default([]),
 });
@@ -112,18 +112,18 @@ const EmptyTomlRouteRule = {
   labels: [],
   title_contains: [],
   message_contains: [],
-} satisfies z.output<typeof PortableTomlRouteRuleSchema>;
+} satisfies z.output<typeof TomlRouteRuleSchema>;
 
-export const PortableTomlSettingsDocumentSchema = z.strictObject({
-  schema_version: z.literal(PORTABLE_CONFIG_SCHEMA_VERSION),
+export const TomlSettingsDocumentSchema = z.strictObject({
+  schema_version: z.literal(CONFIG_SCHEMA_VERSION),
   exported_at: z.string().optional(),
   include_secrets: z.literal(false),
-  locale: AppLocaleSchema.default("en-US"),
+  locale: LocaleSchema.default("en-US"),
   time_zone: IanaTimeZoneSchema.default("UTC"),
   raw_payload_retention_days: z.number().int().min(0).max(3650),
 });
 
-export const PortableTomlSourceDocumentSchema = z.strictObject({
+export const TomlSourceDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   provider: SourceProviderSchema,
@@ -132,7 +132,7 @@ export const PortableTomlSourceDocumentSchema = z.strictObject({
   secret_refs: SecretReferencesSchema,
 });
 
-export const PortableTomlDestinationDocumentSchema = z.strictObject({
+export const TomlDestinationDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   kind: DestinationKindSchema,
@@ -141,15 +141,15 @@ export const PortableTomlDestinationDocumentSchema = z.strictObject({
   secret_refs: SecretReferencesSchema,
 });
 
-export const PortableTomlRouteDocumentSchema = z.strictObject({
+export const TomlRouteDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   enabled: z.boolean(),
-  rule: PortableTomlRouteRuleSchema.default(EmptyTomlRouteRule),
+  rule: TomlRouteRuleSchema.default(EmptyTomlRouteRule),
   destination_ids: RouteDefinitionSchema.shape.destinationIds,
 });
 
-export const PortableTomlFeishuAppDocumentSchema = z.strictObject({
+export const TomlFeishuAppDocumentSchema = z.strictObject({
   id: NonEmptyConfigStringSchema,
   name: NonEmptyConfigStringSchema,
   app_id: NonEmptyConfigStringSchema,
@@ -157,23 +157,23 @@ export const PortableTomlFeishuAppDocumentSchema = z.strictObject({
   secret_refs: SecretReferencesSchema,
 });
 
-export const PortableTomlDocumentSchema = z.strictObject({
-  settings: PortableTomlSettingsDocumentSchema,
-  feishu_apps: z.array(PortableTomlFeishuAppDocumentSchema).default([]),
-  sources: z.array(PortableTomlSourceDocumentSchema).default([]),
-  destinations: z.array(PortableTomlDestinationDocumentSchema).default([]),
-  routes: z.array(PortableTomlRouteDocumentSchema).default([]),
+export const TomlDocumentSchema = z.strictObject({
+  settings: TomlSettingsDocumentSchema,
+  feishu_apps: z.array(TomlFeishuAppDocumentSchema).default([]),
+  sources: z.array(TomlSourceDocumentSchema).default([]),
+  destinations: z.array(TomlDestinationDocumentSchema).default([]),
+  routes: z.array(TomlRouteDocumentSchema).default([]),
 });
 
 export type SecretReference = z.infer<typeof SecretReferenceSchema>;
 export type SecretReferences = z.infer<typeof SecretReferencesSchema>;
-export type PortableFeishuApp = z.infer<typeof PortableFeishuAppSchema>;
-export type PortableSettings = z.infer<typeof PortableSettingsSchema>;
-export type PortableSource = z.infer<typeof PortableSourceSchema>;
-export type PortableDestination = z.infer<typeof PortableDestinationSchema>;
-export type PortableRoute = z.infer<typeof PortableRouteSchema>;
-export type PortableConfiguration = z.infer<typeof PortableConfigurationSchema>;
-export type PortableTomlDocument = z.infer<typeof PortableTomlDocumentSchema>;
+export type ConfigSettings = z.infer<typeof ConfigSettingsSchema>;
+export type ConfigFeishuApp = z.infer<typeof ConfigFeishuAppSchema>;
+export type ConfigSource = z.infer<typeof ConfigSourceSchema>;
+export type ConfigDestination = z.infer<typeof ConfigDestinationSchema>;
+export type ConfigRoute = z.infer<typeof ConfigRouteSchema>;
+export type Configuration = z.infer<typeof ConfigurationSchema>;
+export type TomlDocument = z.infer<typeof TomlDocumentSchema>;
 
 export function isSafeSecretPath(path: string): boolean {
   return path
@@ -181,12 +181,10 @@ export function isSafeSecretPath(path: string): boolean {
     .every((segment) => segment.length > 0 && !UnsafeSecretPathSegments.has(segment));
 }
 
-export function configurationToTomlDocument(
-  configInput: PortableConfiguration,
-): PortableTomlDocument {
-  const config = PortableConfigurationSchema.parse(configInput);
+export function configurationToTomlDocument(configInput: Configuration): TomlDocument {
+  const config = ConfigurationSchema.parse(configInput);
 
-  return PortableTomlDocumentSchema.parse({
+  return TomlDocumentSchema.parse({
     settings: {
       schema_version: config.settings.schemaVersion,
       exported_at: config.settings.exportedAt,
@@ -235,10 +233,10 @@ export function configurationToTomlDocument(
   });
 }
 
-export function tomlDocumentToConfiguration(documentInput: unknown): PortableConfiguration {
-  const document = PortableTomlDocumentSchema.parse(documentInput);
+export function tomlDocumentToConfiguration(documentInput: unknown): Configuration {
+  const document = TomlDocumentSchema.parse(documentInput);
 
-  return PortableConfigurationSchema.parse({
+  return ConfigurationSchema.parse({
     settings: {
       schemaVersion: document.settings.schema_version,
       exportedAt: document.settings.exported_at,
