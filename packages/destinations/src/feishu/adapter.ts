@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import { feishuManifest } from "#destinations/feishu/manifest";
 import { renderFeishuPreviewPayload, renderFeishuWirePayload } from "#destinations/feishu/payload";
-import { feishuCode, isFeishuSuccess, parseFeishuResult } from "#destinations/feishu/result";
 import { FeishuConfigSchema } from "#destinations/feishu/schema";
+import { feishuCode, isFeishuSuccess, parseFeishuResult } from "#destinations/shared/feishu-result";
 import { DestinationTemplateEngine } from "#destinations/template";
 import { Adapter, R, Send } from "#destinations/utils";
 
