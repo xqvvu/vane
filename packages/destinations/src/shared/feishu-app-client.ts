@@ -1,3 +1,4 @@
+import { FEISHU_TENANT_ACCESS_TOKEN_URL } from "#destinations/shared/feishu-endpoints";
 import { feishuFailureMessage, parseFeishuResult } from "#destinations/shared/feishu-result";
 import type {
   DestinationErrorKind,
@@ -5,9 +6,6 @@ import type {
   DestinationTransportContext,
 } from "#destinations/types";
 import { Adapter, Send } from "#destinations/utils";
-
-const FEISHU_TENANT_ACCESS_TOKEN_URL =
-  "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
 
 export type FeishuTenantAccessTokenResult =
   | { ok: true; tenantAccessToken: string; expiresInSeconds: number }

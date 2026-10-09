@@ -2,10 +2,28 @@ import type { JsonValue } from "@vane/core";
 import { z } from "zod";
 
 import { feishuManifest } from "#destinations/feishu/manifest";
-import { renderFeishuPreviewPayload, renderFeishuWirePayload } from "#destinations/feishu/payload";
+import {
+  renderFeishuPreviewPayload,
+  renderFeishuSendMessage,
+  renderFeishuWirePayload,
+} from "#destinations/feishu/payload";
 import { FeishuConfigSchema } from "#destinations/feishu/schema";
-import { feishuCode, isFeishuSuccess, parseFeishuResult } from "#destinations/shared/feishu-result";
+import type { FeishuConfig } from "#destinations/feishu/schema";
+import { fetchFeishuTenantAccessToken } from "#destinations/shared/feishu-app-client";
+import { FEISHU_MESSAGES_URL } from "#destinations/shared/feishu-endpoints";
+import {
+  feishuCode,
+  feishuFailureMessage,
+  feishuMessageId,
+  isFeishuSuccess,
+  parseFeishuResult,
+} from "#destinations/shared/feishu-result";
 import { DestinationTemplateEngine } from "#destinations/template";
+import type {
+  DestinationSendInput,
+  DestinationSendResult,
+  DestinationTransportContext,
+} from "#destinations/types";
 import { Adapter, R, Send } from "#destinations/utils";
 
 export const feishuAdapter = Adapter.define({
@@ -23,7 +41,7 @@ export const feishuAdapter = Adapter.define({
       return R.fail({
         errorKind: "configuration_error",
         retryHint: "not_retryable",
-        errorMessage: "Feishu destination template configuration is invalid",
+        errorMessage: "Feishu destination configuration is invalid",
         statusCode: null,
         responseBody: null,
         renderedPayload: {
@@ -34,66 +52,213 @@ export const feishuAdapter = Adapter.define({
       });
     }
 
-    const config = parsedConfig.data;
-    const { fetch, now } = Adapter.getTransportContext(context);
-    let renderedPayload: JsonValue;
-    let signedPayload: JsonValue;
-
-    try {
-      renderedPayload = renderFeishuPreviewPayload(input, config);
-      signedPayload = await renderFeishuWirePayload(input, config, now);
-    } catch (error) {
-      if (DestinationTemplateEngine.isValidationError(error)) {
-        return R.fail({
-          errorKind: "configuration_error",
-          retryHint: "not_retryable",
-          errorMessage: error.message,
-          statusCode: null,
-          responseBody: null,
-          renderedPayload: DestinationTemplateEngine.validationErrorToPayload(error),
-        });
-      }
-
-      throw error;
-    }
-
-    try {
-      const response = await fetch(config.webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(signedPayload),
-      });
-      const responseBody = await Send.readResponseBody(response);
-      const feishuResult = parseFeishuResult(responseBody);
-      const feishuOk = feishuResult ? isFeishuSuccess(feishuResult) : response.ok;
-
-      if (response.ok && feishuOk) {
-        return R.ok({
-          statusCode: response.status,
-          responseBody,
-          renderedPayload,
-        });
-      }
-
-      return R.fail({
-        errorKind: response.ok ? "target_rejected" : "http_error",
-        retryHint: response.ok ? "not_retryable" : Send.httpStatusToRetryHint(response.status),
-        errorMessage: feishuResult
-          ? `Feishu returned code ${feishuCode(feishuResult)}`
-          : `Feishu webhook returned HTTP ${response.status}`,
-        statusCode: response.status,
-        responseBody,
-        renderedPayload,
-      });
-    } catch (error) {
-      return Send.transportFailureResult({ error, renderedPayload });
-    }
+    return parsedConfig.data.sendMode === "app"
+      ? sendViaApp(input, parsedConfig.data, context)
+      : sendViaWebhook(input, parsedConfig.data, context);
   },
 });
 
 export const feishuSender = feishuAdapter;
+
+/**
+ * Custom group-bot webhook (the original send path): the signed payload goes to
+ * the operator's webhook URL and the response carries no message handle.
+ */
+async function sendViaWebhook(
+  input: DestinationSendInput<FeishuConfig>,
+  config: FeishuConfig,
+  context: DestinationTransportContext | undefined,
+): Promise<DestinationSendResult> {
+  const webhookUrl = config.webhookUrl;
+
+  if (!webhookUrl) {
+    // The schema requires a webhook URL in this mode; the guard keeps a
+    // hand-crafted config from crashing the worker.
+    return R.fail({
+      errorKind: "configuration_error",
+      retryHint: "not_retryable",
+      errorMessage: "Feishu webhook send mode requires a webhook URL",
+      statusCode: null,
+      responseBody: null,
+      renderedPayload: {},
+    });
+  }
+
+  const { fetch, now } = Adapter.getTransportContext(context);
+  let renderedPayload: JsonValue;
+  let signedPayload: JsonValue;
+
+  try {
+    renderedPayload = renderFeishuPreviewPayload(input, config);
+    signedPayload = await renderFeishuWirePayload(input, config, now);
+  } catch (error) {
+    if (DestinationTemplateEngine.isValidationError(error)) {
+      return R.fail({
+        errorKind: "configuration_error",
+        retryHint: "not_retryable",
+        errorMessage: error.message,
+        statusCode: null,
+        responseBody: null,
+        renderedPayload: DestinationTemplateEngine.validationErrorToPayload(error),
+      });
+    }
+
+    throw error;
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(signedPayload),
+    });
+    const responseBody = await Send.readResponseBody(response);
+    const feishuResult = parseFeishuResult(responseBody);
+    const feishuOk = feishuResult ? isFeishuSuccess(feishuResult) : response.ok;
+
+    if (response.ok && feishuOk) {
+      return R.ok({
+        statusCode: response.status,
+        responseBody,
+        renderedPayload,
+      });
+    }
+
+    return R.fail({
+      errorKind: response.ok ? "target_rejected" : "http_error",
+      retryHint: response.ok ? "not_retryable" : Send.httpStatusToRetryHint(response.status),
+      errorMessage: feishuResult
+        ? `Feishu returned code ${feishuCode(feishuResult)}`
+        : `Feishu webhook returned HTTP ${response.status}`,
+      statusCode: response.status,
+      responseBody,
+      renderedPayload,
+    });
+  } catch (error) {
+    return Send.transportFailureResult({ error, renderedPayload });
+  }
+}
+
+/**
+ * App send mode: the registered app posts the card to the target group and the
+ * response's `message_id` becomes the delivery's provider reference, which is
+ * what a later urgent phone call acts on.
+ *
+ * The credential is resolved server-side (console) from `app.appRef` before the
+ * send; a config that reaches the adapter without it is a non-retryable
+ * configuration error.
+ */
+async function sendViaApp(
+  input: DestinationSendInput<FeishuConfig>,
+  config: FeishuConfig,
+  context: DestinationTransportContext | undefined,
+): Promise<DestinationSendResult> {
+  let renderedPayload: JsonValue;
+
+  try {
+    renderedPayload = renderFeishuPreviewPayload(input, config);
+  } catch (error) {
+    if (DestinationTemplateEngine.isValidationError(error)) {
+      return R.fail({
+        errorKind: "configuration_error",
+        retryHint: "not_retryable",
+        errorMessage: error.message,
+        statusCode: null,
+        responseBody: null,
+        renderedPayload: DestinationTemplateEngine.validationErrorToPayload(error),
+      });
+    }
+
+    throw error;
+  }
+
+  const app = config.app;
+
+  if (!app?.appId || !app.appSecret) {
+    return R.fail({
+      errorKind: "configuration_error",
+      retryHint: "not_retryable",
+      errorMessage: "Feishu app credentials were not resolved for this send",
+      statusCode: null,
+      responseBody: null,
+      renderedPayload,
+    });
+  }
+
+  const { fetch } = Adapter.getTransportContext(context);
+  const token = await fetchFeishuTenantAccessToken(
+    { appId: app.appId, appSecret: app.appSecret },
+    context,
+  );
+
+  if (!token.ok) {
+    return R.fail({
+      errorKind: token.errorKind,
+      retryHint: token.retryHint,
+      errorMessage: token.errorMessage,
+      statusCode: token.statusCode,
+      responseBody: token.responseBody,
+      renderedPayload,
+    });
+  }
+
+  const message = renderFeishuSendMessage(input, config);
+
+  try {
+    const response = await fetch(`${FEISHU_MESSAGES_URL}?receive_id_type=chat_id`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token.tenantAccessToken}`,
+      },
+      body: JSON.stringify({
+        receive_id: app.chatId,
+        msg_type: message.msgType,
+        content: message.content,
+      }),
+    });
+    const responseBody = await Send.readResponseBody(response);
+    const result = parseFeishuResult(responseBody);
+
+    if (!response.ok) {
+      return R.fail({
+        errorKind: "http_error",
+        retryHint: Send.httpStatusToRetryHint(response.status),
+        errorMessage: `Feishu returned HTTP ${response.status}`,
+        statusCode: response.status,
+        responseBody,
+        renderedPayload,
+      });
+    }
+
+    if (!result || result.code !== 0) {
+      return R.fail({
+        errorKind: "target_rejected",
+        retryHint: "not_retryable",
+        errorMessage: feishuFailureMessage(
+          result,
+          "Feishu returned an unreadable send message response",
+        ),
+        statusCode: response.status,
+        responseBody,
+        renderedPayload,
+      });
+    }
+
+    const messageId = feishuMessageId(result);
+
+    return R.ok({
+      statusCode: response.status,
+      responseBody,
+      renderedPayload,
+      ...(messageId ? { providerReference: { type: "feishu_message_id", value: messageId } } : {}),
+    });
+  } catch (error) {
+    return Send.transportFailureResult({ error, renderedPayload });
+  }
+}
 
 function zodTemplateDiagnostics(error: z.ZodError) {
   return error.issues.map((issue) => ({

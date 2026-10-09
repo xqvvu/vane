@@ -39,6 +39,28 @@ export function feishuFailureMessage(result: JsonObject | null, fallback: string
     : `Feishu returned code ${codeText}`;
 }
 
+/**
+ * Reads `data.message_id` from a Feishu send-message response.
+ *
+ * This is the handle a follow-up urgent call acts on, so callers keep it as the
+ * delivery's provider reference.
+ */
+export function feishuMessageId(result: JsonObject | null): string | null {
+  if (!result) {
+    return null;
+  }
+
+  const data = result.data;
+
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return null;
+  }
+
+  const messageId = (data as JsonObject).message_id;
+
+  return typeof messageId === "string" && messageId.length > 0 ? messageId : null;
+}
+
 function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

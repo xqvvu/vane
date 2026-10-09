@@ -41,6 +41,7 @@ const input: DestinationSendInput<FeishuConfig> = {
     occurredAt: "2026-06-07T08:00:00.000Z",
   },
   config: {
+    sendMode: "webhook",
     webhookUrl: "https://open.feishu.cn/open-apis/bot/v2/hook/example",
     signSecret: "secret",
     template: {
