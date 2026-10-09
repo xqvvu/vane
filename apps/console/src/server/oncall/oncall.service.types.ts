@@ -8,6 +8,11 @@ export interface OncallServiceOptions {
   /** Repeat pages for the same fingerprint are suppressed inside this window. */
   dedupeWindowMs?: number;
   now?: () => string;
+  /**
+   * Best-effort immediate dispatch after a manual page is queued. A failure is
+   * logged and leaves the records to the worker's retry schedule.
+   */
+  dispatchNow?: (now: string) => Promise<unknown>;
 }
 
 export interface OncallPingTriggerInput {
@@ -19,3 +24,9 @@ export interface OncallPingTriggerInput {
 }
 
 export type OncallPingTrigger = (input: OncallPingTriggerInput) => Promise<void>;
+
+export interface BuzzDeliveryInput {
+  deliveryId: string;
+  /** Dashboard user who triggered the page; recorded for audit. */
+  initiatedBy?: string | null;
+}

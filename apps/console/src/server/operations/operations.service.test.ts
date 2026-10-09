@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import type { OncallPing } from "@vane/core";
+
 import { openSqliteStore } from "#/infra/sqlite/store";
+import { OncallService } from "#/server/oncall/oncall.service";
 import { OperationsService } from "#/server/operations/operations.service";
 
 const now = "2026-06-09T08:00:00.000Z";
@@ -23,7 +26,7 @@ async function createStore() {
 describe("operations service", () => {
   it("combines history projections and delegates delivery retry", async () => {
     const store = await createStore();
-    const service = new OperationsService({ store });
+    const service = new OperationsService({ store, oncall: new OncallService({ store }) });
 
     await store.sources.create({
       id: "source-1",
@@ -95,4 +98,48 @@ describe("operations service", () => {
 
     await store.close();
   });
+
+  it("delegates manual paging with the operator and scopes the result to the delivery", async () => {
+    const store = await createStore();
+    const calls: Array<{ deliveryId: string; initiatedBy?: string | null }> = [];
+    const service = new OperationsService({
+      store,
+      oncall: {
+        async buzzDelivery(input) {
+          calls.push(input);
+
+          return [oncallPing()];
+        },
+      },
+    });
+
+    await expect(service.buzzDelivery("delivery-1", "user-1")).resolves.toEqual({
+      deliveryId: "delivery-1",
+      pings: [oncallPing()],
+    });
+    expect(calls).toEqual([{ deliveryId: "delivery-1", initiatedBy: "user-1" }]);
+    await store.close();
+  });
 });
+
+function oncallPing(): OncallPing {
+  return {
+    id: "ping-1",
+    deliveryId: "delivery-1",
+    destinationId: "destination-1",
+    eventId: "event-1",
+    receiver: "ou_1",
+    channel: "feishu_urgent_phone",
+    state: "scheduled",
+    trigger: "manual",
+    initiatedBy: "user-1",
+    providerReference: { type: "feishu_message_id", value: "om_123" },
+    attemptCount: 0,
+    maxAttempts: 3,
+    nextAttemptAt: null,
+    lastError: null,
+    createdAt: now,
+    updatedAt: now,
+    firedAt: null,
+  };
+}

@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import type { AlertSeverity, AlertStatus, JsonObject, ProviderReference } from "@vane/core";
 
+import { RecordNotFoundError } from "#/infra/sqlite/errors";
 import type { ClaimedDelivery } from "#/infra/sqlite/repositories/delivery/delivery.interface";
 import { openSqliteStore } from "#/infra/sqlite/store";
 import { OncallService } from "#/server/oncall/oncall.service";
+import { DomainValidationError } from "#/server/runtime/domain-errors";
 
 const now = "2026-10-09T08:00:00.000Z";
 const messageReference: ProviderReference = { type: "feishu_message_id", value: "om_123" };
@@ -119,6 +121,96 @@ describe("oncall auto paging trigger", () => {
   });
 });
 
+describe("oncall manual paging", () => {
+  it("queues one manual ping per receiver, records the operator, and dispatches immediately", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const deliveryId = await seedSucceededDelivery(store);
+    const dispatchNow = vi.fn<(now: string) => Promise<unknown>>(async () => {});
+    const service = new OncallService({ store, now: () => now, dispatchNow });
+
+    const pings = await service.buzzDelivery({ deliveryId, initiatedBy: "user-1" });
+
+    expect(pings.map((ping) => ping.receiver)).toEqual(["ou_1", "ou_2"]);
+    expect(pings[0]).toMatchObject({
+      deliveryId,
+      destinationId: "destination-1",
+      channel: "feishu_urgent_phone",
+      state: "scheduled",
+      trigger: "manual",
+      initiatedBy: "user-1",
+      providerReference: messageReference,
+      attemptCount: 0,
+      firedAt: null,
+    });
+    expect(dispatchNow).toHaveBeenCalledExactlyOnceWith(now);
+    expect((await store.deliveries.get(deliveryId))?.pings).toHaveLength(2);
+  });
+
+  it("refuses to page a delivery that has no Feishu message reference", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const { delivery } = await seedDelivery(store);
+    const service = new OncallService({ store, now: () => now });
+
+    await expect(service.buzzDelivery({ deliveryId: delivery.job.id })).rejects.toThrow(
+      DomainValidationError,
+    );
+    await expect(service.buzzDelivery({ deliveryId: delivery.job.id })).rejects.toThrow(
+      /no Feishu message reference/,
+    );
+    expect(await store.oncall.listForDelivery(delivery.job.id)).toEqual([]);
+  });
+
+  it("refuses to page a destination without urgent receivers", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const deliveryId = await seedSucceededDelivery(store, {
+      config: { sendMode: "app", app: { appRef: "feishu-app-1", chatId: "oc_group" } },
+    });
+    const service = new OncallService({ store, now: () => now });
+
+    await expect(service.buzzDelivery({ deliveryId })).rejects.toThrow(
+      /Configure urgent receivers/,
+    );
+    expect(await store.oncall.listForDelivery(deliveryId)).toEqual([]);
+  });
+
+  it("refuses a missing delivery", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const service = new OncallService({ store, now: () => now });
+
+    await expect(service.buzzDelivery({ deliveryId: "delivery-missing" })).rejects.toThrow(
+      RecordNotFoundError,
+    );
+  });
+
+  it("refuses to page the same receivers again inside the dedupe window", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const deliveryId = await seedSucceededDelivery(store);
+    const service = new OncallService({ store, now: () => now });
+
+    await service.buzzDelivery({ deliveryId, initiatedBy: "user-1" });
+
+    await expect(service.buzzDelivery({ deliveryId, initiatedBy: "user-2" })).rejects.toThrow(
+      /already paged for this alert/,
+    );
+    expect(await store.oncall.listForDelivery(deliveryId)).toHaveLength(2);
+  });
+
+  it("keeps the records queued when the immediate dispatch fails", async () => {
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const deliveryId = await seedSucceededDelivery(store);
+    const dispatchNow = vi.fn<(now: string) => Promise<unknown>>(async () => {
+      throw new Error("worker runner unavailable");
+    });
+    const service = new OncallService({ store, now: () => now, dispatchNow });
+
+    const pings = await service.buzzDelivery({ deliveryId, initiatedBy: "user-1" });
+
+    expect(pings).toHaveLength(2);
+    expect(pings.every((ping) => ping.state === "scheduled")).toBe(true);
+    expect(await store.oncall.listForDelivery(deliveryId)).toHaveLength(2);
+  });
+});
+
 function appModeConfig(
   urgent: { autoEnabled?: boolean; severities?: string[]; receivers?: string[] } = {},
 ): JsonObject {
@@ -133,6 +225,26 @@ function appModeConfig(
       ...urgent,
     },
   };
+}
+
+/** Seeds a delivery that already succeeded through the app and captured a message id. */
+async function seedSucceededDelivery(
+  store: Awaited<ReturnType<typeof openSqliteStore>>,
+  options: { config?: JsonObject } = {},
+): Promise<string> {
+  await seedDelivery(store, options);
+
+  const [claimed] = await store.deliveries.claimNext({ now, limit: 1 });
+  const deliveryId = claimed!.job.id;
+
+  await store.deliveries.markSucceeded({
+    deliveryId,
+    attemptId: claimed!.attempt.id,
+    providerReference: messageReference,
+    finishedAt: now,
+  });
+
+  return deliveryId;
 }
 
 async function seedDelivery(

@@ -129,6 +129,12 @@ export const ReplayRouteEventsCommandSchema = z.object({
 });
 export type ReplayRouteEventsCommand = z.infer<typeof ReplayRouteEventsCommandSchema>;
 
+/** Result of manually paging one delivery: the records created by the attempt. */
+export interface DeliveryPingsResult {
+  deliveryId: string;
+  pings: OncallPing[];
+}
+
 export interface EventReplayTarget {
   routeId: string;
   routeName: string;
