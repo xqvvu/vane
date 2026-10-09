@@ -99,6 +99,11 @@ export const DeliveryDetailSchema = z.object({
   pings: z.array(OncallPingSchema),
 });
 
+export const BuzzDeliveryOutputSchema = z.object({
+  deliveryId: z.string().min(1),
+  pings: z.array(OncallPingSchema),
+});
+
 export const EventReplayTargetSchema = z.object({
   routeId: z.string().min(1),
   routeName: z.string().min(1),

@@ -5,6 +5,7 @@ import { ReplayEventCommandSchema } from "@vane/core";
 import { dashboardAuth } from "../errors/dashboard-auth";
 import { resourceErrors } from "../errors/resources";
 import {
+  BuzzDeliveryOutputSchema,
   DeliveryDetailSchema,
   EventReplayPreviewSchema,
   EventReplayResultSchema,
@@ -58,6 +59,16 @@ export const operations = {
     .errors(dashboardErrors)
     .errors(resource)
     .output(RetryDeliveryOutputSchema),
+
+  // Manual urgent paging for one delivery: calls the destination's configured
+  // receivers and records the operator. BAD_REQUEST carries the readable reason
+  // when the delivery has no message reference or no receivers are configured.
+  buzzDelivery: oc
+    .meta(openapi({ method: "POST" }))
+    .input(OperationDetailInputSchema)
+    .errors(dashboardErrors)
+    .errors(resource)
+    .output(BuzzDeliveryOutputSchema),
 
   previewEventReplay: oc
     .meta(openapi({ method: "GET" }))

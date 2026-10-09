@@ -38,6 +38,13 @@ export const operationsRouter = os.operations.router({
     .use(withOperationsService)
     .handler(({ context, input }) => context.service.retryDelivery(input.id)),
 
+  // The operator is taken from the authenticated session, never from the input.
+  buzzDelivery: os.operations.buzzDelivery
+    .use(withOperationsService)
+    .handler(({ context, input }) =>
+      context.service.buzzDelivery(input.id, context.dashboardRequest.currentUser.id),
+    ),
+
   previewEventReplay: os.operations.previewEventReplay
     .use(withEventReplayService)
     .handler(({ context, input }) => context.service.previewEventReplay(input)),

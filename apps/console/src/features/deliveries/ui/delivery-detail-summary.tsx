@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Badge } from "#/components/ui/badge";
+import { DeliveryBuzzButton } from "#/features/deliveries/ui/delivery-buzz-button";
 import type { DeliveryDetailData } from "#/features/deliveries/ui/delivery-detail-types";
 import { DeliveryStateBadge } from "#/features/deliveries/ui/delivery-state-badge";
 import { OperationTimestamp } from "#/features/operations/ui/operation-timestamp";
@@ -31,7 +32,8 @@ export function DeliveryDetailSummary({ detail }: { detail: DeliveryDetailData }
             {detail.event.normalized.title}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-1">
+        <div className="flex shrink-0 flex-wrap items-center gap-1">
+          <DeliveryBuzzButton detail={detail} />
           <Badge variant="outline">{t(`destinations.kinds.${detail.destination.kind}`)}</Badge>
           <Badge variant={detail.job.lastError ? "destructive" : "outline"}>
             {detail.job.lastError ?? t("deliveries.detail.summary.noLastError")}

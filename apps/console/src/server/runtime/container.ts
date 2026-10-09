@@ -270,6 +270,12 @@ export function createApplicationContainer(
     async createOncallService(serviceOptions = {}) {
       return new OncallService({
         store: await container.getSqliteStore(),
+        // Manual pages dispatch immediately through a one-off worker run so the
+        // operator gets instant feedback; whatever does not fire stays queued.
+        dispatchNow: async (now) => {
+          const worker = await container.createOncallWorker();
+          await worker.runOnce({ now });
+        },
         ...serviceOptions,
       });
     },
@@ -296,6 +302,7 @@ export function createApplicationContainer(
     async createOperationsService() {
       const options: OperationsServiceOptions = {
         store: await container.getSqliteStore(),
+        oncall: await container.createOncallService(),
       };
 
       return new OperationsService(options);

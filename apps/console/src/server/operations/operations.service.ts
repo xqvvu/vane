@@ -1,4 +1,4 @@
-import type { DeliveryDetail, DeliveryJob } from "@vane/core";
+import type { DeliveryDetail, DeliveryJob, DeliveryPingsResult } from "@vane/core";
 
 import type {
   ListOperationsInput,
@@ -8,9 +8,11 @@ import type {
 
 export class OperationsService {
   private readonly store: OperationsServiceOptions["store"];
+  private readonly oncall: OperationsServiceOptions["oncall"];
 
   constructor(options: OperationsServiceOptions) {
     this.store = options.store;
+    this.oncall = options.oncall;
   }
 
   async listOperations(input: ListOperationsInput = {}): Promise<OperationsList> {
@@ -49,5 +51,15 @@ export class OperationsService {
 
   async retryDelivery(deliveryId: string): Promise<DeliveryJob> {
     return this.store.deliveries.retryNow({ deliveryId });
+  }
+
+  /**
+   * Manual urgent paging for one delivery; the operator is recorded on every
+   * page for audit.
+   */
+  async buzzDelivery(deliveryId: string, initiatedBy: string | null): Promise<DeliveryPingsResult> {
+    const pings = await this.oncall.buzzDelivery({ deliveryId, initiatedBy });
+
+    return { deliveryId, pings };
   }
 }
