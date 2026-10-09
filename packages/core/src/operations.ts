@@ -5,6 +5,7 @@ import type { DestinationSummary } from "#core/destination/destination";
 import type { EventRecord } from "#core/event/event";
 import type { NormalizedEvent } from "#core/event/normalized-event";
 import type { JsonObject, JsonValue } from "#core/json";
+import type { OncallPing } from "#core/oncall/oncall";
 import type { RouteDefinition, RouteMatchResult } from "#core/route/route";
 import type { SourceSummary } from "#core/source/source";
 
@@ -87,6 +88,8 @@ export interface DeliveryDetail {
   renderedPayload: JsonValue | null;
   providerReference: ProviderReference | null;
   attempts: DeliveryAttempt[];
+  /** Urgent phone pages created for this delivery, oldest first. */
+  pings: OncallPing[];
 }
 
 export interface WorkerRunNotice {

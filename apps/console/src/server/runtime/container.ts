@@ -2,7 +2,12 @@ import "@tanstack/react-start/server-only";
 import { getLogger } from "@logtape/logtape";
 import { betterAuth } from "better-auth";
 
-import { createDefaultDestinationRegistry, type DestinationRegistry } from "@vane/destinations";
+import {
+  createDefaultDestinationRegistry,
+  createDefaultUrgencyRegistry,
+  type DestinationRegistry,
+  type UrgencyRegistry,
+} from "@vane/destinations";
 import { createDefaultProviderRegistry, type ProviderRegistry } from "@vane/providers";
 
 import { env } from "#/env";
@@ -28,6 +33,10 @@ import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service
 import { createDestinationConfigResolver } from "#/server/integrations/destination-config-resolver";
 import { FeishuAppService } from "#/server/integrations/feishu-app.service";
 import type { FeishuAppServiceOptions } from "#/server/integrations/feishu-app.service.types";
+import { OncallWorker } from "#/server/oncall/oncall-worker.service";
+import type { OncallWorkerOptions } from "#/server/oncall/oncall-worker.service.types";
+import { OncallService } from "#/server/oncall/oncall.service";
+import type { OncallServiceOptions } from "#/server/oncall/oncall.service.types";
 import { EventReplayService } from "#/server/operations/event-replay.service";
 import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types";
 import { OperationsService } from "#/server/operations/operations.service";
@@ -44,6 +53,7 @@ import { SourceService } from "#/server/sources/source.service";
 import type { SourceServiceOptions } from "#/server/sources/source.service.types";
 
 const deliveryWorkerLogger = getLogger(["vane", "worker", "delivery"]);
+const oncallWorkerLogger = getLogger(["vane", "worker", "oncall"]);
 
 export interface VaneAuth {
   handler(request: Request): Promise<Response>;
@@ -56,6 +66,7 @@ export interface ApplicationContainer {
   getSqliteStore(): Promise<SqliteStore>;
   getProviderRegistry(): ProviderRegistry;
   getDestinationRegistry(): DestinationRegistry;
+  getUrgencyRegistry(): UrgencyRegistry;
   createSourceService(
     options?: Partial<Omit<SourceServiceOptions, "store">>,
   ): Promise<SourceService>;
@@ -76,11 +87,18 @@ export interface ApplicationContainer {
   createDeliveryWorker(
     options?: Partial<Omit<DeliveryWorkerOptions, "store" | "destinations">>,
   ): Promise<DeliveryWorker>;
+  createOncallService(
+    options?: Partial<Omit<OncallServiceOptions, "store">>,
+  ): Promise<OncallService>;
+  createOncallWorker(
+    options?: Partial<Omit<OncallWorkerOptions, "store" | "urgency">>,
+  ): Promise<OncallWorker>;
   createEventReplayService(
     options?: Partial<Omit<EventReplayServiceOptions, "store">>,
   ): Promise<EventReplayService>;
   createOperationsService(): Promise<OperationsService>;
   ensureDeliveryWorkerRunner(): Promise<DeliveryWorkerRunner>;
+  ensureOncallWorkerRunner(): Promise<DeliveryWorkerRunner>;
   getBetterAuthDatabase(): Promise<VaneSqliteKysely>;
   hasRegisteredUsers(): Promise<boolean>;
   getAuth(): Promise<VaneAuth>;
@@ -91,6 +109,7 @@ export interface ApplicationContainerOptions {
   openStore?: () => Promise<SqliteStore>;
   createProviderRegistry?: () => ProviderRegistry;
   createDestinationRegistry?: () => DestinationRegistry;
+  createUrgencyRegistry?: () => UrgencyRegistry;
   createAuthDatabase?: () => Promise<VaneSqliteKysely>;
   createAuth?: (input: { db: VaneSqliteKysely }) => VaneAuth;
   createWorkerRunner?: (options: DeliveryWorkerRunnerOptions) => DeliveryWorkerRunner;
@@ -99,6 +118,8 @@ export interface ApplicationContainerOptions {
   workerStaleRunningMs?: number;
   onWorkerRunComplete?: (result: DeliveryWorkerRunResult) => void;
   onWorkerError?: (error: unknown) => void;
+  onOncallWorkerRunComplete?: (result: DeliveryWorkerRunResult) => void;
+  onOncallWorkerError?: (error: unknown) => void;
 }
 
 let applicationContainer: ApplicationContainer | undefined;
@@ -123,12 +144,15 @@ export function createApplicationContainer(
   let sqliteStorePromise: Promise<SqliteStore> | undefined;
   let providers: ProviderRegistry | undefined;
   let destinations: DestinationRegistry | undefined;
+  let urgency: UrgencyRegistry | undefined;
   let authDatabase: VaneSqliteKysely | undefined;
   let authDatabasePromise: Promise<VaneSqliteKysely> | undefined;
   let auth: VaneAuth | undefined;
   let authPromise: Promise<VaneAuth> | undefined;
   let runner: DeliveryWorkerRunner | undefined;
   let runnerPromise: Promise<DeliveryWorkerRunner> | undefined;
+  let oncallRunner: DeliveryWorkerRunner | undefined;
+  let oncallRunnerPromise: Promise<DeliveryWorkerRunner> | undefined;
 
   const openStore =
     options.openStore ??
@@ -139,6 +163,7 @@ export function createApplicationContainer(
   const createProviderRegistry = options.createProviderRegistry ?? createDefaultProviderRegistry;
   const createDestinationRegistry =
     options.createDestinationRegistry ?? createDefaultDestinationRegistry;
+  const createUrgencyRegistry = options.createUrgencyRegistry ?? createDefaultUrgencyRegistry;
   const createAuthDatabase = options.createAuthDatabase ?? createDefaultBetterAuthDatabase;
   const createAuth = options.createAuth ?? createDefaultAuth;
   const createWorkerRunner = options.createWorkerRunner ?? createDeliveryWorkerRunner;
@@ -147,11 +172,14 @@ export function createApplicationContainer(
   const workerStaleRunningMs = options.workerStaleRunningMs ?? env.VANE_WORKER_STALE_RUNNING_MS;
   const onWorkerRunComplete = options.onWorkerRunComplete ?? logWorkerRunComplete;
   const onWorkerError = options.onWorkerError ?? logWorkerError;
+  const onOncallWorkerRunComplete = options.onOncallWorkerRunComplete ?? logOncallWorkerRunComplete;
+  const onOncallWorkerError = options.onOncallWorkerError ?? logOncallWorkerError;
 
   const container: ApplicationContainer = {
     async getSqliteStore() {
       const store = await getOrOpenSqliteStore();
       void container.ensureDeliveryWorkerRunner();
+      void container.ensureOncallWorkerRunner();
 
       return store;
     },
@@ -166,6 +194,12 @@ export function createApplicationContainer(
       destinations ??= createDestinationRegistry();
 
       return destinations;
+    },
+
+    getUrgencyRegistry() {
+      urgency ??= createUrgencyRegistry();
+
+      return urgency;
     },
 
     async createSourceService(serviceOptions = {}) {
@@ -219,10 +253,33 @@ export function createApplicationContainer(
 
     async createDeliveryWorker(workerOptions = {}) {
       const store = await getOrOpenSqliteStore();
+      // Built straight from the open store so creating the delivery worker does
+      // not eagerly start the on-call runner as a side effect.
+      const oncall = new OncallService({ store });
 
       return new DeliveryWorker({
         store,
         destinations: container.getDestinationRegistry(),
+        staleRunningTimeoutMs: workerStaleRunningMs,
+        resolveDestinationConfig: createDestinationConfigResolver({ store }),
+        triggerPings: (input) => oncall.triggerPingsForDelivery(input),
+        ...workerOptions,
+      });
+    },
+
+    async createOncallService(serviceOptions = {}) {
+      return new OncallService({
+        store: await container.getSqliteStore(),
+        ...serviceOptions,
+      });
+    },
+
+    async createOncallWorker(workerOptions = {}) {
+      const store = await getOrOpenSqliteStore();
+
+      return new OncallWorker({
+        store,
+        urgency: container.getUrgencyRegistry(),
         staleRunningTimeoutMs: workerStaleRunningMs,
         resolveDestinationConfig: createDestinationConfigResolver({ store }),
         ...workerOptions,
@@ -260,6 +317,22 @@ export function createApplicationContainer(
       return runnerPromise;
     },
 
+    ensureOncallWorkerRunner() {
+      oncallRunnerPromise ??= (async () => {
+        oncallRunner ??= createWorkerRunner({
+          worker: await container.createOncallWorker(),
+          intervalMs: workerIntervalMs,
+          limit: workerBatchSize,
+          onRunComplete: onOncallWorkerRunComplete,
+          onError: onOncallWorkerError,
+        });
+
+        return oncallRunner;
+      })();
+
+      return oncallRunnerPromise;
+    },
+
     async getBetterAuthDatabase() {
       authDatabase ??= await getOrCreateAuthDatabase();
 
@@ -284,22 +357,27 @@ export function createApplicationContainer(
 
     async dispose() {
       const currentRunner = runner;
+      const currentOncallRunner = oncallRunner;
       const currentSqliteStore = sqliteStore;
       const currentAuthDatabase = authDatabase;
       const errors: unknown[] = [];
 
       runner = undefined;
       runnerPromise = undefined;
+      oncallRunner = undefined;
+      oncallRunnerPromise = undefined;
       sqliteStore = undefined;
       sqliteStorePromise = undefined;
       providers = undefined;
       destinations = undefined;
+      urgency = undefined;
       authDatabase = undefined;
       authDatabasePromise = undefined;
       auth = undefined;
       authPromise = undefined;
 
       tryDispose(() => currentRunner?.stop(), errors);
+      tryDispose(() => currentOncallRunner?.stop(), errors);
       await tryDisposeAsync(() => currentSqliteStore?.close(), errors);
       await tryDisposeAsync(() => currentAuthDatabase?.destroy(), errors);
 
@@ -393,6 +471,38 @@ function logWorkerRunComplete(result: DeliveryWorkerRunResult): void {
 
 function logWorkerError(error: unknown): void {
   deliveryWorkerLogger.error("Delivery worker run failed", safeErrorProperties(error));
+}
+
+function logOncallWorkerRunComplete(result: DeliveryWorkerRunResult): void {
+  if (result.claimed === 0 && result.reclaimed === 0) {
+    return;
+  }
+
+  const properties = {
+    claimed: result.claimed,
+    reclaimed: result.reclaimed,
+    fired: result.succeeded,
+    failed: result.failed,
+    retrying: result.retrying,
+    startedAt: result.startedAt,
+    finishedAt: result.finishedAt,
+  };
+
+  if (result.failed > 0) {
+    oncallWorkerLogger.warn(
+      "On-call worker completed with {failed} failed and {retrying} retrying",
+      properties,
+    );
+  } else {
+    oncallWorkerLogger.info(
+      "On-call worker completed with {fired} fired and {retrying} retrying",
+      properties,
+    );
+  }
+}
+
+function logOncallWorkerError(error: unknown): void {
+  oncallWorkerLogger.error("On-call worker run failed", safeErrorProperties(error));
 }
 
 async function createDefaultBetterAuthDatabase(): Promise<VaneSqliteKysely> {

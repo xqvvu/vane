@@ -57,6 +57,8 @@ describe("sqlite schema plan", () => {
         "destinations",
         "events",
         "feishu_apps",
+        "oncall_ping_dedupe_keys",
+        "oncall_pings",
         "routes",
         "schema_migrations",
         "session",

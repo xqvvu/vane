@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { JsonObject } from "@vane/core";
-import { createDefaultDestinationRegistry } from "@vane/destinations";
+import { createDefaultDestinationRegistry, createDefaultUrgencyRegistry } from "@vane/destinations";
 import {
   createDefaultProviderRegistry,
   type ProviderParseInput,
@@ -534,6 +534,24 @@ function createTestContainer(): ApplicationContainer {
     createOperationsService: async () => {
       throw new Error("Operations service is not used by webhook route handler tests");
     },
+    getUrgencyRegistry: () => createDefaultUrgencyRegistry(),
+    createOncallService: async () => {
+      throw new Error("On-call service is not used by webhook route handler tests");
+    },
+    createOncallWorker: async () => {
+      throw new Error("On-call worker is not used by webhook route handler tests");
+    },
+    ensureOncallWorkerRunner: async () => ({
+      runNow: async () => null,
+      getHealth: () => ({
+        state: "idle",
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastError: null,
+        lastRun: null,
+      }),
+      stop: () => {},
+    }),
     ensureDeliveryWorkerRunner: async () => ({
       runNow: async () => null,
       getHealth: () => ({

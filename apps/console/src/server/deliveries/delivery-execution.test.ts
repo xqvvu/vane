@@ -94,6 +94,94 @@ describe("delivery execution", () => {
     expect(failed).toEqual([]);
   });
 
+  it("triggers auto paging only for successful sends that carry a provider reference", async () => {
+    const triggered: Array<{ providerReference: unknown }> = [];
+    const triggerPings = async (input: { providerReference: unknown }) => {
+      triggered.push(input);
+    };
+    const successWithReference = {
+      async send() {
+        return {
+          ok: true,
+          statusCode: 200,
+          responseBody: null,
+          renderedPayload: {},
+          providerReference: { type: "feishu_message_id", value: "om_abc123" },
+        };
+      },
+    } satisfies Pick<DestinationRegistry, "send">;
+    const successWithoutReference = {
+      async send() {
+        return { ok: true, statusCode: 200, responseBody: null, renderedPayload: {} };
+      },
+    } satisfies Pick<DestinationRegistry, "send">;
+    const failure = {
+      async send() {
+        return {
+          ok: false,
+          errorKind: "network_error",
+          retryHint: "retryable",
+          errorMessage: "socket hang up",
+          statusCode: null,
+          responseBody: null,
+          renderedPayload: {},
+        };
+      },
+    } satisfies Pick<DestinationRegistry, "send">;
+
+    await new DeliveryExecution({
+      store: createExecutionStore({ succeeded: [], failed: [] }),
+      destinations: successWithReference,
+      triggerPings,
+    }).execute(createClaimedDelivery(), now);
+
+    expect(triggered).toEqual([
+      {
+        delivery: expect.objectContaining({ job: expect.objectContaining({ id: "delivery-1" }) }),
+        providerReference: { type: "feishu_message_id", value: "om_abc123" },
+        now,
+      },
+    ]);
+
+    await new DeliveryExecution({
+      store: createExecutionStore({ succeeded: [], failed: [] }),
+      destinations: successWithoutReference,
+      triggerPings,
+    }).execute(createClaimedDelivery(), now);
+    await new DeliveryExecution({
+      store: createExecutionStore({ succeeded: [], failed: [] }),
+      destinations: failure,
+      triggerPings,
+    }).execute(createClaimedDelivery(), now);
+
+    expect(triggered).toHaveLength(1);
+  });
+
+  it("keeps a delivery succeeded when the paging trigger throws", async () => {
+    const succeeded: Parameters<DeliveryRepository["markSucceeded"]>[0][] = [];
+    const destinations = {
+      async send() {
+        return {
+          ok: true,
+          statusCode: 200,
+          responseBody: null,
+          renderedPayload: {},
+          providerReference: { type: "feishu_message_id", value: "om_abc123" },
+        };
+      },
+    } satisfies Pick<DestinationRegistry, "send">;
+    const execution = new DeliveryExecution({
+      store: createExecutionStore({ succeeded, failed: [] }),
+      destinations,
+      triggerPings: async () => {
+        throw new Error("trigger exploded");
+      },
+    });
+
+    await expect(execution.execute(createClaimedDelivery(), now)).resolves.toBe("succeeded");
+    expect(succeeded).toHaveLength(1);
+  });
+
   it("records failed sends with redaction and bounded retry timing", async () => {
     const succeeded: Parameters<DeliveryRepository["markSucceeded"]>[0][] = [];
     const failed: Parameters<DeliveryRepository["markFailed"]>[0][] = [];

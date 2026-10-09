@@ -6,6 +6,7 @@ import type {
   DeliveryAttempt,
   DeliveryJob,
   DestinationKind,
+  OncallPing,
   SourceProvider,
 } from "@vane/core";
 
@@ -21,6 +22,8 @@ export interface VaneSqliteDatabaseSchema {
   destinations: DestinationsTable;
   events: EventsTable;
   feishu_apps: FeishuAppsTable;
+  oncall_ping_dedupe_keys: OncallPingDedupeKeysTable;
+  oncall_pings: OncallPingsTable;
   routes: RoutesTable;
   schema_migrations: SchemaMigrationsTable;
   session: BetterAuthSessionTable;
@@ -137,6 +140,37 @@ export interface DeliveryDedupeKeysTable {
   route_id: string;
   destination_id: string;
   first_event_id: string;
+  created_at: string;
+}
+
+export interface OncallPingsTable {
+  id: string;
+  delivery_id: string;
+  destination_id: string;
+  event_id: string;
+  fingerprint: string;
+  receiver: string;
+  channel: string;
+  state: OncallPing["state"];
+  provider_ref_type: string | null;
+  provider_ref_value: string | null;
+  attempt_count: SqliteGenerated<number>;
+  max_attempts: SqliteGenerated<number>;
+  next_attempt_at: string | null;
+  last_error: string | null;
+  trigger: OncallPing["trigger"];
+  initiated_by: string | null;
+  suppress_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  fired_at: string | null;
+}
+
+export interface OncallPingDedupeKeysTable {
+  fingerprint: string;
+  destination_id: string;
+  receiver: string;
+  first_ping_id: string;
   created_at: string;
 }
 

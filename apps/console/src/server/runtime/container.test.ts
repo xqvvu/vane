@@ -87,7 +87,8 @@ describe("application container", () => {
     await expect(container.ensureDeliveryWorkerRunner()).resolves.toBe(
       await container.ensureDeliveryWorkerRunner(),
     );
-    expect(createWorkerRunner).toHaveBeenCalledTimes(1);
+    // Both queues share the runner factory: the delivery worker and the on-call worker.
+    expect(createWorkerRunner).toHaveBeenCalledTimes(2);
     expect(createWorkerRunner).toHaveBeenCalledWith(
       expect.objectContaining({
         intervalMs: 1234,
@@ -139,7 +140,8 @@ describe("application container", () => {
     await container.dispose();
     await container.dispose();
 
-    expect(runner.stop).toHaveBeenCalledTimes(1);
+    // Delivery and on-call runners both wrap this fake, so dispose stops it twice.
+    expect(runner.stop).toHaveBeenCalledTimes(2);
     expect(openedStoreClose).toHaveBeenCalledTimes(1);
     expect(authDatabaseDestroy).toHaveBeenCalledTimes(1);
   });
@@ -186,7 +188,8 @@ describe("application container", () => {
 
     await expect(container.dispose()).rejects.toThrow(AggregateError);
     await expect(container.dispose()).resolves.toBeUndefined();
-    expect(runner.stop).toHaveBeenCalledTimes(1);
+    // Delivery and on-call runners both wrap this fake, so dispose stops it twice.
+    expect(runner.stop).toHaveBeenCalledTimes(2);
     expect(sqliteStoreClose).toHaveBeenCalledTimes(1);
     expect(authDatabaseDestroy).toHaveBeenCalledTimes(1);
   });
