@@ -4,6 +4,7 @@ import type {
   DeliveryJob,
   EventRecord,
   JsonValue,
+  ProviderReference,
   RouteDefinition,
 } from "@vane/core";
 import type { IsoDateTimeString } from "@vane/core";
@@ -26,6 +27,8 @@ export interface DeliveryRow {
   next_attempt_at: IsoDateTimeString | null;
   last_error: string | null;
   rendered_payload_json: SqliteJsonText | null;
+  provider_ref_type: string | null;
+  provider_ref_value: string | null;
   created_at: IsoDateTimeString;
   updated_at: IsoDateTimeString;
   finished_at: IsoDateTimeString | null;
@@ -127,6 +130,7 @@ export interface MarkDeliverySucceededInput {
   deliveryId: string;
   attemptId: string;
   renderedPayload?: JsonValue;
+  providerReference?: ProviderReference;
   responseStatus?: number;
   responseBody?: string;
   finishedAt?: IsoDateTimeString;

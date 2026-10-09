@@ -20,6 +20,7 @@ export interface VaneSqliteDatabaseSchema {
   delivery_dedupe_keys: DeliveryDedupeKeysTable;
   destinations: DestinationsTable;
   events: EventsTable;
+  feishu_apps: FeishuAppsTable;
   routes: RoutesTable;
   schema_migrations: SchemaMigrationsTable;
   session: BetterAuthSessionTable;
@@ -70,6 +71,15 @@ export interface EventsTable {
   route_matches_json: string | null;
 }
 
+export interface FeishuAppsTable {
+  id: string;
+  name: string;
+  app_id: string;
+  app_secret: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DestinationsTable {
   id: string;
   name: string;
@@ -102,6 +112,8 @@ export interface DeliveriesTable {
   next_attempt_at: string | null;
   last_error: string | null;
   rendered_payload_json: string | null;
+  provider_ref_type: string | null;
+  provider_ref_value: string | null;
   created_at: string;
   updated_at: string;
   finished_at: string | null;

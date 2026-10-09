@@ -14,6 +14,7 @@ import {
   parsePortableConfigurationJson,
   parsePortableConfigurationToml,
   resolveDestinationSecretRefs,
+  resolveFeishuAppSecretRefs,
   resolveSourceSecretRefs,
   serializePortableConfigurationJson,
   serializePortableConfigurationToml,
@@ -72,11 +73,13 @@ export class ConfigPortabilityService {
     const sources = (
       await Promise.all(sourceSummaries.map((source) => this.store.sources.get(source.id)))
     ).filter((source): source is NonNullable<typeof source> => source !== null);
+    const feishuApps = await this.store.feishuApps.list();
     const destinations = await this.store.destinations.list();
     const routes = await this.store.routes.list();
 
     return createPortableConfiguration(
       {
+        feishuApps,
         sources,
         destinations,
         routes,
@@ -161,6 +164,28 @@ export class ConfigPortabilityService {
           sourceId: source.id,
           sourceName: source.name,
           token,
+        });
+      }
+
+      for (const app of portable.feishuApps.map((entry) =>
+        resolveFeishuAppSecretRefs(entry, options),
+      )) {
+        const existing = await tx.feishuApps.get(app.id);
+
+        if (existing) {
+          await tx.feishuApps.update(app.id, {
+            name: app.name,
+            appId: app.appId,
+            appSecret: app.appSecret,
+          });
+          continue;
+        }
+
+        await tx.feishuApps.create({
+          id: app.id,
+          name: app.name,
+          appId: app.appId,
+          appSecret: app.appSecret,
         });
       }
 

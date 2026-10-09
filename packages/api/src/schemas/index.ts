@@ -2,6 +2,7 @@ export * from "./auth";
 export * from "./destinations";
 export * from "./health";
 export * from "./i18n";
+export * from "./integrations";
 export * from "./operations";
 export * from "./portability";
 export * from "./routes";

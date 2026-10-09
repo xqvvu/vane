@@ -1,4 +1,5 @@
 import { parse, stringify } from "smol-toml";
+import { z } from "zod";
 
 import {
   isSensitiveKey,
@@ -7,10 +8,12 @@ import {
   VaneConfigurationSchema,
   vaneConfigurationToTomlDocument,
   vaneTomlDocumentToConfiguration,
+  type FeishuApp,
   type JsonObject,
   type JsonValue,
   type RouteDefinition,
   type VaneConfigDestination,
+  type VaneConfigFeishuApp,
   type VaneConfigSource,
   type VaneConfiguration,
   type VaneSecretReferences,
@@ -18,10 +21,12 @@ import {
 
 import type { DestinationRuntimeConfig } from "#/infra/sqlite/repositories/destination/destination.interface";
 import type { SourceRuntimeConfig } from "#/infra/sqlite/repositories/source/source.interface";
+import { DomainValidationError } from "#/server/runtime/domain-errors";
 
 export type PortableConfiguration = VaneConfiguration;
 export type PortableDestination = VaneConfigDestination;
 export type PortableSource = VaneConfigSource;
+export type PortableFeishuApp = VaneConfigFeishuApp;
 
 export interface ExportConfigurationOptions {
   includeSecrets?: boolean;
@@ -36,6 +41,7 @@ export const PortableConfigurationSchema = VaneConfigurationSchema;
 
 export function createPortableConfiguration(
   input: {
+    feishuApps: FeishuApp[];
     sources: SourceRuntimeConfig[];
     destinations: DestinationRuntimeConfig[];
     routes: RouteDefinition[];
@@ -48,7 +54,7 @@ export function createPortableConfiguration(
   options: ExportConfigurationOptions = {},
 ): PortableConfiguration {
   if (options.includeSecrets) {
-    throw new Error("Plaintext secret export is not supported");
+    throw new DomainValidationError("Plaintext secret export is not supported");
   }
 
   return VaneConfigurationSchema.parse({
@@ -60,6 +66,7 @@ export function createPortableConfiguration(
       timeZone: input.settings.timeZone,
       rawPayloadRetentionDays: input.settings.rawPayloadRetentionDays,
     },
+    feishuApps: input.feishuApps.map((app) => sanitizeFeishuAppConfig(app)),
     sources: input.sources.map((source) => sanitizeSourceConfig(source)),
     destinations: input.destinations.map((destination) => {
       const sanitized = sanitizeDestinationConfig(destination);
@@ -97,11 +104,43 @@ export function serializePortableConfigurationJson(config: PortableConfiguration
 }
 
 export function parsePortableConfigurationToml(toml: string): PortableConfiguration {
-  return vaneTomlDocumentToConfiguration(parse(toml));
+  return parsePortableDocument(() => parse(toml), "TOML");
 }
 
 export function parsePortableConfigurationJson(json: string): PortableConfiguration {
-  return vaneTomlDocumentToConfiguration(JSON.parse(json));
+  return parsePortableDocument(() => JSON.parse(json), "JSON");
+}
+
+/**
+ * Wraps document decoding and schema validation so malformed operator input is a
+ * `DomainValidationError` instead of a raw `TomlError` / `SyntaxError` / `ZodError`
+ * bubbling up as an opaque 500. The message is shown in the console, so it
+ * describes the offending construct without echoing the whole payload.
+ */
+function parsePortableDocument(
+  decode: () => unknown,
+  format: "TOML" | "JSON",
+): PortableConfiguration {
+  try {
+    return vaneTomlDocumentToConfiguration(decode());
+  } catch (error) {
+    throw new DomainValidationError(
+      `Invalid ${format} configuration: ${describeParseFailure(error)}`,
+      {
+        cause: error,
+      },
+    );
+  }
+}
+
+function describeParseFailure(error: unknown): string {
+  if (error instanceof z.ZodError) {
+    const [issue] = error.issues;
+
+    return issue ? `${issue.path.join(".") || "(root)"}: ${issue.message}` : error.message;
+  }
+
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function resolveDestinationSecretRefs(
@@ -116,6 +155,47 @@ export function resolveSourceSecretRefs(
   options: ImportConfigurationOptions = {},
 ): PortableSource {
   return resolvePortableSecretRefs(source, options, "source");
+}
+
+export interface ResolvedFeishuApp {
+  id: string;
+  name: string;
+  appId: string;
+  appSecret: string;
+}
+
+/**
+ * Resolves the app secret for import.
+ *
+ * Exported documents omit the secret and carry a `secretRefs.appSecret` env
+ * reference; the value is read from the environment at import time, so a
+ * checked-in configuration file never contains the plaintext credential.
+ */
+export function resolveFeishuAppSecretRefs(
+  app: PortableFeishuApp,
+  options: ImportConfigurationOptions = {},
+): ResolvedFeishuApp {
+  const envName = app.secretRefs.appSecret ? secretRefEnvName(app.secretRefs.appSecret) : null;
+  const value = app.appSecret?.trim()
+    ? app.appSecret
+    : envName
+      ? (options.env ?? {})[envName]
+      : undefined;
+
+  if (!value) {
+    throw new DomainValidationError(
+      envName
+        ? `Missing environment variable for feishu app secret: ${envName}`
+        : `Feishu app "${app.name}" is missing its app secret`,
+    );
+  }
+
+  return {
+    id: app.id,
+    name: app.name,
+    appId: app.appId,
+    appSecret: value,
+  };
 }
 
 function resolvePortableSecretRefs<
@@ -134,7 +214,9 @@ function resolvePortableSecretRefs<
     const value = env[envName];
 
     if (value === undefined) {
-      throw new Error(`Missing environment variable for ${resource} secret: ${envName}`);
+      throw new DomainValidationError(
+        `Missing environment variable for ${resource} secret: ${envName}`,
+      );
     }
 
     setJsonPath(config, path, value);
@@ -144,6 +226,21 @@ function resolvePortableSecretRefs<
     ...entry,
     config,
   };
+}
+
+function sanitizeFeishuAppConfig(app: FeishuApp): PortableFeishuApp {
+  return {
+    id: app.id,
+    name: app.name,
+    appId: app.appId,
+    secretRefs: {
+      appSecret: { env: envNameForFeishuAppSecret(app) },
+    },
+  };
+}
+
+function envNameForFeishuAppSecret(app: FeishuApp): string {
+  return `VANE_FEISHU_APP_${slugEnvPart(app.id)}_${slugEnvPart("appSecret")}`;
 }
 
 function sanitizeSourceConfig(source: SourceRuntimeConfig): PortableSource {
@@ -266,7 +363,7 @@ function getJsonPath(input: JsonObject, path: string): JsonValue | undefined {
 
 function setJsonPath(input: JsonObject, path: string, value: JsonValue): void {
   if (!isSafeVaneSecretPath(path)) {
-    throw new Error(`Unsafe destination secret reference path: ${path}`);
+    throw new DomainValidationError(`Unsafe destination secret reference path: ${path}`);
   }
 
   const segments = path.split(".");

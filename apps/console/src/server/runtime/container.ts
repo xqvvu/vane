@@ -25,8 +25,12 @@ import { DestinationService } from "#/server/destinations/destination.service";
 import type { DestinationServiceOptions } from "#/server/destinations/destination.service.types";
 import { WebhookIntakeService } from "#/server/intake/intake.service";
 import type { WebhookIntakeServiceOptions } from "#/server/intake/intake.service.types";
+import { FeishuAppService } from "#/server/integrations/feishu-app.service";
+import type { FeishuAppServiceOptions } from "#/server/integrations/feishu-app.service.types";
 import { EventReplayService } from "#/server/operations/event-replay.service";
 import type { EventReplayServiceOptions } from "#/server/operations/event-replay.service.types";
+import { OperationsService } from "#/server/operations/operations.service";
+import type { OperationsServiceOptions } from "#/server/operations/operations.service.types";
 import { RouteService } from "#/server/routes/route.service";
 import type { DashboardSession } from "#/server/runtime/dashboard-session";
 import {
@@ -58,6 +62,9 @@ export interface ApplicationContainer {
     options?: Partial<Omit<DestinationServiceOptions, "store" | "destinations">>,
   ): Promise<DestinationService>;
   createRouteService(): Promise<RouteService>;
+  createFeishuAppService(
+    options?: Partial<Omit<FeishuAppServiceOptions, "store">>,
+  ): Promise<FeishuAppService>;
   createAppSettingsService(): Promise<AppSettingsService>;
   createConfigPortabilityService(
     options?: Partial<Omit<ConfigPortabilityServiceOptions, "store" | "destinations">>,
@@ -71,6 +78,7 @@ export interface ApplicationContainer {
   createEventReplayService(
     options?: Partial<Omit<EventReplayServiceOptions, "store">>,
   ): Promise<EventReplayService>;
+  createOperationsService(): Promise<OperationsService>;
   ensureDeliveryWorkerRunner(): Promise<DeliveryWorkerRunner>;
   getBetterAuthDatabase(): Promise<VaneSqliteKysely>;
   hasRegisteredUsers(): Promise<boolean>;
@@ -178,6 +186,13 @@ export function createApplicationContainer(
       return new RouteService({ store: await container.getSqliteStore() });
     },
 
+    async createFeishuAppService(serviceOptions = {}) {
+      return new FeishuAppService({
+        store: await container.getSqliteStore(),
+        ...serviceOptions,
+      });
+    },
+
     async createAppSettingsService() {
       return new AppSettingsService({ store: await container.getSqliteStore() });
     },
@@ -212,6 +227,14 @@ export function createApplicationContainer(
         store: await container.getSqliteStore(),
         ...serviceOptions,
       });
+    },
+
+    async createOperationsService() {
+      const options: OperationsServiceOptions = {
+        store: await container.getSqliteStore(),
+      };
+
+      return new OperationsService(options);
     },
 
     ensureDeliveryWorkerRunner() {

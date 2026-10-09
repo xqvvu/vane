@@ -63,7 +63,7 @@ changes, update the appropriate document under `docs` instead.
 
 - `apps/console` is the TanStack Start console. It owns UI, API routes, Better
   Auth integration, SQLite persistence, migrations, repositories/services,
-  orchestration, server functions, and the in-process worker.
+  orchestration, oRPC procedures, and the in-process worker.
 - `packages/core` owns shared schemas, domain types, route rules, delivery
   types, config types, JSON helpers, redaction helpers, and shared errors.
   Module-specific contracts live under `packages/core/src/<module>/`; cross-cutting
@@ -96,8 +96,9 @@ general workflow automation.
 The backend is plain layered code, not a domain-model / hexagonal / clean
 architecture. The layers are:
 
-- entrypoints: API routes and `*.functions.ts` server functions (the controller
-  layer) validate input, check auth, and return safe DTOs.
+- entrypoints: API routes and oRPC procedures under
+  `server/orpc/features/<capability>/router.ts` (the controller layer) validate
+  input, check auth, and return safe DTOs.
 - services: per-capability `*.service.ts` files (for example
   `server/sources/source.service.ts`) hold business logic. Exported service
   option/result types live next to the implementation in `*.service.types.ts`.
@@ -127,11 +128,22 @@ Wire dependencies explicitly. Do not reach for a DI framework.
   container. TanStack Start runtime lifecycles, HMR, serverless execution, and
   request isolation make magic DI a poor fit here.
 - Keep entrypoints thin: validate input, establish request or webhook context,
-  get the service it needs, call it, and return a safe DTO.
+  get the service it needs, call it, and return a safe DTO. In an oRPC router,
+  declare the dependency once with
+  `withDashboardService((container) => container.createXService())` and let the
+  handler call `context.service.<method>(input)`. Do not reach through
+  `context.dashboardRequest.container` from a handler unless the procedure needs
+  the container itself.
+- Services express domain failures with domain error classes, never with
+  transport errors. Repositories raise `RecordNotFoundError`; services raise
+  `DomainValidationError` for domain-level validation. `server/orpc/errors.ts`
+  is the single place that translates them to oRPC codes at the boundary, so a
+  missing record becomes a 404 with its message intact instead of an opaque 500.
+  Do not throw `ORPCError` from a `*.service.ts`.
 
 Dashboard auth and webhook auth are separate paths:
 
-- Dashboard routes, loaders, server functions, and API routes that touch
+- Dashboard routes, loaders, oRPC procedures, and API routes that touch
   user-owned data or runtime configuration must verify dashboard auth on the
   server.
 - Webhook intake endpoints authenticate with Source tokens or Vane-side additional shared secrets,
@@ -148,9 +160,9 @@ Recommended shape inside `apps/console/src`:
 shell               dashboard layout, sidebar, header, user menu
 components/ui       shadcn primitives only; no Vane domain knowledge
 components/common   reusable console UI, no feature ownership or server state
-features            Sources, Routes, Destinations, Events, Deliveries, Settings
+features            Sources, Routes, Destinations, Events, Deliveries, Integrations, Settings
 routes              file routes, layouts, validateSearch, loaders, thin screens
-server              server-only: *.functions.ts controllers, per-capability *.service.ts/*.service.types.ts, runtime wiring, intake, deliveries
+server              server-only: orpc/ implementer + routers, per-capability *.service.ts/*.service.types.ts, runtime wiring, intake, deliveries, integrations
 infra               SQLite connection, migrations, codecs, store assembly, repositories, and server-only runtime infrastructure
 lib                 small shared helpers; split same-name .server/.client pairs only when needed
 ```
@@ -177,7 +189,7 @@ Feature modules should own domain UI and client-safe data boundaries:
 
 ```txt
 features/sources/
-  api/       server function wrappers, queryOptions, mutation helpers
+  api/       orpc call wrappers, queryOptions, mutation helpers
   model/     schemas, form values, view models, DTO types
   ui/        SourcesPage, SourceTable, SourceForm, source actions
 ```
@@ -192,7 +204,7 @@ features but is not a shadcn primitive: operational table shells, pagination,
 copyable code lines, generic form/content panels, tooltips, and generic
 enabled/disabled badges. These components may encode Vane console density and
 layout conventions, but they must not own Source/Destination/Event/Delivery
-business rules, call server functions, read query state, or import server-only
+business rules, call oRPC procedures, read query state, or import server-only
 modules. Feature-specific cells, actions, empty states, provider/destination
 badges, route coverage summaries, and delivery state badges stay in
 `features/*`.
@@ -229,12 +241,16 @@ when they are not reusable components.
   as Grafana, SigNoz, Uptime Kuma, Alertmanager, and protocol/config terms such
   as Webhook, JSON, URL, Token, TOML, and API in English when that is clearer.
 
-### Server Function Boundary
+### oRPC Boundary
 
-Server functions are the client/server boundary for console data.
+The oRPC contract + router is the client/server boundary for console data.
 
-- `*.functions.ts` files may be imported by client-safe route, feature, query,
-  and component code.
+- Browser code reaches the server only through `#/lib/orpc`
+  (`orpc.<namespace>.<procedure>.queryOptions(...)` / `.call`). It must never
+  import `#/server/orpc/**` or a capability service directly.
+- Contract definitions live in `packages/api`; the matching implementer lives in
+  `apps/console/src/server/orpc`. The two must stay in step, and the type checker
+  enforces it.
 - Default to no import-protection marker. Most modules are environment-neutral
   and need neither a `server-only` / `client-only` side-effect import nor a
   `.server` / `.client` suffix.
@@ -258,37 +274,39 @@ Server functions are the client/server boundary for console data.
   imported by code from the other environment.
 - `*.schema.ts`, `*.types.ts`, and `*.model.ts` stay shared as long as their own
   imports remain environment-neutral.
-- Keep server function command schemas, input validators, DTO types, and other
-  client-safe contracts in the `@vane/core` package or feature `model/*` files
-  when they are reused outside a server-only implementation. Console-level
-  command schemas and operation DTOs live in `@vane/core`.
+- Keep command schemas, input validators, DTO types, and other client-safe
+  contracts in the `@vane/core` package, the `@vane/api` contract package, or
+  feature `model/*` files when they are reused outside a server-only
+  implementation. Console-level command schemas and operation DTOs live in
+  `@vane/core`.
 - `@vane/core` and feature `model/*` contracts must stay environment-neutral.
   They must not import `node:*`, `#/infra/*`, `#/server/*`,
   `#/lib/auth.server.ts`, modules marked with TanStack Start import protection,
   or modules with `.server` / `.client` suffixes.
-- `*.functions.ts` files are RPC boundary files. Static imports may include
-  TanStack Start, shared contracts, server function middleware, and
-  `#/server/runtime/*`. Runtime functions must be called only from
-  `.handler(...)` or server middleware, not at module initialization. Do not
-  import `#/infra/*`, server capability services under `#/server/*`,
-  `#/lib/auth.server.ts`, modules with `.server` / `.client` suffixes, or
-  modules that import `node:*` unless TanStack Start build confirms the server
-  function boundary keeps that code out of the browser bundle.
-- Private dashboard server functions should normally reach services through
-  `requireDashboardContextMiddleware` and `context.dashboardRequest.container`.
-  Public server functions that cannot use the throwing dashboard middleware may
-  call narrow runtime accessors directly from the handler and must catch auth
-  errors when returning nullable public state.
-- Server functions must validate inputs and perform their own server-side auth
-  checks when returning private dashboard data.
-- Server functions should return DTOs shaped for UI needs. Do not return
-  database rows, token hashes, raw secret config, destination secrets, provider
-  signing secrets, or unredacted sensitive payloads.
+- Router files under `server/orpc/features/<capability>/` are the only
+  server-only entrypoints for dashboard data. They may import the contract,
+  middleware, and `#/server/runtime/*`; they may not call runtime functions at
+  module initialization.
+- Private procedures declare their service dependency once with
+  `withDashboardService((container) => container.createXService())` and call
+  `context.service.<method>(input)`. Use bare `requireDashboard()` only when the
+  procedure needs the container itself.
+- Public procedures that cannot use the throwing guard (for example
+  `auth.getDashboardSession`) use the tolerant `findDashboardContext()` and
+  return nullable state.
+- Procedures must validate inputs and perform their own server-side auth checks
+  when returning private dashboard data.
+- Procedures should return DTOs shaped for UI needs. Do not return database rows,
+  token hashes, raw secret config, destination secrets, provider signing
+  secrets, or unredacted sensitive payloads.
+- Routers must not translate domain errors themselves. Services raise
+  `RecordNotFoundError` / `DomainValidationError` and `server/orpc/errors.ts`
+  maps them at the boundary; see the composition rules above.
 
 TanStack Router loaders are not a persistence boundary. Loaders must not import
 SQLite stores, env secret modules, server-only containers, or filesystem code.
 Use route loaders to call `queryClient.ensureQueryData(...)` with feature
-`queryOptions`; those query functions may call server functions.
+`queryOptions`; those query functions may call oRPC procedures.
 
 ## State Ownership
 
@@ -458,7 +476,7 @@ authenticated dashboard operators; only true secrets stay out of browser state.
   `import "@tanstack/react-start/client-only";` (or a `.client.ts(x)` suffix for
   same-basename pairs).
 - Treat `beforeLoad` route guards as user-experience guards only. They do not
-  replace server-side authorization in server functions or API routes.
+  replace server-side authorization in oRPC procedures or API routes.
 - Validate all external input, config blobs, route rules, TOML input, webhook
   payloads, and raw provider data at the boundary.
 
@@ -493,16 +511,16 @@ authenticated dashboard operators; only true secrets stay out of browser state.
   console so aliases remain unambiguous when TypeScript follows workspace
   package source.
 - Omit `.ts` and `.tsx` extensions from TypeScript import specifiers. Keep
-  semantic filename suffixes such as `.server`, `.client`, and `.functions`.
+  semantic filename suffixes such as `.server`, `.client`, and `.service`.
   TanStack Start currently generates two extension-bearing type imports in
   `route-tree.gen.ts`; treat that generated file as the only exception and do
   not hand-edit it.
 - Keep server-only imports out of client components, feature UI, route loaders,
   query option files, and serialized route data.
 - Keep environment-specific imports out of shared contracts and out of the
-  static import chain of `*.functions.ts` files. If a shared schema/type needs
-  something from a server-only module, move the shared part upward instead of
-  weakening import protection.
+  static import chain of the oRPC routers that `#/lib/orpc.ts` imports. If a
+  shared schema/type needs something from a server-only module, move the shared
+  part upward instead of weakening import protection.
 - Keep `.server` / `.client` suffixes rare and pair-driven. For one-off
   server-only or browser-only modules, use a normal filename plus the matching
   TanStack Start side-effect import.
@@ -568,7 +586,7 @@ hook runs `vp staged` from `.vite-hooks/`.
 - Keep entrypoints thin; delegate persistence, orchestration, routing,
   delivery, and secret handling to repositories or services.
 - Add or update tests when behavior, schemas, migrations, routing, delivery,
-  providers, destinations, server functions, auth, query keys, URL state, forms,
+  providers, destinations, oRPC procedures, auth, query keys, URL state, forms,
   or tables change.
 - Do not add new toolchain requirements for narrow changes; use the scripts
   already declared in package manifests.
@@ -595,7 +613,7 @@ the task crosses domains. Examples:
 - Frontend architecture or route splitting can require
   `tanstack-router-best-practices`, `tanstack-query-best-practices`, and
   `shadcn`.
-- Server-side container, request context, server functions, or API routes can
+- Server-side container, request context, oRPC procedures, or API routes can
   require `tanstack-start-best-practices`.
 - Stitch-to-React work can require `stitch::generate-design`,
   `react-components`, and `shadcn`.

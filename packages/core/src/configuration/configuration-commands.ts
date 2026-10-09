@@ -30,6 +30,27 @@ export const DeleteSourceCommandSchema = z.object({
   id: z.string().min(1),
 });
 
+export const CreateFeishuAppCommandSchema = z.object({
+  name: z.string().trim().min(1),
+  appId: z.string().trim().min(1),
+  appSecret: z.string().min(1),
+});
+
+export const UpdateFeishuAppCommandSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1).optional(),
+  appId: z.string().trim().min(1).optional(),
+  appSecret: z.string().min(1).optional(),
+});
+
+export const DeleteFeishuAppCommandSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const TestFeishuAppCommandSchema = z.object({
+  id: z.string().min(1),
+});
+
 export const CreateDestinationCommandSchema = z.object({
   name: z.string().trim().min(1),
   kind: DestinationKindSchema,
@@ -124,6 +145,10 @@ export type CreateSourceCommand = z.input<typeof CreateSourceCommandSchema>;
 export type UpdateSourceCommand = z.input<typeof UpdateSourceCommandSchema>;
 export type RotateSourceTokenCommand = z.input<typeof RotateSourceTokenCommandSchema>;
 export type DeleteSourceCommand = z.input<typeof DeleteSourceCommandSchema>;
+export type CreateFeishuAppCommand = z.input<typeof CreateFeishuAppCommandSchema>;
+export type UpdateFeishuAppCommand = z.input<typeof UpdateFeishuAppCommandSchema>;
+export type DeleteFeishuAppCommand = z.input<typeof DeleteFeishuAppCommandSchema>;
+export type TestFeishuAppCommand = z.input<typeof TestFeishuAppCommandSchema>;
 export type CreateDestinationCommand = z.input<typeof CreateDestinationCommandSchema>;
 export type UpdateDestinationCommand = z.input<typeof UpdateDestinationCommandSchema>;
 export type TestDestinationCommand = z.input<typeof TestDestinationCommandSchema>;

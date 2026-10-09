@@ -66,6 +66,34 @@ describe("delivery execution", () => {
     expect(failed).toEqual([]);
   });
 
+  it("passes the destination provider reference through on success", async () => {
+    const succeeded: Parameters<DeliveryRepository["markSucceeded"]>[0][] = [];
+    const failed: Parameters<DeliveryRepository["markFailed"]>[0][] = [];
+    const store = createExecutionStore({ succeeded, failed });
+    const destinations = {
+      async send() {
+        return {
+          ok: true,
+          statusCode: 200,
+          responseBody: null,
+          renderedPayload: {},
+          providerReference: { type: "feishu_message_id", value: "om_abc123" },
+        };
+      },
+    } satisfies Pick<DestinationRegistry, "send">;
+    const execution = new DeliveryExecution({ store, destinations });
+
+    await expect(execution.execute(createClaimedDelivery(), now)).resolves.toBe("succeeded");
+
+    expect(succeeded).toEqual([
+      expect.objectContaining({
+        deliveryId: "delivery-1",
+        providerReference: { type: "feishu_message_id", value: "om_abc123" },
+      }),
+    ]);
+    expect(failed).toEqual([]);
+  });
+
   it("records failed sends with redaction and bounded retry timing", async () => {
     const succeeded: Parameters<DeliveryRepository["markSucceeded"]>[0][] = [];
     const failed: Parameters<DeliveryRepository["markFailed"]>[0][] = [];

@@ -67,14 +67,17 @@ route loader / 组件
      -> 浏览器阶段：RPCLink POST /api/rpc/sources/list
         -> routes/api/rpc/$.ts（server handler）
            -> rpcHandler.handle(request, { prefix: "/api/rpc" })
-              -> middleware 链：requestId -> requireDashboard
+              -> middleware 链：translateErrors -> requestId -> withDashboardService
                  -> procedure handler
-                    -> context.dashboardRequest.container.createSourceService()
+                    -> context.service.listSources()
                        -> SourceService -> SQLite repository
 ```
 
 关键点：**service、repository、worker 的组织方式没有变**。oRPC 只替换了“入口层”的实现方式，
 `server/<capability>/*.service.ts` 与 `infra/sqlite/repositories/<module>/` 完全沿用既有约定。
+
+handler 与 service 的关系被压缩成三件事：**guard（是否放行）+ service 解析（用哪个 service）
++ 调用（调哪个方法）**。前两件由 middleware 承担，第三件是 handler 里唯一的一行；见 4.2 与 4.3。
 
 ## 3. 契约层（`packages/api`）
 
@@ -105,6 +108,10 @@ export const sources = {
   `CreateSourceCommandSchema` 等定义，不在契约层复制。
 - **只在契约层声明 error code**。dashboard 面统一 `.errors(dashboardAuth.error)`，声明
   `UNAUTHORIZED` / `FORBIDDEN`；客户端的错误处理因此可以只认这几个 code。
+- **业务错误按 procedure 声明**。当 service 会抛出领域失败时，该 procedure 额外
+  `.errors(resourceErrors.error)` 声明 `NOT_FOUND` / `BAD_REQUEST` / `CONFLICT`
+  （`packages/api/src/errors/resources.ts`）。没有声明的 code 仍然会拿到正确 HTTP status，
+  只是不属于客户端可 narrow 的类型集合。
 - **`openapi({ method })` 只影响 OpenAPI 面**。RPC protocol 固定用 POST，method 元数据是给
   `/api/openapi` 用的；因此浏览器侧永远发 POST，用 GET 探测 `/api/rpc/*` 返回 404 是预期行为。
 - **output 必须是 safe DTO**。契约是类型层的“返回什么”，不要在 output schema 里放 token hash、
@@ -119,11 +126,15 @@ export const sources = {
 `os.ts` 是整个 console 唯一的 implementer：
 
 ```ts
-export const os = implement(contract).use(requestId());
+export const os = implement(contract)
+  .use(translateErrors) // 领域错误 -> oRPC 类型化错误
+  .use(requestId()); // context.requestId + x-request-id
 ```
 
 - `implement(contract)` 把契约绑定成可实现对象，`os.sources.list` 这样的路径由契约形状推导，
   procedure 名字写错即类型错误。
+- `translateErrors` 挂在最外层，把 service 抛出的领域错误映射成 oRPC 错误，见 4.5。它**不声明
+  error map**，否则 public procedure 会连带继承 `NOT_FOUND` / `CONFLICT` 这些并不属于它的 code。
 - `requestId()` 挂在根上，所有 procedure 都拿到 `context.requestId`，并回写 `x-request-id`。
   同一个请求（浏览器 `/api/rpc` 或进程内 `createRouterClient`）拿到的是同一个 id，和 HTTP
   访问日志里的 request id 一致。
@@ -141,51 +152,94 @@ export const router = os.router({
 });
 ```
 
-`features/<capability>/router.ts` 是薄适配层，一个 procedure 一行，职责是“取依赖、调用 service、
-返回业务方法的结果”，不做编排：
+`features/<capability>/router.ts` 是薄适配层。**依赖在文件顶部声明一次，handler 只调用
+`context.service`**，不再在 handler 里写 `context.dashboardRequest.container.create*Service()`：
 
 ```ts
+const withSourceService = withDashboardService((container) => container.createSourceService());
+
 export const sourcesRouter = os.sources.router({
-  list: os.sources.list.use(requireDashboard()).handler(async ({ context }) =>
-    (await context.dashboardRequest!.container.createSourceService()).listSources(),
-  ),
+  list: os.sources.list.use(withSourceService).handler(({ context }) => context.service.listSources()),
+
+  create: os.sources.create
+    .use(withSourceService)
+    .handler(({ context, input }) => context.service.createSource(input)),
 });
 ```
 
 约束：
 
-- **handler 里不写业务逻辑**。校验、鉴权、取 service、调用、返回，仅此而已。真正的规则在
+- **handler 里不写业务逻辑**。校验、鉴权、取 service、返回，仅此而已。真正的规则在
   `*.service.ts`。
-- **handler 里不直接碰 SQLite、filesystem 或 env**。要走 `container.create*Service()`。
+- **handler 里不直接碰 SQLite、filesystem 或 env**。`withDashboardService` 已经完成 service
+  解析；需要 container 本身时（例如手动跑 worker）才退回裸 `requireDashboard()`。
+- **一个 procedure 需要两个 service 时**，各建一个 `with*Service` middleware 并链式 `.use()`；
+  不要在一个 middleware 里塞多个不相关的依赖。
 - **能力长大了再拆**。单个 `router.ts` 变大时，把一个 procedure 一个文件地拆到
   `features/<capability>/procedures/`，而不是提前铺目录。
 
 ### 4.3 middleware
 
-两个 middleware，都在 `server/orpc/middlewares/`：
+四个文件，都在 `server/orpc/middlewares/`：
 
 - `request-id.ts`：用 `middlewares/request-logging.middleware.ts` 的 `resolveRequestId()` 解析
   request id（复用请求中间件已归一化的 `x-request-id` / `x-correlation-id`），写入
   `context.requestId` 与 `x-request-id` 响应头。挂在根 `os` 上。
-- `require-dashboard.ts`：从 `context.reqHeaders` 解析 dashboard session，成功时把
-  `dashboardRequest`（含 `container`）注入 context，失败时把 `DashboardAuthError` /
-  `DashboardAuthorizationError` 映射成 oRPC 的 `UNAUTHORIZED` / `FORBIDDEN`。
-
-`requireDashboard()` **按 procedure 挂**，不挂在 router 或根 `os` 上：
+- `dashboard-context.ts`：解析 dashboard session 的唯一入口。`requireDashboardContext()` 把
+  `DashboardAuthError` / `DashboardAuthorizationError` 映射成 `UNAUTHORIZED` / `FORBIDDEN`；
+  `findDashboardContext()` 是宽容版，只把 auth 错误折成 `null`，其它异常继续抛出，供 public
+  probe 使用。两个函数都从 `context.reqHeaders` 取 header。
+- `require-dashboard.ts`：`requireDashboard()` 调用 `requireDashboardContext()`，把
+  `dashboardRequest`（含 `container`）注入 context；`withDashboardService(createService)`
+  再在其上注入 `context.service`。
+- 三者都**按 procedure 挂**，不挂在 router 或根 `os` 上：
 
 ```ts
-list: os.sources.list.use(requireDashboard()).handler(...)
+list: os.sources.list.use(withDashboardService((container) => container.createSourceService())).handler(...)
 ```
 
 原因：auth、i18n、health 这些 public procedure 不能继承 dashboard 的 error map，而 oRPC 的
 error map 是随中间件链声明的。per-procedure 挂载让“这个 procedure 要不要登录”在契约里就能
-一眼读出（看它是否声明了 `dashboardAuth.error`），`server-orpc-auth.test.ts` 正是按这个不变量
-做全量断言的。
+一眼读出（看它是否声明了 `dashboardAuth.error`）。
+
+**guard 的 output context 是显式类型的**（`os.middleware<{ dashboardRequest }, unknown>(...)`），
+所以 `context.dashboardRequest` / `context.service` 在挂过 guard 的 handler 里是非可选的。
+没挂 `.use(...)` 就直接读 `context.dashboardRequest` 会在类型检查阶段报错——这正是用来替代
+过去 `context.dashboardRequest!` 非空断言的地方。
 
 middleware 从 `context.reqHeaders` 取 header，而不是直接调用 `getRequestHeaders()`：
 浏览器请求由 `RequestHeadersHandlerPlugin` 注入 header bag，进程内调用由 `#/lib/orpc.ts` 显式传入。
-两种 transport 因此共享同一段鉴权代码。context 类型通过 `declare module "@orpc/server"` 扩展
-`DefaultInitialContext` 收窄（见 `middlewares/*.ts` 与 `apps/console/src/rpc.d.ts`）。
+两种 transport 因此共享同一段鉴权代码。header bag 的 context 类型通过
+`declare module "@orpc/server"` 扩展 `DefaultInitialContext` 收窄（见
+`apps/console/src/rpc.d.ts`）。
+
+### 4.5 领域错误到 oRPC 错误的映射
+
+`server/orpc/errors.ts` 的 `toContractError()` 是**唯一**把领域错误翻译成 oRPC 错误的函数，
+由根 `os` 的 `translateErrors` middleware 调用：
+
+| 领域错误 | oRPC code | HTTP |
+| -------- | --------- | ---- |
+| `RecordNotFoundError`（`#/infra/sqlite/errors`） | `NOT_FOUND` | 404 |
+| `DomainValidationError`（`#/server/runtime/domain-errors`） | `BAD_REQUEST` | 400 |
+| `z.ZodError` | `BAD_REQUEST` | 400（message 渲染成 `path: message` 行） |
+| `InvalidDeliveryStateError` | `CONFLICT` | 409 |
+| 其它 | 原样抛出 | 500 |
+
+没有这层翻译时，service 抛出的任何错误都会以 `INTERNAL_SERVER_ERROR` / "Internal Server Error"
+到达浏览器，**原始 message 被丢弃**：operator 在 toast 里看到的是通用服务器故障，而不是
+“Destination not found: xxx”或“Invalid TOML configuration: …”。这是 console 日常路径上的
+错误（删除已不存在的 Destination、导入格式错误的 TOML），所以必须在边界翻译。
+
+约定：
+
+- **service 用领域错误类表达领域语义**，不认识 oRPC code。repository 继续抛
+  `RecordNotFoundError`；service 自己做的领域校验（未知 id、adapter config 非法、导入载荷
+  无法解析）抛 `DomainValidationError`。
+- **不要为了翻译而在 service 里 `throw new ORPCError(...)`**。那会让 `server/*.service.ts`
+  依赖传输层，破坏“service 可被 fake store 单测”的性质。
+- **新增领域错误类时同时更新 `toContractError()` 与 `resourceErrors`**，否则新错误会静默退化成
+  500。
 
 ### 4.4 handler 与路由挂载
 
@@ -292,8 +346,11 @@ export const sourceMutations = {
 ## 7. 验证方式
 
 - `apps/console/src/server/orpc/server-orpc-auth.test.ts`：断言每个 router 的 procedure 清单与
-  契约一致，且 private procedure 都挂了 `requireDashboard()`、public 的都没挂；同时确认 webhook
-  路由不在 oRPC 面上。
+  契约一致；并**通过真实的 `createRouterClient` 调用**逐个验证 private procedure 在无 session
+  时返回 `UNAUTHORIZED`、public procedure 正常返回。断言的是运行时行为，不是源码文本。
+- `apps/console/src/server/orpc/errors.test.ts`：通过真实的 `RPCHandler` 验证领域错误映射，
+  覆盖 `RecordNotFoundError -> 404`、`InvalidDeliveryStateError -> 409`、`z.ZodError -> 400`
+  （message 可读）、未知错误仍是 500、service 抛出的 `ORPCError` 不被改写。
 - `vp -C apps/console run typecheck`：契约与实现是否对齐由类型检查兜底。
 - `vp -C apps/console build`：验证 import protection 仍然成立，client bundle 不含 SQLite。
 - 手工验证：登录后访问 dashboard 各页面，确认浏览器发出 `POST /api/rpc/<ns>/<proc>` 且无 console

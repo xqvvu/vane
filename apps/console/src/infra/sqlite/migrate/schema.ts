@@ -50,6 +50,16 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
     .execute();
 
   await db.schema
+    .createTable("feishu_apps")
+    .addColumn("id", "text", (column) => column.primaryKey())
+    .addColumn("name", "text", (column) => column.notNull().unique())
+    .addColumn("app_id", "text", (column) => column.notNull())
+    .addColumn("app_secret", "text", (column) => column.notNull())
+    .addColumn("created_at", "text", (column) => column.notNull())
+    .addColumn("updated_at", "text", (column) => column.notNull())
+    .execute();
+
+  await db.schema
     .createTable("events")
     .addColumn("id", "text", (column) => column.primaryKey())
     .addColumn("source_id", "text", (column) =>
@@ -113,6 +123,8 @@ export async function createVaneTables(db: Kysely<VaneSqliteDatabaseSchema>): Pr
     .addColumn("next_attempt_at", "text")
     .addColumn("last_error", "text")
     .addColumn("rendered_payload_json", "text")
+    .addColumn("provider_ref_type", "text")
+    .addColumn("provider_ref_value", "text")
     .addColumn("created_at", "text", (column) => column.notNull())
     .addColumn("updated_at", "text", (column) => column.notNull())
     .addColumn("finished_at", "text")

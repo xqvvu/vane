@@ -10,6 +10,8 @@ import type { DeliveryRepository } from "#/infra/sqlite/repositories/delivery/de
 import { SqliteDeliveryRepository } from "#/infra/sqlite/repositories/delivery/delivery.repository";
 import type { DestinationRepository } from "#/infra/sqlite/repositories/destination/destination.interface";
 import { SqliteDestinationRepository } from "#/infra/sqlite/repositories/destination/destination.repository";
+import type { FeishuAppRepository } from "#/infra/sqlite/repositories/feishu-app/feishu-app.interface";
+import { SqliteFeishuAppRepository } from "#/infra/sqlite/repositories/feishu-app/feishu-app.repository";
 import type { HistoryRepository } from "#/infra/sqlite/repositories/history/history.interface";
 import { SqliteHistoryRepository } from "#/infra/sqlite/repositories/history/history.repository";
 import type { IntakeRepository } from "#/infra/sqlite/repositories/intake/intake.interface";
@@ -34,6 +36,7 @@ export interface OpenSqliteStoreOptions {
     event: () => string;
     delivery: () => string;
     attempt: () => string;
+    feishuApp: () => string;
   }>;
 }
 
@@ -43,6 +46,7 @@ export interface SqliteStoreUnitOfWork {
   readonly routes: RouteRepository;
   readonly intake: IntakeRepository;
   readonly deliveries: DeliveryRepository;
+  readonly feishuApps: FeishuAppRepository;
   readonly history: HistoryRepository;
   readonly settings: SettingsRepository;
 }
@@ -63,6 +67,7 @@ export function createSqliteRepositories(context: SqliteRepositoryContext): Sqli
   const routes = new SqliteRouteRepository(context);
   const intake = new SqliteIntakeRepository(context);
   const deliveries = new SqliteDeliveryRepository(context, sources, destinations, routes, intake);
+  const feishuApps = new SqliteFeishuAppRepository(context);
   const history = new SqliteHistoryRepository(context, sources, intake, routes, deliveries);
   const settings = new SqliteSettingsRepository(context);
 
@@ -72,6 +77,7 @@ export function createSqliteRepositories(context: SqliteRepositoryContext): Sqli
     routes,
     intake,
     deliveries,
+    feishuApps,
     history,
     settings,
   };
@@ -124,6 +130,10 @@ export class OpenedSqliteStore implements SqliteStore {
 
   get deliveries() {
     return this.repositories.deliveries;
+  }
+
+  get feishuApps() {
+    return this.repositories.feishuApps;
   }
 
   get history() {

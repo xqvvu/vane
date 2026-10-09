@@ -44,10 +44,16 @@ env-neutral、`server/` 按能力分目录、dynamic import 只作边界适配�
    `orpc.<ns>.<proc>.queryOptions(...)` / `.call` 封装 query 与 mutation。
 
 4. **Authentication 按 procedure 挂载。** private procedure 在 contract 上声明
-   `dashboardAuth.error`（UNAUTHORIZED / FORBIDDEN），实现处 `.use(requireDashboard())`。
-   不把 dashboard middleware 挂在 router 级——那会把错误映射强加到 public 的 `health`、
-   `i18n` 和 `auth.getDashboardSession` 上。`requireDashboard()` 从
-   `context.reqHeaders` 解析 session，因此 SSR 进程内调用与浏览器 RPC 调用走同一条鉴权路径。
+   `dashboardAuth.error`（UNAUTHORIZED / FORBIDDEN），实现处 `.use(requireDashboard())`
+   或 `.use(withDashboardService(...))`。不把 dashboard middleware 挂在 router 级——那会把
+   错误映射强加到 public 的 `health`、`i18n` 和 `auth.getDashboardSession` 上。
+   `requireDashboardContext()` 从 `context.reqHeaders` 解析 session，因此 SSR 进程内调用与
+   浏览器 RPC 调用走同一条鉴权路径。guard 的 output context 显式类型化，使
+   `context.dashboardRequest` / `context.service` 在挂过 guard 的 handler 内非可选，漏挂
+   guard 成为类型错误而不是运行时 panic。
+
+   `withDashboardService(createService)` 由该 ADR 之后的实现补充：它在 guard 之上注入
+   `context.service`，把“解析服务”从每个 handler 上移到 middleware，handler 只剩一次调用。
 
 5. **两个 handler、两个协议，不混用。** 浏览器走 RPC protocol（`POST /api/rpc`），
    外部调用与生成的 reference 走 OpenAPI surface（`/api/openapi`、`/api/openapi/spec.json`、
@@ -93,6 +99,24 @@ env-neutral、`server/` 按能力分目录、dynamic import 只作边界适配�
   约束冲突，也超出本次重构范围。oRPC 的 handler 只是同一应用内的另一条 HTTP 入口。
 - **直接暴露 OpenAPI surface 给浏览器用**：浏览器需要 RPC 信封来支持批量请求、响应头
   透传和 TanStack Query utils；OpenAPI surface 面向外部调用方与文档。
+
+## 补充：领域错误在边界翻译
+
+本 ADR 之后发现的一个语义缺口：service 抛出的领域错误到达浏览器时被折叠成
+`INTERNAL_SERVER_ERROR` / "Internal Server Error"，原始 message 被丢弃。删除一个已不存在的
+Destination、导入格式错误的 TOML，在 operator 看来都是“服务器故障”。
+
+修复方式保持在既有分层内：
+
+- service 继续用领域错误类表达语义（repository 的 `RecordNotFoundError`、service 的
+  `DomainValidationError`），不引入对 oRPC 的依赖。
+- 根 implementer 挂一个 `translateErrors` middleware，调用
+  `server/orpc/errors.ts#toContractError()` 把领域错误映射成 `NOT_FOUND` / `BAD_REQUEST` /
+  `CONFLICT`；该 middleware 不声明 error map，因此不会污染 public procedure 的契约。
+- 契约层新增 `packages/api/src/errors/resources.ts`，供会抛出这些错误的 procedure 显式声明 code。
+
+这仍然符合“朴素分层”：entrypoint 负责传输语义，service 负责业务语义，翻译发生在两者之间的
+边界 middleware。
 
 ## 参考
 

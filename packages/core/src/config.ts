@@ -76,8 +76,17 @@ export const VaneConfigRouteSchema = z.strictObject({
   destinationIds: RouteDefinitionSchema.shape.destinationIds,
 });
 
+export const VaneConfigFeishuAppSchema = z.strictObject({
+  id: NonEmptyConfigStringSchema,
+  name: NonEmptyConfigStringSchema,
+  appId: NonEmptyConfigStringSchema,
+  appSecret: z.string().min(1).optional(),
+  secretRefs: VaneSecretReferencesSchema,
+});
+
 export const VaneConfigurationSchema = z.strictObject({
   settings: VaneConfigSettingsSchema,
+  feishuApps: z.array(VaneConfigFeishuAppSchema).default([]),
   sources: z.array(VaneConfigSourceSchema).default([]),
   destinations: z.array(VaneConfigDestinationSchema).default([]),
   routes: z.array(VaneConfigRouteSchema).default([]),
@@ -142,8 +151,17 @@ export const VaneTomlRouteDocumentSchema = z.strictObject({
   destination_ids: RouteDefinitionSchema.shape.destinationIds,
 });
 
+export const VaneTomlFeishuAppDocumentSchema = z.strictObject({
+  id: NonEmptyConfigStringSchema,
+  name: NonEmptyConfigStringSchema,
+  app_id: NonEmptyConfigStringSchema,
+  app_secret: z.string().min(1).optional(),
+  secret_refs: VaneSecretReferencesSchema,
+});
+
 export const VaneTomlDocumentSchema = z.strictObject({
   settings: VaneTomlSettingsDocumentSchema,
+  feishu_apps: z.array(VaneTomlFeishuAppDocumentSchema).default([]),
   sources: z.array(VaneTomlSourceDocumentSchema).default([]),
   destinations: z.array(VaneTomlDestinationDocumentSchema).default([]),
   routes: z.array(VaneTomlRouteDocumentSchema).default([]),
@@ -152,6 +170,7 @@ export const VaneTomlDocumentSchema = z.strictObject({
 export type VaneSecretReference = z.infer<typeof VaneSecretReferenceSchema>;
 export type VaneSecretReferences = z.infer<typeof VaneSecretReferencesSchema>;
 export type VaneConfigSettings = z.infer<typeof VaneConfigSettingsSchema>;
+export type VaneConfigFeishuApp = z.infer<typeof VaneConfigFeishuAppSchema>;
 export type VaneConfigSource = z.infer<typeof VaneConfigSourceSchema>;
 export type VaneConfigDestination = z.infer<typeof VaneConfigDestinationSchema>;
 export type VaneConfigRoute = z.infer<typeof VaneConfigRouteSchema>;
@@ -176,6 +195,13 @@ export function vaneConfigurationToTomlDocument(configInput: VaneConfiguration):
       time_zone: config.settings.timeZone,
       raw_payload_retention_days: config.settings.rawPayloadRetentionDays,
     },
+    feishu_apps: config.feishuApps.map((app) => ({
+      id: app.id,
+      name: app.name,
+      app_id: app.appId,
+      app_secret: app.appSecret,
+      secret_refs: app.secretRefs,
+    })),
     sources: config.sources.map((source) => ({
       id: source.id,
       name: source.name,
@@ -221,6 +247,13 @@ export function vaneTomlDocumentToConfiguration(documentInput: unknown): VaneCon
       timeZone: document.settings.time_zone,
       rawPayloadRetentionDays: document.settings.raw_payload_retention_days,
     },
+    feishuApps: document.feishu_apps.map((app) => ({
+      id: app.id,
+      name: app.name,
+      appId: app.app_id,
+      appSecret: app.app_secret,
+      secretRefs: app.secret_refs,
+    })),
     sources: document.sources.map((source) => ({
       id: source.id,
       name: source.name,

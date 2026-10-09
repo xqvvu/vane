@@ -6,6 +6,7 @@ import type { DestinationKind, JsonObject, JsonValue, NormalizedEvent } from "@v
 import type { DestinationRegistry } from "@vane/destinations";
 
 import type { SqliteStore } from "#/infra/sqlite/store";
+import { DomainValidationError } from "#/server/runtime/domain-errors";
 
 export function generateSourceToken(): string {
   return `vane_src_${randomBytes(24).toString("base64url")}`;
@@ -51,7 +52,7 @@ export async function requireExistingSourceIds(
   }
 
   if (missing.length > 0) {
-    throw new Error(`Unknown source IDs: ${missing.join(", ")}`);
+    throw new DomainValidationError(`Unknown source IDs: ${missing.join(", ")}`);
   }
 }
 
@@ -68,7 +69,7 @@ export async function requireExistingDestinationIds(
   }
 
   if (missing.length > 0) {
-    throw new Error(`Unknown destination IDs: ${missing.join(", ")}`);
+    throw new DomainValidationError(`Unknown destination IDs: ${missing.join(", ")}`);
   }
 }
 

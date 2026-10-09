@@ -310,6 +310,7 @@ const dashboardNavSkeletons = [
   "sources",
   "routes",
   "destinations",
+  "integrations",
   "deliveries",
   "settings",
 ];

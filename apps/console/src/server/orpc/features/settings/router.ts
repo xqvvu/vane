@@ -1,19 +1,17 @@
-import { requireDashboard } from "#/server/orpc/middlewares/require-dashboard";
+import { withDashboardService } from "#/server/orpc/middlewares/require-dashboard";
 import { os } from "#/server/orpc/os";
 
 /** Console runtime settings. */
+const withAppSettingsService = withDashboardService((container) =>
+  container.createAppSettingsService(),
+);
+
 export const settingsRouter = os.settings.router({
   get: os.settings.get
-    .use(requireDashboard())
-    .handler(async ({ context }) =>
-      (await context.dashboardRequest!.container.createAppSettingsService()).getAppSettings(),
-    ),
+    .use(withAppSettingsService)
+    .handler(({ context }) => context.service.getAppSettings()),
 
   update: os.settings.update
-    .use(requireDashboard())
-    .handler(async ({ context, input }) =>
-      (await context.dashboardRequest!.container.createAppSettingsService()).updateAppSettings(
-        input,
-      ),
-    ),
+    .use(withAppSettingsService)
+    .handler(({ context, input }) => context.service.updateAppSettings(input)),
 });

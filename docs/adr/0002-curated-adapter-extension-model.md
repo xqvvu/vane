@@ -8,6 +8,8 @@ Adapter manifest 可以描述配置字段、能力、secret 路径和安全摘�
 
 Provider 和 destination 只共享展示元数据、配置字段描述、secret 字段声明、安全摘要等 manifest primitives。两者保持独立接口：provider adapter 把入站 Webhook 载荷解析成规范化告警，destination adapter 负责预览和发送出站通知。
 
+（2026-10-08 由 `docs/adr/0009-oncall-feishu-urgent.md` 提议，尚未实现）出站通知与主动呼叫人是两种语义，因此 adapter 家族在 provider 与 destination 之外新增第三类 urgency channel adapter：`UrgencyChannelAdapter`（`kind` / `configSchema` / `ping`）与 `UrgencyRegistry`，落在 `packages/destinations/src/urgency/`，复用本 ADR 已确立的全部纪律，即结构化 `ok` union、封闭 error kind、retry hint、只接收已校验 typed config、不碰 DB/container/logger、通过注入的 `fetch` 与 `now` 访问 transport。`UrgencyChannelKind` 同样是封闭枚举。不把加急做成 `DestinationAdapter` 的可选方法加 capability 标志：那会让能力真相分裂成两处，并被迫打开本 ADR 明确封闭的 capabilities schema。
+
 Secret 处理不能只从表单字段描述推导。Adapter manifest 同时暴露 UI 字段描述和独立的 secret 字段声明，并通过测试或 registry audit 保持可见 secret 字段的一致性。这样 console 可以渲染友好的表单，同时把导出、日志、摘要和 DTO 脱敏锚定在明确的服务端安全边界上。
 
 Provider parser 可以接收 typed Source config，用于 severity 映射、默认标签、metadata 选择等解析行为。Webhook 认证仍由 console 服务层拥有，以便 Source token、额外共享密钥、审计行为和拒绝响应在所有 provider 之间保持一致。
@@ -100,6 +102,8 @@ Core 中的 catalog item 以泛型 `Kind extends string = string` 表达，具�
 Destination send result 使用 `ok` discriminated union 替代 `success: boolean`。成功分支不携带错误字段；失败分支必须包含标准 error kind、retry hint 和安全错误消息。`statusCode` 与已脱敏 `responseBody` 是通用 nullable 字段，HTTP destination 填写实际值，非 HTTP transport 可为 `null`。
 
 Destination send result 的两个分支都必须携带 safe `renderedPayload`。该字段是用于 preview 和 Delivery detail 的调试表达，不承诺等于实际 wire payload；即使渲染或发送失败，也应返回安全占位 payload，避免 UI 和 worker 处理 optional payload。
+
+（2026-10-08 由 `docs/adr/0009-oncall-feishu-urgent.md` amend）Destination send result 增加可选的 `providerReference`，形状为 `{ type, value }`，例如 `{ type: "feishu_message_id", value: "om_..." }`，表示目标系统里可反向操作的资产句柄。它不破坏 `ok` union 纪律：只在成功分支有实际意义，adapter 拿不到句柄时直接省略，console 落 `deliveries.provider_ref_type` / `provider_ref_value` 两列并投影进 Delivery detail，使后续对同一条消息的二次操作（如飞书加急）不必再改 schema。`type` 是开放字符串命名空间，由各 adapter 自行约定，core 不枚举；`value` 是运维标识符而不是 secret，可以进入已认证 dashboard 的 detail DTO。
 
 Destination adapter 应尽量捕获预期 transport 失败并返回结构化 failure，例如 network error、timeout、provider rejection 或 auth/configuration error。Console worker 的 catch 只作为非预期 adapter bug 或最后防线，而不是正常错误分类机制。
 
