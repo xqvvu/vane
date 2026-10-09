@@ -1,7 +1,9 @@
-import type { JsonObject } from "@vane/core";
-
-import { parseFeishuResult } from "#destinations/feishu/result";
-import type { DestinationTransportContext } from "#destinations/types";
+import { feishuFailureMessage, parseFeishuResult } from "#destinations/shared/feishu-result";
+import type {
+  DestinationErrorKind,
+  DestinationRetryHint,
+  DestinationTransportContext,
+} from "#destinations/types";
 import { Adapter, Send } from "#destinations/utils";
 
 const FEISHU_TENANT_ACCESS_TOKEN_URL =
@@ -9,15 +11,22 @@ const FEISHU_TENANT_ACCESS_TOKEN_URL =
 
 export type FeishuTenantAccessTokenResult =
   | { ok: true; tenantAccessToken: string; expiresInSeconds: number }
-  | { ok: false; errorMessage: string };
+  | {
+      ok: false;
+      errorKind: DestinationErrorKind;
+      retryHint: DestinationRetryHint;
+      errorMessage: string;
+      statusCode: number | null;
+      responseBody: string | null;
+    };
 
 /**
  * Exchanges a Feishu self-built app credential for a `tenant_access_token`.
  *
- * Used by the app validation action now, and by app-mode sends and urgent calls
- * later. Returns a structured result so callers can surface the platform's own
- * message instead of an opaque failure, and uses the injected transport context
- * so tests can drive it with a fake fetch.
+ * Shared by the app validation action and the urgency channels. Returns a
+ * structured result so callers can surface the platform's own message and keep
+ * retry discipline, and uses the injected transport context so tests can drive
+ * it with a fake fetch.
  */
 export async function fetchFeishuTenantAccessToken(
   input: { appId: string; appSecret: string },
@@ -37,11 +46,28 @@ export async function fetchFeishuTenantAccessToken(
     const result = parseFeishuResult(responseBody);
 
     if (!response.ok) {
-      return { ok: false, errorMessage: `Feishu returned HTTP ${response.status}` };
+      return {
+        ok: false,
+        errorKind: "http_error",
+        retryHint: Send.httpStatusToRetryHint(response.status),
+        errorMessage: `Feishu returned HTTP ${response.status}`,
+        statusCode: response.status,
+        responseBody,
+      };
     }
 
     if (!result || result.code !== 0) {
-      return { ok: false, errorMessage: feishuErrorMessage(result) };
+      return {
+        ok: false,
+        errorKind: "target_rejected",
+        retryHint: "not_retryable",
+        errorMessage: feishuFailureMessage(
+          result,
+          "Feishu returned an unreadable tenant access token response",
+        ),
+        statusCode: response.status,
+        responseBody,
+      };
     }
 
     const token = result.tenant_access_token;
@@ -49,7 +75,11 @@ export async function fetchFeishuTenantAccessToken(
     if (typeof token !== "string" || token.length === 0) {
       return {
         ok: false,
+        errorKind: "target_rejected",
+        retryHint: "not_retryable",
         errorMessage: "Feishu tenant access token response was missing the token",
+        statusCode: response.status,
+        responseBody,
       };
     }
 
@@ -61,24 +91,14 @@ export async function fetchFeishuTenantAccessToken(
   } catch (error) {
     return {
       ok: false,
+      errorKind: "network_error",
+      retryHint: "retryable",
       errorMessage:
         error instanceof Error && error.message.trim()
           ? `Feishu tenant access token request failed: ${error.message}`
           : "Feishu tenant access token request failed",
+      statusCode: null,
+      responseBody: null,
     };
   }
-}
-
-function feishuErrorMessage(result: JsonObject | null): string {
-  if (!result) {
-    return "Feishu returned an unreadable tenant access token response";
-  }
-
-  const code = result.code ?? result.StatusCode;
-  const codeText = typeof code === "string" || typeof code === "number" ? String(code) : "unknown";
-  const message = typeof result.msg === "string" && result.msg.trim() ? result.msg.trim() : null;
-
-  return message
-    ? `Feishu returned code ${codeText}: ${message}`
-    : `Feishu returned code ${codeText}`;
 }
