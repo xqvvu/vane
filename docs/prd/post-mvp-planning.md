@@ -37,6 +37,14 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
   critical/warning/info severity 与 firing/resolved status，并以 `modelId` 作为 fingerprint。
   接入方式沿用告警源接入 Token：FastGPT 侧 `webhookToken` 填 Vane 的接入 Token，
   以 `Authorization: Bearer` 发送。
+- [On-call 加急（飞书电话呼叫）](./oncall-feishu-urgent.md)：飞书自建应用成为可复用资源
+  （登记、测试、被引用时拒删、导出为 `VANE_FEISHU_APP_<id>_APPSECRET` 环境变量引用）；飞书
+  通知目标新增应用发送模式（引用应用 + 群 `chat_id`，卡片由应用发出并把 `message_id` 记为投递的
+  provider reference）与加急配置（severity 门槛、`userIdType`、呼叫对象）；命中的 firing 投递自动
+  为每个接收人建一条加急记录，投递详情也可手动加急。加急有独立状态机、指数退避与
+  `(fingerprint, 目标, 接收人)` 去重窗口，与卡片投递完全解耦：电话失败不重发卡片，卡片重试不重复
+  打电话。实现顺序、平台约束与 2026-10-10 的官方文档核实结论见
+  [ADR 0009](../adr/0009-oncall-feishu-urgent.md)。
 
 ## 当前内测配置删除策略
 
@@ -174,12 +182,8 @@ PRD 都应该保持 Vane 的核心约束：单进程、SQLite-first、自托管�
 
 ### On-call 加急（飞书电话呼叫）
 
-问题：Vane 的投递能"通知"但不能"叫醒"。夜班 critical 告警会在静音的群消息里被错过。
-
-范围：飞书自建应用成为可复用资源（登记、测试、被通知目标引用）；飞书通知目标新增"应用发送
-模式"（引用应用 + 群 `chat_id`，卡片由应用发出并携带 `message_id`）；通知目标上配置加急接收人
-与 severity 门槛后，命中的 firing 投递自动为每个接收人创建一条加急记录并执行 `urgent_phone`，
-也可在投递详情手动加急。加急有独立状态、重试与去重。
+已交付（2026-10-10，见上方「已交付增量」与 PR #32–#38）。方向内未兑现的部分留在下方 out-of-scope
+清单，作为后续独立增量重新认领。
 
 不在本方向内（仍属 out-of-scope）：on-call 排班、轮转与多级 escalation policy，ack 确认与抑制，
 短信/应用内加急渠道，恢复（resolved）呼叫，路由级加急配置。

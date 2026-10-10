@@ -68,6 +68,7 @@ React component、RegExp、fetch、parse/send 或 transport context。
 
 - `@vane/providers` 暴露 `ProviderAdapter`。
 - `@vane/destinations` 暴露 `DestinationAdapter`。
+- `@vane/destinations/urgency` 暴露 `UrgencyChannelAdapter` 与 `UrgencyRegistry`（见下文 urgency 边界）。
 
 Provider 和 destination 只共享 manifest primitives，不合并成一个万能
 `IntegrationAdapter`。Provider 的核心动词是 `parse`，destination 的核心动词是
@@ -96,6 +97,9 @@ Catalog DTO 不包含 `parse`、`send`、Zod schema 对象、secret 内部规则
 
 Catalog capabilities 使用 provider/destination 各自的封闭结构，不使用开放
 `record<string, boolean>`。
+
+Urgency channel 没有 manifest 与 catalog 投影：它不渲染用户可见消息、没有需要在表单里渲染的配置
+字段（配置形状挂在 destination config 上），因此只暴露 `kind` + `ping`。
 
 ## 配置与 Secret
 
@@ -168,6 +172,26 @@ payload。真实 secret 只在 `send` 内部用于构造网络请求，不能进
 
 MVP 不让 adapter manifest 控制 rate limit 或 concurrency。Delivery worker 先使用全局
 batch/backoff 策略，per-destination policy 未来单独设计。
+
+## Urgency channel 边界
+
+（2026-10-10 落地，见 `docs/adr/0009-oncall-feishu-urgent.md` 决定 7 与 `docs/adr/0002` 的对应修订。）
+
+出站"通知"与主动"呼叫人"是两种语义，因此 adapter 家族在 provider 与 destination 之外还有第三类：
+`UrgencyChannelAdapter`（`kind` + `ping(input, ctx)`）与 `UrgencyRegistry`，落在
+`packages/destinations/src/urgency/`。它复用 destination 的全部纪律——结构化 `ok` union、封闭 error
+kind、retry hint、只接收已校验 typed config、不碰 DB/container/logger、`fetch` 与 `now` 由 ctx 注入——
+但**没有 manifest / catalog / preview**：加急渠道不渲染用户消息，也没有需要进 UI 的配置字段，
+配置形状挂在 destination config（`urgent` 块）上，由 destination schema 负责校验。
+
+`UrgencyChannelKind` 是与 `DestinationKind` 并列的封闭枚举，v1 唯一成员 `feishu_urgent_phone`。
+输入是 `{ app: { appId, appSecret }, messageId, receivers, userIdType }`：`messageId` 指向一条**已由
+destination 发送**的消息（delivery 的 provider reference），渠道只升级它、自己不发消息。
+
+重试判定复用 destination 的同一张平台错误码表（`shared/feishu-errors.ts`）：限流与暂时性拒绝为
+`retryable`，配置/权限/额度类为 `not_retryable`，凭证失效在渠道内部先重换 token 再决定。渠道返回的
+`retryHint` 只是建议，最终退避与状态转移仍由 console 的 oncall worker 拥有——与"adapter 表达语义、
+worker 拥有策略"的既有分工一致。
 
 ## Destination 模板扩展
 

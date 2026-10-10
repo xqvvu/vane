@@ -61,9 +61,9 @@ Vane 的投递能"通知"，但不能"叫醒"。告警进入飞书群或邮箱�
   - 手动：`operations.buzzDelivery({ deliveryId })`，从投递详情页触发，接收人取目标配置，记录操作者。失败落回队列重试。
   - 加急配置形状：`{ autoEnabled, severities（默认 ["critical"]）, userIdType, receivers（≥1，唯一） }`；`autoEnabled = false` 即只保留手动。v1 不支持手动指定任意接收人。
 - **ping 的粒度是一个接收人一条**：独立消息、独立呼叫、独立状态与独立重试；一个接收人失败不影响其他人。状态机为 `scheduled | running | fired | suppressed | failed`，其中 `scheduled` / `suppressed` 为后续延时/确认能力预留，本切片恒不出现。ping 记录投递、接收人、渠道、`message_id`、尝试次数、下次重试时间、最后错误、触发来源（`auto` / `manual` 与操作者）。
-- **重试与退避**复用 delivery 语义：指数退避 + 有界最大尝试次数；配额/权限类拒绝判定为不可重试；ping 失败不回滚、不触碰对应投递的状态。
+- **重试与退避**复用 delivery 语义：指数退避 + 有界最大尝试次数；可否重试按**飞书业务码**判定而不是按 HTTP 状态（平台把权限、配额、机器人不在群等永久性拒绝一律用 HTTP 400 返回，把限流用 `99991400`/HTTP 429 返回，把"未读加急过多"用 `230023` 返回）；配额/权限/配置类判定为不可重试并在错误信息里给出运维动作，限流与未读加急超限保留重试；接口在部分接收人无效时仍返回 `code 0` 并把无效 id 放进 `data.invalid_user_id_list`，落在该列表里的接收人不能算呼叫成功；ping 失败不回滚、不触碰对应投递的状态。
 - **去重**按 `(fingerprint, 目标, 接收人)` 在一个去重窗口内只建一条 ping；去重键独立成表，不复用 delivery 的去重表。
-- **加急渠道与投递目标适配器并列但独立**：加急渠道是封闭枚举（v1 唯一成员 `feishu_urgent_phone`），对"某条已存在的消息"执行呼叫；它不碰数据库、不读环境变量，`fetch` 与时钟由外部注入。若 spike 证明群卡片不可被加急，则渠道内部回退为"先发单聊、再对单聊加急"，对外接口不变。
+- **加急渠道与投递目标适配器并列但独立**：加急渠道是封闭枚举（v1 唯一成员 `feishu_urgent_phone`），对"某条已存在的消息"执行呼叫；它不碰数据库、不读环境变量，`fetch` 与时钟由外部注入。官方文档已确认群卡片可由发送它的机器人直接加急，实现里没有单聊回退分支。
 - **凭证解析在服务端路径完成**：投递发送、目标测试、加急执行三条路径按引用解析应用凭证后注入适配器；适配器不认识引用，也不接触存储。
 - **oRPC 面**：新增 `integrations` namespace（应用的列表/创建/更新/删除/测试）+ `operations.buzzDelivery`；投递详情 DTO 增加 `pings[]`，与既有 provider reference 一起构成加急可见面。不新增 oncall namespace。私有过程一律 dashboard 鉴权，领域错误由边界统一翻译；DTO 不返回 `app_secret`。
 - **删除语义**：删除被引用的应用被拒绝；ping 随投递级联删除，去重键随 ping 级联；source/route/destination 的既有级联策略不变。
@@ -74,7 +74,7 @@ Vane 的投递能"通知"，但不能"叫醒"。告警进入飞书群或邮箱�
 
 - 好测试只断言外部行为：命令与 DTO 形状、服务状态转移、worker 的调用次数与顺序、HTTP 请求形状；不断言私有 helper、SQL 文本或内部实现细节。
 - 主 seam 是**加急服务级集成测试**：内存 SQLite + 注入的假 urgency registry + 假时钟，覆盖"投递成功 → 自动入队（severity 门槛、firing-only、去重、每接收人一条）→ worker 执行 → 状态转移 → 退避重试"，并必须覆盖两条关键断言：**ping 失败不改投递状态**、**卡片重试不重复 ping**。先例是 `delivery-worker.service.test.ts` 与 `delivery-execution.test.ts`。
-- 次 seam 是 **urgency 渠道单测**：假 `fetch` + 假时钟，断言 `message_id`、`user_id_type`、`urgent_receivers` 的请求形状、token 获取与复用、响应解析、配额类不可重试。先例是 `packages/destinations/src/feishu/index.test.ts`。
+- 次 seam 是 **urgency 渠道单测**：假 `fetch` + 假时钟，断言 `message_id`、`user_id_type`、扁平 `user_id_list` 请求体与固定 `Content-Type`、token 获取与复用、凭证失效后重换 token、缺失 `expire` 时的 TTL 兜底、`invalid_user_id_list` 部分成功、按业务码的重试分类。先例是 `packages/destinations/src/feishu/index.test.ts`。
 - 飞书目标测试：app 模式发送的请求形状与 provider reference 捕获、webhook 模式回归不变、`sendMode`/`urgent` 校验矩阵（urgent 只能 app 模式、receivers 非空唯一、appRef 必须存在）。
 - 应用资源测试：CRUD、凭证测试、被引用时拒删、TOML/JSON 往返（含 secret 环境变量引用）与无新块的旧文档导入。
 - oRPC 边界测试：新过程的 dashboard 鉴权覆盖与领域错误映射。先例是 `server-orpc-auth.test.ts`、`errors.test.ts`。
@@ -96,8 +96,8 @@ Vane 的投递能"通知"，但不能"叫醒"。告警进入飞书群或邮箱�
 
 ## Further Notes
 
-- 实现前必须完成一次真实飞书 spike（见 ADR 0009 步骤 0）：凭证换 `tenant_access_token`；应用向群发卡片并拿到 `message_id`；对群内接收人执行 `urgent_phone` 真实响铃；记录配额/计费错误码；若群卡片加急不可行，确认单聊回退路径。spike 结论回写 ADR。
-- 电话加急是飞书的有配额/计费能力，且需要自建应用开通对应权限；部署文档需要说明这一前置条件。
+- 门槛核实（见 ADR 0009 步骤 0）已按官方接口文档 + Go/Node SDK 源码完成：凭证换 token 与缓存语义、应用向群发卡片拿 `message_id`、群卡片加急的请求形状与前置条件、错误码可否重试分类、部分成功语义，均已回写 ADR 并据此修正实现。仍需真实企业租户验证的是：端到端真实响铃、响铃时长与无人接听时的行为、发消息 `uuid` 去重键在重复请求时的响应语义（v1 因此不使用该字段）。
+- 电话加急是飞书的有配额/计费能力（管理后台 > 费用中心 > 权益数据 > 短信/电话加急），且需要自建应用开通机器人能力与 `im:message.urgent:phone` 权限、接收人在应用可用范围内、群允许该机器人发起加急；README「飞书加急部署前提」与目标表单提示已写明这些前置条件。单次呼叫的接收人上限 200（Vane 一条 ping 一个接收人，正常运维不会触顶，但保存配置时按平台上限校验）。
 - 一个 destination 引用一个应用；应用必须对接收人所在租户可用。
 - 状态机保留 `scheduled` / `suppressed`，使后续"没人确认就升级 / 确认后抑制"能无迁移落地。
 - 本版对 2026-10-08 的初版设计做了修订：初版是"独立加急策略实体 + 单聊载体"，修订为"应用资源 + 通知目标配置 + 投递级动作"。修订理由与被替换方案记录在 ADR 0009 的「不采用的替代方案」。

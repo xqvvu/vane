@@ -20,17 +20,21 @@ Vane 的 MVP 约束不变：单进程、SQLite-first、server-only 后端运行�
 
 `apps/console/src/server/runtime/container.ts` 是默认 server-only wiring object。它直接 import Better Auth、env、SQLite connection/store 和默认 registry，因此保留 `import "@tanstack/react-start/server-only";`。
 
-默认 container 使用 ESM module cache 做懒加载：第一次调用 `getApplicationContainer()` 时创建，后续在同一个 server module 实例内复用。不要把 container 挂到 `globalThis`。如果开发模式 HMR 或测试需要释放默认实例，调用 `disposeApplicationContainer()`；它会停止 delivery worker runner，并关闭已打开的 SQLite store / Better Auth database。
+默认 container 使用 ESM module cache 做懒加载：第一次调用 `getApplicationContainer()` 时创建，后续在同一个 server module 实例内复用。不要把 container 挂到 `globalThis`。如果开发模式 HMR 或测试需要释放默认实例，调用 `disposeApplicationContainer()`；它会停止 delivery 与 oncall worker runner，并关闭已打开的 SQLite store / Better Auth database。
 
 | 依赖                   | 生命周期                | 说明                                                                                                                                                                                                                                        |
 | ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SqliteStore`          | 默认 container 内懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、Settings 等仓储。                                                                                                           |
+| `SqliteStore`          | 默认 container 内懒加载 | 默认使用 `env.VANE_DATABASE_PATH`，应用显式 migrations。承载 Sources、Routes、Destinations、Events、Deliveries、Feishu Apps、Oncall、Settings 等仓储。                                                                                       |
 | `ProviderRegistry`     | 默认 container 内懒加载 | 默认来自 `createDefaultProviderRegistry()`，用于把 Source payload 解析为 normalized Event。                                                                                                                                                 |
 | `DestinationRegistry`  | 默认 container 内懒加载 | 默认来自 `createDefaultDestinationRegistry()`，用于校验 Destination config、preview 和 send。                                                                                                                                               |
+| `UrgencyRegistry`      | 默认 container 内单例   | 默认来自 `createDefaultUrgencyRegistry()`，注册 `feishu_urgent_phone` 渠道。它是 destination registry 的并列家族（呼叫而不是通知）；渠道实例按凭证缓存 `tenant_access_token`，所以必须进程内单例，不能按请求新建。                            |
 | Better Auth database   | 默认 container 内懒加载 | 使用与 SQLite store 同一套 Kysely-first connection/migration 入口。Better Auth 拥有 auth 表读写，Vane 不把 auth 表包装成业务 repository。                                                                                                   |
 | `AuthServer`             | 默认 container 内懒加载 | Better Auth server runtime，通过 Kysely SQLite adapter 配置连接数据库，包含 HTTP handler 与 `api.getSession(...)`。                                                                                                                         |
 | `DeliveryWorkerRunner` | 默认 container 内单例   | 由 `DeliveryWorker` + store + destination registry + env worker 配置组装，维持 MVP 的 in-process SQLite-backed delivery worker。                                                                                                            |
-| service factory        | 每次调用新建            | `createSourceService()`、`createDestinationService()`、`createRouteService()`、`createAppSettingsService()`、`createConfigPortabilityService()`、`createWebhookIntakeService()`、`createDeliveryWorker()` 返回显式注入依赖的 service 实例。 |
+| `OncallWorkerRunner`   | 默认 container 内单例   | 由 `OncallWorker` + store + `UrgencyRegistry` + `DestinationConfigResolver` 组装，复用 `createDeliveryWorkerRunner`（它对队列形状无感知），维持加急队列的 in-process 轮询。                                                                 |
+| service factory        | 每次调用新建            | `createSourceService()`、`createDestinationService()`、`createRouteService()`、`createFeishuAppService()`、`createAppSettingsService()`、`createConfigPortabilityService()`、`createWebhookIntakeService()`、`createDeliveryWorker()`、`createOncallService()`、`createOncallWorker()` 返回显式注入依赖的 service 实例。 |
+
+加急切片的接线要点：`createDeliveryWorker()` 在成功分支注入窄接口 `triggerPings`（由 `OncallService.triggerPingsForDelivery` 提供）；该依赖缺省时投递行为与加急之前完全一致，触发内部抛错也只记日志，不会把已成功的投递改判失败。`DestinationConfigResolver`（`server/integrations/destination-config-resolver.ts`）在投递发送、目标测试、加急执行三条路径上按 `app.appRef` 解析应用凭证后再交给 adapter，secret 不落库、不进 DTO。
 
 当前目录形状：
 
@@ -54,6 +58,7 @@ apps/console/src/server/
       destinations/router.ts
       health/router.ts
       i18n/router.ts
+      integrations/router.ts
       operations/router.ts
       portability/router.ts
       routes/router.ts
@@ -71,6 +76,13 @@ apps/console/src/server/
   sources/source.service.ts
   destinations/destination.service.ts
   routes/route.service.ts
+  integrations/
+    feishu-app.service.ts
+    destination-config-resolver.ts
+  oncall/
+    oncall.service.ts
+    oncall-execution.ts
+    oncall-worker.service.ts
   operations/event-replay.service.ts
   intake/
     intake.service.ts
@@ -168,6 +180,8 @@ const worker = await context.dashboardRequest.container.createDeliveryWorker();
 
 return worker.runOnce({ limit });
 ```
+
+Oncall worker（`server/oncall/oncall-worker.service.ts`）与 delivery worker 同形状：`ensureOncallWorkerRunner()` 复用同一个 `createDeliveryWorkerRunner` 工厂（它只依赖 `runOnce()` 与 health snapshot，对队列无感知），`oncall` runner 与 delivery runner 在 container 里并列、各自独立 interval，dispose 时一起停止。它也照抄 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`。加急的 run-once 入口是 `operations.buzzDelivery` 之后的 best-effort `dispatchNow`，失败只记日志并交由 runner 重试。
 
 ### Logging Runtime
 

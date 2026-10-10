@@ -10,7 +10,7 @@ repository 分层、事务边界，以及 Better Auth schema 的生成/落库方
 
 ## 1. 概述
 
-SQLite 层是 Vane 的持久化适配器。对外暴露一个 `SqliteStore`，内部由 7 个 repository
+SQLite 层是 Vane 的持久化适配器。对外暴露一个 `SqliteStore`，内部由 9 个 repository
 组成：
 
 - `sources`
@@ -18,6 +18,8 @@ SQLite 层是 Vane 的持久化适配器。对外暴露一个 `SqliteStore`，�
 - `routes`
 - `intake`
 - `deliveries`
+- `feishuApps`
+- `oncall`
 - `history`
 - `settings`
 
@@ -66,8 +68,8 @@ apps/console/src/infra/sqlite/
   migrate.ts                    # 兼容导出，转发到 migrate/
   migrate/                      # MVP baseline schema plan
     0001_initial_schema.ts      # 当前完整 baseline，编排下列 builder
-    vane-schema.ts              # Vane 业务表和索引
-    better-auth-schema.ts       # Better Auth 表和索引的 Kysely builder
+    schema.ts                   # Vane 业务表和索引
+    better-auth.schema.ts       # Better Auth 表和索引的 Kysely builder
     better-auth.generated.sql   # Better Auth CLI 生成的 schema 参考
     index.ts                    # public migration API
     runner.ts                   # schema plan runner、ledger 和校验
@@ -86,6 +88,8 @@ apps/console/src/infra/sqlite/
     route/
     intake/
     delivery/
+    feishu-app/
+    oncall/
     history/
     settings/
 ```
@@ -134,6 +138,9 @@ export interface SqliteDatabaseSchema {
   deliveries: DeliveriesTable;
   delivery_attempts: DeliveryAttemptsTable;
   delivery_dedupe_keys: DeliveryDedupeKeysTable;
+  feishu_apps: FeishuAppsTable;
+  oncall_pings: OncallPingsTable;
+  oncall_ping_dedupe_keys: OncallPingDedupeKeysTable;
   settings: SettingsTable;
   schema_migrations: SchemaMigrationsTable;
   user: BetterAuthUserTable;
@@ -155,6 +162,9 @@ export type SqliteExecutor = SqliteKysely | SqliteTransaction;
 - `EventsTable.status: AlertStatus`
 - `DeliveriesTable.state: DeliveryJob["state"]`
 - `DeliveryAttemptsTable.state: DeliveryAttempt["state"]`
+- `OncallPingsTable.state/trigger` 直接取 `OncallPing` 的同名字段，枚举由 CHECK 约束兜住
+- `feishu_apps.app_secret` 与 `oncall_pings.last_error` 都是服务端-only 文本：secret 不进 DTO/导出
+  明文，错误文本在写入前统一过 `redactText()`
 
 SQLite 没有原生 boolean，因此使用 `SqliteBoolean = 0 | 1`。JSON 列在 SQLite 里是
 TEXT，因此使用 `SqliteJsonText = string`。
@@ -178,6 +188,8 @@ export interface OpenSqliteStoreOptions {
     event: () => string;
     delivery: () => string;
     attempt: () => string;
+    feishuApp: () => string;
+    oncallPing: () => string;
   }>;
 }
 
@@ -210,13 +222,27 @@ export interface SqliteStoreUnitOfWork {
   readonly routes: RouteRepository;
   readonly intake: IntakeRepository;
   readonly deliveries: DeliveryRepository;
+  readonly feishuApps: FeishuAppRepository;
+  readonly oncall: OncallRepository;
   readonly history: HistoryRepository;
   readonly settings: SettingsRepository;
 }
 ```
 
 `createSqliteRepositories(context)` 按依赖顺序实例化 repository。`deliveries` 需要
-sources/destinations/routes/intake；`history` 需要 sources/intake/routes/deliveries。
+sources/destinations/routes/intake/oncall；`oncall` 需要 destinations/intake（认领 ping 时把目标运行
+时配置与事件一起带出）；`history` 需要 sources/intake/routes/deliveries。
+
+加急队列的两个仓储是 ping 状态机的唯一持有者：
+
+- `oncall.enqueueForDelivery()` 在一个事务里写 `oncall_pings` 与 `oncall_ping_dedupe_keys`，
+  命中 `(fingerprint, destination_id, receiver)` 的窗口内已存在键时返回 `null`（被抑制的 ping 不落库）。
+  过期键在同一次调用里先清理，因此不需要额外的清理 job。
+- `claimNext()` / `reclaimStaleRunning()` / `markFired()` / `markFailed()` 与 delivery 侧一一对应，
+  状态推进只作用于 ping 自己；`provider_ref_type / provider_ref_value` 记录被加急的那条消息，
+  由 delivery 的 provider reference 复制而来。
+- 级联：`oncall_pings.delivery_id` 随 delivery 级联删除，`oncall_ping_dedupe_keys.first_ping_id` 随
+  ping 级联删除，因此删除 source/route/delivery 不会留下悬空加急记录。
 
 ---
 
