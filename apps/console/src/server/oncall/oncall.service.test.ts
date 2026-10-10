@@ -79,6 +79,33 @@ describe("oncall auto paging trigger", () => {
     expect(detail?.pings[0]?.state).toBe("scheduled");
   });
 
+  it("does not page again when the alert card itself is re-delivered inside the window", async () => {
+    // The "card retry must not duplicate pings" contract: a retried delivery
+    // posts a *new* message and triggers the paging hook again with a different
+    // provider reference, and the receiver must still be called only once.
+    const store = await openSqliteStore({ databasePath: ":memory:", now: () => now });
+    const { delivery } = await seedDelivery(store);
+    const service = new OncallService({ store });
+
+    await service.triggerPingsForDelivery({
+      delivery,
+      providerReference: messageReference,
+      now,
+    });
+
+    const retryAt = "2026-10-09T08:01:00.000Z";
+    await service.triggerPingsForDelivery({
+      delivery,
+      providerReference: { type: "feishu_message_id", value: "om_retry" },
+      now: retryAt,
+    });
+
+    const pings = await store.oncall.listForDelivery(delivery.job.id);
+
+    expect(pings).toHaveLength(2);
+    expect(pings.map((ping) => ping.providerReference?.value)).toEqual(["om_123", "om_123"]);
+  });
+
   it("enqueues nothing for webhook mode, non-firing alerts, severity misses, disabled auto paging, and other kinds", async () => {
     const cases: Array<{
       name: string;

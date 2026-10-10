@@ -123,6 +123,46 @@ describe("oncall worker", () => {
     expect(ping).toMatchObject({ state: "scheduled", attemptCount: 1 });
     expect(ping?.nextAttemptAt).toBe("2026-10-09T09:00:00.000Z");
   });
+
+  it("stops a page the platform can never serve and keeps the operator hint", async () => {
+    // Quota/permission rejections are documented as permanent for the same
+    // request, so the ping must go failed on the first attempt, not burn calls.
+    const store = await createStore();
+    const deliveryId = await seedPing(store);
+    let pings = 0;
+    const urgency = {
+      async ping() {
+        pings += 1;
+
+        return {
+          ok: false,
+          errorKind: "target_rejected",
+          retryHint: "not_retryable",
+          errorMessage:
+            "Feishu returned code 230024: Reach the upper limit of urgent message. Fix: ask the Feishu administrator about 加急额度",
+          statusCode: 200,
+          responseBody: null,
+        } as const;
+      },
+    } satisfies Pick<UrgencyRegistry, "ping">;
+    const worker = new OncallWorker({
+      store,
+      urgency,
+      now: () => now,
+      resolveDestinationConfig: resolveAppCredentials,
+    });
+
+    const result = await worker.runOnce();
+
+    expect(result).toMatchObject({ claimed: 1, succeeded: 0, failed: 1, retrying: 0 });
+    expect(pings).toBe(1);
+
+    const [ping] = await store.oncall.listForDelivery(deliveryId);
+
+    expect(ping).toMatchObject({ state: "failed", attemptCount: 1, nextAttemptAt: null });
+    expect(ping?.lastError).toContain("230024");
+    expect((await store.deliveries.get(deliveryId))?.job.state).toBe("pending");
+  });
 });
 
 const resolveAppCredentials: DestinationConfigResolver = async ({ config }) => ({
