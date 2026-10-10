@@ -44,6 +44,13 @@ Console 内的业务模块直接使用 LogTape 原生分类 logger，不新增 `
 `server/runtime/request-context.ts` 仍负责 dashboard/webhook 的认证上下文，只读取 middleware 已校验
 或生成的 request ID。Source Token、额外共享密钥、raw headers 不进入 LogTape context。
 
+oRPC procedure 层由 `server/orpc/procedure-logging.ts`（挂在根 `os` 最外层）补充 HTTP 层看不到的
+信息：procedure path、翻译后的 `ORPCError.code` 和 procedure 耗时。它只记录失败——成功的浏览器
+调用已经有 `vane.http` 访问日志（procedure 路径就在 URL 尾部），而 SSR 进程内调用
+（`createRouterClient`）不经过 HTTP handler，失败时原本完全没有日志。由于 `withContext()` 包住
+整个请求调用链（含 SSR 分支），这些记录自动带上同一个 `requestId`，与 HTTP 行可以关联。
+Severity 跟随错误映射的 HTTP status：4xx 记 `warning`，5xx 与未翻译故障记 `error`。
+
 ## Category 与 Level
 
 当前 category：
@@ -52,6 +59,7 @@ Console 内的业务模块直接使用 LogTape 原生分类 logger，不新增 `
 | ---------------------- | --------------------------------------------------------- |
 | `vane.runtime`         | 日志运行时启动、系统信息等进程级事实。                    |
 | `vane.http`            | HTTP 请求完成、失败、status 和 duration。                 |
+| `vane.orpc`            | oRPC procedure 失败：procedure path、oRPC code、耗时。    |
 | `vane.intake`          | Webhook 接入接受/拒绝、parser failure、Event 与投递计数。 |
 | `vane.delivery`        | 单次 Delivery 成功、失败、重试和 destination 稳定结果。   |
 | `vane.worker.delivery` | 后台 delivery worker 批次摘要和基础设施失败。             |

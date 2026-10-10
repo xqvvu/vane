@@ -27,6 +27,6 @@
   },
   "devDependencies": {
     "typescript": "catalog:toolchain",
-    "vite-plus": "catalog:toolchain"
+    "vite-plus": "catalog:"
   }
 }

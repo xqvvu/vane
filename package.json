@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-router": "^1.162.0",
-    "vite": "catalog:toolchain",
-    "vite-plus": "catalog:toolchain"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@12.10.1"
 }
