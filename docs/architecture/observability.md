@@ -55,6 +55,8 @@ Console 内的业务模块直接使用 LogTape 原生分类 logger，不新增 `
 | `vane.intake`          | Webhook 接入接受/拒绝、parser failure、Event 与投递计数。 |
 | `vane.delivery`        | 单次 Delivery 成功、失败、重试和 destination 稳定结果。   |
 | `vane.worker.delivery` | 后台 delivery worker 批次摘要和基础设施失败。             |
+| `vane.oncall`          | 加急呼叫（ping）触发、入队、派发、fired/failed 与退避重试；含平台错误码与运维提示。 |
+| `vane.worker.oncall`   | 后台加急 worker 批次摘要和基础设施失败。                  |
 
 Level 约定：
 
@@ -79,12 +81,19 @@ development 使用 ANSI 文本。
 - provider、destination kind、failure reason、error kind、retry hint。
 - route/delivery/worker 数量、HTTP status、duration、attempt number。
 - 已通过 `redactText()` 处理的稳定错误消息。
+- ping id、被加急消息的 provider reference 类型、加急渠道 kind、trigger（`auto` / `manual`）。
+- 事件 severity / status（用于回答"这条告警为什么没打电话"）。
+- 呼叫对象 id（`open_id` / `user_id` / `union_id` 这类运维标识符）与操作者 user id：它们是排障所需的
+  "谁被叫了、谁叫的"，不是 secret，与 destination 操作摘要里的接收人同一口径。
 
 禁止记录：
 
 - authorization、cookie、Source Token、额外共享密钥、session token。
 - raw headers、raw payload、normalized message 全文。
 - Source/Destination config、secret refs、webhook URL、SMTP password、signing secret。
+- 飞书应用凭证（`app_id` / `app_secret`）与 `tenant_access_token`：加急与发送路径都只把它们交给
+  adapter，调用点不得记 log；adapter 的结构化结果里也只允许出现平台错误码和已过 `redactText()` 的
+  消息文本。
 - rendered payload、destination response body、完整 request URL/query。
 - raw `Error` 对象、stack 和 cause。
 
