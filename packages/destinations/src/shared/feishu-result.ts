@@ -19,6 +19,58 @@ export function feishuCode(result: JsonObject): string {
 }
 
 /**
+ * Numeric business code of a Feishu response, or `null` when it is absent or unparseable.
+ *
+ * The platform mixes numeric codes (`230001`) and, on older endpoints, string
+ * status codes, so callers classify through this reader instead of trusting one shape.
+ */
+export function feishuBusinessCode(result: JsonObject | null): number | null {
+  if (!result) {
+    return null;
+  }
+
+  const code = result.code ?? result.StatusCode;
+
+  if (typeof code === "number" && Number.isFinite(code)) {
+    return code;
+  }
+
+  if (typeof code === "string" && code.trim() !== "" && Number.isFinite(Number(code))) {
+    return Number(code);
+  }
+
+  return null;
+}
+
+/**
+ * The receiver ids a Feishu urgent call silently skipped.
+ *
+ * Documented behaviour of `urgent_phone` / `urgent_sms` / `urgent_app`: when
+ * *some* of the ids are invalid the call still succeeds (`code: 0`) and the
+ * invalid ones come back in `data.invalid_user_id_list`. Without this reader a
+ * paging queue would record a call that never happened.
+ */
+export function feishuInvalidUserIds(result: JsonObject | null): string[] {
+  if (!result) {
+    return [];
+  }
+
+  const data = result.data;
+
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return [];
+  }
+
+  const list = (data as JsonObject).invalid_user_id_list;
+
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  return list.filter((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+/**
  * Builds a readable message for a Feishu business rejection (`code !== 0`).
  *
  * Shared by the token client and the urgent phone client so platform
