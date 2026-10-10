@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { fetchFeishuTenantAccessToken } from "#destinations/shared/feishu-app-client";
+import { feishuTokenIsInvalid } from "#destinations/shared/feishu-errors";
 import type { DestinationTransportContext } from "#destinations/types";
 import { callFeishuUrgentPhone } from "#destinations/urgency/feishu-urgent/client";
 import {
@@ -28,6 +29,11 @@ type FailedPing = Extract<UrgencyPingResult, { ok: false }>;
  * app-sent message. The token is cached per credential pair on the adapter
  * instance — the registry owns one instance for the process — so a call storm
  * does not hammer the token endpoint.
+ *
+ * A call that fails because the *cached* token is no longer accepted
+ * (99991661 / 99991663 / 99991665) is retried once with a freshly minted token:
+ * the platform can invalidate a token before its stated expiry, and paging a
+ * critical alert is not something to leave broken until the local TTL runs out.
  */
 export function createFeishuUrgentPhoneAdapter(): UrgencyChannelAdapter<"feishu_urgent_phone"> {
   const tenantTokens = new Map<string, CachedTenantToken>();
@@ -49,9 +55,33 @@ export function createFeishuUrgentPhoneAdapter(): UrgencyChannelAdapter<"feishu_
         return token;
       }
 
-      return callFeishuUrgentPhone(
+      const call = await callFeishuUrgentPhone(
         {
           tenantAccessToken: token.tenantAccessToken,
+          messageId,
+          receivers,
+          userIdType,
+        },
+        context,
+      );
+
+      if (call.ok || !token.reused || !feishuTokenIsInvalid(call.code ?? null)) {
+        return call;
+      }
+
+      // A cached token the platform has already rejected: drop it, mint a new
+      // one, and place the call again. Only the cached path retries, so a
+      // genuinely bad credential still costs a single round trip.
+      tenantTokens.delete(token.cacheKey);
+      const refreshed = await resolveTenantToken(app, tenantTokens, context, { force: true });
+
+      if (!refreshed.ok) {
+        return refreshed;
+      }
+
+      return callFeishuUrgentPhone(
+        {
+          tenantAccessToken: refreshed.tenantAccessToken,
           messageId,
           receivers,
           userIdType,
@@ -66,14 +96,17 @@ async function resolveTenantToken(
   app: { appId: string; appSecret: string },
   cache: Map<string, CachedTenantToken>,
   context: DestinationTransportContext | undefined,
-): Promise<{ ok: true; tenantAccessToken: string } | FailedPing> {
+  options: { force?: boolean } = {},
+): Promise<
+  { ok: true; tenantAccessToken: string; reused: boolean; cacheKey: string } | FailedPing
+> {
   const { now } = Adapter.getTransportContext(context);
   const cacheKey = `${app.appId}\u0000${app.appSecret}`;
   const cached = cache.get(cacheKey);
   const nowMs = now().valueOf();
 
-  if (cached && cached.expiresAtMs - TOKEN_REFRESH_SKEW_MS > nowMs) {
-    return { ok: true, tenantAccessToken: cached.token };
+  if (!options.force && cached && cached.expiresAtMs - TOKEN_REFRESH_SKEW_MS > nowMs) {
+    return { ok: true, tenantAccessToken: cached.token, reused: true, cacheKey };
   }
 
   const result = await fetchFeishuTenantAccessToken(
@@ -90,7 +123,12 @@ async function resolveTenantToken(
     expiresAtMs: nowMs + result.expiresInSeconds * 1000,
   });
 
-  return { ok: true, tenantAccessToken: result.tenantAccessToken };
+  return {
+    ok: true,
+    tenantAccessToken: result.tenantAccessToken,
+    reused: false,
+    cacheKey,
+  };
 }
 
 function invalidPingResult(error: z.ZodError): FailedPing {

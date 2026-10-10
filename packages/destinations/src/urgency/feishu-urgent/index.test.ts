@@ -38,20 +38,82 @@ describe("feishu urgent phone channel", () => {
     expect(calls[0]?.init).toMatchObject({
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
       },
       body: JSON.stringify({ app_id: "cli_sre", app_secret: "secret-1" }),
     });
     expect(calls[1]?.init).toMatchObject({
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         Authorization: "Bearer t-1",
       },
-      body: JSON.stringify({ urgent_receivers: { user_id_list: ["ou_1", "ou_2"] } }),
+      // Documented body of the endpoint: a flat `user_id_list`, not wrapped in
+      // `urgent_receivers` (that name is the SDK's body *model* type).
+      body: JSON.stringify({ user_id_list: ["ou_1", "ou_2"] }),
     });
   });
 
+  it.each([
+    ["user_id", "user_id_type=user_id"],
+    ["union_id", "user_id_type=union_id"],
+  ] as const)("sends the configured %s id type", async (userIdType, query) => {
+    const { calls, fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 0 }),
+    ]);
+
+    await createFeishuUrgentPhoneAdapter().ping({ ...pingInput, userIdType }, { fetch });
+
+    expect(calls[1]?.url).toContain(query);
+  });
+
+  it("records a page that the platform silently skipped as a non-retryable rejection", async () => {
+    // Documented partial success: code 0 plus the ids it did not call. Vane
+    // pings one receiver per record, so this receiver never rang.
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 0, msg: "success", data: { invalid_user_id_list: ["ou_1"] } }),
+    ]);
+
+    const result = await createFeishuUrgentPhoneAdapter().ping(pingInput, { fetch });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "not_retryable",
+      statusCode: 200,
+    });
+    expect(result.ok ? "" : result.errorMessage).toContain("ou_1");
+    expect(result.ok ? "" : result.errorMessage).not.toContain("ou_2");
+  });
+
+  it("treats any skipped receiver on a single-receiver page as a failed call", async () => {
+    // The platform echoes the invalid id back; when it does not match the shape
+    // we sent (e.g. an internal user id), a one-receiver page still did not ring.
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({
+        code: 0,
+        msg: "success",
+        data: { invalid_user_id_list: ["2921304923074478100"] },
+      }),
+    ]);
+
+    const result = await createFeishuUrgentPhoneAdapter().ping(
+      { ...pingInput, receivers: ["ou_1"] },
+      {
+        fetch,
+      },
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "not_retryable",
+    });
+    expect(result.ok ? "" : result.errorMessage).toContain("2921304923074478100");
+  });
   it("reuses the tenant token until it is close to expiry", async () => {
     const { calls, fetch } = createRecordingFetch([
       jsonResponse(tokenResponse),
@@ -79,10 +141,10 @@ describe("feishu urgent phone channel", () => {
     ]);
   });
 
-  it("maps Feishu business rejections to non-retryable failures", async () => {
+  it("maps Feishu configuration rejections to non-retryable failures with operator guidance", async () => {
     const { fetch } = createRecordingFetch([
       jsonResponse(tokenResponse),
-      jsonResponse({ code: 99991672, msg: "permission denied" }),
+      jsonResponse({ code: 230002, msg: "The bot can not be outside the group." }),
     ]);
     const adapter = createFeishuUrgentPhoneAdapter();
 
@@ -94,9 +156,27 @@ describe("feishu urgent phone channel", () => {
       retryHint: "not_retryable",
       statusCode: 200,
     });
-    expect(result.ok ? "" : result.errorMessage).toContain("99991672");
-    expect(result.ok ? "" : result.errorMessage).toContain("permission denied");
+    expect(result.ok ? "" : result.errorMessage).toContain("230002");
+    expect(result.ok ? "" : result.errorMessage).toContain("bot to the target group");
     expect(JSON.stringify(result)).not.toContain("secret-1");
+  });
+
+  it.each([
+    [99991400, "request trigger frequency limit"],
+    [230023, "The user has too many unread urgent messages."],
+  ])("keeps transient platform code %s retryable", async (code, msg) => {
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code, msg }),
+    ]);
+
+    const result = await createFeishuUrgentPhoneAdapter().ping(pingInput, { fetch });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "retryable",
+    });
   });
 
   it("keeps HTTP and transport failures retryable", async () => {
@@ -131,6 +211,30 @@ describe("feishu urgent phone channel", () => {
     expect(brokenResult.ok ? "" : brokenResult.errorMessage).toContain("socket hang up");
   });
 
+  it("replaces a cached token the platform no longer accepts and calls once more", async () => {
+    const { calls, fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 0, msg: "success" }),
+      jsonResponse({ code: 99991663, msg: "Invalid access token for authorization." }),
+      jsonResponse({ ...tokenResponse, tenant_access_token: "t-2" }),
+      jsonResponse({ code: 0, msg: "success" }),
+    ]);
+    const adapter = createFeishuUrgentPhoneAdapter();
+    const context = { fetch, now: () => new Date("2026-10-09T00:00:00.000Z") };
+
+    // Primes the token cache.
+    await adapter.ping(pingInput, context);
+
+    // The cached token has been invalidated platform-side: retry with a fresh one.
+    const retried = await adapter.ping(pingInput, context);
+
+    expect(retried).toMatchObject({ ok: true });
+    expect(calls).toHaveLength(5);
+    expect(calls[2]?.init?.headers).toMatchObject({ Authorization: "Bearer t-1" });
+    expect(calls[4]?.init?.headers).toMatchObject({ Authorization: "Bearer t-2" });
+    expect(calls[3]?.url).toBe(TOKEN_URL);
+  });
+
   it("fails with the token error when the credential is rejected", async () => {
     const { calls, fetch } = createRecordingFetch([
       jsonResponse({ code: 10003, msg: "invalid param" }),
@@ -146,6 +250,23 @@ describe("feishu urgent phone channel", () => {
     });
     expect(result.ok ? "" : result.errorMessage).toContain("10003");
     expect(calls).toHaveLength(1);
+  });
+
+  it("treats a token response without `expire` as a short-lived token instead of an expired one", async () => {
+    const { calls, fetch } = createRecordingFetch([
+      jsonResponse({ code: 0, msg: "ok", tenant_access_token: "t-1" }),
+      jsonResponse({ code: 0 }),
+      jsonResponse({ code: 0 }),
+    ]);
+    const adapter = createFeishuUrgentPhoneAdapter();
+    let clock = new Date("2026-10-09T00:00:00.000Z");
+    const context = { fetch, now: () => clock };
+
+    await adapter.ping(pingInput, context);
+    clock = new Date("2026-10-09T00:02:00.000Z");
+    await adapter.ping(pingInput, context);
+
+    expect(calls.map((call) => call.url)).toEqual([TOKEN_URL, URGENT_URL, URGENT_URL]);
   });
 
   it("rejects invalid requests before any network call", async () => {

@@ -1,5 +1,12 @@
 import { FEISHU_MESSAGES_URL } from "#destinations/shared/feishu-endpoints";
-import { feishuFailureMessage, parseFeishuResult } from "#destinations/shared/feishu-result";
+import { feishuErrorDecision, withOperatorHint } from "#destinations/shared/feishu-errors";
+import { FEISHU_JSON_CONTENT_TYPE } from "#destinations/shared/feishu-protocol";
+import {
+  feishuBusinessCode,
+  feishuFailureMessage,
+  feishuInvalidUserIds,
+  parseFeishuResult,
+} from "#destinations/shared/feishu-result";
 import type {
   DestinationErrorKind,
   DestinationRetryHint,
@@ -23,16 +30,24 @@ export type FeishuUrgentPhoneCallResult =
       errorMessage: string;
       statusCode: number | null;
       responseBody: string | null;
+      /** Business code of the rejection, when the platform sent one; callers use it to classify. */
+      code?: number | null;
     };
 
 /**
  * Asks Feishu to urgent-call the receivers about an existing message
  * (`PATCH /open-apis/im/v1/messages/:message_id/urgent_phone`).
  *
- * The message must be one the app itself sent; the platform rejects the call
- * otherwise. Business rejections (quota, permission, invalid receivers) are
- * non-retryable — retrying the same call cannot succeed — while transport and
- * HTTP-level failures keep the standard retry hint.
+ * Request shape follows the endpoint doc and both official SDKs: the body is the
+ * flat `{ user_id_list }` object (the Go SDK's `UrgentReceivers` type is the
+ * body *model*, not a wrapper key) and `user_id_type` is a required query
+ * parameter whose values must match the id shape in that list.
+ *
+ * The message must be one the app itself sent, in a chat the bot belongs to;
+ * the platform rejects anything else. Retryability is decided by the platform
+ * code, not by HTTP status alone, because Feishu answers rate limits with a
+ * business code (99991400, HTTP 429 or on legacy endpoints 400) and answers
+ * configuration problems with a plain HTTP 400 that a retry can never fix.
  */
 export async function callFeishuUrgentPhone(
   input: FeishuUrgentPhoneCall,
@@ -45,36 +60,73 @@ export async function callFeishuUrgentPhone(
     const response = await fetch(url, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": FEISHU_JSON_CONTENT_TYPE,
         Authorization: `Bearer ${input.tenantAccessToken}`,
       },
-      body: JSON.stringify({ urgent_receivers: { user_id_list: input.receivers } }),
+      body: JSON.stringify({ user_id_list: input.receivers }),
     });
     const responseBody = await Send.readResponseBody(response);
     const result = parseFeishuResult(responseBody);
+    const code = feishuBusinessCode(result);
 
     if (!response.ok) {
+      const decision = feishuErrorDecision(code, response.status);
+
       return {
         ok: false,
         errorKind: "http_error",
-        retryHint: Send.httpStatusToRetryHint(response.status),
-        errorMessage: `Feishu returned HTTP ${response.status}`,
+        retryHint:
+          decision.retryHint === "retryable"
+            ? "retryable"
+            : Send.httpStatusToRetryHint(response.status),
+        errorMessage: withOperatorHint(
+          `Feishu returned HTTP ${response.status}${code === null ? "" : ` (code ${code})`}`,
+          decision.operatorHint,
+        ),
         statusCode: response.status,
         responseBody,
+        code,
       };
     }
 
-    if (!result || result.code !== 0) {
+    if (!result || code !== 0) {
+      const decision = feishuErrorDecision(code, response.status);
+
+      return {
+        ok: false,
+        errorKind: "target_rejected",
+        retryHint: decision.retryHint,
+        errorMessage: withOperatorHint(
+          feishuFailureMessage(result, "Feishu returned an unreadable urgent phone response"),
+          decision.operatorHint,
+        ),
+        statusCode: response.status,
+        responseBody,
+        code,
+      };
+    }
+
+    // Partial success is documented as `code: 0` plus the ids it skipped. Vane
+    // pages one receiver per ping, so any skipped id means this ping never rang
+    // and must not be recorded as fired. When more than one receiver is in the
+    // call, only a skipped id that belongs to this call's receivers is held
+    // against it (the platform echoes the id back, but the shape is not
+    // guaranteed, so a single-receiver call fails on any non-empty list).
+    const skipped = feishuInvalidUserIds(result);
+    const invalid = skipped.filter((id) => input.receivers.includes(id));
+
+    if (invalid.length > 0 || (input.receivers.length === 1 && skipped.length > 0)) {
       return {
         ok: false,
         errorKind: "target_rejected",
         retryHint: "not_retryable",
-        errorMessage: feishuFailureMessage(
-          result,
-          "Feishu returned an unreadable urgent phone response",
+        errorMessage: withOperatorHint(
+          `Feishu skipped these urgent receivers: ${(invalid.length > 0 ? invalid : skipped).join(", ")}`,
+          "The receiver must be a member of the chat the message was sent to, with an id matching the configured user id type",
         ),
         statusCode: response.status,
         responseBody,
+        code,
       };
     }
 
