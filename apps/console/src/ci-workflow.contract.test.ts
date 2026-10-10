@@ -55,7 +55,7 @@ describe("root CI workflow contract", () => {
     };
 
     expect(packageJson.packageManager).toMatch(/^pnpm@\d+\./);
-    expect(packageJson.devDependencies?.["vite-plus"]).toBe("catalog:toolchain");
+    expect(packageJson.devDependencies?.["vite-plus"]).toBe("catalog:");
     expect(packageJson.scripts?.test).toBe("vp run -r test");
     expect(packageJson.scripts?.build).toBe("vp run -r build");
     expect(packageJson.scripts?.ready).toBe("vp check && vp run -r test && vp run -r build");
