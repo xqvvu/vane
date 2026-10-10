@@ -129,11 +129,33 @@ describe("feishu app send mode", () => {
 
     expect(result).toMatchObject({
       ok: false,
-      errorKind: "http_error",
+      errorKind: "target_rejected",
       retryHint: "retryable",
       statusCode: 400,
     });
     expect(result.ok ? "" : result.errorMessage).toContain("99991400");
+  });
+
+  it("reports a documented HTTP 400 business rejection as a platform rejection", async () => {
+    // The endpoint error tables answer invalid chat, bot-not-in-group, missing
+    // scope, etc. with HTTP 400 plus a code. Labelling that an HTTP error would
+    // hide which platform rule the delivery tripped.
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 230002, msg: "The bot can not be outside the group." }, 400),
+    ]);
+
+    const result = await feishuSender.send(createInput({ sendMode: "app", app: appTarget }), {
+      fetch,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "not_retryable",
+      statusCode: 400,
+    });
+    expect(result.ok ? "" : result.errorMessage).toContain("bot to the target group");
   });
 
   it("explains a missing permission instead of failing opaquely", async () => {

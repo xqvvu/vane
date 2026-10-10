@@ -161,6 +161,27 @@ describe("feishu urgent phone channel", () => {
     expect(JSON.stringify(result)).not.toContain("secret-1");
   });
 
+  it("keeps the platform message when the endpoint answers a rejection with HTTP 400", async () => {
+    // Documented in the endpoint error table: bot-not-in-group and friends are
+    // HTTP 400 + code. That is a platform rejection, not a transport failure.
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 230052, msg: "Can not urgent this message." }, 400),
+    ]);
+
+    const result = await createFeishuUrgentPhoneAdapter().ping(pingInput, { fetch });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "not_retryable",
+      statusCode: 400,
+    });
+    expect(result.ok ? "" : result.errorMessage).toContain("Can not urgent this message.");
+    expect(result.ok ? "" : result.errorMessage).toContain("(HTTP 400)");
+    expect(result.ok ? "" : result.errorMessage).toContain("owner/admins");
+  });
+
   it.each([
     [99991400, "request trigger frequency limit"],
     [230023, "The user has too many unread urgent messages."],

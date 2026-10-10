@@ -11,12 +11,16 @@ import { FeishuConfigSchema } from "#destinations/feishu/schema";
 import type { FeishuConfig } from "#destinations/feishu/schema";
 import { fetchFeishuTenantAccessToken } from "#destinations/shared/feishu-app-client";
 import { FEISHU_MESSAGES_URL } from "#destinations/shared/feishu-endpoints";
-import { feishuErrorDecision, withOperatorHint } from "#destinations/shared/feishu-errors";
+import {
+  feishuErrorDecision,
+  feishuErrorKind,
+  withOperatorHint,
+} from "#destinations/shared/feishu-errors";
 import { FEISHU_JSON_CONTENT_TYPE } from "#destinations/shared/feishu-protocol";
 import {
-  feishuCode,
   feishuBusinessCode,
   feishuFailureMessage,
+  feishuFailureSummary,
   feishuMessageId,
   isFeishuSuccess,
   parseFeishuResult,
@@ -132,7 +136,7 @@ async function sendViaWebhook(
     }
 
     return R.fail({
-      errorKind: response.ok ? "target_rejected" : "http_error",
+      errorKind: feishuErrorKind(code),
       // The platform answers a rate-limited custom-bot send with a body-level
       // code (11232) and HTTP 200/400, so the code — not the status — decides
       // whether the card can be posted again.
@@ -144,7 +148,7 @@ async function sendViaWebhook(
             : Send.httpStatusToRetryHint(response.status),
       errorMessage: withOperatorHint(
         feishuResult
-          ? `Feishu returned code ${feishuCode(feishuResult)}`
+          ? feishuFailureSummary(feishuResult, response.status)
           : `Feishu webhook returned HTTP ${response.status}`,
         decision.operatorHint,
       ),
@@ -243,13 +247,13 @@ async function sendViaApp(
       const decision = feishuErrorDecision(code, response.status);
 
       return R.fail({
-        errorKind: "http_error",
+        errorKind: feishuErrorKind(code),
         retryHint:
           decision.retryHint === "retryable"
             ? "retryable"
             : Send.httpStatusToRetryHint(response.status),
         errorMessage: withOperatorHint(
-          `Feishu returned HTTP ${response.status}${code === null ? "" : ` (code ${code})`}`,
+          feishuFailureSummary(result, response.status),
           decision.operatorHint,
         ),
         statusCode: response.status,

@@ -1,9 +1,14 @@
 import { FEISHU_MESSAGES_URL } from "#destinations/shared/feishu-endpoints";
-import { feishuErrorDecision, withOperatorHint } from "#destinations/shared/feishu-errors";
+import {
+  feishuErrorDecision,
+  feishuErrorKind,
+  withOperatorHint,
+} from "#destinations/shared/feishu-errors";
 import { FEISHU_JSON_CONTENT_TYPE } from "#destinations/shared/feishu-protocol";
 import {
   feishuBusinessCode,
   feishuFailureMessage,
+  feishuFailureSummary,
   feishuInvalidUserIds,
   parseFeishuResult,
 } from "#destinations/shared/feishu-result";
@@ -74,13 +79,16 @@ export async function callFeishuUrgentPhone(
 
       return {
         ok: false,
-        errorKind: "http_error",
+        // Documented: the urgent endpoints answer every business rejection with
+        // HTTP 400 plus a code, so a code in the body means the platform refused
+        // the call rather than the transport failing.
+        errorKind: feishuErrorKind(code),
         retryHint:
           decision.retryHint === "retryable"
             ? "retryable"
             : Send.httpStatusToRetryHint(response.status),
         errorMessage: withOperatorHint(
-          `Feishu returned HTTP ${response.status}${code === null ? "" : ` (code ${code})`}`,
+          feishuFailureSummary(result, response.status),
           decision.operatorHint,
         ),
         statusCode: response.status,

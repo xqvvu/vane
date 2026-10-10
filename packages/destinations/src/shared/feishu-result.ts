@@ -13,11 +13,6 @@ export function isFeishuSuccess(result: JsonObject): boolean {
   return result.code === 0 || result.StatusCode === 0 || result.msg === "success";
 }
 
-export function feishuCode(result: JsonObject): string {
-  const code = result.code ?? result.StatusCode;
-  return typeof code === "string" || typeof code === "number" ? String(code) : "unknown";
-}
-
 /**
  * Numeric business code of a Feishu response, or `null` when it is absent or unparseable.
  *
@@ -68,6 +63,29 @@ export function feishuInvalidUserIds(result: JsonObject | null): string[] {
   }
 
   return list.filter((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+/**
+ * One readable summary for any failed Feishu response.
+ *
+ * The platform puts the actionable sentence in `msg`, so it must survive the
+ * failure text; the HTTP status is only appended when it is the part that
+ * failed, because most Feishu business rejections arrive as HTTP 400 (and the
+ * custom-bot webhook even answers them with HTTP 200 plus a body code).
+ */
+export function feishuFailureSummary(result: JsonObject | null, httpStatus: number): string {
+  const code = feishuBusinessCode(result);
+
+  if (code === null || code === 0) {
+    return `Feishu returned HTTP ${httpStatus}`;
+  }
+
+  const message =
+    result && typeof result.msg === "string" && result.msg.trim() ? result.msg.trim() : null;
+  const summary = `Feishu returned code ${code}${message ? `: ${message}` : ""}`;
+  const ok = httpStatus >= 200 && httpStatus < 300;
+
+  return ok ? summary : `${summary} (HTTP ${httpStatus})`;
 }
 
 /**

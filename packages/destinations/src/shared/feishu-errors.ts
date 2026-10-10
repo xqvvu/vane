@@ -10,7 +10,7 @@
  * transient (rate limit, too many unread urgent messages), so the HTTP status
  * alone cannot decide retryability.
  */
-import type { DestinationRetryHint } from "#destinations/types";
+import type { DestinationErrorKind, DestinationRetryHint } from "#destinations/types";
 
 export interface FeishuErrorDecision {
   retryHint: DestinationRetryHint;
@@ -57,6 +57,13 @@ const OPERATOR_HINTS: ReadonlyMap<number, string> = new Map([
   [
     99991663,
     "The tenant access token was rejected or has expired; re-check the app credential (凭证无效或已过期)",
+  ],
+  [
+    230001,
+    // Shared code: on the send endpoint it is any invalid parameter, on the
+    // urgent endpoints the documented trigger is that *every* receiver id was
+    // invalid. The hint names the paging case because that is the costly one.
+    "A request parameter was rejected; for urgent calls this means every receiver id was invalid — ids must match the configured user id type and every receiver must be in the chat (参数错误 / 接收人 ID 全部无效)",
   ],
   [230002, "Add the app's bot to the target group before paging or sending (机器人不在群内)"],
   [230006, "Enable the bot ability for this Feishu app (未开启机器人能力)"],
@@ -141,4 +148,21 @@ export function feishuTokenIsInvalid(code: number | null): code is number {
 /** Appends the operator guidance to a platform message without losing the code. */
 export function withOperatorHint(message: string, operatorHint: string | null): string {
   return operatorHint ? `${message}. Fix: ${operatorHint}` : message;
+}
+
+/**
+ * Whether a failed Feishu response is a *business rejection* or a plain HTTP failure.
+ *
+ * Every endpoint Vane calls documents the same shape: business rejections (invalid
+ * parameter, bot not in the group, missing scope, exhausted 加急额度, and even the
+ * rate limit on legacy endpoints) come back with a non-zero `code` in the body, and
+ * most of them are answered with HTTP 400. A gateway or transport failure carries no
+ * business code at all. So the code — not the status — tells the two apart: labelling
+ * a documented `400 + 230002` as an HTTP error hides the platform's answer behind the
+ * wrong `errorKind` in the delivery/ping logs. A body that cannot be parsed, and a body
+ * that claims success (`code === 0`) under a failing status, stay `http_error` — in
+ * both cases the status is the only thing that actually failed.
+ */
+export function feishuErrorKind(code: number | null): DestinationErrorKind {
+  return code === null || code === 0 ? "http_error" : "target_rejected";
 }

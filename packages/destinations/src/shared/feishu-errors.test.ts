@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { feishuErrorDecision, feishuTokenIsInvalid, withOperatorHint } from "./feishu-errors";
-import { feishuBusinessCode, feishuInvalidUserIds } from "./feishu-result";
+import {
+  feishuErrorDecision,
+  feishuErrorKind,
+  feishuTokenIsInvalid,
+  withOperatorHint,
+} from "./feishu-errors";
+import { feishuBusinessCode, feishuFailureSummary, feishuInvalidUserIds } from "./feishu-result";
 
 describe("feishu error classification", () => {
   it("treats the documented transient codes as retryable", () => {
@@ -31,6 +36,7 @@ describe("feishu error classification", () => {
 
   it("keeps configuration and quota rejections non-retryable and explains them", () => {
     const cases: Array<[number, string]> = [
+      [230001, "every receiver id was invalid"],
       [230002, "bot to the target group"],
       [230006, "bot ability"],
       [230012, "sent the message"],
@@ -81,6 +87,29 @@ describe("feishu error classification", () => {
     expect(feishuInvalidUserIds({ code: 0, data: {} })).toEqual([]);
     expect(feishuInvalidUserIds({ code: 0 })).toEqual([]);
     expect(feishuInvalidUserIds(null)).toEqual([]);
+  });
+
+  it("keeps the platform message in one failure summary", () => {
+    expect(
+      feishuFailureSummary({ code: 230002, msg: "The bot can not be outside the group." }, 400),
+    ).toBe("Feishu returned code 230002: The bot can not be outside the group. (HTTP 400)");
+    // A webhook rejection answered with HTTP 200 should not quote the status.
+    expect(feishuFailureSummary({ code: 11232, msg: "rate limited" }, 200)).toBe(
+      "Feishu returned code 11232: rate limited",
+    );
+    // No usable body code: the status is all the platform said.
+    expect(feishuFailureSummary(null, 502)).toBe("Feishu returned HTTP 502");
+    expect(feishuFailureSummary({ code: 0 }, 429)).toBe("Feishu returned HTTP 429");
+  });
+
+  it("labels a documented HTTP 400 business rejection as a platform rejection", () => {
+    // The endpoint error tables answer bot-not-in-group, missing scope, quota, etc.
+    // with HTTP 400 plus a code. Only a body without a business code (or one that
+    // claims success) means the transport/status itself failed.
+    expect(feishuErrorKind(230002)).toBe("target_rejected");
+    expect(feishuErrorKind(99991400)).toBe("target_rejected");
+    expect(feishuErrorKind(0)).toBe("http_error");
+    expect(feishuErrorKind(null)).toBe("http_error");
   });
 
   it("appends guidance without losing the platform message", () => {

@@ -1,9 +1,14 @@
 import { FEISHU_TENANT_ACCESS_TOKEN_URL } from "#destinations/shared/feishu-endpoints";
-import { feishuErrorDecision, withOperatorHint } from "#destinations/shared/feishu-errors";
+import {
+  feishuErrorDecision,
+  feishuErrorKind,
+  withOperatorHint,
+} from "#destinations/shared/feishu-errors";
 import { FEISHU_JSON_CONTENT_TYPE } from "#destinations/shared/feishu-protocol";
 import {
   feishuBusinessCode,
   feishuFailureMessage,
+  feishuFailureSummary,
   parseFeishuResult,
 } from "#destinations/shared/feishu-result";
 import type {
@@ -75,13 +80,13 @@ export async function fetchFeishuTenantAccessToken(
 
       return {
         ok: false,
-        errorKind: "http_error",
+        errorKind: feishuErrorKind(code),
         retryHint:
           decision.retryHint === "retryable"
             ? "retryable"
             : Send.httpStatusToRetryHint(response.status),
         errorMessage: withOperatorHint(
-          `Feishu returned HTTP ${response.status}${code === null ? "" : ` (code ${code})`}`,
+          feishuFailureSummary(result, response.status),
           decision.operatorHint,
         ),
         statusCode: response.status,
