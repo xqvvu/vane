@@ -1,6 +1,5 @@
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferenceHandlerPlugin } from "@orpc/openapi/plugins";
-import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import {
   CORSHandlerPlugin,
@@ -17,6 +16,13 @@ import { router } from "#/server/orpc/router";
  *
  * The RPC protocol is what makes `orpc.*.queryOptions()` / `mutationOptions()`
  * work from the client without generating a typed client per procedure.
+ *
+ * Procedure failures are logged through LogTape, not here: the root
+ * `procedureLogging()` middleware on `os` records translated codes with the
+ * request id and safe error properties, and transport-level faults (malformed
+ * bodies, unmatched procedures) surface as 4xx in the HTTP access log written
+ * by `middlewares/request-logging.middleware.ts`. A `console.error` interceptor
+ * would bypass redaction and correlation, so it is deliberately absent.
  */
 export const rpcHandler = new RPCHandler(router, {
   plugins: [
@@ -26,11 +32,6 @@ export const rpcHandler = new RPCHandler(router, {
     }),
     new RequestHeadersHandlerPlugin(),
     new ResponseHeadersHandlerPlugin(),
-  ],
-  interceptors: [
-    onError((error) => {
-      console.error("[oRPC Error]", error);
-    }),
   ],
 });
 
@@ -55,11 +56,6 @@ export const openAPIHandler = new OpenAPIHandler(router, {
       specPath: "/spec.json",
       docsPath: "/docs",
       docsTitle: "Vane API",
-    }),
-  ],
-  interceptors: [
-    onError((error) => {
-      console.error("[oRPC Error]", error);
     }),
   ],
 });

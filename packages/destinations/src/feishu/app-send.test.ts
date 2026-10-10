@@ -30,7 +30,7 @@ describe("feishu app send mode", () => {
     expect(calls[1]?.init).toMatchObject({
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         Authorization: "Bearer t-1",
       },
       body: JSON.stringify({
@@ -115,6 +115,64 @@ describe("feishu app send mode", () => {
     expect(result.ok ? "" : result.errorMessage).toContain("230002");
   });
 
+  it("keeps documented transient platform codes retryable so the card is posted later", async () => {
+    // The platform answers its rate limit with HTTP 400/429 plus code 99991400;
+    // a status-only classification would make the delivery permanently fatal.
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 99991400, msg: "request trigger frequency limit" }, 400),
+    ]);
+
+    const result = await feishuSender.send(createInput({ sendMode: "app", app: appTarget }), {
+      fetch,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "retryable",
+      statusCode: 400,
+    });
+    expect(result.ok ? "" : result.errorMessage).toContain("99991400");
+  });
+
+  it("reports a documented HTTP 400 business rejection as a platform rejection", async () => {
+    // The endpoint error tables answer invalid chat, bot-not-in-group, missing
+    // scope, etc. with HTTP 400 plus a code. Labelling that an HTTP error would
+    // hide which platform rule the delivery tripped.
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({ code: 230002, msg: "The bot can not be outside the group." }, 400),
+    ]);
+
+    const result = await feishuSender.send(createInput({ sendMode: "app", app: appTarget }), {
+      fetch,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "not_retryable",
+      statusCode: 400,
+    });
+    expect(result.ok ? "" : result.errorMessage).toContain("bot to the target group");
+  });
+
+  it("explains a missing permission instead of failing opaquely", async () => {
+    const { fetch } = createRecordingFetch([
+      jsonResponse(tokenResponse),
+      jsonResponse({
+        code: 99991672,
+        msg: "Access denied. One of the following scopes is required",
+      }),
+    ]);
+
+    const result = await feishuSender.send(createInput({ sendMode: "app", app: appTarget }), {
+      fetch,
+    });
+
+    expect(result.ok ? "" : result.errorMessage).toContain("im:message");
+  });
   it("keeps HTTP failures retryable", async () => {
     const { fetch } = createRecordingFetch([
       jsonResponse(tokenResponse),

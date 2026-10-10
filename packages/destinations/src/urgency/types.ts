@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { FEISHU_MAX_URGENT_RECEIVERS } from "#destinations/shared/feishu-protocol";
 import type {
   DestinationErrorKind,
   DestinationRetryHint,
@@ -18,6 +19,13 @@ export type UrgencyChannelKind = z.output<typeof UrgencyChannelKindSchema>;
 export type UrgencyErrorKind = DestinationErrorKind;
 export type UrgencyRetryHint = DestinationRetryHint;
 
+/**
+ * Platform limit for one urgent call: the endpoint validates that the receiver
+ * list is at most {@link FEISHU_MAX_URGENT_RECEIVERS} ids. Vane pages one receiver per ping, so the cap is a
+ * guard against a hand-built input rather than a normal operating point.
+ */
+export const MAX_URGENCY_RECEIVERS = FEISHU_MAX_URGENT_RECEIVERS;
+
 export const UrgencyPingInputSchema = z.object({
   app: z.object({
     appId: z.string().trim().min(1),
@@ -27,6 +35,9 @@ export const UrgencyPingInputSchema = z.object({
   receivers: z
     .array(z.string().trim().min(1))
     .min(1)
+    .max(MAX_URGENCY_RECEIVERS, {
+      message: `Urgent phone receivers cannot exceed ${MAX_URGENCY_RECEIVERS}`,
+    })
     .refine((receivers) => new Set(receivers).size === receivers.length, {
       message: "Urgent phone receivers must be unique",
     }),

@@ -43,7 +43,7 @@ packages/api                     契约层（env-neutral，无 server-only 代�
   src/client.ts                  RPCClient 类型（RouterContractClient）
 
 apps/console/src/server/orpc     实现层（server-only）
-  os.ts                          implement(contract).use(requestId())，全 console 共用
+  os.ts                          implement(contract).use(procedureLogging()).use(translateErrors).use(requestId())，全 console 共用
   router.ts                      根 router：os.router({ auth, sources, ... })
   features/<capability>/router.ts  每个 procedure 一行：取 service、调用、返回 DTO
   middlewares/*.ts                requestId、requireDashboard
@@ -67,7 +67,7 @@ route loader / 组件
      -> 浏览器阶段：RPCLink POST /api/rpc/sources/list
         -> routes/api/rpc/$.ts（server handler）
            -> rpcHandler.handle(request, { prefix: "/api/rpc" })
-              -> middleware 链：translateErrors -> requestId -> withDashboardService
+              -> middleware 链：procedureLogging -> translateErrors -> requestId -> withDashboardService
                  -> procedure handler
                     -> context.service.listSources()
                        -> SourceService -> SQLite repository
@@ -127,13 +127,24 @@ export const sources = {
 
 ```ts
 export const os = implement(contract)
+  .use(procedureLogging()) // 失败 procedure -> vane.orpc 结构化日志
   .use(translateErrors) // 领域错误 -> oRPC 类型化错误
   .use(requestId()); // context.requestId + x-request-id
 ```
 
 - `implement(contract)` 把契约绑定成可实现对象，`os.sources.list` 这样的路径由契约形状推导，
   procedure 名字写错即类型错误。
-- `translateErrors` 挂在最外层，把 service 抛出的领域错误映射成 oRPC 错误，见 4.5。它**不声明
+- `procedureLogging()` 挂在最外层：内层 `translateErrors` 翻译后的 `ORPCError.code`、以及
+  guard 拒绝（`UNAUTHORIZED` / `FORBIDDEN`）在这里都已经是有类型的 oRPC 错误。它只记录失败
+  （成功的浏览器调用已由 HTTP request-logging middleware 以 `POST /api/rpc/<path>` 记录），
+  级别跟随错误映射的 HTTP status：4xx 记 `warn`，5xx 与未翻译的意外故障记 `error`，
+  message 走 `safeErrorProperties` 脱敏。requestId 不用在这里注入——HTTP request middleware
+  的 `withContext()` 包住整个调用链（含 SSR），日志自动带上同一个 requestId。
+- 一个必要的实现细节：oRPC 2 beta 会把根 `os` 上的 middleware 链在每个
+  `os.<ns>.router(...)` 和最终 `os.router(...)` 组合时重新叠加一遍。`translateErrors` 和
+  `requestId` 是幂等的所以无害；logging 不幂等（一次失败会记 3 条），因此它用 context 上的
+  `procedureLogged` 标记去重，只让最外层那一次记录。这也是官方 dedupe-middleware 模式。
+- `translateErrors` 把 service 抛出的领域错误映射成 oRPC 错误，见 4.5。它**不声明
   error map**，否则 public procedure 会连带继承 `NOT_FOUND` / `CONFLICT` 这些并不属于它的 code。
 - `requestId()` 挂在根上，所有 procedure 都拿到 `context.requestId`，并回写 `x-request-id`。
   同一个请求（浏览器 `/api/rpc` 或进程内 `createRouterClient`）拿到的是同一个 id，和 HTTP
@@ -251,7 +262,10 @@ middleware 从 `context.reqHeaders` 取 header，而不是直接调用 `getReque
 | `openAPIHandler`（`OpenAPIHandler`） | `/api/openapi/*` | OpenAPI | 外部调用方、`/spec.json`、`/docs` 参考页 |
 
 两个 handler 都额外挂了 `CORSHandlerPlugin`、`RequestHeadersHandlerPlugin`、
-`ResponseHeadersHandlerPlugin`，并用 `onError` 记录 `[oRPC Error]`。
+`ResponseHeadersHandlerPlugin`。handler 上**不再挂 `console.error` 的 `onError` 拦截器**：它绕过
+LogTape、脱敏和 requestId 关联，而且覆盖不到 SSR 进程内调用。procedure 失败统一由 `os` 上的
+`procedureLogging()` 记录（见 4.1），transport 级故障（malformed body、未匹配 procedure）本来就以
+4xx 出现在 HTTP 访问日志里，两层合起来没有盲区。
 
 路由文件是标准的 TanStack Start server route，把 HTTP method 全部转给 handler：
 

@@ -1,6 +1,7 @@
 import { getLogger, withContext } from "@logtape/logtape";
 import { createMiddleware } from "@tanstack/react-start";
 
+import { elapsedMs } from "#/lib/utils";
 import { safeErrorProperties } from "#/server/runtime/log-safety";
 
 const httpLogger = getLogger(["vane", "http"]);
@@ -21,7 +22,7 @@ export const requestLoggingMiddleware = createMiddleware({ type: "request" }).se
             requestId,
           },
         });
-        const durationMs = elapsedMilliseconds(startedAt);
+        const durationMs = elapsedMs(startedAt);
         const response = withRequestIdHeader(result.response, requestId);
 
         logCompletedRequest({
@@ -38,7 +39,7 @@ export const requestLoggingMiddleware = createMiddleware({ type: "request" }).se
           method: request.method,
           pathname,
           handlerType,
-          durationMs: elapsedMilliseconds(startedAt),
+          durationMs: elapsedMs(startedAt),
           ...safeErrorProperties(error),
         });
 
@@ -78,10 +79,6 @@ function logCompletedRequest(input: {
   } else {
     httpLogger.info("HTTP {method} {pathname} completed with {status}", properties);
   }
-}
-
-function elapsedMilliseconds(startedAt: number): number {
-  return Math.round((performance.now() - startedAt) * 100) / 100;
 }
 
 function withRequestIdHeader(response: Response, requestId: string): Response {

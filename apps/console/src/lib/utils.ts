@@ -1,8 +1,9 @@
-import { clsx, type ClassValue } from "cnfast";
-import { twMerge } from "cnfast";
+import { round } from "es-toolkit/math";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "cn";
 
 export async function noop(): Promise<void> {}
+
+export function elapsedMs(startedAt: number): number {
+  return round(performance.now() - startedAt, 2);
+}

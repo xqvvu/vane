@@ -44,6 +44,13 @@ Console 内的业务模块直接使用 LogTape 原生分类 logger，不新增 `
 `server/runtime/request-context.ts` 仍负责 dashboard/webhook 的认证上下文，只读取 middleware 已校验
 或生成的 request ID。Source Token、额外共享密钥、raw headers 不进入 LogTape context。
 
+oRPC procedure 层由 `server/orpc/procedure-logging.ts`（挂在根 `os` 最外层）补充 HTTP 层看不到的
+信息：procedure path、翻译后的 `ORPCError.code` 和 procedure 耗时。它只记录失败——成功的浏览器
+调用已经有 `vane.http` 访问日志（procedure 路径就在 URL 尾部），而 SSR 进程内调用
+（`createRouterClient`）不经过 HTTP handler，失败时原本完全没有日志。由于 `withContext()` 包住
+整个请求调用链（含 SSR 分支），这些记录自动带上同一个 `requestId`，与 HTTP 行可以关联。
+Severity 跟随错误映射的 HTTP status：4xx 记 `warning`，5xx 与未翻译故障记 `error`。
+
 ## Category 与 Level
 
 当前 category：
@@ -52,9 +59,12 @@ Console 内的业务模块直接使用 LogTape 原生分类 logger，不新增 `
 | ---------------------- | --------------------------------------------------------- |
 | `vane.runtime`         | 日志运行时启动、系统信息等进程级事实。                    |
 | `vane.http`            | HTTP 请求完成、失败、status 和 duration。                 |
+| `vane.orpc`            | oRPC procedure 失败：procedure path、oRPC code、耗时。    |
 | `vane.intake`          | Webhook 接入接受/拒绝、parser failure、Event 与投递计数。 |
 | `vane.delivery`        | 单次 Delivery 成功、失败、重试和 destination 稳定结果。   |
 | `vane.worker.delivery` | 后台 delivery worker 批次摘要和基础设施失败。             |
+| `vane.oncall`          | 加急呼叫（ping）触发、入队、派发、fired/failed 与退避重试；含平台错误码与运维提示。 |
+| `vane.worker.oncall`   | 后台加急 worker 批次摘要和基础设施失败。                  |
 
 Level 约定：
 
@@ -79,12 +89,19 @@ development 使用 ANSI 文本。
 - provider、destination kind、failure reason、error kind、retry hint。
 - route/delivery/worker 数量、HTTP status、duration、attempt number。
 - 已通过 `redactText()` 处理的稳定错误消息。
+- ping id、被加急消息的 provider reference 类型、加急渠道 kind、trigger（`auto` / `manual`）。
+- 事件 severity / status（用于回答"这条告警为什么没打电话"）。
+- 呼叫对象 id（`open_id` / `user_id` / `union_id` 这类运维标识符）与操作者 user id：它们是排障所需的
+  "谁被叫了、谁叫的"，不是 secret，与 destination 操作摘要里的接收人同一口径。
 
 禁止记录：
 
 - authorization、cookie、Source Token、额外共享密钥、session token。
 - raw headers、raw payload、normalized message 全文。
 - Source/Destination config、secret refs、webhook URL、SMTP password、signing secret。
+- 飞书应用凭证（`app_id` / `app_secret`）与 `tenant_access_token`：加急与发送路径都只把它们交给
+  adapter，调用点不得记 log；adapter 的结构化结果里也只允许出现平台错误码和已过 `redactText()` 的
+  消息文本。
 - rendered payload、destination response body、完整 request URL/query。
 - raw `Error` 对象、stack 和 cause。
 

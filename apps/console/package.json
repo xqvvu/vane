@@ -61,7 +61,7 @@
     "better-sqlite3": "catalog:",
     "class-variance-authority": "catalog:ui",
     "clsx": "catalog:",
-    "cnfast": "catalog:",
+    "cn": "catalog:",
     "codemirror": "catalog:codemirror",
     "es-toolkit": "catalog:",
     "kysely": "catalog:",
@@ -94,7 +94,7 @@
     "babel-plugin-react-compiler": "catalog:toolchain",
     "jsdom": "catalog:testing",
     "typescript": "catalog:toolchain",
-    "vite": "catalog:toolchain",
-    "vite-plus": "catalog:toolchain"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

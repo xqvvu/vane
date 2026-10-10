@@ -7,10 +7,14 @@ import {
   BUILT_IN_FEISHU_ALERT_CARD_VERSION,
   resolveBuiltInFeishuCardTemplate,
 } from "#destinations/feishu/default-card";
+import { FEISHU_MAX_URGENT_RECEIVERS } from "#destinations/shared/feishu-protocol";
 import { DestinationTemplateSchema, TemplateBindingsSchema } from "#destinations/template";
 
 const FeishuCardColorSet: ReadonlySet<string> = new Set(FeishuCardColors);
 const NonEmptyFeishuStringSchema = z.string().trim().min(1);
+
+/** Platform limit for one urgent call's receiver list (`user_id_list` ≤ 200). */
+export const MAX_URGENT_RECEIVERS = FEISHU_MAX_URGENT_RECEIVERS;
 
 export const BuiltInFeishuDestinationTemplateSchema = z.strictObject({
   source: z.literal("builtin"),
@@ -100,6 +104,10 @@ const FeishuAppTargetSchema = z.strictObject({
  * receivers still apply. Webhook mode rejects the block outright: a
  * webhook-sent message carries no provider reference, so paging could never
  * fire and the configuration would be silently dead.
+ *
+ * The receiver cap is the platform's own per-call limit for the urgent
+ * endpoints (`user_id_list` 列表长度不能大于 200); rejecting it at save time
+ * keeps an operator from building a destination that fails on every page.
  */
 const FeishuUrgentSchema = z.strictObject({
   autoEnabled: z.boolean(),
@@ -108,6 +116,9 @@ const FeishuUrgentSchema = z.strictObject({
   receivers: z
     .array(NonEmptyFeishuStringSchema)
     .min(1)
+    .max(MAX_URGENT_RECEIVERS, {
+      message: `Feishu urgent receivers cannot exceed ${MAX_URGENT_RECEIVERS}`,
+    })
     .refine((receivers) => new Set(receivers).size === receivers.length, {
       message: "Feishu urgent receivers must be unique",
     }),

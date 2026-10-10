@@ -8,7 +8,7 @@ Adapter manifest 可以描述配置字段、能力、secret 路径和安全摘�
 
 Provider 和 destination 只共享展示元数据、配置字段描述、secret 字段声明、安全摘要等 manifest primitives。两者保持独立接口：provider adapter 把入站 Webhook 载荷解析成规范化告警，destination adapter 负责预览和发送出站通知。
 
-（2026-10-08 由 `docs/adr/0009-oncall-feishu-urgent.md` 提议，尚未实现）出站通知与主动呼叫人是两种语义，因此 adapter 家族在 provider 与 destination 之外新增第三类 urgency channel adapter：`UrgencyChannelAdapter`（`kind` / `configSchema` / `ping`）与 `UrgencyRegistry`，落在 `packages/destinations/src/urgency/`，复用本 ADR 已确立的全部纪律，即结构化 `ok` union、封闭 error kind、retry hint、只接收已校验 typed config、不碰 DB/container/logger、通过注入的 `fetch` 与 `now` 访问 transport。`UrgencyChannelKind` 同样是封闭枚举。不把加急做成 `DestinationAdapter` 的可选方法加 capability 标志：那会让能力真相分裂成两处，并被迫打开本 ADR 明确封闭的 capabilities schema。
+（由 `docs/adr/0009-oncall-feishu-urgent.md` 提出，2026-10-10 已随 `packages/destinations/src/urgency/` 实现）出站通知与主动呼叫人是两种语义，因此 adapter 家族在 provider 与 destination 之外新增第三类 urgency channel adapter：`UrgencyChannelAdapter`（`kind` / `ping`，没有 manifest / `configSchema`）与 `UrgencyRegistry`，落在 `packages/destinations/src/urgency/`，复用本 ADR 已确立的全部纪律，即结构化 `ok` union、封闭 error kind、retry hint、只接收已校验 typed config、不碰 DB/container/logger、通过注入的 `fetch` 与 `now` 访问 transport。`UrgencyChannelKind` 同样是封闭枚举。不把加急做成 `DestinationAdapter` 的可选方法加 capability 标志：那会让能力真相分裂成两处，并被迫打开本 ADR 明确封闭的 capabilities schema。
 
 Secret 处理不能只从表单字段描述推导。Adapter manifest 同时暴露 UI 字段描述和独立的 secret 字段声明，并通过测试或 registry audit 保持可见 secret 字段的一致性。这样 console 可以渲染友好的表单，同时把导出、日志、摘要和 DTO 脱敏锚定在明确的服务端安全边界上。
 

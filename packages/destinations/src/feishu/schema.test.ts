@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { FeishuConfigSchema } from "#destinations/feishu/schema";
+import { FeishuConfigSchema, MAX_URGENT_RECEIVERS } from "#destinations/feishu/schema";
 
 const webhookUrl = "https://open.feishu.cn/open-apis/bot/v2/hook/example";
 const appTarget = { appRef: "app-1", chatId: "oc_group" };
@@ -60,6 +60,25 @@ describe("feishu destination config", () => {
     ).toThrow(/receivers must be unique/);
   });
 
+  it("rejects more urgent receivers than the platform allows per call", () => {
+    const receivers = Array.from({ length: MAX_URGENT_RECEIVERS + 1 }, (_, index) => `ou_${index}`);
+
+    expect(() =>
+      FeishuConfigSchema.parse({
+        sendMode: "app",
+        app: appTarget,
+        urgent: { autoEnabled: true, receivers },
+      }),
+    ).toThrow(/cannot exceed 200/);
+
+    expect(
+      FeishuConfigSchema.parse({
+        sendMode: "app",
+        app: appTarget,
+        urgent: { autoEnabled: true, receivers: receivers.slice(0, MAX_URGENT_RECEIVERS) },
+      }).urgent?.receivers,
+    ).toHaveLength(MAX_URGENT_RECEIVERS);
+  });
   it("accepts app send mode with urgent configuration and applies its defaults", () => {
     const config = FeishuConfigSchema.parse({
       sendMode: "app",

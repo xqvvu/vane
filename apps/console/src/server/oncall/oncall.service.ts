@@ -162,9 +162,11 @@ export class OncallService {
     const dedupeWindowStartsAt = new Date(
       new Date(now).valueOf() - this.dedupeWindowMs,
     ).toISOString();
+    let queued = 0;
+    let suppressed = 0;
 
     for (const receiver of urgent.receivers) {
-      await this.store.oncall.enqueueForDelivery({
+      const ping = await this.store.oncall.enqueueForDelivery({
         deliveryId: input.delivery.job.id,
         destinationId: destination.id,
         eventId: event.id,
@@ -176,6 +178,23 @@ export class OncallService {
         dedupeWindowStartsAt,
         now,
       });
+
+      if (ping) {
+        queued += 1;
+      } else {
+        suppressed += 1;
+      }
     }
+
+    // Storm protection makes "nothing new to page" the common case, so the
+    // suppression is a debug fact rather than a warning.
+    oncallLogger.debug("Auto paging for {deliveryId} queued {queued} and suppressed {suppressed}", {
+      deliveryId: input.delivery.job.id,
+      destinationId: destination.id,
+      eventId: event.id,
+      severity: event.normalized.severity,
+      queued,
+      suppressed,
+    });
   }
 }

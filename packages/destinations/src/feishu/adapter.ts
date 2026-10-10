@@ -12,8 +12,15 @@ import type { FeishuConfig } from "#destinations/feishu/schema";
 import { fetchFeishuTenantAccessToken } from "#destinations/shared/feishu-app-client";
 import { FEISHU_MESSAGES_URL } from "#destinations/shared/feishu-endpoints";
 import {
-  feishuCode,
+  feishuErrorDecision,
+  feishuErrorKind,
+  withOperatorHint,
+} from "#destinations/shared/feishu-errors";
+import { FEISHU_JSON_CONTENT_TYPE } from "#destinations/shared/feishu-protocol";
+import {
+  feishuBusinessCode,
   feishuFailureMessage,
+  feishuFailureSummary,
   feishuMessageId,
   isFeishuSuccess,
   parseFeishuResult,
@@ -117,6 +124,8 @@ async function sendViaWebhook(
     const responseBody = await Send.readResponseBody(response);
     const feishuResult = parseFeishuResult(responseBody);
     const feishuOk = feishuResult ? isFeishuSuccess(feishuResult) : response.ok;
+    const code = feishuBusinessCode(feishuResult);
+    const decision = feishuErrorDecision(code, response.status);
 
     if (response.ok && feishuOk) {
       return R.ok({
@@ -127,11 +136,22 @@ async function sendViaWebhook(
     }
 
     return R.fail({
-      errorKind: response.ok ? "target_rejected" : "http_error",
-      retryHint: response.ok ? "not_retryable" : Send.httpStatusToRetryHint(response.status),
-      errorMessage: feishuResult
-        ? `Feishu returned code ${feishuCode(feishuResult)}`
-        : `Feishu webhook returned HTTP ${response.status}`,
+      errorKind: feishuErrorKind(code),
+      // The platform answers a rate-limited custom-bot send with a body-level
+      // code (11232) and HTTP 200/400, so the code — not the status — decides
+      // whether the card can be posted again.
+      retryHint:
+        decision.retryHint === "retryable"
+          ? "retryable"
+          : response.ok
+            ? "not_retryable"
+            : Send.httpStatusToRetryHint(response.status),
+      errorMessage: withOperatorHint(
+        feishuResult
+          ? feishuFailureSummary(feishuResult, response.status)
+          : `Feishu webhook returned HTTP ${response.status}`,
+        decision.operatorHint,
+      ),
       statusCode: response.status,
       responseBody,
       renderedPayload,
@@ -210,7 +230,7 @@ async function sendViaApp(
     const response = await fetch(`${FEISHU_MESSAGES_URL}?receive_id_type=chat_id`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": FEISHU_JSON_CONTENT_TYPE,
         Authorization: `Bearer ${token.tenantAccessToken}`,
       },
       body: JSON.stringify({
@@ -221,25 +241,36 @@ async function sendViaApp(
     });
     const responseBody = await Send.readResponseBody(response);
     const result = parseFeishuResult(responseBody);
+    const code = feishuBusinessCode(result);
 
     if (!response.ok) {
+      const decision = feishuErrorDecision(code, response.status);
+
       return R.fail({
-        errorKind: "http_error",
-        retryHint: Send.httpStatusToRetryHint(response.status),
-        errorMessage: `Feishu returned HTTP ${response.status}`,
+        errorKind: feishuErrorKind(code),
+        retryHint:
+          decision.retryHint === "retryable"
+            ? "retryable"
+            : Send.httpStatusToRetryHint(response.status),
+        errorMessage: withOperatorHint(
+          feishuFailureSummary(result, response.status),
+          decision.operatorHint,
+        ),
         statusCode: response.status,
         responseBody,
         renderedPayload,
       });
     }
 
-    if (!result || result.code !== 0) {
+    if (!result || code !== 0) {
+      const decision = feishuErrorDecision(code, response.status);
+
       return R.fail({
         errorKind: "target_rejected",
-        retryHint: "not_retryable",
-        errorMessage: feishuFailureMessage(
-          result,
-          "Feishu returned an unreadable send message response",
+        retryHint: decision.retryHint,
+        errorMessage: withOperatorHint(
+          feishuFailureMessage(result, "Feishu returned an unreadable send message response"),
+          decision.operatorHint,
         ),
         statusCode: response.status,
         responseBody,

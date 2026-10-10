@@ -4,15 +4,17 @@ import { contract } from "@vane/api";
 
 import { toContractError } from "#/server/orpc/errors";
 import { requestId } from "#/server/orpc/middlewares/request-id";
+import { procedureLogging } from "#/server/orpc/procedure-logging";
 
 /**
  * Translates domain failures into typed oRPC errors.
  *
  * Registered at the root so every procedure inherits it, including public ones,
- * and outermost so it also covers failures raised by other middleware. The
- * middleware declares no error map on purpose: keeping the translation out of the
- * contract's error keys means public procedures such as `health.check` do not
- * inherit NOT_FOUND/CONFLICT just because a service can raise them.
+ * and inside `procedureLogging` so the logged code is always the translated
+ * `ORPCError.code`. The middleware declares no error map on purpose: keeping
+ * the translation out of the contract's error keys means public procedures such
+ * as `health.check` do not inherit NOT_FOUND/CONFLICT just because a service
+ * can raise them.
  */
 const translateErrors = base.middleware(async ({ next }) => {
   try {
@@ -27,6 +29,9 @@ const translateErrors = base.middleware(async ({ next }) => {
  *
  * `implement(contract)` binds the API shape from `@vane/api`, so a procedure
  * name that is missing or extra is a type error rather than a runtime 404. The
- * shared middleware chain is error translation, then request id.
+ * shared middleware chain is procedure logging, then error translation, then
+ * request id. Logging sits outermost so it also records failures raised by
+ * `translateErrors` and `requestId`, and sees their already-translated
+ * `ORPCError` codes.
  */
-export const os = implement(contract).use(translateErrors).use(requestId());
+export const os = implement(contract).use(procedureLogging()).use(translateErrors).use(requestId());

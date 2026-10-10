@@ -498,6 +498,8 @@ describe("feishu sender", () => {
   });
 
   it("reports Feishu error codes as delivery failures", async () => {
+    // The custom-bot webhook answers a rejection with HTTP 200 plus a body code;
+    // the platform's own `msg` is the actionable part and must survive.
     const fetcher: FetchLike = async () => ({
       ok: true,
       status: 200,
@@ -510,10 +512,44 @@ describe("feishu sender", () => {
     expect(result).toMatchObject({
       errorKind: "target_rejected",
       retryHint: "not_retryable",
-      errorMessage: "Feishu returned code 19024",
+      errorMessage: "Feishu returned code 19024: invalid sign",
     });
   });
 
+  it("adds the HTTP status to a webhook failure the body cannot explain", async () => {
+    const fetcher: FetchLike = async () => ({
+      ok: false,
+      status: 502,
+      text: async () => "Bad Gateway",
+    });
+
+    const result = await feishuSender.send(input, { fetch: fetcher });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "http_error",
+      retryHint: "retryable",
+      errorMessage: "Feishu webhook returned HTTP 502",
+    });
+  });
+
+  it("retries a custom group bot send that Feishu rate limited", async () => {
+    // Documented for custom bots: 100 次/分钟、5 次/秒, and the platform surfaces
+    // the burst as body code 11232 with an otherwise successful HTTP response.
+    const fetcher: FetchLike = async () => ({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ code: 11232, msg: "create message trigger rate limit" }),
+    });
+
+    const result = await feishuSender.send(input, { fetch: fetcher });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorKind: "target_rejected",
+      retryHint: "retryable",
+    });
+  });
   it("creates signatures with Feishu's timestamp and secret format", () => {
     const expected = "jWsBkWnzlRKtaP+iZgwraSojMWik4cJR7aysApQZuoA=";
 
