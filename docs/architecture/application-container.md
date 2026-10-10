@@ -181,7 +181,7 @@ const worker = await context.dashboardRequest.container.createDeliveryWorker();
 return worker.runOnce({ limit });
 ```
 
-Oncall worker（`server/oncall/oncall-worker.service.ts`）与 delivery worker 同形状：`ensureOncallWorkerRunner()` 复用同一个 `createDeliveryWorkerRunner` 工厂（它只依赖 `runOnce()` 与 health snapshot，对队列无感知），`oncall` runner 与 delivery runner 在 container 里并列、各自独立 interval，dispose 时一起停止。它也照抄 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`。加急的 run-once 入口是 `operations.buzzDelivery` 之后的 best-effort `dispatchNow`，失败只记日志并交由 runner 重试。
+Oncall worker（`server/oncall/oncall-worker.service.ts`）与 delivery worker 同形状：`ensureOncallWorkerRunner()` 复用同一个 `createDeliveryWorkerRunner` 工厂（它只依赖 `runOnce()` 与 health snapshot，对队列无感知），`oncall` runner 与 delivery runner 在 container 里并列，各自持有独立 timer，但共用同一组 env 配置（`VANE_WORKER_INTERVAL_MS` 轮询间隔、`VANE_WORKER_BATCH_SIZE` 每轮上限），dispose 时一起停止。它也照抄 reclaim → claim(due) → execute 顺序，退避复用 `DeliveryBackoffOptions`。加急的 run-once 入口是 `operations.buzzDelivery` 之后的 best-effort `dispatchNow`，失败只记日志并交由 runner 重试。
 
 ### Logging Runtime
 
